@@ -98,40 +98,86 @@ function sendBookingConfirmationEmail(
             }
         }
 
+        // Generate invoice URL from checkin URL
+        $invoice_url = $checkin_url ? str_replace('/checkin?', '/invoice?', $checkin_url) : '';
+
         // Content
-        $checkin_fmt  = date('F j, Y', strtotime($check_in));
-        $checkout_fmt = date('F j, Y', strtotime($check_out));
+        $checkin_fmt  = date('D, M j, Y', strtotime($check_in));
+        $checkout_fmt = date('D, M j, Y', strtotime($check_out));
         $amount_fmt   = number_format($total_amount, 2);
+        
         $cancel_section = '';
         if ($cancellation_url) {
-            $cancel_section = "<p>If you need to cancel your booking, use this secure link: <a href='" . htmlspecialchars($cancellation_url) . "'>" . htmlspecialchars($cancellation_url) . "</a></p>";
+            $cancel_section = "
+            <div style='margin-top:24px; padding:16px; background:#F8FAFC; border-radius:12px; border:1px solid #E2E8F0; text-align:center;'>
+                <p style='margin:0 0 10px; color:#475569; font-size:13px;'>Need to make changes or cancel?</p>
+                <a href='" . htmlspecialchars($cancellation_url) . "' style='color:#7C533C; font-weight:600; text-decoration:underline; font-size:13px;'>Manage your reservation securely</a>
+            </div>";
         }
 
         $mail->isHTML(true);
         $mail->Subject = "Booking Confirmed – {$booking_ref} – Santa Fe Beach Club";
         $mail->Body    = "
-            <div style='font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;'>
-                <h2 style='color:#0ea5e9;'>Your booking is confirmed!</h2>
-                <p>Hi " . htmlspecialchars($guest_name) . ",</p>
-                <p>Great news — your reservation at <strong>Santa Fe Beach Club</strong> has been confirmed.</p>
-                <table style='width:100%; border-collapse: collapse; margin: 20px 0;'>
-                    <tr><td style='padding:6px 0; color:#777;'>Booking Reference</td><td style='padding:6px 0; text-align:right; font-weight:bold;'>" . htmlspecialchars($booking_ref) . "</td></tr>
-                    <tr><td style='padding:6px 0; color:#777;'>Room</td><td style='padding:6px 0; text-align:right;'>" . htmlspecialchars($room_name) . "</td></tr>
-                    <tr><td style='padding:6px 0; color:#777;'>Check-in</td><td style='padding:6px 0; text-align:right;'>{$checkin_fmt}</td></tr>
-                    <tr><td style='padding:6px 0; color:#777;'>Check-out</td><td style='padding:6px 0; text-align:right;'>{$checkout_fmt}</td></tr>
-                    <tr><td style='padding:6px 0; color:#777;'>Total Amount</td><td style='padding:6px 0; text-align:right; font-weight:bold;'>₱ {$amount_fmt}</td></tr>
-                </table>
-                {$qr_html}
-                <p>Please keep your booking reference and QR code handy for check-in.</p>
-                {$cancel_section}
-                <p style='color:#999; font-size:12px; margin-top:30px;'>See you soon at Santa Fe Beach Club!</p>
+            <div style='font-family: \"Plus Jakarta Sans\", Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);'>
+                
+                <!-- Header -->
+                <div style='background: linear-gradient(135deg, #FAF6F0 0%, #F5EBE0 100%); padding: 32px; border-bottom: 2px solid #EADBCC; text-align: center;'>
+                    <h2 style='color:#5A3E2B; margin: 0 0 4px; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;'>Booking Confirmed!</h2>
+                    <p style='color:#84563C; margin: 0; font-size: 14px;'>Santa Fe Beach Club, Bantayan Island</p>
+                </div>
+
+                <!-- Body -->
+                <div style='padding: 32px;'>
+                    <p style='color:#1E293B; font-size: 15px; margin: 0 0 20px; line-height: 1.6;'>Hi <strong>" . htmlspecialchars($guest_name) . "</strong>,</p>
+                    <p style='color:#475569; font-size: 14.5px; margin: 0 0 24px; line-height: 1.6;'>Great news — your reservation at Santa Fe Beach Club has been officially confirmed! We are thrilled to welcome you to the island.</p>
+                    
+                    <!-- Details Card -->
+                    <div style='background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 24px;'>
+                        <h3 style='color:#0F172A; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;'>Reservation Details</h3>
+                        <table style='width: 100%; border-collapse: collapse; font-size: 14px;'>
+                            <tr>
+                                <td style='padding: 6px 0; color: #64748B;'>Reference</td>
+                                <td style='padding: 6px 0; text-align: right; font-weight: 700; color: #1E293B;'>" . htmlspecialchars($booking_ref) . "</td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 6px 0; color: #64748B;'>Accommodation</td>
+                                <td style='padding: 6px 0; text-align: right; color: #1E293B; font-weight: 600;'>" . htmlspecialchars($room_name) . "</td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 6px 0; color: #64748B;'>Check-in</td>
+                                <td style='padding: 6px 0; text-align: right; color: #1E293B;'>" . $checkin_fmt . " <span style='color:#94A3B8; font-size:12px;'>(13:30)</span></td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 6px 0; color: #64748B;'>Check-out</td>
+                                <td style='padding: 6px 0; text-align: right; color: #1E293B;'>" . $checkout_fmt . " <span style='color:#94A3B8; font-size:12px;'>(11:00)</span></td>
+                            </tr>
+                            <tr>
+                                <td style='padding: 10px 0 4px; color: #64748B; border-top: 1px dashed #CBD5E1; margin-top: 6px;'>Total Stay Cost</td>
+                                <td style='padding: 10px 0 4px; text-align: right; font-weight: 800; color: #0F172A; font-size: 16px; border-top: 1px dashed #CBD5E1; margin-top: 6px;'>₱ " . $amount_fmt . "</td>
+                            </tr>
+                        </table>
+                        " . ($invoice_url ? "<div style='text-align:center; margin-top:16px;'><a href='" . htmlspecialchars($invoice_url) . "' style='display:inline-block; padding:8px 16px; background:#7C533C; color:#FFF; text-decoration:none; font-weight:600; font-size:13px; border-radius:6px;'>View / Print Official PDF Invoice</a></div>" : "") . "
+                    </div>
+
+                    <!-- QR Pass Section -->
+                    {$qr_html}
+
+                    {$cancel_section}
+
+                </div>
+
+                <!-- Footer -->
+                <div style='background: #1E293B; padding: 24px; text-align: center;'>
+                    <p style='color: #94A3B8; font-size: 12px; margin: 0;'>Santa Fe Beach Club</p>
+                    <p style='color: #64748B; font-size: 11px; margin: 4px 0 0;'>Bantayan Island, Cebu, Philippines</p>
+                </div>
+
             </div>
         ";
         $mail->AltBody = "Hi {$guest_name}, your booking {$booking_ref} at Santa Fe Beach Club is confirmed. "
-            . "Room: {$room_name}. Check-in: {$checkin_fmt}. Check-out: {$checkout_fmt}. Total: PHP {$amount_fmt}.";
-        if ($cancellation_url) {
-            $mail->AltBody .= " Cancel here: {$cancellation_url}.";
-        }
+            . "Room: {$room_name}. Check-in: {$checkin_fmt}. Check-out: {$checkout_fmt}. Total: PHP {$amount_fmt}. "
+            . ($invoice_url ? "View official invoice: {$invoice_url}. " : "")
+            . ($cancellation_url ? "Cancel here: {$cancellation_url}." : "");
 
         $mail->send();
         return ['success' => true, 'error' => null];

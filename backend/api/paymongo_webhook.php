@@ -39,8 +39,10 @@ if (!empty($webhookSecret) && !empty($signatureHeader)) {
         $signedPayload = $timestamp . '.' . $rawInput;
         $computedSig = hash_hmac('sha256', $signedPayload, $webhookSecret);
         if (!hash_equals($computedSig, $expectedSig)) {
-            error_log('[PayMongo Webhook] Invalid signature verification');
-            // Log warning but continue processing if needed
+            error_log('[PayMongo Webhook] Invalid signature verification - unauthorized payload rejected');
+            http_response_code(401);
+            echo json_encode(['error' => 'Invalid signature verification']);
+            exit;
         }
     }
 }

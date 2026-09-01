@@ -1,11 +1,22 @@
 <?php
 header("Content-Type: application/json; charset=utf-8");
 require_once __DIR__ . "/../config/db.php";
+require_once __DIR__ . "/../helpers/csrf_helper.php";
+require_once __DIR__ . "/../helpers/rate_limiter.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
     echo json_encode(["success" => false, "error" => "Method not allowed."]);
     exit;
 }
+
+if (!verify_csrf_token()) {
+    http_response_code(403);
+    echo json_encode(["success" => false, "error" => "Security verification failed. Please refresh the page."]);
+    exit;
+}
+
+RateLimiter::enforce($conn, 'submit_review', 5, 600);
 
 $guest_name     = trim($_POST["guest_name"] ?? "");
 $guest_location = trim($_POST["guest_location"] ?? "Verified Guest");

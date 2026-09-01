@@ -593,10 +593,20 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                     </div>
                 </div>
             </div>
-            
             <div class="booking-success-actions">
-                <a href="my_booking" class="btn-home" style="background:#7C533C; color:#fff; margin-right:10px;">View My Booking</a>
-                <a href="index" class="btn-home">Return to Home</a>
+                <a href="invoice?ref=<?php echo urlencode($booking_ref); ?>&token=<?php echo urlencode($checkin_token); ?>" 
+                   target="_blank" 
+                   class="btn-home" style="background:#7C533C; color:#fff; margin-right:10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px; vertical-align:middle;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Print / PDF Invoice
+                </a>
+                <a href="assets/qrcodes/qr_booking_<?php echo $booking_id; ?>.png" 
+                   download="SantaFe_Pass_<?php echo htmlspecialchars($booking_ref); ?>.png"
+                   class="btn-home" style="background:#0F172A; color:#fff; margin-right:10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px; vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Save QR Pass (PNG)
+                </a>
+                <a href="my_booking" class="btn-home" style="margin-right:10px;">View My Booking</a>
             </div>
         </div>
     </div>
@@ -666,9 +676,15 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                                     <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Flexible cancellation <span class="info-icon">i</span></li>
                                     <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <?php echo $has_breakfast ? 'Breakfast included' : 'No breakfast included'; ?></li>
                                 </ul>
+                                <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+                                    <button type="button" id="openAvailabilityCalBtn" style="background:#FFF; border:1.5px solid #84563C; color:#84563C; border-radius:8px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;" onmouseover="this.style.background='#84563C'; this.style.color='#FFF';" onmouseout="this.style.background='#FFF'; this.style.color='#84563C';">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                        Change Dates & Check Availability
+                                    </button>
+                                </div>
                             </div>
                             <div class="bk-room-right">
-                                <button type="button" class="bk-edit-icon" id="editRoomBtn" aria-label="Edit room">
+                                <button type="button" class="bk-edit-icon" id="editRoomBtn" aria-label="Edit room" title="Change Room or Guests">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
                                 <div class="bk-room-price">₱ <?php echo number_format($total_amount, 2); ?></div>
@@ -1433,10 +1449,22 @@ function showFileError(input, errorDiv, message) {
                 </div>
             </div>
 
+            <!-- Room Type Selection -->
+            <div style="margin-bottom:18px;">
+                <label style="font-size:12px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Accommodation Type</label>
+                <select id="editRoomType" style="width:100%; padding:12px 16px; border:1.5px solid #E5E7EB; border-radius:10px; font-family:'Outfit',sans-serif; font-size:14px; color:#1A1A2E; background:#fff; outline:none; cursor:pointer;">
+                    <option value="beachview_duplex" <?php echo ($room_type === 'beachview_duplex') ? 'selected' : ''; ?>>Beachview Duplex</option>
+                    <option value="seaview_duplex" <?php echo ($room_type === 'seaview_duplex') ? 'selected' : ''; ?>>Seaview Duplex</option>
+                    <option value="beach_villa" <?php echo ($room_type === 'beach_villa') ? 'selected' : ''; ?>>Beach Villa</option>
+                    <option value="standard_king" <?php echo ($room_type === 'standard_king') ? 'selected' : ''; ?>>Standard Family Room</option>
+                    <option value="standard_room" <?php echo ($room_type === 'standard_room') ? 'selected' : ''; ?>>Standard Room</option>
+                </select>
+            </div>
+
             <!-- Room count -->
             <div style="margin-bottom:18px;">
-                <label style="font-size:12px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Room</label>
-                <select id="editRoomCount" style="width:100%; padding:12px 16px; border:1.5px solid #E5E7EB; border-radius:10px; font-family:'Outfit',sans-serif; font-size:14px; color:#1A1A2E; background:#F9FAFB; outline:none; cursor:pointer; appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position:calc(100% - 14px) center;">
+                <label style="font-size:12px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Room Quantity</label>
+                <select id="editRoomCount" style="width:100%; padding:12px 16px; border:1.5px solid #E5E7EB; border-radius:10px; font-family:'Outfit',sans-serif; font-size:14px; color:#1A1A2E; background:#F9FAFB; outline:none; cursor:pointer;">
                     <option value="1" selected>1 room</option>
                 </select>
             </div>
@@ -1473,44 +1501,268 @@ function showFileError(input, errorDiv, message) {
     </div>
 </div>
 
+<!-- ══ Interactive Availability Calendar Modal ═══════════════════ -->
+<div id="availabilityCalendarModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:16px; box-shadow:0 24px 64px rgba(0,0,0,0.2); width:100%; max-width:540px; overflow:hidden; font-family:'Outfit',sans-serif; animation:modalPop 0.25s ease-out;">
+        
+        <!-- Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 22px; background:#FAF6F0; border-bottom:1px solid #EFE4D6;">
+            <div>
+                <h3 style="font-size:17px; font-weight:700; color:#5A3E2B; margin:0; display:flex; align-items:center; gap:8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Live Availability Calendar
+                </h3>
+                <p style="font-size:12px; color:#84563C; margin:3px 0 0 0;">Select your Check-in and Check-out dates</p>
+            </div>
+            <button id="closeAvailCalModal" type="button" style="background:none; border:none; cursor:pointer; color:#7C533C; font-size:24px; line-height:1; padding:2px 6px; border-radius:6px;">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:20px 22px;">
+            
+            <!-- Month Navigator -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                <button type="button" id="book-cal-prev" style="background:#F3F4F6; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:700; color:#374151;">&larr; Prev</button>
+                <div id="book-cal-month-title" style="font-size:15px; font-weight:700; color:#1F2937;">Loading...</div>
+                <button type="button" id="book-cal-next" style="background:#F3F4F6; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:700; color:#374151;">Next &rarr;</button>
+            </div>
+
+            <!-- Legend -->
+            <div style="display:flex; justify-content:center; gap:14px; margin-bottom:14px; font-size:11.5px; color:#4B5563;">
+                <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; border-radius:3px; background:#ECFDF5; border:1px solid #A7F3D0; display:inline-block;"></span> Available</span>
+                <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; border-radius:3px; background:#FFFBEB; border:1px solid #FDE68A; display:inline-block;"></span> Low Stock</span>
+                <span style="display:inline-flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; border-radius:3px; background:#FEF2F2; border:1px solid #FECACA; display:inline-block;"></span> Sold Out</span>
+            </div>
+
+            <!-- Weekday header -->
+            <div style="display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; font-size:11px; font-weight:700; color:#9CA3AF; margin-bottom:8px;">
+                <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div id="book-cal-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:6px;">
+                <div style="grid-column:span 7; text-align:center; padding:30px; color:#9CA3AF; font-size:13px;">Loading availability matrix...</div>
+            </div>
+
+            <!-- Selected Dates Indicator -->
+            <div style="margin-top:16px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-size:11px; color:#64748B; text-transform:uppercase; font-weight:700;">Selected Stay</div>
+                    <div id="book-cal-selection-text" style="font-size:13.5px; font-weight:700; color:#1E293B; margin-top:2px;">
+                        <?php echo date('M j, Y', strtotime($checkin)); ?> &rarr; <?php echo date('M j, Y', strtotime($checkout)); ?> (<?php echo $nights; ?> night<?php echo $nights>1?'s':''; ?>)
+                    </div>
+                </div>
+                <button type="button" id="book-cal-apply-btn" style="background:#84563C; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">
+                    Confirm Dates
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <script>
 (function(){
-    var modal   = document.getElementById('editRoomModal');
-    var openBtn = document.getElementById('editRoomBtn');
-    var closeBtn= document.getElementById('closeEditRoomModal');
-    var applyBtn= document.getElementById('applyEditRoom');
+    // ── Edit Room Modal ──────────────────────────────────────────
+    var editModal = document.getElementById('editRoomModal');
+    var openEditBtn = document.getElementById('editRoomBtn');
+    var closeEditBtn = document.getElementById('closeEditRoomModal');
+    var applyEditBtn = document.getElementById('applyEditRoom');
 
-    function openModal() {
-        modal.style.display = 'flex';
+    if (openEditBtn) openEditBtn.addEventListener('click', function() {
+        editModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-    }
-    function closeModal() {
-        modal.style.display = 'none';
+    });
+    if (closeEditBtn) closeEditBtn.addEventListener('click', function() {
+        editModal.style.display = 'none';
         document.body.style.overflow = '';
-    }
-
-    if (openBtn)  openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (applyBtn) applyBtn.addEventListener('click', function(){
-        // Build new URL with updated guests value and reload step 1
+    });
+    if (applyEditBtn) applyEditBtn.addEventListener('click', function(){
         var adults   = document.getElementById('editAdults').value;
+        var roomType = document.getElementById('editRoomType') ? document.getElementById('editRoomType').value : '<?php echo htmlspecialchars($room_type); ?>';
         var params   = new URLSearchParams(window.location.search);
         params.set('step', '1');
         params.set('guests', adults);
         params.set('checkin',  '<?php echo htmlspecialchars($checkin); ?>');
         params.set('checkout', '<?php echo htmlspecialchars($checkout); ?>');
-        params.set('room_type','<?php echo htmlspecialchars($room_type); ?>');
+        params.set('room_type', roomType);
         window.location.href = 'book?' + params.toString();
     });
 
-    // Close on backdrop click
-    modal.addEventListener('click', function(e){
-        if (e.target === modal) closeModal();
+    if (editModal) {
+        editModal.addEventListener('click', function(e){
+            if (e.target === editModal) { editModal.style.display = 'none'; document.body.style.overflow = ''; }
+        });
+    }
+
+    // ── Availability Calendar Modal ──────────────────────────────
+    var calModal = document.getElementById('availabilityCalendarModal');
+    var openCalBtn = document.getElementById('openAvailabilityCalBtn');
+    var closeCalBtn = document.getElementById('closeAvailCalModal');
+    var prevMonthBtn = document.getElementById('book-cal-prev');
+    var nextMonthBtn = document.getElementById('book-cal-next');
+    var applyCalBtn = document.getElementById('book-cal-apply-btn');
+
+    var currentYear = <?php echo (int)date('Y', strtotime($checkin)); ?>;
+    var currentMonth = <?php echo (int)date('n', strtotime($checkin)); ?>;
+    var activeRoomType = '<?php echo htmlspecialchars($room_type); ?>';
+
+    var selectedCheckIn = '<?php echo htmlspecialchars($checkin); ?>';
+    var selectedCheckOut = '<?php echo htmlspecialchars($checkout); ?>';
+    var pickState = 0; // 0 = ready to pick check-in, 1 = ready to pick check-out
+
+    var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    function openCal() {
+        if (!calModal) return;
+        calModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        loadCalData(currentYear, currentMonth);
+    }
+    function closeCal() {
+        if (!calModal) return;
+        calModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    if (openCalBtn) openCalBtn.addEventListener('click', openCal);
+    if (closeCalBtn) closeCalBtn.addEventListener('click', closeCal);
+    if (calModal) {
+        calModal.addEventListener('click', function(e){
+            if (e.target === calModal) closeCal();
+        });
+    }
+
+    if (prevMonthBtn) prevMonthBtn.addEventListener('click', function(){
+        currentMonth--;
+        if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+        loadCalData(currentYear, currentMonth);
+    });
+    if (nextMonthBtn) nextMonthBtn.addEventListener('click', function(){
+        currentMonth++;
+        if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+        loadCalData(currentYear, currentMonth);
     });
 
-    // Close on Escape key
+    function updateSelectionText() {
+        var textEl = document.getElementById('book-cal-selection-text');
+        if (!textEl) return;
+        if (selectedCheckIn && selectedCheckOut) {
+            var d1 = new Date(selectedCheckIn);
+            var d2 = new Date(selectedCheckOut);
+            var diffNights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+            textEl.textContent = selectedCheckIn + ' → ' + selectedCheckOut + ' (' + diffNights + ' night' + (diffNights > 1 ? 's' : '') + ')';
+        } else if (selectedCheckIn) {
+            textEl.textContent = selectedCheckIn + ' → Select check-out date';
+        }
+    }
+
+    function loadCalData(year, month) {
+        var titleEl = document.getElementById('book-cal-month-title');
+        var grid = document.getElementById('book-cal-grid');
+        if (!titleEl || !grid) return;
+
+        titleEl.textContent = monthNames[month - 1] + ' ' + year;
+        grid.innerHTML = '<div style="grid-column:span 7; text-align:center; padding:25px; color:#9CA3AF; font-size:13px;">Checking room availability...</div>';
+
+        fetch('api/availability?action=get_month_matrix&year=' + year + '&month=' + month + '&room_type=' + encodeURIComponent(activeRoomType))
+            .then(function(res){ return res.json(); })
+            .then(function(data){
+                if (!data || !data.success) {
+                    grid.innerHTML = '<div style="grid-column:span 7; text-align:center; color:#EF4444; font-size:13px;">Unable to load matrix.</div>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+                var firstDayIndex = new Date(year, month - 1, 1).getDay();
+                for (var pad = 0; pad < firstDayIndex; pad++) {
+                    var empty = document.createElement('div');
+                    empty.style.cssText = 'height:48px;';
+                    grid.appendChild(empty);
+                }
+
+                Object.keys(data.days).forEach(function(dateKey){
+                    var item = data.days[dateKey];
+                    var cell = document.createElement('div');
+
+                    var isSelected = (dateKey === selectedCheckIn || dateKey === selectedCheckOut);
+                    var isInRange = (selectedCheckIn && selectedCheckOut && dateKey > selectedCheckIn && dateKey < selectedCheckOut);
+
+                    var bg = '#ECFDF5';
+                    var border = '#A7F3D0';
+                    var textColor = '#065F46';
+                    var badgeText = item.available + ' left';
+
+                    if (item.is_past) {
+                        bg = '#F8FAFC'; border = '#E2E8F0'; textColor = '#94A3B8'; badgeText = 'Past';
+                    } else if (item.status === 'sold_out') {
+                        bg = '#FEF2F2'; border = '#FECACA'; textColor = '#991B1B'; badgeText = 'Sold Out';
+                    } else if (item.status === 'low_stock') {
+                        bg = '#FFFBEB'; border = '#FDE68A'; textColor = '#92400E'; badgeText = item.available + ' left';
+                    }
+
+                    if (isSelected) {
+                        bg = '#84563C'; border = '#84563C'; textColor = '#FFFFFF';
+                    } else if (isInRange) {
+                        bg = '#F5EBE6'; border = '#D7C4B7'; textColor = '#84563C';
+                    }
+
+                    cell.style.cssText = 'height:48px; background:' + bg + '; border:1px solid ' + border + '; border-radius:8px; padding:3px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:12px; cursor:pointer; transition:all 0.15s; user-select:none;';
+                    cell.innerHTML = '<strong style="color:' + (isSelected ? '#FFF' : textColor) + '; font-size:13px;">' + item.day + '</strong>' +
+                                     '<span style="font-size:9px; font-weight:700; color:' + (isSelected ? '#FFF' : textColor) + ';">' + badgeText + '</span>';
+
+                    if (!item.is_past && item.status !== 'sold_out') {
+                        cell.onmouseover = function() { if (!isSelected) this.style.transform = 'scale(1.06)'; };
+                        cell.onmouseout = function() { if (!isSelected) this.style.transform = 'none'; };
+                        cell.onclick = function() {
+                            if (pickState === 0) {
+                                selectedCheckIn = dateKey;
+                                selectedCheckOut = '';
+                                pickState = 1;
+                            } else {
+                                if (dateKey <= selectedCheckIn) {
+                                    selectedCheckIn = dateKey;
+                                    selectedCheckOut = '';
+                                    pickState = 1;
+                                } else {
+                                    selectedCheckOut = dateKey;
+                                    pickState = 0;
+                                }
+                            }
+                            updateSelectionText();
+                            loadCalData(year, month);
+                        };
+                    }
+
+                    grid.appendChild(cell);
+                });
+            })
+            .catch(function(){
+                grid.innerHTML = '<div style="grid-column:span 7; text-align:center; color:#EF4444; font-size:13px;">Failed to fetch availability.</div>';
+            });
+    }
+
+    if (applyCalBtn) {
+        applyCalBtn.addEventListener('click', function(){
+            if (!selectedCheckIn || !selectedCheckOut) {
+                alert('Please select both Check-in and Check-out dates.');
+                return;
+            }
+            var params = new URLSearchParams(window.location.search);
+            params.set('step', '1');
+            params.set('checkin', selectedCheckIn);
+            params.set('checkout', selectedCheckOut);
+            params.set('room_type', activeRoomType);
+            params.set('guests', '<?php echo (int)$guests; ?>');
+            window.location.href = 'book?' + params.toString();
+        });
+    }
+
     document.addEventListener('keydown', function(e){
-        if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+        if (e.key === 'Escape') {
+            if (editModal && editModal.style.display === 'flex') { editModal.style.display = 'none'; document.body.style.overflow = ''; }
+            if (calModal && calModal.style.display === 'flex') closeCal();
+        }
     });
 })();
 </script>

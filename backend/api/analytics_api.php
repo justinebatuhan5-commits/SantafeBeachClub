@@ -6,7 +6,12 @@
 
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../helpers/api_auth_helper.php';
+require_once __DIR__ . '/../helpers/rate_limiter.php';
 require_once __DIR__ . '/../helpers/room_status_helper.php';
+
+require_api_auth($conn, 'admin');
+RateLimiter::enforce($conn, 'analytics_api', 120, 60);
 
 $action = $_GET['action'] ?? '';
 
@@ -386,6 +391,47 @@ switch ($action) {
             'total_bookings' => $totalBookingsAll,
             'total_revenue'  => $totalRevenueAll,
             'total_origins'  => count($countries),
+        ]);
+        break;
+
+    // ── 14. Security Threats & Warning Summary (Last 24h) ─────────────────────
+    case 'security-threats-summary':
+        $res = $conn->query("
+            SELECT 
+                COUNT(*) AS total_threats,
+                SUM(CASE WHEN event_level = 'CRITICAL' THEN 1 ELSE 0 END) AS critical_count,
+                SUM(CASE WHEN event_level = 'WARNING' THEN 1 ELSE 0 END) AS warning_count
+            FROM security_logs
+            WHERE event_level IN ('CRITICAL', 'WARNING')
+              AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ");
+        $stats = $res ? $res->fetch_assoc() : [];
+
+        $total_threats  = (int)($stats['total_threats'] ?? 0);
+        $critical_count = (int)($stats['critical_count'] ?? 0);
+        $warning_count  = (int)($stats['warning_count'] ?? 0);
+
+        $latest_res = $conn->query("
+            SELECT event_type, event_level, username, ip_address, description, created_at
+            FROM security_logs
+            WHERE event_level IN ('CRITICAL', 'WARNING')
+              AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            ORDER BY id DESC
+            LIMIT 3
+        ");
+        $recent_events = [];
+        if ($latest_res) {
+            while ($row = $latest_res->fetch_assoc()) {
+                $recent_events[] = $row;
+            }
+        }
+
+        echo json_encode([
+            'total_threats'  => $total_threats,
+            'critical_count' => $critical_count,
+            'warning_count'  => $warning_count,
+            'recent_events'  => $recent_events,
+            'status'         => $critical_count > 0 ? 'critical' : ($warning_count > 0 ? 'warning' : 'secure')
         ]);
         break;
 

@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/security_headers.php';
+require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 
 // Fetch custom room type primary photos from room_types
 $db_photos = [];
@@ -670,6 +672,7 @@ if ($price_q) {
                 <p style="font-size:13px; color:#6B7280; margin-top:4px;">We would love to hear how your stay at Santa Fe Beach Club was!</p>
             </div>
             <form id="reviewSubmitForm" onsubmit="handleReviewSubmit(event)">
+                <?php echo csrf_field(); ?>
                 <div style="margin-bottom:14px;">
                     <label style="display:block; font-size:12px; font-weight:700; color:#374151; margin-bottom:4px;">YOUR RATING</label>
                     <div style="display:flex; gap:8px; font-size:26px; cursor:pointer; color:#D1D5DB;" id="starRatingContainer">

@@ -847,6 +847,24 @@ $csrf_token = get_csrf_token();
         </div>
         <div class="portal-card-body">
             <div class="portal-actions">
+                <!-- Print / Save Invoice & Voucher -->
+                <a href="invoice?ref=<?php echo urlencode($booking['booking_ref']); ?>&token=<?php echo urlencode($booking['checkin_token'] ?? ''); ?>"
+                   target="_blank"
+                   class="btn-action" style="background:#7C533C; color:#fff;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Print / PDF Invoice
+                </a>
+
+                <!-- Download QR Pass -->
+                <?php if (!empty($qr_data_uri)): ?>
+                <a href="<?php echo htmlspecialchars($qr_data_uri); ?>"
+                   download="SantaFe_Pass_<?php echo htmlspecialchars($booking['booking_ref']); ?>.png"
+                   class="btn-action" style="background:#0F172A; color:#fff;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Save QR Pass (PNG)
+                </a>
+                <?php endif; ?>
+
                 <!-- Resume Payment -->
                 <?php 
                 if ($bk_status === 'Pending Payment' && !empty($payment['receipt_url']) && strpos($payment['receipt_url'], 'http') === 0): 

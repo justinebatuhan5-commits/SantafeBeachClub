@@ -9,6 +9,12 @@
  */
 
 header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../helpers/api_auth_helper.php';
+require_once __DIR__ . '/../helpers/rate_limiter.php';
+
+require_api_auth($conn, 'admin');
+RateLimiter::enforce($conn, 'analytics_proxy', 120, 60);
 
 $action = $_GET['action'] ?? '';
 

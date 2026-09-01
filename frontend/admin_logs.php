@@ -11,6 +11,104 @@ $tab = ($_GET['tab'] ?? 'activity') === 'security' ? 'security' : 'activity';
 $filter_user   = trim($_GET['user'] ?? '');
 $filter_action = trim($_GET['action_type'] ?? '');
 $filter_date   = trim($_GET['date'] ?? '');
+$do_export     = ($_GET['export'] ?? '') === 'csv';
+
+// Handle CSV Export
+if ($do_export) {
+    $filename = ($tab === 'security' ? 'security_logs_' : 'activity_logs_') . date('Y-m-d_His') . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $output = fopen('php://output', 'w');
+    // UTF-8 BOM for Excel compatibility
+    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+    $whereParts = [];
+    $types = '';
+    $params = [];
+
+    if ($tab === 'security') {
+        fputcsv($output, ['ID', 'Timestamp', 'Level', 'Event Type', 'Username', 'IP Address', 'User Agent', 'Request URI', 'Description']);
+        if ($filter_user !== '') {
+            $whereParts[] = 'username LIKE ?';
+            $types .= 's';
+            $params[] = '%' . $filter_user . '%';
+        }
+        if ($filter_action !== '') {
+            $whereParts[] = 'event_type LIKE ?';
+            $types .= 's';
+            $params[] = '%' . $filter_action . '%';
+        }
+        if ($filter_date !== '') {
+            $whereParts[] = 'DATE(created_at) = ?';
+            $types .= 's';
+            $params[] = $filter_date;
+        }
+        $whereClause = !empty($whereParts) ? 'WHERE ' . implode(' AND ', $whereParts) : '';
+        $sql = "SELECT id, created_at, event_level, event_type, username, ip_address, user_agent, request_uri, description FROM security_logs $whereClause ORDER BY id DESC";
+        $stmt = $conn->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            fputcsv($output, [
+                $row['id'],
+                $row['created_at'],
+                $row['event_level'],
+                $row['event_type'],
+                $row['username'],
+                $row['ip_address'],
+                $row['user_agent'],
+                $row['request_uri'],
+                $row['description'],
+            ]);
+        }
+        $stmt->close();
+    } else {
+        fputcsv($output, ['ID', 'Timestamp', 'Admin Username', 'Action', 'Details', 'IP Address']);
+        if ($filter_user !== '') {
+            $whereParts[] = 'admin_username LIKE ?';
+            $types .= 's';
+            $params[] = '%' . $filter_user . '%';
+        }
+        if ($filter_action !== '') {
+            $whereParts[] = 'action LIKE ?';
+            $types .= 's';
+            $params[] = '%' . $filter_action . '%';
+        }
+        if ($filter_date !== '') {
+            $whereParts[] = 'DATE(created_at) = ?';
+            $types .= 's';
+            $params[] = $filter_date;
+        }
+        $whereClause = !empty($whereParts) ? 'WHERE ' . implode(' AND ', $whereParts) : '';
+        $sql = "SELECT id, created_at, admin_username, action, details, ip_address FROM activity_logs $whereClause ORDER BY id DESC";
+        $stmt = $conn->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            fputcsv($output, [
+                $row['id'],
+                $row['created_at'],
+                $row['admin_username'],
+                $row['action'],
+                $row['details'],
+                $row['ip_address'],
+            ]);
+        }
+        $stmt->close();
+    }
+
+    fclose($output);
+    exit;
+}
 
 // Handle clear logs
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -178,13 +276,19 @@ if ($tab === 'security') {
         </div>
 
         <!-- Filters -->
-        <form method="GET" class="filter-bar">
+        <form method="GET" class="filter-bar" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
             <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
             <input type="text" name="user" placeholder="Filter by username/IP" value="<?php echo htmlspecialchars($filter_user); ?>">
             <input type="text" name="action_type" placeholder="Filter by event/action" value="<?php echo htmlspecialchars($filter_action); ?>">
             <input type="date" name="date" value="<?php echo htmlspecialchars($filter_date); ?>">
             <button type="submit" class="btn-primary">Filter</button>
             <a href="admin_logs?tab=<?php echo urlencode($tab); ?>" class="btn-secondary">Clear</a>
+            <a href="admin_logs?tab=<?php echo urlencode($tab); ?>&export=csv&user=<?php echo urlencode($filter_user); ?>&action_type=<?php echo urlencode($filter_action); ?>&date=<?php echo urlencode($filter_date); ?>" 
+               class="btn-secondary" 
+               style="margin-left:auto; display:inline-flex; align-items:center; gap:6px; background:#F8FAFC; border:1px solid #CBD5E1; color:#334155; font-weight:600; text-decoration:none; padding:8px 14px; border-radius:8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+            </a>
         </form>
 
         <div class="admin-card">

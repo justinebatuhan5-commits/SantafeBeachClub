@@ -166,6 +166,22 @@ include __DIR__ . '/partials/_sidebar.php';
 
     <div class="admin-body">
 
+        <!-- ═══ SECURITY STATUS / THREAT ALERT BANNER ═══ -->
+        <div id="security-alert-banner" style="display:none; margin-bottom:20px; border-radius:12px; padding:14px 18px; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div id="sec-banner-icon-box" style="width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg id="sec-banner-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                    <div id="sec-banner-title" style="font-size:14px; font-weight:700;"></div>
+                    <div id="sec-banner-desc" style="font-size:12.5px; margin-top:2px;"></div>
+                </div>
+            </div>
+            <a href="admin_logs?tab=security" id="sec-banner-link" style="padding:6px 14px; border-radius:8px; font-size:12.5px; font-weight:700; text-decoration:none; white-space:nowrap; transition:all 0.2s ease;">
+                Review Threat Logs &rarr;
+            </a>
+        </div>
+
         <!-- ═══ KPI METRICS WITH SPARKLINE TRENDLINES ═══ -->
         <div class="stats-grid">
             <div class="stat-card" style="flex-direction:column; padding-bottom:12px;">
@@ -455,7 +471,13 @@ include __DIR__ . '/partials/_sidebar.php';
                         <h3>Live Audit Feed</h3>
                         <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Real-time administrator & staff actions</p>
                     </div>
-                    <a href="admin_logs">Full Log &rarr;</a>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button type="button" onclick="refreshAuditFeed(this)" title="Refresh Live Feed" style="background:none; border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; color:var(--text-muted); display:inline-flex; align-items:center; gap:4px;">
+                            <svg id="audit-refresh-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            Refresh
+                        </button>
+                        <a href="admin_logs">Full Log &rarr;</a>
+                    </div>
                 </div>
                 <div id="recent-logs-container">
                     <div class="loading">Loading activity logs...</div>
@@ -697,43 +719,43 @@ async function loadDashboardData() {
         }
 
         // 6. Recent Logs Feed
-        const logs = await fetchAPI('/api/recent-logs');
-        const lContainer = document.getElementById('recent-logs-container');
-        if (logs.length > 0) {
-            let html = '<ul class="activity-list">';
-            logs.forEach(log => {
-                let dot = 'default';
-                const actionLower = (log.action || '').toLowerCase();
-                if (actionLower.includes('login')) dot = 'login';
-                if (actionLower.includes('booking')) dot = 'booking';
-                if (actionLower.includes('payment')) dot = 'payment';
-                
-                let detailsHtml = log.details ? `<span style="color:var(--text-muted);"> · ${log.details}</span>` : '';
-                
-                html += `
-                <li class="activity-item">
-                    <div class="activity-dot ${dot}"></div>
-                    <div>
-                        <div class="activity-text">
-                            <strong style="color:var(--primary);">${log.admin_username}</strong>
-                            ${log.action}
-                            ${detailsHtml}
-                        </div>
-                        <div class="activity-meta">${log.created_at}</div>
-                    </div>
-                </li>`;
-            });
-            html += '</ul>';
-            lContainer.innerHTML = html;
-        } else {
-            lContainer.innerHTML = `
-            <div class="empty-state">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <p>No recent activity recorded.</p>
-            </div>`;
-        }
+        await renderAuditLogs();
 
-        // 7. Daily Activity Summary (non-blocking — won't break other widgets on failure)
+        // 7. Security Threats / Warning Banner Check
+        fetchAPI('/api/security-threats-summary').then(threats => {
+            const banner = document.getElementById('security-alert-banner');
+            if (!banner) return;
+
+            if (threats.status === 'critical' || threats.status === 'warning') {
+                const isCrit = threats.status === 'critical';
+                banner.style.display = 'flex';
+                banner.style.background = isCrit ? '#FEF2F2' : '#FFFBEB';
+                banner.style.border = isCrit ? '1px solid #FCA5A5' : '1px solid #FCD34D';
+
+                const iconBox = document.getElementById('sec-banner-icon-box');
+                iconBox.style.background = isCrit ? '#FEE2E2' : '#FEF3C7';
+                iconBox.style.color = isCrit ? '#DC2626' : '#D97706';
+
+                const title = document.getElementById('sec-banner-title');
+                title.style.color = isCrit ? '#991B1B' : '#92400E';
+                title.textContent = isCrit 
+                    ? `⚠️ Security Alert: ${threats.critical_count} critical incident(s) detected in the last 24h`
+                    : `⚠️ Security Warning: ${threats.warning_count} security warning(s) detected in the last 24h`;
+
+                const desc = document.getElementById('sec-banner-desc');
+                desc.style.color = isCrit ? '#B91C1C' : '#B45309';
+                const latestEvent = threats.recent_events && threats.recent_events[0] ? threats.recent_events[0].event_type : 'Suspicious activity';
+                desc.textContent = `Latest: ${latestEvent} from IP ${threats.recent_events[0]?.ip_address || 'unknown'}. Please review your security log.`;
+
+                const link = document.getElementById('sec-banner-link');
+                link.style.background = isCrit ? '#DC2626' : '#D97706';
+                link.style.color = '#FFFFFF';
+            } else {
+                banner.style.display = 'none';
+            }
+        }).catch(() => {});
+
+        // 8. Daily Activity Summary (non-blocking — won't break other widgets on failure)
         fetchAPI('/api/daily-summary').then(ds => {
             const fmt = new Date(ds.date + 'T00:00:00').toLocaleDateString('en-US', {
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -753,6 +775,84 @@ async function loadDashboardData() {
     } catch (e) {
         console.error("Failed to load dashboard data.", e);
         document.querySelectorAll('.loading').forEach(el => el.innerHTML = '<span class="error">Failed to load data.</span>');
+    }
+}
+
+// Render Audit Logs Helper
+async function renderAuditLogs() {
+    const logs = await fetchAPI('/api/recent-logs');
+    const lContainer = document.getElementById('recent-logs-container');
+    if (!lContainer) return;
+
+    if (logs && logs.length > 0) {
+        let html = '<ul class="activity-list">';
+        logs.forEach(log => {
+            let dot = 'default';
+            let tag = 'System';
+            let tagBg = '#F1F5F9';
+            let tagColor = '#475569';
+
+            const actionLower = (log.action || '').toLowerCase();
+            if (actionLower.includes('login') || actionLower.includes('auth') || actionLower.includes('otp')) {
+                dot = 'login';
+                tag = 'Auth';
+                tagBg = '#ECFDF5';
+                tagColor = '#047857';
+            } else if (actionLower.includes('booking') || actionLower.includes('reserve') || actionLower.includes('check')) {
+                dot = 'booking';
+                tag = 'Booking';
+                tagBg = '#EFF6FF';
+                tagColor = '#1D4ED8';
+            } else if (actionLower.includes('payment') || actionLower.includes('paid') || actionLower.includes('receipt')) {
+                dot = 'payment';
+                tag = 'Payment';
+                tagBg = '#FEF3C7';
+                tagColor = '#B45309';
+            }
+            
+            let detailsHtml = log.details ? `<span style="color:var(--text-muted); font-size:12.5px;"> · ${log.details}</span>` : '';
+            
+            html += `
+            <li class="activity-item" style="display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
+                <div class="activity-dot ${dot}" style="margin-top:5px;"></div>
+                <div style="flex:1; min-width:0;">
+                    <div class="activity-text" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:13px;">
+                        <span style="display:inline-block; font-size:10.5px; font-weight:700; padding:2px 6px; border-radius:4px; background:${tagBg}; color:${tagColor}; text-transform:uppercase;">${tag}</span>
+                        <strong style="color:var(--primary); font-weight:700;">${log.admin_username}</strong>
+                        <span>${log.action}</span>
+                        ${detailsHtml}
+                    </div>
+                    <div class="activity-meta" style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">${log.created_at}</div>
+                </div>
+            </li>`;
+        });
+        html += '</ul>';
+        lContainer.innerHTML = html;
+    } else {
+        lContainer.innerHTML = `
+        <div class="empty-state">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>No recent activity recorded.</p>
+        </div>`;
+    }
+}
+
+// Instant Refresh Button handler for Audit Feed
+async function refreshAuditFeed(btn) {
+    const icon = document.getElementById('audit-refresh-icon');
+    if (icon) {
+        icon.style.transition = 'transform 0.5s ease';
+        icon.style.transform = 'rotate(360deg)';
+    }
+    if (btn) btn.disabled = true;
+
+    try {
+        await renderAuditLogs();
+    } finally {
+        setTimeout(() => {
+            if (icon) icon.style.transform = 'none';
+            if (btn) btn.disabled = false;
+        }, 500);
     }
 }
 
