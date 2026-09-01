@@ -30,25 +30,12 @@ function getPdoConnection(): PDO {
     }
 
     // Live InfinityFree Database
-    try {
-        $host = 'sql111.infinityfree.com';
-        $port = 3306;
-        $db   = 'if0_42717273_santafebeachclub_db';
-        $user = 'if0_42717273';
-        $pass = 'ndAuPvlRiQVG';
-        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-        $pdo = new PDO($dsn, $user, $pass, $options);
-        return $pdo;
-    } catch (PDOException $e) {
-        // Fallback to TiDB Cloud
-        $host = 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com';
-        $port = 4000;
-        $db   = 'test';
-        $user = '3QXoXQuJo9As2Sx.root';
-        $pass = 'VKweBYleHtG91N9K';
-        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-        $pdo = new PDO($dsn, $user, $pass, $options);
-        return $pdo;
-    }
-}
+    $host = 'sql111.infinityfree.com';
+    $port = 3306;
+    $db   = 'if0_42717273_santafebeachclub_db';
+    $user = 'if0_42717273';
+    $pass = 'ndAuPvlRiQVG';
+    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+    $pdo = new PDO($dsn, $user, $pass, $options);
+    return $pdo;
+}

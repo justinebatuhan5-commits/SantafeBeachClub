@@ -29,22 +29,6 @@ if (!$conn || $conn->connect_error) {
     $conn = @new mysqli($inf_host, $inf_user, $inf_pass, $dbname, 3306);
 }
 
-// 3. Fallback to TiDB Cloud if needed
-if (!$conn || $conn->connect_error) {
-    $tidb_host = 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com';
-    $tidb_port = 4000;
-    $tidb_user = '3QXoXQuJo9As2Sx.root';
-    $tidb_pass = 'VKweBYleHtG91N9K';
-    $dbname    = 'test';
-
-    $conn = mysqli_init();
-    if (defined('MYSQLI_OPT_SSL_VERIFY_SERVER_CERT')) {
-        $conn->options(MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, false);
-    }
-    @$conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-    @$conn->real_connect($tidb_host, $tidb_user, $tidb_pass, $dbname, $tidb_port, NULL, MYSQLI_CLIENT_SSL);
-}
-
 // Restore strict reporting for application queries
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
