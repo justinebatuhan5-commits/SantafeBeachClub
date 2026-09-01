@@ -132,13 +132,13 @@ function _sb_badge($count, $type = '') {
     <div class="sidebar-scroll-body">
         <p class="sidebar-section-label">Overview</p>
         <ul class="sidebar-nav">
-            <li><a href="admin_reports" class="sidebar-link <?php echo _sb_active('reports',$_page); ?>" title="Reports & Analytics">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                Reports & Analytics
-            </a></li>
             <li><a href="admin_dashboard" class="sidebar-link <?php echo _sb_active('dashboard',$_page); ?>" title="Dashboard">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
                 Dashboard
+            </a></li>
+            <li><a href="admin_reports" class="sidebar-link <?php echo _sb_active('reports',$_page); ?>" title="Reports & Analytics">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Reports & Analytics
             </a></li>
             <li><a href="admin_notifications" class="sidebar-link <?php echo _sb_active('notifications',$_page); ?>" title="Notifications">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
