@@ -213,6 +213,32 @@ if ($price_q) {
             font-weight: 700;
             cursor: pointer;
         }
+        @media (max-width: 480px) {
+            .chatbot-panel {
+                right: 12px;
+                left: 12px;
+                bottom: 80px;
+                width: auto;
+                max-width: calc(100vw - 24px);
+                max-height: 80dvh;
+            }
+        }
+        .mobile-menu-btn {
+            display: none;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 7px;
+            color: var(--color-primary);
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: inline-flex;
+            }
+        }
     </style>
 </head>
 <body class="home-page">
@@ -224,7 +250,7 @@ if ($price_q) {
                 <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
             </a>
         </div>
-        <nav class="nav-menu">
+        <nav class="nav-menu" id="mainNavMenu">
             <ul>
                 <li class="active"><a href="index"><?php echo __t('home'); ?></a></li>
                 <li><a href="rooms"><?php echo __t('rooms'); ?></a></li>
@@ -233,8 +259,15 @@ if ($price_q) {
                 <li><a href="my_booking"><?php echo __t('my_booking'); ?></a></li>
             </ul>
         </nav>
-        <div class="header-action" style="display:flex; align-items:center; gap:12px;">
+        <div class="header-action" style="display:flex; align-items:center; gap:10px;">
             <a href="rooms" class="btn-book-header"><?php echo __t('book_now'); ?></a>
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
         </div>
     </header>
 
@@ -752,6 +785,16 @@ if ($price_q) {
                 btn.disabled = false;
                 btn.textContent = "Submit Review";
             }
+        }
+
+        // Mobile Navigation Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mainNavMenu = document.getElementById('mainNavMenu');
+        if (mobileMenuBtn && mainNavMenu) {
+            mobileMenuBtn.addEventListener('click', function() {
+                const isHidden = window.getComputedStyle(mainNavMenu).display === 'none';
+                mainNavMenu.style.display = isHidden ? 'block' : 'none';
+            });
         }
     </script>
 

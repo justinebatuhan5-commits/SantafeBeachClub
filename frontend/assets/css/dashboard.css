@@ -194,3 +194,17 @@
     text-align: center;
     margin-bottom: 16px;
 }
+
+@media (max-width: 640px) {
+    .gcash-modal {
+        padding: 20px 16px;
+        width: calc(100vw - 24px);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px !important;
+        min-height: 44px;
+    }
+}
+

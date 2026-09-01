@@ -284,9 +284,14 @@ if ($bk_res) {
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Payment Processing — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/dashboard.css?v=4">
-    <style>
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .reservations-table {
             width: 100%;
+            min-width: 750px;
             border-collapse: collapse;
         }
         .reservations-table th, .reservations-table td {
@@ -431,6 +436,7 @@ if ($bk_res) {
                     <h2>Outstanding &amp; Settled Bills</h2>
                 </div>
 
+                <div class="table-responsive">
                 <table class="reservations-table">
                     <thead>
                         <tr>
@@ -546,6 +552,7 @@ if ($bk_res) {
                         ?>
                     </tbody>
                 </table>
+                </div>
             </div>
         </section>
     </main>

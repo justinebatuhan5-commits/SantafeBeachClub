@@ -865,18 +865,8 @@ body.home-page {
 }
 
 @media (max-width: 768px) {
-    .main-header {
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px;
-    }
-    .nav-menu ul {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
-    }
     .hero-title {
-        font-size: 40px;
+        font-size: 36px;
     }
     .search-card-container {
         position: relative;
@@ -1574,6 +1564,18 @@ body.home-page {
 }
 
 @media (max-width: 768px) {
+    /* Prevent iOS Safari automatic zoom on form focus */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+
     /* Header & Mobile Navigation */
     .main-header {
         padding: 12px 4%;

@@ -993,21 +993,59 @@ body {
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 860px) {
     .bk-columns {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .bk-main-col {
+        order: 1;
+        width: 100%;
     }
     .bk-sidebar {
-        order: -1;
+        order: 2;
         position: static;
+        width: 100%;
+        margin-top: 10px;
     }
     .bk-form-grid { grid-template-columns: 1fr; }
     .bk-progress { max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
     .bk-step-label { display: none; }
-    .bk-layout { margin-top: 28px; }
+    .bk-layout { margin-top: 20px; }
+}
+
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea,
+    .bk-input {
+        font-size: 16px !important;
+        min-height: 44px;
+    }
+    .bk-pay-option {
+        padding: 14px;
+        min-height: 48px;
+    }
+    .btn-bk-next,
+    .btn-bk-back,
+    .btn-pay-now {
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 480px) {
-    .bk-card { padding: 18px; }
-    .bk-actions { flex-direction: column; }
-    .btn-bk-back { justify-content: center; }
-    .booking-card { padding: 20px; }
+    .bk-card { padding: 18px 14px; border-radius: 14px; }
+    .bk-actions { flex-direction: column; gap: 10px; }
+    .btn-bk-back { justify-content: center; width: 100%; }
+    .btn-bk-next { width: 100%; }
+    .booking-card { padding: 18px 14px; }
+    .bk-room-summary-meta { font-size: 13px; }
 }
+

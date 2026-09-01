@@ -1698,6 +1698,27 @@ img.logo-circle {
     background: rgba(148, 163, 184, 0.6);
 }
 
+/* Table responsive scrolling */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 12px;
+}
+
+.card:has(table),
+.admin-card:has(table) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-table,
+.reservations-table,
+.arrivals-table,
+.guests-table {
+    min-width: 650px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
     .charts-grid,
@@ -1707,6 +1728,19 @@ img.logo-circle {
     }
     .metrics-row {
         grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px !important;
     }
 }
 
@@ -1733,4 +1767,12 @@ img.logo-circle {
     .metrics-row {
         grid-template-columns: 1fr !important;
     }
+    .modal-content,
+    .admin-modal-content {
+        width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+        margin: 10px auto !important;
+        padding: 16px !important;
+    }
 }
+
