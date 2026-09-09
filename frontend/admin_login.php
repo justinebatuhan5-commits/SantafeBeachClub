@@ -187,10 +187,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             opacity: 1;
         }
 
-        .bg-slide:nth-child(1) { background-image: url('assets/hero-slide-1.jpg'); animation-delay: 0s; }
-        .bg-slide:nth-child(2) { background-image: url('assets/hero-slide-2.jpg'); animation-delay: -5s; }
-        .bg-slide:nth-child(3) { background-image: url('assets/hero-slide-3.jpg'); animation-delay: -10s; }
-        .bg-slide:nth-child(4) { background-image: url('assets/hero-slide-4.jpg'); animation-delay: -15s; }
+        .bg-slide:nth-child(1) { background-image: url('assets/images/resort_bg1.jpg'); animation-delay: 0s; }
+        .bg-slide:nth-child(2) { background-image: url('assets/images/resort_bg2.jpg'); animation-delay: -5s; }
+        .bg-slide:nth-child(3) { background-image: url('assets/images/resort_bg3.jpg'); animation-delay: -10s; }
 
         @keyframes kenBurns {
             from { transform: scale(1.0) translateX(0px); }
@@ -751,7 +750,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="bg-slide active"></div>
         <div class="bg-slide"></div>
         <div class="bg-slide"></div>
-        <div class="bg-slide"></div>
     </div>
     <div class="bg-overlay" aria-hidden="true"></div>
 
@@ -760,7 +758,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="slide-dot active" data-slide="0"></div>
         <div class="slide-dot" data-slide="1"></div>
         <div class="slide-dot" data-slide="2"></div>
-        <div class="slide-dot" data-slide="3"></div>
     </div>
     <!-- Fullscreen Verification Overlay -->
     <div id="authLoader" class="auth-loader-screen" aria-hidden="true">
