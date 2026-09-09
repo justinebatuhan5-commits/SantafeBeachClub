@@ -69,12 +69,18 @@ if ($rooms_query && $rooms_query->num_rows > 0) {
 
 // Fetch room types for the booking form dropdown
 $room_types = [];
-$rt_q = $conn->query("SELECT id, name, base_price FROM room_types ORDER BY id ASC");
-if ($rt_q && $rt_q->num_rows > 0) {
-    while ($row = $rt_q->fetch_assoc()) {
-        $room_types[] = $row;
+try {
+    $rt_q = $conn->query("SELECT id, name, price AS base_price FROM room_types ORDER BY id ASC");
+    if ($rt_q && $rt_q->num_rows > 0) {
+        while ($row = $rt_q->fetch_assoc()) {
+            $room_types[] = $row;
+        }
     }
-} else {
+} catch (Throwable $e) {
+    $room_types = [];
+}
+
+if (empty($room_types)) {
     $room_types = [
         ['id' => 1, 'name' => 'beachview_duplex', 'base_price' => 3500],
         ['id' => 2, 'name' => 'seaview_duplex', 'base_price' => 4200],
