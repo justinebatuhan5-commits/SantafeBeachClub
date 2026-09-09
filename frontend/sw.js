@@ -26,8 +26,30 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Let normal network requests proceed
+    // Only handle GET requests; never intercept POST/API/admin mutations
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    // Do not cache or intercept admin, staff login, or backend API dynamic routes
+    const url = new URL(event.request.url);
+    if (url.pathname.includes('admin') || url.pathname.includes('staff') || url.pathname.includes('backend/')) {
+        return;
+    }
+
     event.respondWith(
-        fetch(event.request).catch(() => caches.match(event.request))
+        fetch(event.request)
+            .catch(async () => {
+                const cachedResponse = await caches.match(event.request);
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                // Return a safe offline fallback Response object instead of undefined
+                return new Response('Network connection failed. Please check your internet connection.', {
+                    status: 503,
+                    statusText: 'Service Unavailable',
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+                });
+            })
     );
 });
