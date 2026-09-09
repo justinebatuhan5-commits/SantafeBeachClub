@@ -1,36 +1,25 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
-require_once __DIR__ . '/../backend/helpers/checkout_notification_helper.php';
 $admin = $_SESSION['admin_username'] ?? 'Admin';
 
-// ── Overdue check-out alert (safe – never breaks the page) ───────────────────
+// ── Overdue check-out alert (simple, no helper dependencies) ─────────────────
 $_overdue_guest_names = [];
-$_overdue_now_display = '';
-$_overdue_tz_name     = '';
+$_overdue_now_display = date('M d, Y h:i A');
+$_overdue_tz_name     = 'Asia/Manila';
 try {
-    $_overdue_checkout_time = sf_get_checkout_time_setting($conn);
-    $_overdue_now           = sf_get_current_business_datetime($conn);
-    $_overdue_tz            = $_overdue_now->getTimezone();
-    $_overdue_tz_name       = $_overdue_tz->getName();
-    $_overdue_now_display   = $_overdue_now->format('M d, Y h:i A');
-    $_overdue_result = $conn->query(
-        "SELECT guest_name, check_out FROM bookings WHERE status = 'Checked In' ORDER BY check_out ASC"
+    $_ov_res = $conn->query(
+        "SELECT guest_name FROM bookings
+         WHERE status = 'Checked In'
+           AND check_out < CURDATE()
+         ORDER BY check_out ASC"
     );
-    if ($_overdue_result) {
-        while ($_ov_row = $_overdue_result->fetch_assoc()) {
-            if (sf_is_due_for_checkout(
-                (string)$_ov_row['check_out'],
-                $_overdue_checkout_time,
-                $_overdue_tz,
-                $_overdue_now
-            )) {
-                $_overdue_guest_names[] = (string)$_ov_row['guest_name'];
-            }
+    if ($_ov_res) {
+        while ($_ov_row = $_ov_res->fetch_assoc()) {
+            $_overdue_guest_names[] = (string)$_ov_row['guest_name'];
         }
     }
-} catch (Throwable $_overdue_err) {
-    // Silently ignore — overdue popup is non-critical
+} catch (Throwable $_ov_err) {
     $_overdue_guest_names = [];
 }
 ?>
