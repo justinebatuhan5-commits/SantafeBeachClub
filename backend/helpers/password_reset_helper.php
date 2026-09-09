@@ -125,9 +125,9 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
     }
 
     // Validate password policy (min 8 chars, lowercase, uppercase, number, special char, common blocklist)
-    $policy = pw_validate_policy($newPassword);
-    if (!$policy['valid']) {
-        return ['success' => false, 'message' => $policy['errors'][0] ?? 'Password does not meet security requirements.'];
+    $policyError = pw_validate($newPassword);
+    if ($policyError !== null) {
+        return ['success' => false, 'message' => $policyError];
     }
 
     $adminId = $verification['admin_id'];
