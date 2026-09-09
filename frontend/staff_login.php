@@ -1120,6 +1120,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- ── Maintenance Lockout Popup Modal ── -->
     <div class="portal-lock-overlay" id="portalLockOverlay" role="dialog" aria-modal="true" aria-labelledby="lockModalTitle">
         <div class="portal-lock-modal">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px;">
+                <img src="assets/logo.jpg" alt="Santa Fe Beach Club" style="width: 38px; height: 38px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.12);">
+                <span style="font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: #84563C; letter-spacing: 0.5px; text-transform: uppercase;">Santa Fe Beach Club</span>
+            </div>
+
             <div class="portal-lock-badge">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 System Maintenance

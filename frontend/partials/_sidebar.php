@@ -393,57 +393,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <!-- ══════════════════════════════════════════════════
-     GLOBAL CUSTOM CONFIRMATION DIALOG
+     GLOBAL CUSTOM LUXURY CONFIRMATION DIALOG
 ══════════════════════════════════════════════════ -->
 <div id="sfbc-confirm-overlay" style="
     display: none;
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 99999;
     align-items: center;
     justify-content: center;
-    animation: sfbcFadeIn 0.15s ease-out;
+    padding: 20px;
+    animation: sfbcFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 ">
     <div style="
-        background: #fff;
-        border-radius: 20px;
-        padding: 32px 28px 24px;
-        max-width: 400px;
-        width: calc(100% - 40px);
-        box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+        background: #FFFFFF;
+        border-radius: 24px;
+        padding: 36px 32px 28px;
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
         text-align: center;
-        animation: sfbcSlideUp 0.2s cubic-bezier(0.16,1,0.3,1);
+        animation: sfbcSlideUp 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         position: relative;
     ">
+        <!-- Resort Branding Header -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px;">
+            <img src="assets/logo.jpg" alt="Santa Fe Beach Club" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: #84563C; letter-spacing: 0.5px; text-transform: uppercase;">Santa Fe Beach Club</span>
+        </div>
+
+        <!-- Dynamic Icon / Badge -->
         <div id="sfbc-confirm-icon" style="
-            width: 60px; height: 60px;
-            border-radius: 50%;
-            background: #FEF3C7;
+            width: 68px; height: 68px;
+            border-radius: 20px;
+            background: #FEF2F2;
+            border: 2px solid #FECACA;
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 18px;
             font-size: 28px;
+            box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.15);
         ">⚠️</div>
-        <h3 id="sfbc-confirm-title" style="margin: 0 0 8px; font-size: 18px; font-weight: 800; color: #111827;"></h3>
-        <p id="sfbc-confirm-message" style="margin: 0 0 24px; font-size: 14px; color: #6B7280; line-height: 1.6;"></p>
+
+        <h3 id="sfbc-confirm-title" style="margin: 0 0 10px; font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: #0F172A; letter-spacing: -0.3px;"></h3>
+        <p id="sfbc-confirm-message" style="margin: 0 0 26px; font-size: 14px; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 12px 16px; border-radius: 12px; border: 1px solid #E2E8F0;"></p>
+        
         <div style="display: flex; gap: 12px;">
             <button id="sfbc-confirm-cancel" style="
-                flex: 1; padding: 12px;
-                background: #F3F4F6; color: #374151;
-                border: none; border-radius: 10px;
+                flex: 1; padding: 13px 18px;
+                background: #F1F5F9; color: #475569;
+                border: 1px solid #CBD5E1; border-radius: 12px;
+                font-family: 'Outfit', sans-serif;
                 font-size: 14px; font-weight: 600;
-                cursor: pointer; transition: background 0.15s;
-            " onmouseover="this.style.background='#E5E7EB'" onmouseout="this.style.background='#F3F4F6'">
+                cursor: pointer; transition: all 0.2s ease;
+            " onmouseover="this.style.background='#E2E8F0'; this.style.color='#0F172A';" onmouseout="this.style.background='#F1F5F9'; this.style.color='#475569';">
                 Cancel
             </button>
             <button id="sfbc-confirm-ok" style="
-                flex: 1; padding: 12px;
-                background: #DC2626; color: #fff;
-                border: none; border-radius: 10px;
+                flex: 1.2; padding: 13px 18px;
+                background: #DC2626; color: #FFFFFF;
+                border: none; border-radius: 12px;
+                font-family: 'Outfit', sans-serif;
                 font-size: 14px; font-weight: 700;
-                cursor: pointer; transition: background 0.15s;
-            " onmouseover="this.style.background='#B91C1C'" onmouseout="this.style.background='#DC2626'">
+                cursor: pointer; transition: all 0.2s ease;
+                box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(220, 38, 38, 0.4)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.3)';">
                 Confirm
             </button>
         </div>
@@ -451,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 <style>
 @keyframes sfbcFadeIn { from { opacity:0; } to { opacity:1; } }
-@keyframes sfbcSlideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes sfbcSlideUp { from { opacity:0; transform:translateY(16px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
 </style>
 <script>
 /**

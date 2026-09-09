@@ -457,10 +457,8 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <!-- Reception Portal Lockdown & Maintenance Mode Control -->
             <div class="admin-card" style="margin-bottom:24px;border:1.5px solid <?php echo $isPortalLocked ? '#FCA5A5' : 'var(--border)'; ?>;background:<?php echo $isPortalLocked ? '#FFF5F5' : 'var(--card-bg)'; ?>;">
                 <div class="admin-card-header" style="border-bottom:1px solid <?php echo $isPortalLocked ? '#FEE2E2' : 'var(--border-light)'; ?>;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <div style="width:36px;height:36px;border-radius:10px;background:<?php echo $isPortalLocked ? '#FEE2E2' : '#F5ECE5'; ?>;display:flex;align-items:center;justify-content:center;color:<?php echo $isPortalLocked ? '#DC2626' : 'var(--primary)'; ?>;font-size:18px;">
-                            <?php echo $isPortalLocked ? '🔒' : '🛡️'; ?>
-                        </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <img src="assets/logo.jpg" alt="Logo" style="width:38px;height:38px;border-radius:10px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.12);border:1.5px solid var(--border);">
                         <div>
                             <h3 style="margin:0;font-size:15px;color:<?php echo $isPortalLocked ? '#991B1B' : 'var(--text-main)'; ?>;">Staff Portal Lockdown</h3>
                             <p style="margin:2px 0 0;font-size:12px;color:<?php echo $isPortalLocked ? '#B91C1C' : 'var(--text-muted)'; ?>;">
@@ -492,7 +490,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                         <?php endif; ?>
                     </p>
 
-                    <form method="POST" action="admin_staff">
+                    <form method="POST" action="admin_staff" <?php if (!$isPortalLocked): ?>data-confirm-title="Lock Reception Portal?" data-confirm-msg="Are you sure you want to LOCK the staff login portal? All receptionist sign-ins will be blocked and an under-maintenance popup will be shown." data-confirm-icon="🔒" data-confirm-icon-bg="#FEE2E2" data-confirm-color="#DC2626" data-confirm-text="Lock Portal"<?php endif; ?>>
                         <?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="toggle_staff_maintenance">
                         
@@ -510,7 +508,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                                 </button>
                             <?php else: ?>
                                 <input type="hidden" name="maintenance_mode" value="1">
-                                <button type="submit" class="btn-danger" style="padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;" onclick="return confirm('Are you sure you want to LOCK the staff login portal? All receptionist sign-ins will be blocked and an under-maintenance popup will be shown.')">
+                                <button type="submit" class="btn-danger" style="padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                                     Lock Staff Portal (Activate Maintenance Mode)
                                 </button>
