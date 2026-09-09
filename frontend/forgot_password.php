@@ -381,27 +381,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return;
             }
 
-            // reCAPTCHA v3 - ensure script is ready before executing
-            try {
-                if (typeof grecaptcha !== 'undefined') {
-                    await new Promise((resolve) => {
-                        grecaptcha.ready(async () => {
-                            try {
-                                const token = await grecaptcha.execute('6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'forgot_password' });
-                                document.getElementById('g-recaptcha-response').value = token;
-                            } catch (e) {
-                                console.warn('reCAPTCHA execute error:', e);
-                            }
-                            resolve();
-                        });
-                    });
-                }
-            } catch (err) {
-                console.warn('reCAPTCHA fallback:', err);
-            }
-
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span>Sending instructions...</span>';
+
+            // Fetch reCAPTCHA token
+            if (typeof grecaptcha !== 'undefined') {
+                try {
+                    const token = await grecaptcha.execute('6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'forgot_password' });
+                    document.getElementById('g-recaptcha-response').value = token;
+                } catch (e) {
+                    console.warn('reCAPTCHA token error:', e);
+                }
+            }
 
             const formData = new FormData(form);
 

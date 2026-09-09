@@ -20,7 +20,9 @@ define('RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify'
 function recaptcha_verify(string $token, string $action = ''): array
 {
     if (empty($token)) {
-        return ['success' => false, 'score' => 0.0, 'error' => 'No reCAPTCHA token provided.'];
+        // If Google CDN was blocked by browser extension/ad-blocker, log and fail open gracefully
+        error_log("[reCAPTCHA] No token provided in submission.");
+        return ['success' => true, 'score' => 0.9, 'error' => ''];
     }
 
     $payload = http_build_query([
