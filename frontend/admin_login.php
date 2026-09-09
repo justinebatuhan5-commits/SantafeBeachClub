@@ -686,6 +686,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+    <!-- ── Auto-Sliding Background Slideshow ── -->
+    <div class="bg-slideshow" aria-hidden="true">
+        <div class="bg-slide active"></div>
+        <div class="bg-slide"></div>
+        <div class="bg-slide"></div>
+    </div>
+
+    <!-- Slide indicator dots -->
+    <div class="slide-dots" aria-hidden="true">
+        <div class="slide-dot active" onclick="goToSlide(0)"></div>
+        <div class="slide-dot" onclick="goToSlide(1)"></div>
+        <div class="slide-dot" onclick="goToSlide(2)"></div>
+    </div>
+
     <!-- Fullscreen Verification Overlay -->
     <div id="authLoader" class="auth-loader-screen" aria-hidden="true">
         <div class="loader-ring-box">
@@ -942,6 +956,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }, 400);
             }
         });
+
+        // ── Background Auto-Slideshow Controller ─────────
+        (function() {
+            const slides = document.querySelectorAll('.bg-slide');
+            const dots   = document.querySelectorAll('.slide-dot');
+            let current  = 0;
+            let timer;
+
+            function advance(index) {
+                slides[current].classList.remove('active');
+                dots[current].classList.remove('active');
+                current = (index + slides.length) % slides.length;
+                slides[current].classList.add('active');
+                dots[current].classList.add('active');
+            }
+
+            // Expose for onclick in HTML dots
+            window.goToSlide = function(i) {
+                clearInterval(timer);
+                advance(i);
+                timer = setInterval(() => advance(current + 1), 6000);
+            };
+
+            // Auto-advance every 6 seconds
+            timer = setInterval(() => advance(current + 1), 6000);
+        })();
     </script>
 </body>
 </html>
