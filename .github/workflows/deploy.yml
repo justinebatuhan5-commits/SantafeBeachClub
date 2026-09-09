@@ -1,4 +1,4 @@
-name: Deploy to InfinityFree
+name: Deploy to InfinityFree via FTP
 
 on:
   push:
@@ -6,29 +6,26 @@ on:
       - main
 
 jobs:
-  web-deploy:
-    name: 🚀 Deploy to InfinityFree
+  deploy:
+    name: FTP Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Latest Code
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: 📡 Sync Files to santafebeachclub.wuaze.com via FTP
+      - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /santafebeachclub.wuaze.com/htdocs/
+          local-dir: ./
+          server-dir: /htdocs/
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
-            **/.env.example
-            **/README.md
-            **/wapiti_report.txt
-            **/__pycache__/**
-            **/*.bat
+            .github/**
+            *.md
+            .gitignore
