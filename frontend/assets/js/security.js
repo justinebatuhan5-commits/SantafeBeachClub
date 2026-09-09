@@ -34,11 +34,15 @@
             const value = (input.value || '').trim();
             const type = input.getAttribute('type');
             const patternType = input.getAttribute('data-validate');
+            const label = input.getAttribute('data-label');
             let isValid = true;
             let errorMessage = '';
 
-            // Only validate format when the field has a value (skip empty-required check)
-            if (value !== '') {
+            // Show "X is required." if field has a data-label and is empty
+            if (label && value === '') {
+                isValid = false;
+                errorMessage = label + ' is required.';
+            } else if (value !== '') {
                 // Email validation
                 if (type === 'email' || patternType === 'email') {
                     if (!this.config.patterns.email.test(value)) {
@@ -85,6 +89,7 @@
             this.toggleFieldError(input, isValid, errorMessage);
             return isValid;
         },
+
 
 
         toggleFieldError: function (input, isValid, message) {

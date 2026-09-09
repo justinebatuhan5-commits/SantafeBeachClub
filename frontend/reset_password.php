@@ -402,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="input-block">
                     <label class="input-label" for="password">New Password</label>
                     <div class="input-box">
-                        <input type="password" id="password" name="password" autofocus autocomplete="new-password" placeholder="Enter at least 8 characters">
+                        <input type="password" id="password" name="password" autofocus autocomplete="new-password" data-label="New Password" placeholder="Enter at least 8 characters">
                         <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         <button type="button" class="toggle-pw-btn" onclick="toggleVisibility('password', this)" aria-label="Toggle password">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -413,7 +413,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="input-block">
                     <label class="input-label" for="confirm_password">Confirm New Password</label>
                     <div class="input-box">
-                        <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" placeholder="Confirm your password">
+                        <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" data-label="Confirm Password" placeholder="Confirm your password">
                         <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         <button type="button" class="toggle-pw-btn" onclick="toggleVisibility('confirm_password', this)" aria-label="Toggle password">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
