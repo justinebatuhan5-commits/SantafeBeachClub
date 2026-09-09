@@ -38,8 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (strlen($uname) < 3) { 
             $_SESSION['staff_error'] = 'Username must be at least 3 characters.'; 
-        } elseif (!str_ends_with($uname, '@beachclub.com')) {
-            $_SESSION['staff_error'] = 'Username must end with @beachclub.com.';
+        } elseif (!str_ends_with($uname, '@santafebeachclub.com') && !str_ends_with($uname, '@beachclub.com')) {
+            $_SESSION['staff_error'] = 'Username must end with @santafebeachclub.com.';
         } elseif (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $_SESSION['staff_error'] = 'Please provide a valid personal/MFA email address.';
         } elseif (($pwError = pw_validate($pw)) !== null) { 
@@ -466,7 +466,7 @@ $staff_list = $conn->query("SELECT id, username, email, role, profile_photo, loc
         <form method="POST" enctype="multipart/form-data">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="add_staff">
-            <div class="admin-form-group"><label>System Username (Login ID)</label><input type="email" name="username" required pattern=".+@beachclub\.com$" title="Must end with @beachclub.com" placeholder="name@beachclub.com"></div>
+            <div class="admin-form-group"><label>System Username (Login ID)</label><input type="email" name="username" required pattern=".+@(santafebeachclub|beachclub)\.com$" title="Must end with @santafebeachclub.com" placeholder="name@santafebeachclub.com"></div>
             <div class="admin-form-group"><label>Personal Email (Receives Login OTPs)</label><input type="email" name="email" required placeholder="personal@gmail.com"></div>
             <div class="admin-form-group"><label>Password</label><input type="password" name="password" required minlength="8" placeholder="Min 8 chars: upper, lower, number, symbol" title="Must be 8+ characters with uppercase, lowercase, number, and special character"></div>
             <div class="admin-form-group">

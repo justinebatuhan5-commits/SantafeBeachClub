@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Password confirmation is incorrect.';
         } elseif (strlen($new_username) < 3) {
             $error = 'Username must be at least 3 characters.';
-        } elseif (!str_ends_with($new_username, '@beachclub.com')) {
-            $error = 'Username must end with @beachclub.com.';
+        } elseif (!str_ends_with($new_username, '@santafebeachclub.com') && !str_ends_with($new_username, '@beachclub.com')) {
+            $error = 'Username must end with @santafebeachclub.com.';
         } else {
             $stmt = $conn->prepare("SELECT id FROM admins WHERE username = ? AND id != ?");
             $stmt->bind_param("si", $new_username, $row['id']);
@@ -94,8 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (strlen($new_user) < 3) {
             $error = 'Username must be at least 3 characters.';
-        } elseif (!str_ends_with($new_user, '@beachclub.com')) {
-            $error = 'Username must end with @beachclub.com.';
+        } elseif (!str_ends_with($new_user, '@santafebeachclub.com') && !str_ends_with($new_user, '@beachclub.com')) {
+            $error = 'Username must end with @santafebeachclub.com.';
         } elseif (($pwError = pw_validate($new_pass)) !== null) {
             $error = $pwError;
         } else {
@@ -724,7 +724,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
                             </div>
                             <div>
                                 <label>New Username</label>
-                                <input type="email" name="new_username" required pattern=".+@beachclub\.com$" title="Must end with @beachclub.com" placeholder="name@beachclub.com">
+                                <input type="email" name="new_username" required pattern=".+@(santafebeachclub|beachclub)\.com$" title="Must end with @santafebeachclub.com" placeholder="name@santafebeachclub.com">
                             </div>
                         </div>
                         <div class="form-row single">
@@ -832,7 +832,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         <div class="form-row">
                             <div>
                                 <label>Username</label>
-                                <input type="email" name="admin_username" required pattern=".+@beachclub\.com$" title="Must end with @beachclub.com" placeholder="name@beachclub.com">
+                                <input type="email" name="admin_username" required pattern=".+@(santafebeachclub|beachclub)\.com$" title="Must end with @santafebeachclub.com" placeholder="name@santafebeachclub.com">
                             </div>
                             <div>
                                 <label>Password</label>
