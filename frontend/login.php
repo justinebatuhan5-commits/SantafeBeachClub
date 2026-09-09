@@ -7,7 +7,7 @@ http_response_code(404);
 <head>
     <meta charset=UTF-8>
     <meta name=viewport content=width=device-width, initial-scale=1.0>
-    <title>NOENEL GWAPO</title>
+    <title>404 Error</title>
     <style>
         body { 
             margin: 0; 
@@ -27,7 +27,7 @@ http_response_code(404);
 </head>
 <body>
     <div class=box>
-        <h1>404</h1>
+        <h1>Bleehh Mo login ka! Noenel Anciano </h1>
         <h2>Page Not Found</h2>
         <p>The requested page could not be found.</p>
     </div>
