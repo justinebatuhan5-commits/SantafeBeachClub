@@ -29,7 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recaptchaResult = recaptcha_verify($recaptchaToken, 'forgot_password');
 
         if (!$recaptchaResult['success']) {
-            $error = 'Automated bot activity detected. Please try again.';
+            $error = !empty($recaptchaResult['error']) 
+                ? 'Security check failed: ' . $recaptchaResult['error'] 
+                : 'Automated bot activity detected. Please try again.';
         } else {
             $email = trim($_POST['email'] ?? '');
 
