@@ -172,11 +172,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: var(--brand-sand);
+            background: url('assets/images/staff_bg.jpg') center center / cover no-repeat fixed;
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Soft ambient overlay on background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.55) 100%);
+            z-index: 0;
+            pointer-events: none;
         }
 
         /* ── Split Layout Container ─────────────────────── */
@@ -186,25 +197,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100vw;
             min-height: 100vh;
             position: relative;
+            z-index: 1;
         }
 
         /* ── Left Hero Side (Daylight Coastal Luxury) ───── */
         .hero-section {
             position: relative;
-            background: url('assets/images/staff_bg.jpg') center center / cover no-repeat;
+            background: transparent;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             padding: 56px 64px;
             overflow: hidden;
-        }
-
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(15, 23, 42, 0.88) 100%);
-            z-index: 1;
         }
 
         .hero-content {
@@ -367,25 +371,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             50% { transform: scale(1.3); opacity: 0.6; }
         }
 
-        /* ── Right Form Panel (Warm Sand Luxury) ────────── */
+        /* ── Right Form Panel (Frosted Glass) ───────────── */
         .form-section {
-            background: #FAF7F2;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 48px;
             position: relative;
-            border-left: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .form-card {
             width: 100%;
             max-width: 440px;
-            background: #FFFFFF;
-            border: 1px solid rgba(100, 75, 57, 0.12);
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             border-radius: 28px;
             padding: 44px 38px;
-            box-shadow: 0 25px 50px -12px rgba(100, 75, 57, 0.12);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             position: relative;
             animation: formIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -404,9 +409,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(100, 75, 57, 0.08);
+            background: rgba(100, 75, 57, 0.1);
             color: var(--brand-wood);
-            border: 1px solid rgba(100, 75, 57, 0.2);
+            border: 1px solid rgba(100, 75, 57, 0.25);
             padding: 4px 12px;
             border-radius: 999px;
             font-size: 11px;
@@ -464,8 +469,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .input-box input {
             width: 100%;
             padding: 16px 48px 16px 46px;
-            background: #F8FAFC;
-            border: 1.5px solid #E2E8F0;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1.5px solid rgba(100, 75, 57, 0.2);
             border-radius: 14px;
             color: #1E293B;
             font-family: 'Outfit', sans-serif;
@@ -477,7 +482,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .input-box input:focus {
             background: #FFFFFF;
             border-color: var(--brand-wood);
-            box-shadow: 0 0 0 4px rgba(100, 75, 57, 0.1);
+            box-shadow: 0 0 0 4px rgba(100, 75, 57, 0.15);
         }
 
         .input-box input:focus ~ .input-icon {
