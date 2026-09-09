@@ -90,24 +90,30 @@
         },
 
         toggleFieldError: function (input, isValid, message) {
-            // Check if input is wrapped in input-block or form-group
-            const inputBlock = input.closest('.input-block');
-            const container = inputBlock || input.closest('.bk-form-group') || input.closest('.form-group') || input.parentNode;
-            let errorEl = container.querySelector(':scope > .security-field-error') || container.querySelector('.security-field-error');
-            const combo = input.closest('.bk-input-combo');
-            // The direct wrapper of the input (input-box or combo)
-            const inputWrapper = input.closest('.input-box') || input.closest('.bk-input-combo') || input.parentNode;
+            // The direct flex-row wrapper of the input (never put error INSIDE this)
+            const inputBox = input.closest('.input-box') || input.closest('.bk-input-combo');
+            const combo    = input.closest('.bk-input-combo');
+
+            // Walk up to find a block-level container that is NOT the flex row itself
+            const container = input.closest('.input-block')
+                           || input.closest('.bk-form-group')
+                           || input.closest('.form-group')
+                           || (inputBox ? inputBox.parentNode : input.parentNode);
+
+            // Find an existing error element scoped to this container (not inside input-box)
+            let errorEl = container.querySelector(':scope > .security-field-error');
 
             if (!isValid) {
                 input.classList.add('is-invalid');
                 input.classList.remove('is-valid');
                 if (combo) combo.classList.add('is-invalid');
+
                 if (!errorEl) {
                     errorEl = document.createElement('div');
                     errorEl.className = 'security-field-error';
-                    // Insert right after the input wrapper (e.g., after .input-box) for correct visual placement
-                    if (inputWrapper && inputWrapper !== container && inputWrapper.parentNode === container) {
-                        inputWrapper.insertAdjacentElement('afterend', errorEl);
+                    // Always insert AFTER the flex row (.input-box), never inside it
+                    if (inputBox && inputBox.parentNode === container) {
+                        inputBox.insertAdjacentElement('afterend', errorEl);
                     } else {
                         container.appendChild(errorEl);
                     }
@@ -120,7 +126,7 @@
                     </svg>
                     <span>${Security.escapeHTML(message)}</span>
                 `;
-                errorEl.style.display = '';
+                errorEl.style.display = 'flex';
             } else {
                 input.classList.remove('is-invalid');
                 if (combo && !combo.querySelector('.is-invalid')) {
@@ -134,6 +140,7 @@
                 }
             }
         },
+
 
         // --- 2. INPUT SANITIZATION ---
         sanitizeString: function (str) {
