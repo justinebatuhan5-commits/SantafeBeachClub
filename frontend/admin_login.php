@@ -958,22 +958,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
 
         // ── Background Auto-Slideshow Controller ─────────
-        document.addEventListener('DOMContentLoaded', function() {
-            const slides = document.querySelectorAll('.bg-slide');
-            const dots   = document.querySelectorAll('.slide-dot');
-            let current  = 0;
+        (function() {
+            var slides = document.querySelectorAll('.bg-slide');
+            var dots   = document.querySelectorAll('.slide-dot');
+            var current = 0;
+            var slideshowTimer;
 
             if (!slides.length) return;
 
             // Preload slide images so transitions are instant
-            const imgs = [
-                'assets/images/admin_bg.jpg',
-                'assets/images/admin_bg2.jpg',
-                'assets/images/admin_bg3.jpg'
-            ];
-            imgs.forEach(function(src) {
-                var img = new Image();
-                img.src = src;
+            ['assets/images/admin_bg2.jpg', 'assets/images/admin_bg3.jpg'].forEach(function(src) {
+                (new Image()).src = src;
             });
 
             function goTo(index) {
@@ -984,16 +979,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (dots[current]) dots[current].classList.add('active');
             }
 
-            // Allow dot clicks to jump slides
             window.goToSlide = function(i) {
                 clearInterval(slideshowTimer);
                 goTo(i);
                 slideshowTimer = setInterval(function() { goTo(current + 1); }, 5000);
             };
 
-            // Start the auto-advance
-            var slideshowTimer = setInterval(function() { goTo(current + 1); }, 5000);
-        });
+            slideshowTimer = setInterval(function() { goTo(current + 1); }, 5000);
+        })();
     </script>
 </body>
 </html>
