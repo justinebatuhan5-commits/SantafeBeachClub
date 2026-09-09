@@ -1068,10 +1068,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return;
             }
 
-            // Get reCAPTCHA v3 token before submitting
+            // Get reCAPTCHA v3 token before submitting (with timeout guard)
             let recaptchaToken = '';
             try {
-                recaptchaToken = await grecaptcha.execute('6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'staff_login' });
+                recaptchaToken = await Promise.race([
+                    grecaptcha.execute('6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'staff_login' }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('reCAPTCHA timeout')), 5000))
+                ]);
                 document.getElementById('g-recaptcha-response').value = recaptchaToken;
             } catch (err) {
                 console.warn('reCAPTCHA failed to load, proceeding anyway.');
@@ -1083,15 +1086,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             const formData = new FormData(loginForm);
             const startTime = Date.now();
+            let redirectUrl = null;
 
             try {
+                // Fetch with a 10-second timeout guard
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
                 const response = await fetch('staff_login', {
                     method: 'POST',
                     body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 const data = await response.json();
                 const elapsed = Date.now() - startTime;
@@ -1099,24 +1107,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const remainingTime = Math.max(0, minDisplayTime - elapsed);
 
                 if (data && data.success) {
-                    setTimeout(() => {
-                        window.location.href = data.redirect;
-                    }, remainingTime);
+                    redirectUrl = data.redirect;
+                    setTimeout(() => { window.location.href = redirectUrl; }, remainingTime);
+                    return; // keep loader visible during redirect
                 } else {
-                    setTimeout(() => {
-                        authLoader.classList.remove('active');
-                        authLoader.setAttribute('aria-hidden', 'true');
-                        submitBtn.disabled = false;
-                        showError(data.message || 'Invalid username or password.');
-                    }, remainingTime);
+                    await new Promise(resolve => setTimeout(resolve, remainingTime));
+                    showError(data.message || 'Invalid username or password.');
                 }
             } catch (err) {
-                setTimeout(() => {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                if (err.name === 'AbortError') {
+                    showError('Request timed out. Please check your connection and try again.');
+                } else {
+                    showError('An unexpected network error occurred. Please try again.');
+                }
+            } finally {
+                // Always reset UI unless we are about to redirect
+                if (!redirectUrl) {
                     authLoader.classList.remove('active');
                     authLoader.setAttribute('aria-hidden', 'true');
                     submitBtn.disabled = false;
-                    showError('An unexpected network error occurred. Please try again.');
-                }, 400);
+                }
             }
         });
     </script>
