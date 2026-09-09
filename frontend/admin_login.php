@@ -889,7 +889,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="input-block">
                         <label class="input-label" for="username">Administrator Email</label>
                         <div class="input-box">
-                            <input type="email" id="username" name="username" required autofocus autocomplete="username" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" placeholder="admin@santabeachclub.com">
+                            <input type="email" id="username" name="username" required autofocus autocomplete="username" data-label="Email" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" placeholder="admin@santabeachclub.com">
                             <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                         </div>
                     </div>
@@ -900,7 +900,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <a href="forgot_password?portal=admin" style="font-size: 12px; color: #38BDF8; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#7DD3FC'; this.style.textDecoration='underline';" onmouseout="this.style.color='#38BDF8'; this.style.textDecoration='none';">Forgot Password?</a>
                         </div>
                         <div class="input-box">
-                            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter administrative password">
+                            <input type="password" id="password" name="password" required autocomplete="current-password" data-label="Password" placeholder="Enter administrative password">
                             <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                             <button type="button" class="toggle-pw-btn" id="togglePwBtn" aria-label="Toggle password visibility">
                                 <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>

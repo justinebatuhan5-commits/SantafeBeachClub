@@ -95,6 +95,8 @@
             const container = inputBlock || input.closest('.bk-form-group') || input.closest('.form-group') || input.parentNode;
             let errorEl = container.querySelector(':scope > .security-field-error') || container.querySelector('.security-field-error');
             const combo = input.closest('.bk-input-combo');
+            // The direct wrapper of the input (input-box or combo)
+            const inputWrapper = input.closest('.input-box') || input.closest('.bk-input-combo') || input.parentNode;
 
             if (!isValid) {
                 input.classList.add('is-invalid');
@@ -103,7 +105,12 @@
                 if (!errorEl) {
                     errorEl = document.createElement('div');
                     errorEl.className = 'security-field-error';
-                    container.appendChild(errorEl);
+                    // Insert right after the input wrapper (e.g., after .input-box) for correct visual placement
+                    if (inputWrapper && inputWrapper !== container && inputWrapper.parentNode === container) {
+                        inputWrapper.insertAdjacentElement('afterend', errorEl);
+                    } else {
+                        container.appendChild(errorEl);
+                    }
                 }
                 errorEl.innerHTML = `
                     <svg class="error-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -113,7 +120,7 @@
                     </svg>
                     <span>${Security.escapeHTML(message)}</span>
                 `;
-                errorEl.style.display = 'flex';
+                errorEl.style.display = '';
             } else {
                 input.classList.remove('is-invalid');
                 if (combo && !combo.querySelector('.is-invalid')) {
@@ -429,24 +436,31 @@
                 style.id = 'security-styles';
                 style.textContent = `
                     @keyframes secSpin { to { transform: rotate(360deg); } }
-                    @keyframes secFadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+                    @keyframes secFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
                     .is-invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.2) !important; }
                     .is-valid { border-color: #16a34a !important; }
                     .security-field-error {
-                        display: flex;
+                        display: flex !important;
                         align-items: center;
-                        gap: 5px;
-                        margin-top: 6px;
+                        gap: 6px;
+                        margin-top: 7px;
+                        padding: 0;
                         font-size: 12px;
                         font-weight: 500;
-                        color: #ef4444;
-                        line-height: 1.3;
-                        animation: secFadeIn 0.2s ease;
+                        color: #F87171;
+                        line-height: 1.4;
+                        animation: secFadeIn 0.22s ease;
+                        clear: both;
+                        width: 100%;
+                    }
+                    .security-field-error[style*="display: none"] {
+                        display: none !important;
                     }
                     .security-field-error .error-icon {
                         display: inline-block;
                         flex-shrink: 0;
-                        color: #ef4444;
+                        color: #EF4444;
+                        margin-top: 1px;
                     }
                 `;
                 document.head.appendChild(style);
