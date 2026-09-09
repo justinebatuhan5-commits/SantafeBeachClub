@@ -284,6 +284,7 @@ if ($bk_res) {
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Payment Processing — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/dashboard.css?v=4">
+    <style>
         .table-responsive {
             width: 100%;
             overflow-x: auto;
