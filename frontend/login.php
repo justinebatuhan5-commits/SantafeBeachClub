@@ -27,7 +27,7 @@ http_response_code(404);
 </head>
 <body>
     <div class=box>
-        <h1>Bleehh Mo login ka! Noenel Anciano </h1>
+        <h1>404</h1>
         <h2>Page Not Found</h2>
         <p>The requested page could not be found.</p>
     </div>
