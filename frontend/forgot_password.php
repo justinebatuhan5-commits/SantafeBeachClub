@@ -371,7 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="input-block">
                 <label class="input-label" for="email">Account Email</label>
                 <div class="input-box">
-                    <input type="email" id="email" name="email" required autofocus placeholder="name@santabeachclub.com" data-label="Email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+                    <input type="email" id="email" name="email" required autofocus placeholder="name@santabeachclub.com" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
                     <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </div>
             </div>

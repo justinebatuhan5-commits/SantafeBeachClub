@@ -37,11 +37,8 @@
             let isValid = true;
             let errorMessage = '';
 
-            // Check required attribute
-            if (input.hasAttribute('required') && value === '') {
-                isValid = false;
-                errorMessage = (input.getAttribute('data-label') || 'This field') + ' is required.';
-            } else if (value !== '') {
+            // Only validate format when the field has a value (skip empty-required check)
+            if (value !== '') {
                 // Email validation
                 if (type === 'email' || patternType === 'email') {
                     if (!this.config.patterns.email.test(value)) {
@@ -88,6 +85,7 @@
             this.toggleFieldError(input, isValid, errorMessage);
             return isValid;
         },
+
 
         toggleFieldError: function (input, isValid, message) {
             // The direct flex-row wrapper of the input (never put error INSIDE this)
