@@ -303,26 +303,34 @@
                     return false;
                 }
 
-                // Prevent double submission safely
-                const submitBtn = e.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
-                if (submitBtn && !submitBtn.disabled) {
-                    // If the button has a name, we must create a hidden input so the backend still receives it
-                    if (submitBtn.name) {
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = submitBtn.name;
-                        hiddenInput.value = submitBtn.value || '1';
-                        form.appendChild(hiddenInput);
+                // Prevent double submission safely for standard HTTP submissions
+                // Skip completely if another handler (e.g. custom AJAX fetch/xhr) has called e.preventDefault()
+                // or if the form is flagged for custom AJAX handling
+                setTimeout(() => {
+                    // Check on next tick to ensure any other submit listener that calls preventDefault() has run
+                    if (e.defaultPrevented) {
+                        return;
                     }
-                    
-                    submitBtn.disabled = true;
-                    submitBtn.dataset.originalHtml = submitBtn.innerHTML;
-                    if (submitBtn.tagName === 'BUTTON') {
-                        submitBtn.innerHTML = '<span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:#fff;animation:secSpin 0.8s linear infinite;margin-right:6px;vertical-align:middle;"></span> Processing...';
+                    const submitBtn = e.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+                    if (submitBtn && !submitBtn.disabled) {
+                        if (submitBtn.name) {
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = submitBtn.name;
+                            hiddenInput.value = submitBtn.value || '1';
+                            form.appendChild(hiddenInput);
+                        }
+                        
+                        submitBtn.disabled = true;
+                        submitBtn.dataset.originalHtml = submitBtn.innerHTML;
+                        if (submitBtn.tagName === 'BUTTON') {
+                            submitBtn.innerHTML = '<span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:#fff;animation:secSpin 0.8s linear infinite;margin-right:6px;vertical-align:middle;"></span> Processing...';
+                        }
                     }
-                }
+                }, 0);
             });
         },
+
 
         // --- 6, 7 & 8. FILE UPLOAD, TYPE & SIZE VALIDATION ---
         validateFileInput: function (input) {
