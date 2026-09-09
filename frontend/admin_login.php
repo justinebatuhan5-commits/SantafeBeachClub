@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         body {
             font-family: 'Outfit', sans-serif;
-            background: url('assets/images/admin_bg.jpg') center center / cover no-repeat fixed;
+            background: var(--bg-night);
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
@@ -165,13 +165,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: relative;
         }
 
-        /* Ambient soft overlay on background */
-        body::before {
-            content: '';
+        /* ── Auto-Sliding Background Slideshow ─────────────── */
+        .bg-slideshow {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at center, rgba(11, 15, 23, 0.45) 0%, rgba(11, 15, 23, 0.75) 100%);
             z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-slide {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            animation: kenBurns 14s ease-in-out infinite alternate;
+        }
+
+        .bg-slide.active {
+            opacity: 1;
+        }
+
+        .bg-slide:nth-child(1) { background-image: url('assets/images/admin_bg.jpg'); animation-delay: 0s; }
+        .bg-slide:nth-child(2) { background-image: url('assets/images/admin_bg2.jpg'); animation-delay: -4.67s; }
+        .bg-slide:nth-child(3) { background-image: url('assets/images/admin_bg3.jpg'); animation-delay: -9.33s; }
+
+        @keyframes kenBurns {
+            from { transform: scale(1.0) translateX(0px); }
+            to   { transform: scale(1.08) translateX(-12px); }
+        }
+
+        /* Slide dot indicators */
+        .slide-indicators {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .slide-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.35);
+            border: 1px solid rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .slide-dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: var(--gold-primary);
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 10px rgba(245,158,11,0.6);
+        }
+
+        /* Ambient dark overlay on top of slideshow */
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(11, 15, 23, 0.35) 0%, rgba(11, 15, 23, 0.72) 100%);
+            z-index: 1;
             pointer-events: none;
         }
 
@@ -686,20 +745,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-    <!-- ── Auto-Sliding Background Slideshow ── -->
+    <!-- Auto-sliding background -->
     <div class="bg-slideshow" aria-hidden="true">
         <div class="bg-slide active"></div>
         <div class="bg-slide"></div>
         <div class="bg-slide"></div>
     </div>
+    <div class="bg-overlay" aria-hidden="true"></div>
 
-    <!-- Slide indicator dots -->
-    <div class="slide-dots" aria-hidden="true">
-        <div class="slide-dot active" onclick="goToSlide(0)"></div>
-        <div class="slide-dot" onclick="goToSlide(1)"></div>
-        <div class="slide-dot" onclick="goToSlide(2)"></div>
+    <!-- Slide progress indicators -->
+    <div class="slide-indicators" aria-hidden="true">
+        <div class="slide-dot active" data-slide="0"></div>
+        <div class="slide-dot" data-slide="1"></div>
+        <div class="slide-dot" data-slide="2"></div>
     </div>
-
     <!-- Fullscreen Verification Overlay -->
     <div id="authLoader" class="auth-loader-screen" aria-hidden="true">
         <div class="loader-ring-box">
@@ -818,6 +877,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </section>
     </main>
 
+    <script>
+        // ── Auto-Sliding Background ──
+        (function() {
+            const slides = document.querySelectorAll('.bg-slide');
+            const dots   = document.querySelectorAll('.slide-dot');
+            let current = 0;
+            const INTERVAL = 6000; // ms per slide
+
+            function goToSlide(idx) {
+                slides[current].classList.remove('active');
+                dots[current].classList.remove('active');
+                current = (idx + slides.length) % slides.length;
+                slides[current].classList.add('active');
+                dots[current].classList.add('active');
+            }
+
+            // Auto advance
+            let timer = setInterval(() => goToSlide(current + 1), INTERVAL);
+
+            // Dot click navigation
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    clearInterval(timer);
+                    goToSlide(parseInt(dot.dataset.slide));
+                    timer = setInterval(() => goToSlide(current + 1), INTERVAL);
+                });
+            });
+        })();
+    </script>
     <script>
         // ── Realtime Bantayan Clock & Dynamic Greeting ──
         function updateClock() {
@@ -956,37 +1044,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }, 400);
             }
         });
-
-        // ── Background Auto-Slideshow Controller ─────────
-        (function() {
-            var slides = document.querySelectorAll('.bg-slide');
-            var dots   = document.querySelectorAll('.slide-dot');
-            var current = 0;
-            var slideshowTimer;
-
-            if (!slides.length) return;
-
-            // Preload slide images so transitions are instant
-            ['assets/images/admin_bg2.jpg', 'assets/images/admin_bg3.jpg'].forEach(function(src) {
-                (new Image()).src = src;
-            });
-
-            function goTo(index) {
-                slides[current].classList.remove('active');
-                if (dots[current]) dots[current].classList.remove('active');
-                current = ((index % slides.length) + slides.length) % slides.length;
-                slides[current].classList.add('active');
-                if (dots[current]) dots[current].classList.add('active');
-            }
-
-            window.goToSlide = function(i) {
-                clearInterval(slideshowTimer);
-                goTo(i);
-                slideshowTimer = setInterval(function() { goTo(current + 1); }, 5000);
-            };
-
-            slideshowTimer = setInterval(function() { goTo(current + 1); }, 5000);
-        })();
     </script>
 </body>
 </html>
