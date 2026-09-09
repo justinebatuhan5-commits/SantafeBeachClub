@@ -619,6 +619,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         /* Errors and Alerts */
+        .security-field-error {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 8px;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: #F87171;
+            animation: errorSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .security-field-error .error-icon {
+            color: #EF4444;
+            flex-shrink: 0;
+        }
+
+        .input-box input.is-invalid {
+            border-color: rgba(239, 68, 68, 0.75) !important;
+            background: rgba(239, 68, 68, 0.08) !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22) !important;
+        }
+
+        @keyframes errorSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .error {
             background: rgba(239, 68, 68, 0.14);
             border: 1px solid rgba(239, 68, 68, 0.35);

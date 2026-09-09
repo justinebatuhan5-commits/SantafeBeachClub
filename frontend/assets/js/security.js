@@ -90,7 +90,9 @@
         },
 
         toggleFieldError: function (input, isValid, message) {
-            const container = input.closest('.bk-form-group') || input.closest('.form-group') || input.parentNode;
+            // Check if input is wrapped in input-block or form-group
+            const inputBlock = input.closest('.input-block');
+            const container = inputBlock || input.closest('.bk-form-group') || input.closest('.form-group') || input.parentNode;
             let errorEl = container.querySelector(':scope > .security-field-error') || container.querySelector('.security-field-error');
             const combo = input.closest('.bk-input-combo');
 
@@ -101,10 +103,16 @@
                 if (!errorEl) {
                     errorEl = document.createElement('div');
                     errorEl.className = 'security-field-error';
-                    errorEl.style.cssText = 'color:#dc2626;font-size:0.8rem;margin-top:5px;display:flex;align-items:center;gap:5px;font-weight:500;';
                     container.appendChild(errorEl);
                 }
-                errorEl.innerHTML = '<span style="color:#dc2626;font-size:0.75rem;">▲</span> ' + Security.escapeHTML(message);
+                errorEl.innerHTML = `
+                    <svg class="error-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>${Security.escapeHTML(message)}</span>
+                `;
                 errorEl.style.display = 'flex';
             } else {
                 input.classList.remove('is-invalid');
@@ -424,6 +432,19 @@
                     @keyframes secFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
                     .is-invalid { border-color: #dc2626 !important; box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important; }
                     .is-valid { border-color: #16a34a !important; }
+                    .security-field-error {
+                        color: #ef4444;
+                        font-size: 0.8rem;
+                        margin-top: 6px;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        font-weight: 500;
+                        animation: secFadeIn 0.2s ease-out;
+                    }
+                    .security-field-error .error-icon {
+                        flex-shrink: 0;
+                    }
                 `;
                 document.head.appendChild(style);
             }
