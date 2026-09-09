@@ -118,5 +118,131 @@ class RateLimiter {
         }
         self::hit($conn, $action);
     }
+
+    // ── Account-Level Lockout ─────────────────────────────────────────────────
+
+    /**
+     * Check if an account is currently locked out.
+     * Call this BEFORE checking the password.
+     *
+     * @param mysqli $conn
+     * @param int    $adminId
+     * @return array ['locked' => bool, 'seconds_remaining' => int]
+     */
+    public static function checkAccountLockout(mysqli $conn, int $adminId): array {
+        $stmt = $conn->prepare(
+            "SELECT failed_login_count, locked_until FROM admins WHERE id = ? LIMIT 1"
+        );
+        if (!$stmt) {
+            return ['locked' => false, 'seconds_remaining' => 0];
+        }
+        $stmt->bind_param('i', $adminId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$row || empty($row['locked_until'])) {
+            return ['locked' => false, 'seconds_remaining' => 0];
+        }
+
+        $lockedUntil = strtotime($row['locked_until']);
+        $now         = time();
+
+        if ($lockedUntil > $now) {
+            return [
+                'locked'            => true,
+                'seconds_remaining' => (int)($lockedUntil - $now),
+            ];
+        }
+
+        return ['locked' => false, 'seconds_remaining' => 0];
+    }
+
+    /**
+     * Record a failed login attempt for an account.
+     * Locks the account for $lockoutMinutes after $maxAttempts failures.
+     *
+     * @param mysqli $conn
+     * @param int    $adminId
+     * @param int    $maxAttempts   Default 5 consecutive failures
+     * @param int    $lockoutMinutes Default 15 minutes
+     */
+    public static function recordFailedLogin(
+        mysqli $conn,
+        int $adminId,
+        int $maxAttempts = 5,
+        int $lockoutMinutes = 15
+    ): void {
+        // Increment counter
+        $stmt = $conn->prepare(
+            "UPDATE admins SET failed_login_count = failed_login_count + 1 WHERE id = ?"
+        );
+        if ($stmt) {
+            $stmt->bind_param('i', $adminId);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        // Check new count and lock if threshold reached
+        $stmt = $conn->prepare(
+            "SELECT failed_login_count FROM admins WHERE id = ? LIMIT 1"
+        );
+        if (!$stmt) return;
+        $stmt->bind_param('i', $adminId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($row && (int)$row['failed_login_count'] >= $maxAttempts) {
+            $lockUntil = date('Y-m-d H:i:s', time() + ($lockoutMinutes * 60));
+            $stmt = $conn->prepare(
+                "UPDATE admins SET locked_until = ? WHERE id = ?"
+            );
+            if ($stmt) {
+                $stmt->bind_param('si', $lockUntil, $adminId);
+                $stmt->execute();
+                $stmt->close();
+            }
+
+            // Log critical security event to trigger immediate email alert
+            require_once __DIR__ . '/security_logger.php';
+            $username = 'Account ID #' . $adminId;
+            // Fetch username if possible
+            $uStmt = $conn->prepare("SELECT username FROM admins WHERE id = ? LIMIT 1");
+            if ($uStmt) {
+                $uStmt->bind_param('i', $adminId);
+                $uStmt->execute();
+                $uRow = $uStmt->get_result()->fetch_assoc();
+                if ($uRow && !empty($uRow['username'])) {
+                    $username = $uRow['username'];
+                }
+                $uStmt->close();
+            }
+            SecurityLogger::log(
+                $conn,
+                'BRUTE_FORCE_LOCKOUT',
+                "Account {$username} locked for {$lockoutMinutes} minutes after {$maxAttempts} consecutive failed password attempts.",
+                SecurityLogger::LEVEL_CRITICAL,
+                $username
+            );
+        }
+    }
+
+    /**
+     * Clear failed login counter after a successful login.
+     *
+     * @param mysqli $conn
+     * @param int    $adminId
+     */
+    public static function clearFailedLogins(mysqli $conn, int $adminId): void {
+        $stmt = $conn->prepare(
+            "UPDATE admins SET failed_login_count = 0, locked_until = NULL WHERE id = ?"
+        );
+        if ($stmt) {
+            $stmt->bind_param('i', $adminId);
+            $stmt->execute();
+            $stmt->close();
+        }
+    }
 }
 ?>

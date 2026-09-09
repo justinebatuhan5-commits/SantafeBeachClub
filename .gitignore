@@ -1,6 +1,22 @@
-# Environment / Secrets — NEVER commit real credentials
+# Environment / Secrets — NEVER commit real credentials (Checklist 7)
 .env
+.env.*
+.env.local
+.env.production
 !.env.example
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Database dumps / sensitive scratch
+*.sql
+!backend/database/database.sql
+!backend/database/room_availability_schema.sql
+backend/logs/backups/*
+backend/scratch/*
+*.pem
+*.key
 
 # Logs
 backend/logs/*.log

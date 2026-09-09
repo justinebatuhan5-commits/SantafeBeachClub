@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/pii_masker.php';
 
 // ── Guest summary query ───────────────────────────────────────────────────────
 $guests_result = $conn->query("
@@ -554,7 +555,9 @@ include __DIR__ . '/partials/_page_header.php';
                         $profile_data = json_encode([
                             'name'        => $name,
                             'email'       => $email,
+                            'masked_email'=> mask_email($email),
                             'phone'       => $guest_phone,
+                            'masked_phone'=> mask_phone($guest_phone),
                             'country'     => $guest_country,
                             'special_requests' => $guest_special_requests,
                             'type'        => $type,
@@ -578,7 +581,7 @@ include __DIR__ . '/partials/_page_header.php';
                                 <span class="guest-name-main"><?= htmlspecialchars($name) ?></span>
                             </div>
                         </td>
-                        <td style="color:#555;font-size:14px;"><?= htmlspecialchars($email) ?></td>
+                        <td style="color:#555;font-size:14px; font-family:var(--font-mono, monospace);"><?= htmlspecialchars(mask_email($email)) ?></td>
                         <td><?= type_badge($type) ?></td>
                         <td><span class="booking-count-badge"><?= $total ?></span></td>
                         <td style="color:#555;font-size:14px;"><?= htmlspecialchars($last_visit) ?></td>
@@ -643,7 +646,12 @@ include __DIR__ . '/partials/_page_header.php';
             <div class="contact-grid">
                 <div>
                     <div class="contact-label">Phone</div>
-                    <div class="contact-value" id="modalPhone">—</div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="contact-value" id="modalPhone" style="font-family:var(--font-mono, monospace);">—</div>
+                        <button type="button" id="btnTogglePhone" onclick="togglePhoneVisibility()" style="display:none; background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:12px; padding:2px 6px; border-radius:4px; border:1px solid var(--border);" title="Toggle Phone Mask">
+                            👁️ Show
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <div class="contact-label">Country</div>
@@ -744,7 +752,22 @@ function openGuestProfile(data) {
         ? '₱' + Number(data.spend).toLocaleString('en-PH', {minimumFractionDigits:0})
         : '—';
 
-    document.getElementById('modalPhone').textContent   = data.phone   || '—';
+    // Phone masking & toggle
+    window._currentModalRawPhone    = data.phone || '';
+    window._currentModalMaskedPhone = data.masked_phone || '—';
+    window._isPhoneRevealed         = false;
+
+    const phoneEl = document.getElementById('modalPhone');
+    const toggleBtn = document.getElementById('btnTogglePhone');
+    phoneEl.textContent = window._currentModalMaskedPhone;
+
+    if (data.phone && data.phone.trim() !== '') {
+        toggleBtn.style.display = 'inline-flex';
+        toggleBtn.innerHTML = '👁️ Show';
+    } else {
+        toggleBtn.style.display = 'none';
+    }
+
     document.getElementById('modalCountry').textContent = data.country || '—';
 
     const specialRequestsSection = document.getElementById('modalSpecialRequestsSection');
@@ -803,6 +826,20 @@ function openGuestProfile(data) {
 function closeModal() {
     document.getElementById('guestModal').classList.remove('open');
     document.body.style.overflow = '';
+}
+
+function togglePhoneVisibility() {
+    const phoneEl = document.getElementById('modalPhone');
+    const toggleBtn = document.getElementById('btnTogglePhone');
+    window._isPhoneRevealed = !window._isPhoneRevealed;
+
+    if (window._isPhoneRevealed) {
+        phoneEl.textContent = window._currentModalRawPhone;
+        toggleBtn.innerHTML = '🙈 Hide';
+    } else {
+        phoneEl.textContent = window._currentModalMaskedPhone;
+        toggleBtn.innerHTML = '👁️ Show';
+    }
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });

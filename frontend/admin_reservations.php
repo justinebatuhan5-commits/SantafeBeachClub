@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/pii_masker.php';
 
 // Optional status filter
 $allowed_statuses = ['Pending', 'Checked In', 'Checked Out', 'Cancelled'];
@@ -130,7 +131,7 @@ $checked_in_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE statu
                                             </div>
                                         </div>
                                     </td>
-                                    <td style="color:var(--text-muted); font-size:13px;"><?php echo $email ?: '—'; ?></td>
+                                    <td style="color:var(--text-muted); font-size:13px; font-family:var(--font-mono, monospace);"><?php echo $email ? htmlspecialchars(mask_email($email)) : '—'; ?></td>
                                     <td><span style="font-size:12px; font-weight:600; color:var(--text-muted);"><?php echo $type; ?></span></td>
                                     <td style="color:var(--text-main); font-weight:500;"><?php echo $acc; ?></td>
                                     <td style="color:var(--text-muted); font-size:12.5px;"><?php echo $cin; ?> &rarr; <?php echo $cout; ?></td>

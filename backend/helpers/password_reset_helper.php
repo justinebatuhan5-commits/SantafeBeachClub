@@ -158,6 +158,23 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
 
         $conn->commit();
 
+        // ── Notify user that password was changed (OWASP checklist 1.4) ───
+        $notifyStmt = $conn->prepare("SELECT email, username FROM admins WHERE id = ?");
+        if ($notifyStmt) {
+            $notifyStmt->bind_param('i', $adminId);
+            $notifyStmt->execute();
+            $notifyRow = $notifyStmt->get_result()->fetch_assoc();
+            $notifyStmt->close();
+
+            if ($notifyRow) {
+                $notifyEmail = !empty($notifyRow['email']) ? $notifyRow['email'] : $notifyRow['username'];
+                $notifyName  = !empty($notifyRow['username']) ? explode('@', $notifyRow['username'])[0] : 'User';
+                if (filter_var($notifyEmail, FILTER_VALIDATE_EMAIL)) {
+                    pwd_reset_send_change_notification($notifyEmail, ucfirst($notifyName));
+                }
+            }
+        }
+
         return [
             'success'  => true,
             'message'  => 'Your password has been reset successfully! You can now log in.',
@@ -249,6 +266,84 @@ function pwd_reset_send_email(string $toEmail, string $name, string $resetUrl): 
         return ['success' => true, 'error' => null];
     } catch (\PHPMailer\PHPMailer\Exception $e) {
         error_log("[PWD_RESET] Failed to send email: " . $mail->ErrorInfo);
+        return ['success' => false, 'error' => $mail->ErrorInfo];
+    }
+}
+
+/**
+ * Send a notification email after a password has been successfully changed.
+ * OWASP Checklist 1.4: "Notify the user when the password has been changed."
+ *
+ * @param string $toEmail
+ * @param string $name
+ * @return array ['success' => bool, 'error' => string|null]
+ */
+function pwd_reset_send_change_notification(string $toEmail, string $name): array {
+    require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
+    require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
+    require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
+
+    if (!defined('GMAIL_USER')) {
+        require_once __DIR__ . '/../services/mailer.php';
+    }
+
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = GMAIL_USER;
+        $mail->Password   = GMAIL_APP_PASSWORD;
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->Timeout    = 8;
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer'       => false,
+                'verify_peer_name'  => false,
+                'allow_self_signed' => true
+            ]
+        ];
+
+        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+        $mail->addAddress($toEmail, $name);
+
+        $changedAt = date('F j, Y \a\t g:i A');
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+
+        $mail->isHTML(true);
+        $mail->Subject = 'Your Password Was Changed – Santa Fe Beach Club';
+        $mail->Body    = "
+            <div style='font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
+                <div style='background: #644B39; padding: 28px 32px; text-align: center;'>
+                    <h2 style='color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;'>🔒 Password Changed</h2>
+                    <p style='color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px;'>Santa Fe Beach Club — Security Alert</p>
+                </div>
+                <div style='padding: 32px;'>
+                    <p style='color: #334155; font-size: 15px; margin-top: 0;'>Hello <strong>" . htmlspecialchars($name) . "</strong>,</p>
+                    <p style='color: #475569; font-size: 14px; line-height: 1.6;'>
+                        This is a confirmation that the password for your Santa Fe Beach Club portal account was successfully changed.
+                    </p>
+                    <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; margin: 20px 0;'>
+                        <p style='margin: 0 0 6px; font-size: 13px; color: #64748b;'><strong>Date & Time:</strong> {$changedAt}</p>
+                        <p style='margin: 0; font-size: 13px; color: #64748b;'><strong>IP Address:</strong> {$ipAddress}</p>
+                    </div>
+                    <p style='color: #dc2626; font-size: 13px; line-height: 1.5; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px;'>
+                        ⚠️ <strong>If you did not make this change</strong>, please contact the resort administrator immediately to secure your account.
+                    </p>
+                    <hr style='border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;'>
+                    <p style='color: #94a3b8; font-size: 12px; margin: 0;'>Santa Fe Beach Club · Barangay Poblacion, Santa Fe, Cebu</p>
+                </div>
+            </div>
+        ";
+        $mail->AltBody = "Hello {$name},\n\nThis confirms that your Santa Fe Beach Club portal password was changed on {$changedAt} from IP {$ipAddress}.\n\nIf you did not make this change, please contact the administrator immediately.\n\nSanta Fe Beach Club";
+
+        $mail->send();
+        error_log("[PWD_RESET] Password change notification sent to: " . substr($toEmail, 0, 3) . '***@' . explode('@', $toEmail)[1]);
+        return ['success' => true, 'error' => null];
+    } catch (\PHPMailer\PHPMailer\Exception $e) {
+        error_log("[PWD_RESET] Failed to send change notification: " . $mail->ErrorInfo);
         return ['success' => false, 'error' => $mail->ErrorInfo];
     }
 }

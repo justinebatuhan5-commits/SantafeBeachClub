@@ -1,10 +1,14 @@
 <?php
 // Enforce strict, secure, and HttpOnly session cookies for token storage
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['SERVER_PORT'] ?? 80) == 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
     'domain' => '', // Default domain
-    'secure' => false, // Set to true in production over HTTPS
+    'secure' => $isHttps, // Automatically true in production over HTTPS
     'httponly' => true, // Prevent JavaScript access to session cookie (mitigates XSS)
     'samesite' => 'Lax' // Mitigate CSRF
 ]);
@@ -16,6 +20,13 @@ if (session_status() === PHP_SESSION_NONE) {
 // Load Security Headers and CSRF Helper
 require_once __DIR__ . '/security_headers.php';
 require_once __DIR__ . '/csrf_helper.php';
+
+// Enforce strict no-cache on sensitive authenticated pages (Checklist 10)
+if (!headers_sent()) {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}
 
 $is_api_request = (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
                    (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||

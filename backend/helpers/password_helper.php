@@ -5,21 +5,33 @@
  * Centralises all password hashing, verification, and validation logic
  * to enforce the Strong Password Policy (OWASP-aligned).
  *
- * Hashing  : bcrypt via PASSWORD_BCRYPT (cost 12)
+ * Hashing  : Argon2id via PASSWORD_ARGON2ID (OWASP recommended, 2026)
  * Min length: 8 characters
  * Complexity: uppercase + lowercase + digit + special character
  * Blocklist : prevents extremely common / compromised passwords
+ *
+ * Migration : Existing bcrypt hashes are transparently upgraded to Argon2id
+ *             on the user's next successful login via pw_needs_rehash().
  */
 
 // ─────────────────────────────────────────────────────────────
 // Hashing constants
 // ─────────────────────────────────────────────────────────────
 
-/** Always use bcrypt explicitly. Never rely on PASSWORD_DEFAULT. */
-define('PW_ALGO',    PASSWORD_BCRYPT);
+/** Use Argon2id — resistant to both side-channel and GPU brute-force attacks. */
+define('PW_ALGO', PASSWORD_ARGON2ID);
 
-/** Cost factor — 12 is a good balance of security vs. latency on shared hosting */
-define('PW_OPTIONS', ['cost' => 12]);
+/**
+ * Argon2id tuning (OWASP recommended minimums):
+ *  memory_cost : 65536 KB  (64 MB)  — increases memory required per hash
+ *  time_cost   : 4         iterations
+ *  threads     : 1         (safe default for shared hosting)
+ */
+define('PW_OPTIONS', [
+    'memory_cost' => 65536,  // 64 MB
+    'time_cost'   => 4,
+    'threads'     => 1,
+]);
 
 // ─────────────────────────────────────────────────────────────
 // Common / compromised password blocklist
@@ -46,10 +58,10 @@ const COMMON_PASSWORDS = [
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Hash a plaintext password using bcrypt.
+ * Hash a plaintext password using Argon2id.
  *
  * @param  string $plaintext
- * @return string  The bcrypt hash.
+ * @return string  The Argon2id hash.
  */
 function pw_hash(string $plaintext): string
 {

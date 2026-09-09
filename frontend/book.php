@@ -1077,7 +1077,7 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                         </div>
                         <label class="bk-checkbox-label">
                             <input type="checkbox" required>
-                            Please check this box to indicate that you have read and agree to the Booking Policies as well as the <a href="#">Kovena Payer Policy</a>.
+                            Please check this box to indicate that you have read and agree to the <a href="terms" target="_blank" rel="noopener noreferrer">Booking Policies, Terms of Service, and Privacy Policy</a>.
                         </label>
                     </div>
 

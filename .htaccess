@@ -1,15 +1,30 @@
-﻿# ════════════════════════════════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════════════
 #  Santa Fe Beach Club — Server Security & Dynamic Routing (.htaccess)
 # ════════════════════════════════════════════════════════════════════════════════
-# Disable Directory Listing
+# Disable Directory Listing & Hide Server Version Info (Checklist 6)
 Options -Indexes
+ServerSignature Off
 
-# Protect Sensitive Files
-<FilesMatch "^\.env|config\.php|database\.sql|\.log|\.md|\.ini$">
+<IfModule mod_headers.c>
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>
+
+# Protect Sensitive & Configuration Files (Checklist 6)
+<FilesMatch "^\.env|\.git|\.gitignore|composer\.(json|lock)|config\.php|database\.(php|sql)|\.log|\.md|\.ini|\.bak|\.sh$">
     Require all denied
 </FilesMatch>
 
+# Block access to hidden directories and files (e.g. .git/)
+RewriteRule (^|/)\.(?!well-known/) - [F]
+
 RewriteEngine On
+
+# ── Force HTTPS in production (preserves local development) ───────────────────────
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:\d+)?$ [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # ── Dynamic rewrite base / path routing ──────────────────────────────────────────
 

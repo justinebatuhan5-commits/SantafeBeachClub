@@ -63,7 +63,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $stmt->get_result();
 
             if ($row = $result->fetch_assoc()) {
-                if (pw_verify($password, $row['password'])) {
+                // ── Account lockout check (before password attempt) ──
+                $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id']);
+                if ($lockStatus['locked']) {
+                    $mins = (int)ceil($lockStatus['seconds_remaining'] / 60);
+                    $error = "This account is temporarily locked due to too many failed login attempts. Please try again in {$mins} minute(s).";
+                    SecurityLogger::log($conn, 'ACCOUNT_LOCKED', "Locked account login attempt for user: {$username}", SecurityLogger::LEVEL_WARNING, $username);
+                    if ($is_ajax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'message' => $error]);
+                        exit;
+                    }
+                } elseif (pw_verify($password, $row['password'])) {
                     // Transparently upgrade hash if cost/algo has changed
                     if (pw_needs_rehash($row['password'])) {
                         $newHash = pw_hash($password);
@@ -115,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['otp_sent_at']                = time();
                         $_SESSION['login_source']               = 'reception';
 
+                        RateLimiter::clearFailedLogins($conn, (int)$row['id']);
                         SecurityLogger::log($conn, 'MFA_OTP_SENT', "OTP dispatched for Receptionist MFA (step 2)", SecurityLogger::LEVEL_INFO, $username);
                     }
  
@@ -136,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } else {
                     RateLimiter::hit($conn, 'login_attempt');
+                    RateLimiter::recordFailedLogin($conn, (int)$row['id']);
                     $error = 'Invalid username or password.';
                     SecurityLogger::log($conn, 'FAILED_LOGIN', "Failed login attempt (bad password) for user: {$username}", SecurityLogger::LEVEL_WARNING, $username);
                 }

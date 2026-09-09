@@ -1,0 +1,35 @@
+# .github/dependabot.yml - Automated Dependency Maintenance & Security Updates
+# Configured for Santa Fe Beach Club Booking System
+version: 2
+
+updates:
+  # 1. Automated monitoring for Python analytics microservice dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Asia/Manila"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "security"
+      - "python"
+    commit-message:
+      prefix: "chore(deps-python)"
+
+  # 2. Automated updates for GitHub Actions CI/CD workflows (e.g. FTP Deploy, checkout)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Asia/Manila"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci/cd"
+    commit-message:
+      prefix: "chore(deps-actions)"
