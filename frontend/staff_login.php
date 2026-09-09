@@ -7,6 +7,7 @@ require_once __DIR__ . '/../backend/helpers/rate_limiter.php';
 require_once __DIR__ . '/../backend/helpers/security_logger.php';
 require_once __DIR__ . '/../backend/helpers/validator_helper.php';
 require_once __DIR__ . '/../backend/helpers/password_helper.php';
+require_once __DIR__ . '/../backend/helpers/recaptcha_helper.php';
 
 // Already logged in – redirect to correct dashboard
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
@@ -21,6 +22,18 @@ $is_ajax = (isset($_POST['ajax']) && $_POST['ajax'] === '1') ||
            (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // ── reCAPTCHA v3 Verification ────────────────────────────
+    $recaptchaToken = $_POST['g-recaptcha-response'] ?? '';
+    $recaptchaResult = recaptcha_verify($recaptchaToken, 'staff_login');
+    if (!$recaptchaResult['success']) {
+        $error = 'Security check failed. Please refresh and try again.';
+        SecurityLogger::log($conn, 'RECAPTCHA_FAIL', 'reCAPTCHA failed on staff login (score: ' . $recaptchaResult['score'] . ')', SecurityLogger::LEVEL_WARNING);
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => $error]);
+            exit;
+        }
+    } else {
     // Check rate limit on login attempts (max 5 attempts per 15 minutes)
     $rateStatus = RateLimiter::check($conn, 'login_attempt', 5, 900);
     if (!$rateStatus['allowed']) {
@@ -135,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'Please enter both username and password.';
         }
+    } // end else (reCAPTCHA passed)
     } // End CSRF verification else
 
     if ($is_ajax) {
@@ -159,6 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="assets/js/security.js" defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT" async defer></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -634,38 +649,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: underline;
         }
 
-        /* Errors and Alerts */
+        /* ── Field Validation Errors ────────────────────── */
         .security-field-error {
             display: flex;
             align-items: center;
-            gap: 7px;
-            margin-top: 8px;
-            font-size: 12.5px;
+            gap: 5px;
+            margin-top: 6px;
+            font-size: 12px;
             font-weight: 500;
             color: #DC2626;
-            animation: errorSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            line-height: 1.3;
+            animation: errorSlideIn 0.2s ease;
         }
 
         .security-field-error .error-icon {
-            color: #DC2626;
+            display: inline-block;
             flex-shrink: 0;
+            color: #EF4444;
         }
 
         .input-box input.is-invalid {
             border-color: #EF4444 !important;
-            background: #FEF2F2 !important;
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+            background: #FFF5F5 !important;
+            box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.15) !important;
         }
 
         @keyframes errorSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-4px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-3px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .error {
@@ -888,9 +899,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                 </div>
 
-                <form id="loginForm" method="POST" action="staff_login" autocomplete="on">
+                <form id="loginForm" method="POST" action="staff_login" autocomplete="on" novalidate>
                     <?php echo csrf_field(); ?>
                     <input type="hidden" name="ajax" value="1">
+                    <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
 
                     <div class="input-block">
                         <label class="input-label" for="username">Staff Email</label>
@@ -901,7 +913,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="input-block">
-                        <label class="input-label" for="password">Password</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label class="input-label" for="password">Password</label>
+                            <a href="forgot_password?portal=staff" style="font-size: 12px; color: #5C4033; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#3F2B22'; this.style.textDecoration='underline';" onmouseout="this.style.color='#5C4033'; this.style.textDecoration='none';">Forgot Password?</a>
+                        </div>
                         <div class="input-box">
                             <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
                             <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -1051,6 +1066,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!username || !password) {
                 showError('Please enter both username and password.');
                 return;
+            }
+
+            // Get reCAPTCHA v3 token before submitting
+            let recaptchaToken = '';
+            try {
+                recaptchaToken = await grecaptcha.execute('6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'staff_login' });
+                document.getElementById('g-recaptcha-response').value = recaptchaToken;
+            } catch (err) {
+                console.warn('reCAPTCHA failed to load, proceeding anyway.');
             }
 
             authLoader.classList.add('active');

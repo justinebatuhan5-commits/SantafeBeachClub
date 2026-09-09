@@ -297,6 +297,21 @@ try {
         FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
     )");
 
+    // -----------------------------------------------------------------------
+    // Password Resets: stores hashed tokens for forgotten password recovery
+    // -----------------------------------------------------------------------
+    $conn->query("CREATE TABLE IF NOT EXISTS password_resets (
+        id         INT AUTO_INCREMENT PRIMARY KEY,
+        admin_id   INT          NOT NULL,
+        token_hash VARCHAR(64)  NOT NULL,
+        expires_at DATETIME     NOT NULL,
+        used       TINYINT(1)   NOT NULL DEFAULT 0,
+        ip_address VARCHAR(45)  DEFAULT NULL,
+        created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_reset_token (token_hash, used, expires_at),
+        FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+    )");
+
     // Seed default admin if no admins exist.
     // Default credentials: admin@beachclub.com / BeachAdmin@2024!
     // IMPORTANT: Change this password immediately after first login.

@@ -429,21 +429,24 @@
                 style.id = 'security-styles';
                 style.textContent = `
                     @keyframes secSpin { to { transform: rotate(360deg); } }
-                    @keyframes secFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-                    .is-invalid { border-color: #dc2626 !important; box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important; }
+                    @keyframes secFadeIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+                    .is-invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.2) !important; }
                     .is-valid { border-color: #16a34a !important; }
                     .security-field-error {
-                        color: #ef4444;
-                        font-size: 0.8rem;
-                        margin-top: 6px;
                         display: flex;
                         align-items: center;
-                        gap: 6px;
+                        gap: 5px;
+                        margin-top: 6px;
+                        font-size: 12px;
                         font-weight: 500;
-                        animation: secFadeIn 0.2s ease-out;
+                        color: #ef4444;
+                        line-height: 1.3;
+                        animation: secFadeIn 0.2s ease;
                     }
                     .security-field-error .error-icon {
+                        display: inline-block;
                         flex-shrink: 0;
+                        color: #ef4444;
                     }
                 `;
                 document.head.appendChild(style);
