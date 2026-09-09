@@ -153,372 +153,739 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Login - Santa Fe Beach Club</title>
+    <title>Staff & Reception Portal - Santa Fe Beach Club</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="assets/js/security.js" defer></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --brand-wood: #5C4033;
+            --brand-wood-dark: #422D23;
+            --brand-teal: #0D9488;
+            --brand-sand: #FAF7F2;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
-            margin: 0;
+            background-color: var(--brand-sand);
+            color: var(--text-dark);
             min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* ── Split Layout Container ─────────────────────── */
+        .portal-container {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            width: 100vw;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* ── Left Hero Side (Daylight Coastal Luxury) ───── */
+        .hero-section {
+            position: relative;
+            background: url('assets/images/staff_bg.jpg') center center / cover no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 56px 64px;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(15, 23, 42, 0.88) 100%);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .hero-logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .hero-brand-name {
+            font-family: 'Cinzel', serif;
+            font-size: 19px;
+            letter-spacing: 2px;
+            font-weight: 600;
+            color: #FFFFFF;
+            text-transform: uppercase;
+        }
+
+        .hero-brand-sub {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #99F6E4;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .hero-centerpiece {
+            position: relative;
+            z-index: 2;
+            margin: auto 0;
+            max-width: 540px;
+        }
+
+        .hero-badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #FFFFFF;
+            font-size: 12px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-title {
+            font-family: 'Cinzel', serif;
+            font-size: 44px;
+            line-height: 1.15;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+        }
+
+        .hero-title span {
+            color: #FDE047;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #F1F5F9;
+            margin-bottom: 28px;
+            font-weight: 300;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Live Clock Banner */
+        .hero-clock-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        .clock-time {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #FFFFFF;
+            letter-spacing: -0.5px;
+        }
+
+        .clock-divider {
+            width: 1px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .clock-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #CCFBF1;
+            font-weight: 600;
+        }
+
+        .clock-date {
+            font-size: 13px;
+            color: #FFFFFF;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+
+        .hero-footer {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #CBD5E1;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 20px;
+        }
+
+        .terminal-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #A7F3D0;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34D399;
+            box-shadow: 0 0 10px #34D399;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.6; }
+        }
+
+        /* ── Right Form Panel (Warm Sand Luxury) ────────── */
+        .form-section {
+            background: #FAF7F2;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Animated Beach-themed Gradient Background */
-            background: linear-gradient(-45deg, #f0e5d8, #e6d3c4, #b9c7c9, #d0dbdb);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            overflow: hidden;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Decorative background circles for depth */
-        .bg-shape {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
-            z-index: 0;
-            animation: floatShape 20s infinite alternate;
-        }
-        .shape-1 {
-            width: 400px; height: 400px;
-            background: rgba(197, 168, 142, 0.4);
-            top: -100px; left: -100px;
-        }
-        .shape-2 {
-            width: 500px; height: 500px;
-            background: rgba(130, 168, 160, 0.3);
-            bottom: -150px; right: -100px;
-            animation-delay: -5s;
-        }
-
-        @keyframes floatShape {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            100% { transform: translate(100px, 50px) rotate(20deg); }
-        }
-
-        .login-wrapper { 
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 24px; 
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); 
-            max-width: 480px; 
-            width: 90%; 
-            position: relative; 
-            z-index: 1; 
-            padding: 50px 40px;
-            
-            /* Entrance Animation */
-            opacity: 0;
-            transform: translateY(30px) scale(0.95);
-            animation: cardEnter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
-
-        @keyframes cardEnter {
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .brand-logo-img { 
-            width: 90px; 
-            height: 90px;
-            border-radius: 20px; 
-            box-shadow: 0 10px 25px rgba(100, 75, 57, 0.2); 
-            margin-bottom: 20px;
-            object-fit: cover;
-            
-            /* Logo Pop Animation */
-            opacity: 0;
-            transform: scale(0.5);
-            animation: logoPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
-        }
-
-        @keyframes logoPop {
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .form-title { 
-            font-size: 28px; 
-            font-weight: 800; 
-            color: #2D3748; 
-            margin-bottom: 8px; 
-            letter-spacing: -0.5px;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: slideUpFade 0.5s ease forwards 0.5s;
-        }
-        .form-subtitle { 
-            font-size: 15px; 
-            color: #718096; 
-            opacity: 0;
-            transform: translateY(10px);
-            animation: slideUpFade 0.5s ease forwards 0.6s;
-        }
-
-        .form-group { 
+            padding: 48px;
             position: relative;
-            margin-bottom: 30px; 
-            opacity: 0;
-            transform: translateY(10px);
-            animation: slideUpFade 0.5s ease forwards;
-        }
-        
-        .form-group:nth-child(1) { animation-delay: 0.7s; }
-        .form-group:nth-child(2) { animation-delay: 0.8s; }
-        .form-group:nth-child(3) { animation-delay: 0.9s; }
-
-        /* Floating Label styling */
-        .form-group input {
-            width: 100%; 
-            padding: 16px 16px 16px 45px; 
-            background: rgba(255, 255, 255, 0.7);
-            border: 2px solid transparent;
-            border-radius: 12px; 
-            font-family: 'Outfit', sans-serif; 
-            font-size: 15px;
-            color: #2D3748; 
-            outline: none; 
-            transition: all 0.3s ease;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            border-left: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .form-group .input-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #A0AEC0;
-            transition: color 0.3s ease;
-            pointer-events: none;
-        }
-
-        .form-group input:focus { 
-            background: #ffffff;
-            border-color: #644B39; 
-            box-shadow: 0 0 0 4px rgba(100, 75, 57, 0.1);
-        }
-
-        .form-group input:focus + .input-icon {
-            color: #644B39;
-        }
-
-        .btn-login {
-            width: 100%; 
-            background: linear-gradient(135deg, #644B39, #4a3527);
-            color: white; 
-            border: none;
-            padding: 16px; 
-            border-radius: 12px; 
-            font-family: 'Outfit', sans-serif;
-            font-size: 16px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            box-shadow: 0 4px 15px rgba(100, 75, 57, 0.3);
+        .form-card {
+            width: 100%;
+            max-width: 440px;
+            background: #FFFFFF;
+            border: 1px solid rgba(100, 75, 57, 0.12);
+            border-radius: 28px;
+            padding: 44px 38px;
+            box-shadow: 0 25px 50px -12px rgba(100, 75, 57, 0.12);
             position: relative;
-            overflow: hidden;
-            
-            opacity: 0;
-            transform: translateY(10px);
-            animation: slideUpFade 0.5s ease forwards 1s;
+            animation: formIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .btn-login:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(100, 75, 57, 0.4);
-        }
-        .btn-login:active {
-            transform: translateY(1px);
-        }
-
-        /* Button Ripple Effect */
-        .btn-login::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 5px; height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%);
-            transform-origin: 50% 50%;
-        }
-        @keyframes ripple {
-            0% { transform: scale(0, 0); opacity: 0.5; }
-            100% { transform: scale(100, 100); opacity: 0; }
-        }
-        .btn-login:focus:not(:active)::after {
-            animation: ripple 1s ease-out;
-        }
-
-        .error { 
-            color: #E53E3E; 
-            background: #FFF5F5; 
-            border-left: 4px solid #E53E3E;
-            padding: 12px 16px; 
-            border-radius: 8px; 
-            font-size: 14px; 
-            margin-bottom: 24px; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-weight: 500;
-            animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-        }
-
-        @keyframes slideUpFade {
+        @keyframes formIn {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+        .card-header {
+            margin-bottom: 32px;
+            text-align: left;
         }
 
-        /* Loading Screen adjustments */
-        .auth-loader-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(255,255,255,0.8);
+        .card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(100, 75, 57, 0.08);
+            color: var(--brand-wood);
+            border: 1px solid rgba(100, 75, 57, 0.2);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        .card-title {
+            font-family: 'Cinzel', serif;
+            font-size: 27px;
+            font-weight: 700;
+            color: var(--brand-wood-dark);
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .card-desc {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Floating Input Groups */
+        .input-block {
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        .input-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            color: #94A3B8;
+            pointer-events: none;
+            transition: color 0.3s;
+        }
+
+        .input-box input {
+            width: 100%;
+            padding: 16px 48px 16px 46px;
+            background: #F8FAFC;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 14px;
+            color: #1E293B;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-box input:focus {
+            background: #FFFFFF;
+            border-color: var(--brand-wood);
+            box-shadow: 0 0 0 4px rgba(100, 75, 57, 0.1);
+        }
+
+        .input-box input:focus ~ .input-icon {
+            color: var(--brand-wood);
+        }
+
+        .toggle-pw-btn {
+            position: absolute;
+            right: 14px;
+            background: none;
+            border: none;
+            color: #94A3B8;
+            cursor: pointer;
+            padding: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-pw-btn:hover {
+            color: var(--brand-wood);
+        }
+
+        /* Caps Lock Warning */
+        .caps-warning {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 11.5px;
+            color: #D97706;
+            font-weight: 500;
+        }
+
+        .caps-warning.active {
+            display: flex;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #5C4033, #3F2B22);
+            border: none;
+            border-radius: 14px;
+            color: #FFFFFF;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15.5px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(92, 64, 51, 0.3);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(92, 64, 51, 0.45);
+            background: linear-gradient(135deg, #4E362B, #33231B);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .switch-portal-wrap {
+            margin-top: 26px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            border-top: 1px solid #F1F5F9;
+            padding-top: 20px;
+        }
+
+        .switch-portal-wrap a {
+            color: var(--brand-wood);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .switch-portal-wrap a:hover {
+            color: #0F172A;
+            text-decoration: underline;
+        }
+
+        /* Errors and Alerts */
+        .error {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            animation: shake 0.45s ease-in-out;
+            font-weight: 500;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        .timeout-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(92, 64, 51, 0.08);
+            border: 1px solid rgba(92, 64, 51, 0.2);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--brand-wood-dark);
+        }
+
+        .timeout-banner svg { flex-shrink: 0; color: var(--brand-wood); margin-top: 2px; }
+        .timeout-banner-close {
+            background: none; border: none; color: var(--brand-wood); cursor: pointer; font-size: 18px; margin-left: auto;
+        }
+
+        /* ── Fullscreen Auth Loader ─────────────────────── */
+        .auth-loader-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
             z-index: 999999;
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transition: opacity 0.35s ease, visibility 0.35s ease;
         }
-        .auth-loader-screen.active { opacity: 1; visibility: visible; pointer-events: all; }
-        .auth-loader-box { position: relative; width: 105px; height: 105px; display: flex; align-items: center; justify-content: center; }
-        .auth-loader-track { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgba(100, 75, 57, 0.15); }
-        .auth-loader-spinner { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid transparent; border-top-color: #644B39; border-right-color: rgba(100, 75, 57, 0.4); animation: authSpinnerRotate 1.15s linear infinite; }
-        @keyframes authSpinnerRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .auth-loader-center { position: relative; width: 60px; height: 60px; }
-        .auth-loader-logo-img { width: 60px; height: 60px; border-radius: 50%; }
-        /* ── Inactivity Timeout Banner ───────────────────────────── */
-        .timeout-banner {
+
+        .auth-loader-screen.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+        }
+
+        .loader-ring-box {
+            position: relative;
+            width: 100px;
+            height: 100px;
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            background: rgba(100, 75, 57, 0.12);
-            border: 1px solid rgba(132, 86, 60, 0.35);
-            border-radius: 12px;
-            padding: 12px 14px;
-            margin-bottom: 14px;
-            font-size: 13px;
-            color: #D4B896;
-            line-height: 1.45;
-            animation: fadeSlideIn 0.35s ease;
+            align-items: center;
+            justify-content: center;
         }
-        .timeout-banner svg { flex-shrink: 0; margin-top: 1px; color: #A87B5A; }
-        .timeout-banner span { flex: 1; }
-        .timeout-banner-close {
-            flex-shrink: 0;
-            background: none;
-            border: none;
-            color: rgba(212, 184, 150, 0.7);
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 1;
-            padding: 0 2px;
-            transition: color 0.2s;
+
+        .loader-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2.5px solid rgba(92, 64, 51, 0.15);
+            border-top-color: var(--brand-wood);
+            animation: spin 1s linear infinite;
         }
-        .timeout-banner-close:hover { color: #D4B896; }
-        @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-logo {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .loader-caption {
+            font-size: 14px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--brand-wood-dark);
+            font-weight: 600;
+        }
+
+        /* ── Responsive adjustments ─────────────────────── */
+        @media (max-width: 1024px) {
+            .portal-container {
+                grid-template-columns: 1fr;
+            }
+            .hero-section {
+                padding: 40px 32px;
+                min-height: 380px;
+            }
+            .hero-title {
+                font-size: 32px;
+            }
+            .form-section {
+                padding: 36px 20px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .hero-section {
+                display: none;
+            }
+            .form-card {
+                padding: 32px 24px;
+                border-radius: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Fullscreen Loading Overlay -->
+    <!-- Fullscreen Verification Overlay -->
     <div id="authLoader" class="auth-loader-screen" aria-hidden="true">
-        <div class="auth-loader-box">
-            <div class="auth-loader-track"></div>
-            <div class="auth-loader-spinner"></div>
-            <div class="auth-loader-center">
-                <img src="assets/images/sf_logo.jpg" alt="SF Logo" class="auth-loader-logo-img">
-            </div>
+        <div class="loader-ring-box">
+            <div class="loader-ring"></div>
+            <img src="assets/images/sf_logo.jpg" alt="Logo" class="loader-logo">
         </div>
+        <p class="loader-caption">Verifying Staff Credentials...</p>
     </div>
 
-    <!-- Animated Background Shapes -->
-    <div class="bg-shape shape-1"></div>
-    <div class="bg-shape shape-2"></div>
-
-    <div class="login-wrapper">
-        <div class="login-header">
-            <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(100, 75, 57, 0.1); color: #644B39; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path><path d="M17 21v-8a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v8"></path></svg>
-                Staff & Reception Portal
-            </span>
-            <br>
-            <img src="assets/images/sf_logo.jpg" alt="Santa Fe Logo" class="brand-logo-img">
-            <h1 class="form-title">Staff Sign In</h1>
-            <p class="form-subtitle">Santa Fe Beach Club Reception & Staff</p>
-        </div>
-
-        <?php if (isset($_GET['timeout']) && $_GET['timeout'] == '1'): ?>
-        <div class="timeout-banner" id="timeoutBanner" role="alert" aria-live="polite">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Your session expired due to inactivity. Please sign in again to continue.</span>
-            <button type="button" class="timeout-banner-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
-        </div>
-        <?php endif; ?>
-
-        <div id="errorContainer">
-            <?php if ($error): ?>
-                <div class="error">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <span><?php echo htmlspecialchars($error); ?></span>
+    <main class="portal-container">
+        <!-- ── Left Architectural Showcase ──────────────── -->
+        <section class="hero-section" aria-label="Front Desk Information">
+            <div class="hero-content">
+                <div class="hero-brand">
+                    <img src="assets/images/sf_logo.jpg" alt="Santa Fe Beach Club" class="hero-logo">
+                    <div>
+                        <div class="hero-brand-name">Santa Fe Beach Club</div>
+                        <div class="hero-brand-sub">Front Desk Operations</div>
+                    </div>
                 </div>
-            <?php endif; ?>
-        </div>
-        
-        <form id="loginForm" method="POST" action="staff_login" autocomplete="on">
-            <?php echo csrf_field(); ?>
-            <input type="hidden" name="ajax" value="1">
-            
-            <div class="form-group">
-                <input type="email" id="username" name="username" required autofocus autocomplete="username" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" placeholder="Staff / Reception Email Address">
-                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </div>
-            
-            <div class="form-group">
-                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Password">
-                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            </div>
-            
-            <div class="form-group">
-                <button type="submit" id="submitBtn" class="btn-login">Sign In to Staff Portal</button>
-            </div>
-        </form>
 
-        <div style="text-align: center; margin-top: 22px; font-size: 13px; color: #718096;">
-            Management / Administrator? <a href="admin_login" style="color: #644B39; font-weight: 600; text-decoration: none;">Executive Login →</a>
-        </div>
-    </div>
+            <div class="hero-centerpiece">
+                <div class="hero-badge-tag">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path><path d="M17 21v-8a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v8"></path></svg>
+                    Reception Desk
+                </div>
+                <h1 class="hero-title" id="greetingTitle">Welcome <span>Front Desk</span></h1>
+                <p class="hero-subtitle">Guest registration, room reservations, active bookings, key management, and concierge hospitality services.</p>
+
+                <div class="hero-clock-box">
+                    <div class="clock-time" id="liveClock">--:--:--</div>
+                    <div class="clock-divider"></div>
+                    <div>
+                        <div class="clock-label">Bantayan Island Time (GMT+8)</div>
+                        <div class="clock-date" id="liveDate">Loading local time...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-footer">
+                <div class="terminal-pill">
+                    <span class="pulse-dot"></span>
+                    Terminal Ready &bull; Front Desk Portal
+                </div>
+                <div>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club</div>
+            </div>
+        </section>
+
+        <!-- ── Right Reception Form ─────────────────────── -->
+        <section class="form-section" aria-label="Sign In Form">
+            <div class="form-card">
+                <div class="card-header">
+                    <span class="card-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Reception Staff
+                    </span>
+                    <h2 class="card-title">Staff Sign In</h2>
+                    <p class="card-desc">Enter your receptionist email and password to begin your shift.</p>
+                </div>
+
+                <?php if (isset($_GET['timeout']) && $_GET['timeout'] == '1'): ?>
+                <div class="timeout-banner" id="timeoutBanner" role="alert" aria-live="polite">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Your shift session timed out due to inactivity. Please sign in again.</span>
+                    <button type="button" class="timeout-banner-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+                </div>
+                <?php endif; ?>
+
+                <div id="errorContainer">
+                    <?php if ($error): ?>
+                        <div class="error">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <span><?php echo htmlspecialchars($error); ?></span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <form id="loginForm" method="POST" action="staff_login" autocomplete="on">
+                    <?php echo csrf_field(); ?>
+                    <input type="hidden" name="ajax" value="1">
+
+                    <div class="input-block">
+                        <label class="input-label" for="username">Staff Email</label>
+                        <div class="input-box">
+                            <input type="email" id="username" name="username" required autofocus autocomplete="username" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" placeholder="reception@santabeachclub.com">
+                            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        </div>
+                    </div>
+
+                    <div class="input-block">
+                        <label class="input-label" for="password">Password</label>
+                        <div class="input-box">
+                            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+                            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <button type="button" class="toggle-pw-btn" id="togglePwBtn" aria-label="Toggle password visibility">
+                                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                        <div class="caps-warning" id="capsWarning">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            Caps Lock is ON
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <span>Sign In to Terminal</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </form>
+
+                <div class="switch-portal-wrap">
+                    Management / Administrator? <a href="admin_login">Executive Login &rarr;</a>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script>
+        // ── Realtime Bantayan Clock & Dynamic Greeting ──
+        function updateClock() {
+            const now = new Date();
+            const timeFormatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Manila',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            const dateFormatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Manila',
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+
+            const clockEl = document.getElementById('liveClock');
+            const dateEl = document.getElementById('liveDate');
+            if (clockEl) clockEl.textContent = timeFormatter.format(now);
+            if (dateEl) dateEl.textContent = dateFormatter.format(now);
+
+            // Dynamic Greeting
+            const manilaHour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: 'numeric', hour12: false }).format(now), 10);
+            const greetingEl = document.getElementById('greetingTitle');
+            if (greetingEl) {
+                if (manilaHour >= 5 && manilaHour < 12) {
+                    greetingEl.innerHTML = 'Good <span>Morning</span>';
+                } else if (manilaHour >= 12 && manilaHour < 18) {
+                    greetingEl.innerHTML = 'Good <span>Afternoon</span>';
+                } else {
+                    greetingEl.innerHTML = 'Good <span>Evening</span>';
+                }
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ── Password Visibility Toggle ──
+        const passwordInput = document.getElementById('password');
+        const togglePwBtn = document.getElementById('togglePwBtn');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        if (togglePwBtn && passwordInput) {
+            togglePwBtn.addEventListener('click', function() {
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                if (isPassword) {
+                    eyeIcon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>`;
+                } else {
+                    eyeIcon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
+                }
+            });
+        }
+
+        // ── Caps Lock Detector ──
+        const capsWarning = document.getElementById('capsWarning');
+        if (passwordInput && capsWarning) {
+            passwordInput.addEventListener('keyup', function(e) {
+                if (e.getModifierState && e.getModifierState('CapsLock')) {
+                    capsWarning.classList.add('active');
+                } else {
+                    capsWarning.classList.remove('active');
+                }
+            });
+        }
+
+        // ── AJAX Login Submission ──
         const loginForm = document.getElementById('loginForm');
         const authLoader = document.getElementById('authLoader');
         const errorContainer = document.getElementById('errorContainer');
@@ -527,7 +894,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function showError(msg) {
             errorContainer.innerHTML = `
                 <div class="error">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <span>${msg}</span>
                 </div>
             `;
@@ -545,7 +912,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return;
             }
 
-            // Immediately show smooth loading screen
             authLoader.classList.add('active');
             authLoader.setAttribute('aria-hidden', 'false');
             submitBtn.disabled = true;
@@ -563,10 +929,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 });
 
                 const data = await response.json();
-
-                // Ensure the loading animation plays gracefully for at least 1.2 seconds
                 const elapsed = Date.now() - startTime;
-                const minDisplayTime = 1200;
+                const minDisplayTime = 1000;
                 const remainingTime = Math.max(0, minDisplayTime - elapsed);
 
                 if (data && data.success) {
@@ -587,7 +951,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     authLoader.setAttribute('aria-hidden', 'true');
                     submitBtn.disabled = false;
                     showError('An unexpected network error occurred. Please try again.');
-                }, 500);
+                }, 400);
             }
         });
     </script>
