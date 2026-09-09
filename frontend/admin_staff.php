@@ -348,110 +348,136 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
 
         <div style="display:grid;grid-template-columns:1.8fr 1fr;gap:24px;align-items:start;">
 
-            <!-- Staff Table -->
-            <div class="admin-card">
-                <div class="admin-card-header">
-                    <h3>All Staff Accounts</h3>
-                    <button class="btn-primary" onclick="document.getElementById('addModal').classList.add('open')">
+            <!-- Staff Table - Modern Card Design -->
+            <div class="admin-card" style="overflow:hidden;">
+                <div class="admin-card-header" style="padding:20px 24px;border-bottom:1px solid var(--border-light);background:linear-gradient(135deg,rgba(124,83,60,0.04),rgba(180,130,90,0.02));">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#7C533C,#b4824a);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,83,60,0.3);flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div>
+                            <h3 style="margin:0;font-size:15px;font-weight:700;color:var(--text-main);">All Staff Accounts</h3>
+                            <p style="margin:0;font-size:11px;color:var(--text-muted);">Manage team access &amp; permissions</p>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="document.getElementById('addModal').classList.add('open')" style="display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(124,83,60,0.25);">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Staff
                     </button>
                 </div>
-                <table class="admin-table">
-                    <thead><tr><th>Account</th><th>OTP Delivery Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody>
-                    <?php while ($s = $staff_list->fetch_assoc()): 
-                        $isLocked = !empty($s['locked_until']) && (strtotime($s['locked_until']) > time());
-                    ?>
-                    <tr>
-                        <td>
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <div style="position:relative;">
-                                    <?php if (!empty($s['profile_photo']) && file_exists(__DIR__ . '/' . $s['profile_photo'])): ?>
-                                        <img src="<?php echo htmlspecialchars($s['profile_photo']); ?>" alt="Avatar" style="width:36px;height:36px;border-radius:10px;object-fit:cover;border:1.5px solid var(--border);box-shadow:var(--shadow-xs);">
-                                    <?php else: ?>
-                                        <div class="user-avatar" style="width:36px;height:36px;font-size:13px;border-radius:10px;"><?php echo strtoupper(substr($s['username'],0,1)); ?></div>
-                                    <?php endif; ?>
-                                </div>
-                                <div>
-                                    <div style="font-weight:600;display:flex;align-items:center;gap:6px;">
-                                        <?php echo htmlspecialchars($s['username']); ?>
-                                        <button type="button" style="background:none;border:none;cursor:pointer;padding:2px;color:#7C533C;" title="Update Profile Photo" onclick="openEditPhoto(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['profile_photo'] ?? ''); ?>')">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                                        </button>
-                                    </div>
-                                    <?php if ($s['username'] === $admin): ?><span class="badge badge-admin" style="font-size:9px;">You</span><?php endif; ?>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <?php if (!empty($s['email'])): ?>
-                                    <span style="font-size:13px;color:#1E293B;font-weight:500;"><?php echo htmlspecialchars($s['email']); ?></span>
-                                <?php else: ?>
-                                    <span style="font-size:12px;color:#DC2626;background:#FEE2E2;padding:2px 6px;border-radius:4px;">No personal email</span>
+
+                <!-- Column Headers -->
+                <div style="display:grid;grid-template-columns:2fr 1.8fr 1fr 1fr 1.6fr;gap:0;padding:10px 24px;background:rgba(248,250,252,0.9);border-bottom:1px solid var(--border-light);">
+                    <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Account</span>
+                    <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">OTP Email</span>
+                    <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Role</span>
+                    <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Status</span>
+                    <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Actions</span>
+                </div>
+
+                <!-- Staff Rows -->
+                <div>
+                <?php while ($s = $staff_list->fetch_assoc()):
+                    $isLocked = !empty($s['locked_until']) && (strtotime($s['locked_until']) > time());
+                    $isMe = $s['username'] === $admin;
+                    $roleColor = $s['role'] === 'admin' ? '#7C533C' : '#0369A1';
+                    $roleBg    = $s['role'] === 'admin' ? 'rgba(124,83,60,0.1)' : 'rgba(3,105,161,0.1)';
+                    $rowBg     = $isLocked ? 'rgba(254,242,242,0.6)' : 'transparent';
+                    $rowHover  = $isLocked ? 'rgba(254,226,226,0.5)' : 'rgba(248,250,252,0.9)';
+                ?>
+                <div style="display:grid;grid-template-columns:2fr 1.8fr 1fr 1fr 1.6fr;gap:0;align-items:center;padding:14px 24px;border-bottom:1px solid var(--border-light);background:<?php echo $rowBg; ?>;transition:background 0.15s;" onmouseover="this.style.background='<?php echo $rowHover; ?>'" onmouseout="this.style.background='<?php echo $rowBg; ?>'">
+
+                    <!-- Account -->
+                    <div style="display:flex;align-items:center;gap:11px;min-width:0;">
+                        <div style="position:relative;flex-shrink:0;">
+                            <?php if (!empty($s['profile_photo']) && file_exists(__DIR__ . '/' . $s['profile_photo'])): ?>
+                                <img src="<?php echo htmlspecialchars($s['profile_photo']); ?>" alt="Avatar" style="width:42px;height:42px;border-radius:12px;object-fit:cover;border:2px solid <?php echo $isLocked ? '#FECACA' : 'rgba(124,83,60,0.2)'; ?>;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                            <?php else: ?>
+                                <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,<?php echo $roleColor; ?>,<?php echo $roleColor; ?>bb);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);"><?php echo strtoupper(substr($s['username'],0,1)); ?></div>
+                            <?php endif; ?>
+                            <button type="button" title="Update Photo" onclick="openEditPhoto(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['profile_photo'] ?? ''); ?>')" style="position:absolute;bottom:-3px;right:-3px;width:19px;height:19px;background:#fff;border:1.5px solid #E2E8F0;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7C533C" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            </button>
+                        </div>
+                        <div style="min-width:0;">
+                            <div style="font-size:13px;font-weight:600;color:var(--text-main);display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                                <?php echo htmlspecialchars(explode('@', $s['username'])[0]); ?>
+                                <?php if ($isMe): ?>
+                                    <span style="font-size:9px;font-weight:700;color:#7C533C;background:rgba(124,83,60,0.1);padding:1px 6px;border-radius:4px;border:1px solid rgba(124,83,60,0.2);text-transform:uppercase;letter-spacing:0.5px;">You</span>
                                 <?php endif; ?>
-                                <button type="button" style="background:none;border:none;cursor:pointer;padding:2px;color:#7C533C;" title="Change OTP Delivery Email" onclick="openEditEmail(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['email'] ?? ''); ?>')">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                                </button>
                             </div>
-                        </td>
-                        <td>
+                            <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;"><?php echo htmlspecialchars($s['username']); ?></div>
+                        </div>
+                    </div>
+
+                    <!-- OTP Email -->
+                    <div style="display:flex;align-items:center;gap:5px;min-width:0;">
+                        <?php if (!empty($s['email'])): ?>
+                            <span style="font-size:12px;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo htmlspecialchars($s['email']); ?></span>
+                        <?php else: ?>
+                            <span style="font-size:10px;font-weight:700;color:#DC2626;background:#FEF2F2;padding:3px 8px;border-radius:5px;border:1px solid #FECACA;white-space:nowrap;">⚠ No email</span>
+                        <?php endif; ?>
+                        <button type="button" title="Edit OTP Email" onclick="openEditEmail(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['email'] ?? ''); ?>')" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:4px;color:#CBD5E1;border-radius:5px;display:flex;align-items:center;" onmouseover="this.style.color='#7C533C'" onmouseout="this.style.color='#CBD5E1'">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Role -->
+                    <div>
+                        <form method="POST" style="display:inline;">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="action" value="change_role">
+                            <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
+                            <select name="new_role" onchange="this.form.submit()" style="padding:5px 8px;border-radius:7px;border:1.5px solid <?php echo $roleColor; ?>33;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;color:<?php echo $roleColor; ?>;background:<?php echo $roleBg; ?>;cursor:pointer;">
+                                <option value="admin"        <?php echo $s['role']==='admin'?'selected':''; ?>>Admin</option>
+                                <option value="receptionist" <?php echo $s['role']==='receptionist'?'selected':''; ?>>Reception</option>
+                            </select>
+                        </form>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <?php if ($isLocked): ?>
+                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#991B1B;background:#FEE2E2;padding:4px 9px;border-radius:20px;border:1px solid #FECACA;white-space:nowrap;">
+                                <span style="width:6px;height:6px;border-radius:50%;background:#DC2626;display:inline-block;animation:pulse 1.5s infinite;"></span>
+                                Locked
+                            </span>
+                        <?php else: ?>
+                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;padding:4px 9px;border-radius:20px;border:1px solid #86EFAC;white-space:nowrap;">
+                                <span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block;"></span>
+                                Active
+                            </span>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+                        <?php if (!$isMe): ?>
                             <form method="POST" style="display:inline;">
                                 <?php echo csrf_field(); ?>
-                                <input type="hidden" name="action" value="change_role">
+                                <input type="hidden" name="action" value="toggle_lock">
                                 <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
-                                <select name="new_role" onchange="this.form.submit()" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-family:Outfit,sans-serif;font-size:12px;">
-                                    <option value="admin" <?php echo $s['role']==='admin'?'selected':''; ?>>Admin</option>
-                                    <option value="receptionist" <?php echo $s['role']==='receptionist'?'selected':''; ?>>Receptionist</option>
-                                </select>
-                            </form>
-                        </td>
-                        <td>
-                            <?php if ($isLocked): ?>
-                                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#991B1B;background:#FEE2E2;padding:3px 8px;border-radius:6px;">
-                                    🔒 Locked / Suspended
-                                </span>
-                            <?php else: ?>
-                                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#166534;background:#DCFCE7;padding:3px 8px;border-radius:6px;">
-                                    🟢 Active
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <div style="display:flex;gap:6px;align-items:center;">
-                                <?php if ($s['username'] !== $admin): ?>
-                                    <form method="POST" style="display:inline;">
-                                        <?php echo csrf_field(); ?>
-                                        <input type="hidden" name="action" value="toggle_lock">
-                                        <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
-                                        <?php if ($isLocked): ?>
-                                            <input type="hidden" name="lock_op" value="unlock">
-                                            <button type="submit" class="btn-secondary" style="padding:4px 8px;font-size:11px;background:#F0FDF4;border:1px solid #86EFAC;color:#166534;" title="Restore account login access">
-                                                🔓 Unlock
-                                            </button>
-                                        <?php else: ?>
-                                            <input type="hidden" name="lock_op" value="lock">
-                                            <button type="submit" class="btn-secondary" style="padding:4px 8px;font-size:11px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;" title="Immediately lock and suspend account">
-                                                🔒 Lock
-                                            </button>
-                                        <?php endif; ?>
-                                    </form>
+                                <?php if ($isLocked): ?>
+                                    <input type="hidden" name="lock_op" value="unlock">
+                                    <button type="submit" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F0FDF4;border:1.5px solid #86EFAC;color:#166534;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FDF4'">🔓 Unlock</button>
+                                <?php else: ?>
+                                    <input type="hidden" name="lock_op" value="lock">
+                                    <button type="submit" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#FEF2F2;border:1.5px solid #FECACA;color:#991B1B;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'">🔒 Lock</button>
                                 <?php endif; ?>
+                            </form>
+                        <?php endif; ?>
+                        <button onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>')" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F1F5F9;border:1.5px solid #E2E8F0;color:#475569;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">🔑 Reset</button>
+                        <form method="POST" style="display:inline;" onsubmit="return false;" data-confirm-title="Remove Staff Account" data-confirm-msg="Remove <?php echo htmlspecialchars($s['username']); ?>? This cannot be undone." data-confirm-icon="👤" data-confirm-icon-bg="#FEE2E2">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="action" value="delete_staff">
+                            <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
+                            <button type="submit" <?php echo $isMe?'disabled':''; ?> style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:<?php echo $isMe?'#F8FAFC':'#FEF2F2'; ?>;border:1.5px solid <?php echo $isMe?'#E2E8F0':'#FECACA'; ?>;color:<?php echo $isMe?'#CBD5E1':'#991B1B'; ?>;cursor:<?php echo $isMe?'not-allowed':'pointer'; ?>;white-space:nowrap;" <?php if(!$isMe):?>onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'"<?php endif;?>>🗑 Remove</button>
+                        </form>
+                    </div>
 
-                                <button class="btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>')">Reset PW</button>
-                                <form method="POST" onsubmit="return false;" data-confirm-title="Remove Staff Account" data-confirm-msg="Remove <?php echo htmlspecialchars($s['username']); ?>? This cannot be undone." data-confirm-icon="👤" data-confirm-icon-bg="#FEE2E2">
-                                    <?php echo csrf_field(); ?>
-                                    <input type="hidden" name="action" value="delete_staff">
-                                    <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
-                                    <button type="submit" class="btn-danger" <?php echo ($s['username']===$admin)?'disabled':''; ?>>Remove</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                    </tbody>
-                </table>
+                </div>
+                <?php endwhile; ?>
+                </div>
             </div>
 
             <!-- Reception Portal Lockdown & Maintenance Mode Control -->
