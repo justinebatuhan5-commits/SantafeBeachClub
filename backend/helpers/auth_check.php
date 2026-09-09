@@ -36,10 +36,32 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     if ($is_api_request) {
         http_response_code(401);
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Authentication required', 'redirect' => 'login']);
+        echo json_encode(['success' => false, 'error' => 'Authentication required', 'redirect' => 'staff_login']);
         exit;
     }
-    header('Location: login');
+    header('Location: staff_login');
     exit;
 }
+
+// ── Inactivity Timeout Check (15 minutes = 900 seconds) ─────────────────
+$inactivity_limit = 900;
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $inactivity_limit)) {
+    // Session expired due to inactivity
+    $role = $_SESSION['admin_role'] ?? 'receptionist';
+    $source = $_SESSION['login_source'] ?? ($role === 'admin' ? 'admin' : 'reception');
+    
+    session_unset();
+    session_destroy();
+    
+    $dest = ($source === 'admin') ? 'admin_login?timeout=1' : 'staff_login?timeout=1';
+    if ($is_api_request) {
+        http_response_code(401);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'Session timed out due to inactivity', 'redirect' => $dest]);
+        exit;
+    }
+    header("Location: $dest");
+    exit;
+}
+$_SESSION['last_activity'] = time();
 ?>

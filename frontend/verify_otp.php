@@ -15,8 +15,11 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 }
 
 // Must have pending MFA session
+$loginSource = $_SESSION['login_source'] ?? (($_SESSION['mfa_pending_admin_role'] ?? '') === 'admin' ? 'admin' : 'staff');
+$loginPage   = ($loginSource === 'admin') ? 'admin_login' : 'staff_login';
+
 if (!isset($_SESSION['mfa_pending_admin_id'])) {
-    header("Location: login");
+    header("Location: $loginPage");
     exit;
 }
 
@@ -126,10 +129,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                     $error = 'Maximum verification attempts exceeded. Please sign in again.';
                     if ($is_ajax) {
                         header('Content-Type: application/json');
-                        echo json_encode(['success' => false, 'message' => $error, 'redirect' => 'login']);
+                        echo json_encode(['success' => false, 'message' => $error, 'redirect' => $loginPage]);
                         exit;
                     }
-                    header("Location: login");
+                    header("Location: $loginPage");
                     exit;
                 } elseif ($verify['reason'] === 'expired_or_not_found') {
                     $error = 'Verification code expired or not found. Please click "Resend Code".';
@@ -420,7 +423,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
             <span id="countdownText" style="display:none;">(in <span id="timer">60</span>s)</span>
         </div>
 
-        <a href="logout" class="back-link">← Cancel and return to login</a>
+        <a href="logout" class="back-link">← Cancel and return to <?php echo ($loginSource === 'admin') ? 'Executive Login' : 'Front Desk Login'; ?></a>
     </div>
 
     <script>

@@ -510,7 +510,7 @@ if (isset($conn)) {
 }
 </style>
 
-<header class="page-header">
+<header class="page-header" data-role="<?php echo htmlspecialchars($_ph_role, ENT_QUOTES, 'UTF-8'); ?>">
     <div class="page-header-left">
         <button class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle Navigation" title="Toggle Sidebar">
             <!-- Arrow icon (shown when sidebar is open/expanded) -->
@@ -920,3 +920,6 @@ document.addEventListener('keydown', function(e) {
     });
 })();
 </script>
+
+<!-- Inactivity Auto-Logout Timer (15-min timeout with 60-sec warning modal) -->
+<script src="assets/js/inactivity-timer.js" defer></script>
