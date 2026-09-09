@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         body {
             font-family: 'Outfit', sans-serif;
-            background: url('assets/images/staff_bg.jpg') center center / cover no-repeat fixed;
+            background: #0D1B2A;
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
@@ -180,13 +180,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: relative;
         }
 
-        /* Soft ambient overlay on background */
-        body::before {
-            content: '';
+        /* ── Auto-Sliding Background Slideshow ─────────────── */
+        .bg-slideshow {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.55) 100%);
             z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-slide {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            animation: kenBurns 14s ease-in-out infinite alternate;
+        }
+
+        .bg-slide.active {
+            opacity: 1;
+        }
+
+        .bg-slide:nth-child(1) { background-image: url('assets/images/staff_bg1.jpg'); animation-delay: 0s; }
+        .bg-slide:nth-child(2) { background-image: url('assets/images/staff_bg2.jpg'); animation-delay: -5s; }
+        .bg-slide:nth-child(3) { background-image: url('assets/images/staff_bg3.jpg'); animation-delay: -10s; }
+
+        @keyframes kenBurns {
+            from { transform: scale(1.0) translateX(0px); }
+            to   { transform: scale(1.08) translateX(-12px); }
+        }
+
+        /* Slide dot indicators */
+        .slide-indicators {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .slide-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .slide-dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: #0D9488;
+            border-color: #0D9488;
+            box-shadow: 0 0 10px rgba(13,148,136,0.6);
+        }
+
+        /* Ambient overlay */
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.58) 100%);
+            z-index: 1;
             pointer-events: none;
         }
 
@@ -703,6 +762,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+    <!-- Auto-sliding background -->
+    <div class="bg-slideshow" aria-hidden="true">
+        <div class="bg-slide active"></div>
+        <div class="bg-slide"></div>
+        <div class="bg-slide"></div>
+    </div>
+    <div class="bg-overlay" aria-hidden="true"></div>
+
+    <!-- Slide progress indicators -->
+    <div class="slide-indicators" aria-hidden="true">
+        <div class="slide-dot active" data-slide="0"></div>
+        <div class="slide-dot" data-slide="1"></div>
+        <div class="slide-dot" data-slide="2"></div>
+    </div>
+
     <!-- Fullscreen Verification Overlay -->
     <div id="authLoader" class="auth-loader-screen" aria-hidden="true">
         <div class="loader-ring-box">
@@ -821,6 +895,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </section>
     </main>
 
+    <script>
+        // ── Auto-Sliding Background ──
+        (function() {
+            const slides = document.querySelectorAll('.bg-slide');
+            const dots   = document.querySelectorAll('.slide-dot');
+            let current = 0;
+            const INTERVAL = 6000; // ms per slide
+
+            function goToSlide(idx) {
+                slides[current].classList.remove('active');
+                dots[current].classList.remove('active');
+                current = (idx + slides.length) % slides.length;
+                slides[current].classList.add('active');
+                dots[current].classList.add('active');
+            }
+
+            // Auto advance
+            let timer = setInterval(() => goToSlide(current + 1), INTERVAL);
+
+            // Dot click navigation
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    clearInterval(timer);
+                    goToSlide(parseInt(dot.dataset.slide));
+                    timer = setInterval(() => goToSlide(current + 1), INTERVAL);
+                });
+            });
+        })();
+    </script>
     <script>
         // ── Realtime Bantayan Clock & Dynamic Greeting ──
         function updateClock() {
