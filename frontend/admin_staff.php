@@ -274,6 +274,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if ($action === 'toggle_staff_maintenance') {
+        $enabled = isset($_POST['maintenance_mode']) && $_POST['maintenance_mode'] === '1' ? '1' : '0';
+        $message = trim($_POST['maintenance_message'] ?? '');
+        if (empty($message)) {
+            $message = 'Front Desk Reception Portal is currently locked for system maintenance. Please contact the Resort Administrator.';
+        }
+
+        $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('staff_portal_locked', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+        $stmt->bind_param("s", $enabled);
+        $stmt->execute();
+        $stmt->close();
+
+        $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES ('staff_portal_locked_msg', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+        $stmt->bind_param("s", $message);
+        $stmt->execute();
+        $stmt->close();
+
+        $statusText = ($enabled === '1') ? 'LOCKED / UNDER MAINTENANCE' : 'ACTIVE / OPEN';
+        log_activity($conn, $admin, 'Portal Maintenance Toggled', "Staff login portal set to: {$statusText}");
+        SecurityLogger::log($conn, 'PORTAL_LOCK_CHANGED', "Staff portal maintenance mode set to {$statusText}", SecurityLogger::LEVEL_WARNING, $admin);
+
+        $_SESSION['staff_success'] = ($enabled === '1') 
+            ? "Staff login portal is now LOCKED for maintenance. Receptionists cannot sign in."
+            : "Staff login portal is now OPEN and unlocked for all staff.";
+    }
+
     header('Location: admin_staff');
     exit;
 }
@@ -288,6 +314,15 @@ if (isset($_SESSION['staff_error'])) {
 }
 
 $staff_list = $conn->query("SELECT id, username, email, role, profile_photo, locked_until, failed_login_count, created_at FROM admins ORDER BY role ASC, created_at ASC");
+
+// Fetch Staff Portal Lockdown / Maintenance Mode settings
+$portalSettingsRes = $conn->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('staff_portal_locked', 'staff_portal_locked_msg')");
+$portalSettings = [];
+while ($row = $portalSettingsRes->fetch_assoc()) {
+    $portalSettings[$row['setting_key']] = $row['setting_value'];
+}
+$isPortalLocked = ($portalSettings['staff_portal_locked'] ?? '0') === '1';
+$portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Reception Portal is currently locked for system maintenance. Please contact the Resort Administrator.';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -417,6 +452,72 @@ $staff_list = $conn->query("SELECT id, username, email, role, profile_photo, loc
                     <?php endwhile; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Reception Portal Lockdown & Maintenance Mode Control -->
+            <div class="admin-card" style="margin-bottom:24px;border:1.5px solid <?php echo $isPortalLocked ? '#FCA5A5' : 'var(--border)'; ?>;background:<?php echo $isPortalLocked ? '#FFF5F5' : 'var(--card-bg)'; ?>;">
+                <div class="admin-card-header" style="border-bottom:1px solid <?php echo $isPortalLocked ? '#FEE2E2' : 'var(--border-light)'; ?>;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:36px;height:36px;border-radius:10px;background:<?php echo $isPortalLocked ? '#FEE2E2' : '#F5ECE5'; ?>;display:flex;align-items:center;justify-content:center;color:<?php echo $isPortalLocked ? '#DC2626' : 'var(--primary)'; ?>;font-size:18px;">
+                            <?php echo $isPortalLocked ? '🔒' : '🛡️'; ?>
+                        </div>
+                        <div>
+                            <h3 style="margin:0;font-size:15px;color:<?php echo $isPortalLocked ? '#991B1B' : 'var(--text-main)'; ?>;">Staff Portal Lockdown</h3>
+                            <p style="margin:2px 0 0;font-size:12px;color:<?php echo $isPortalLocked ? '#B91C1C' : 'var(--text-muted)'; ?>;">
+                                Control reception desk access & maintenance mode
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <?php if ($isPortalLocked): ?>
+                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#991B1B;background:#FEE2E2;padding:4px 10px;border-radius:20px;border:1px solid #FCA5A5;letter-spacing:0.5px;">
+                                <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;display:inline-block;animation:pulse 1.5s infinite;"></span>
+                                LOCKED (OFFLINE)
+                            </span>
+                        <?php else: ?>
+                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#166534;background:#DCFCE7;padding:4px 10px;border-radius:20px;border:1px solid #86EFAC;letter-spacing:0.5px;">
+                                <span style="width:7px;height:7px;border-radius:50%;background:#16A34A;display:inline-block;"></span>
+                                PORTAL OPEN
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div style="padding:18px;">
+                    <p style="font-size:13px;color:<?php echo $isPortalLocked ? '#7F1D1D' : 'var(--text-muted)'; ?>;margin:0 0 16px;line-height:1.5;">
+                        <?php if ($isPortalLocked): ?>
+                            ⚠️ <strong>Maintenance mode is currently ACTIVE.</strong> The receptionist login page is locked. Anyone visiting <code>staff_login</code> will see a maintenance popup modal and cannot sign in.
+                        <?php else: ?>
+                            Lock the <code>staff_login</code> page whenever the front desk is under maintenance, undergoing shift auditing, or closed. Receptionists will see your custom popup message.
+                        <?php endif; ?>
+                    </p>
+
+                    <form method="POST" action="admin_staff">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="toggle_staff_maintenance">
+                        
+                        <div style="margin-bottom:14px;">
+                            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-main);margin-bottom:6px;">Popup Alert Message for Receptionists:</label>
+                            <textarea name="maintenance_message" rows="2" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;" placeholder="E.g., Front Desk Reception Portal is currently locked for system maintenance. Please contact the Resort Administrator."><?php echo htmlspecialchars($portalLockMsg); ?></textarea>
+                        </div>
+
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px;">
+                            <?php if ($isPortalLocked): ?>
+                                <input type="hidden" name="maintenance_mode" value="0">
+                                <button type="submit" class="btn-primary" style="background:#16A34A;border-color:#15803D;padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                    Unlock Staff Portal (Restore Sign In)
+                                </button>
+                            <?php else: ?>
+                                <input type="hidden" name="maintenance_mode" value="1">
+                                <button type="submit" class="btn-danger" style="padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;" onclick="return confirm('Are you sure you want to LOCK the staff login portal? All receptionist sign-ins will be blocked and an under-maintenance popup will be shown.')">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    Lock Staff Portal (Activate Maintenance Mode)
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- Permissions Reference -->

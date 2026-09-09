@@ -21,8 +21,30 @@ $is_ajax = (isset($_POST['ajax']) && $_POST['ajax'] === '1') ||
            (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
            (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
 
+// ── Check if Staff Portal is Locked / In Maintenance Mode ──
+$portalLockQuery = $conn->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('staff_portal_locked', 'staff_portal_locked_msg')");
+$portalSettings = [];
+if ($portalLockQuery) {
+    while ($row = $portalLockQuery->fetch_assoc()) {
+        $portalSettings[$row['setting_key']] = $row['setting_value'];
+    }
+}
+$isStaffPortalLocked = ($portalSettings['staff_portal_locked'] ?? '0') === '1';
+$staffPortalLockMsg  = !empty($portalSettings['staff_portal_locked_msg']) 
+    ? $portalSettings['staff_portal_locked_msg'] 
+    : 'Front Desk Reception Portal is currently locked for system maintenance. Please contact the Resort Administrator.';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // ── reCAPTCHA v3 Verification ────────────────────────────
+    // If portal is locked, block receptionists from signing in
+    if ($isStaffPortalLocked) {
+        $error = "🔒 " . $staffPortalLockMsg;
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => $error, 'portal_locked' => true]);
+            exit;
+        }
+    } else {
+        // ── reCAPTCHA v3 Verification ────────────────────────────
     $recaptchaToken = $_POST['g-recaptcha-response'] ?? '';
     $recaptchaResult = recaptcha_verify($recaptchaToken, 'staff_login');
     if (!$recaptchaResult['success']) {
@@ -165,8 +187,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'Please enter both username and password.';
         }
-    } // end else (reCAPTCHA passed)
-    } // End CSRF verification else
+        } // end else (reCAPTCHA passed)
+        } // End CSRF verification else
+    } // end else (portal is NOT locked)
 
     if ($is_ajax) {
         header('Content-Type: application/json');
@@ -662,8 +685,141 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .switch-portal-wrap a:hover {
-            color: #0F172A;
+            color: #3F2B22;
             text-decoration: underline;
+        }
+
+        /* ── Staff Portal Maintenance Modal ── */
+        .portal-lock-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            padding: 20px;
+            animation: fadeInLock 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInLock {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .portal-lock-modal {
+            background: #FFFFFF;
+            max-width: 460px;
+            width: 100%;
+            border-radius: 20px;
+            padding: 36px 32px 30px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(239, 68, 68, 0.15);
+            position: relative;
+            transform: scale(1);
+            animation: popInLock 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popInLock {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .portal-lock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 30px;
+            background: #FEE2E2;
+            color: #991B1B;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+            border: 1px solid #FECACA;
+        }
+
+        .portal-lock-icon-wrap {
+            width: 72px;
+            height: 72px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+            border: 2px solid #FCA5A5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: #DC2626;
+            box-shadow: 0 10px 20px -5px rgba(220, 38, 38, 0.2);
+        }
+
+        .portal-lock-title {
+            font-family: 'Outfit', serif;
+            font-size: 23px;
+            font-weight: 700;
+            color: #1E293B;
+            margin: 0 0 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .portal-lock-msg {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #475569;
+            margin: 0 0 24px;
+            background: #F8FAFC;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            text-align: left;
+        }
+
+        .portal-lock-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-portal-admin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 13px 20px;
+            background: #5C4033;
+            color: #FFFFFF;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-portal-admin:hover {
+            background: #3F2B22;
+            color: #FFFFFF;
+        }
+
+        .btn-portal-dismiss {
+            background: none;
+            border: 1px solid #CBD5E1;
+            color: #64748B;
+            padding: 11px 20px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-portal-dismiss:hover {
+            background: #F1F5F9;
+            color: #1E293B;
         }
 
         /* ── Field Validation Errors ────────────────────── */
@@ -924,7 +1080,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="input-block">
                         <label class="input-label" for="username">Staff Email</label>
                         <div class="input-box">
-                            <input type="email" id="username" name="username" autofocus autocomplete="username" data-label="Email" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" placeholder="reception@santabeachclub.com">
+                            <input type="email" id="username" name="username" autofocus autocomplete="username" data-label="Email" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" placeholder="reception@santabeachclub.com" <?php echo $isStaffPortalLocked ? 'disabled style="background:#F1F5F9;cursor:not-allowed;"' : ''; ?>>
                             <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                         </div>
                     </div>
@@ -935,7 +1091,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <a href="forgot_password?portal=staff" style="font-size: 12px; color: #5C4033; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#3F2B22'; this.style.textDecoration='underline';" onmouseout="this.style.color='#5C4033'; this.style.textDecoration='none';">Forgot Password?</a>
                         </div>
                         <div class="input-box">
-                            <input type="password" id="password" name="password" autocomplete="current-password" data-label="Password" placeholder="Enter your password">
+                            <input type="password" id="password" name="password" autocomplete="current-password" data-label="Password" placeholder="Enter your password" <?php echo $isStaffPortalLocked ? 'disabled style="background:#F1F5F9;cursor:not-allowed;"' : ''; ?>>
                             <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                             <button type="button" class="toggle-pw-btn" id="togglePwBtn" aria-label="Toggle password visibility">
                                 <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -947,8 +1103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <button type="submit" id="submitBtn" class="btn-submit">
-                        <span>Sign In to Terminal</span>
+                    <button type="submit" id="submitBtn" class="btn-submit" <?php echo $isStaffPortalLocked ? 'disabled style="opacity:0.6;cursor:not-allowed;"' : ''; ?>>
+                        <span><?php echo $isStaffPortalLocked ? 'Portal Locked (Maintenance)' : 'Sign In to Terminal'; ?></span>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </button>
                 </form>
@@ -959,6 +1115,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </section>
     </main>
+
+    <?php if ($isStaffPortalLocked): ?>
+    <!-- ── Maintenance Lockout Popup Modal ── -->
+    <div class="portal-lock-overlay" id="portalLockOverlay" role="dialog" aria-modal="true" aria-labelledby="lockModalTitle">
+        <div class="portal-lock-modal">
+            <div class="portal-lock-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                System Maintenance
+            </div>
+
+            <div class="portal-lock-icon-wrap">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+
+            <h3 class="portal-lock-title" id="lockModalTitle">Staff Portal Offline</h3>
+            
+            <div class="portal-lock-msg">
+                <strong style="display:block;color:#991B1B;margin-bottom:6px;">⚠️ Reception Sign-In Restricted</strong>
+                <?php echo nl2br(htmlspecialchars($staffPortalLockMsg)); ?>
+            </div>
+
+            <div class="portal-lock-actions">
+                <a href="admin_login" class="btn-portal-admin">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Go to Executive Admin Login
+                </a>
+                <button type="button" class="btn-portal-dismiss" onclick="document.getElementById('portalLockOverlay').style.display='none'">
+                    Dismiss & View Screen
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <script>
         // ── Auto-Sliding Background ──
