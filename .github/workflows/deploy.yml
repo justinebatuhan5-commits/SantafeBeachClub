@@ -21,7 +21,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
-          server-dir: /htdocs/
+          server-dir: /santafebeachclub.wuaze.com/htdocs/
           exclude: |
             **/.git*
             **/.git*/**
