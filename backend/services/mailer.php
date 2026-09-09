@@ -28,7 +28,8 @@ if (!defined('_ENV_LOADED')) {
 }
 
 if (!defined('GMAIL_USER'))         define('GMAIL_USER',         getenv('GMAIL_USER')         ?: 'Justinebatuhan017@gmail.com');
-if (!defined('GMAIL_APP_PASSWORD')) define('GMAIL_APP_PASSWORD', getenv('GMAIL_APP_PASSWORD') ?: 'zsuq eivw kfmw xxsv');
+// Strip spaces: Google shows App Passwords with spaces in their UI (e.g. "xxxx xxxx xxxx xxxx") but SMTP needs the 16-char version without spaces.
+if (!defined('GMAIL_APP_PASSWORD')) define('GMAIL_APP_PASSWORD', str_replace(' ', '', getenv('GMAIL_APP_PASSWORD') ?: 'zsuqeivwkfmwxxsv'));
 if (!defined('MAIL_FROM_NAME'))     define('MAIL_FROM_NAME',     getenv('MAIL_FROM_NAME')     ?: 'Santa Fe Beach Club');
 
 /**
@@ -72,6 +73,7 @@ function sendBookingConfirmationEmail(
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->Timeout    = 8; // 8 seconds max timeout so page doesn't hang forever
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
 
         // Recipients
         $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
@@ -208,6 +210,7 @@ function sendBookingCancellationEmail(
         $mail->Password   = GMAIL_APP_PASSWORD;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
 
         $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
@@ -300,6 +303,7 @@ function sendPaymentRejectedEmail(
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->Timeout    = 8;
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
 
         $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
