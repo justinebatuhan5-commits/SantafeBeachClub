@@ -672,133 +672,261 @@ if (empty($room_types)) {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,.55);
+        background: rgba(15, 23, 42, 0.72);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         align-items: center;
         justify-content: center;
-        z-index: 9999;
+        z-index: 99999;
         padding: 20px;
-        animation: ocm-fadein .22s ease;
+        animation: ocm-fadein .28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes ocm-fadein { from { opacity:0; } to { opacity:1; } }
     .ocm-card {
-        background: #fff;
-        width: min(100%, 480px);
-        border-radius: 16px;
-        box-shadow: 0 20px 50px rgba(0,0,0,.25);
+        background: #FFFFFF;
+        width: min(100%, 500px);
+        border-radius: 20px;
+        box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
         overflow: hidden;
-        animation: ocm-slidein .25s cubic-bezier(.34,1.36,.64,1);
+        animation: ocm-slidein .32s cubic-bezier(.34, 1.25, .64, 1);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
-    @keyframes ocm-slidein { from { transform: translateY(30px) scale(.96); } to { transform: none; } }
+    @keyframes ocm-slidein { from { transform: translateY(24px) scale(.95); } to { transform: translateY(0) scale(1); } }
     .ocm-header {
         display: flex;
         align-items: center;
-        gap: 14px;
-        padding: 22px 24px 18px;
-        background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+        gap: 16px;
+        padding: 22px 26px;
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        border-bottom: 3px solid #D97706;
         color: #fff;
+        position: relative;
     }
-    .ocm-icon {
-        width: 42px; height: 42px;
-        background: rgba(255,255,255,.18);
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
+    .ocm-logo-wrap {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: #FFFFFF;
+        padding: 3px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
-        font-size: 20px;
     }
-    .ocm-header-text h3 { margin:0; font-size:17px; font-weight:800; }
-    .ocm-header-text p  { margin:4px 0 0; font-size:12px; opacity:.85; }
-    .ocm-body { padding: 20px 24px 6px; }
-    .ocm-desc {
-        font-size: 14px;
-        color: #555;
-        line-height: 1.55;
-        margin: 0 0 14px;
+    .ocm-logo-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 9px;
+    }
+    .ocm-header-text {
+        flex: 1;
+        min-width: 0;
+    }
+    .ocm-brand-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #F59E0B;
+        margin-bottom: 2px;
+    }
+    .ocm-header-text h3 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #FFFFFF;
+        letter-spacing: -0.2px;
+    }
+    .ocm-header-text p {
+        margin: 3px 0 0;
+        font-size: 12px;
+        color: #94A3B8;
+    }
+    .ocm-close-x {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: #94A3B8;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-size: 16px;
+        line-height: 1;
+    }
+    .ocm-close-x:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #FFFFFF;
+    }
+    .ocm-body {
+        padding: 22px 26px 14px;
+        background: #FAFAFA;
+    }
+    .ocm-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        background: #FEF3C7;
+        border: 1px solid #FCD34D;
+        border-radius: 12px;
+        padding: 11px 14px;
+        margin-bottom: 16px;
+    }
+    .ocm-banner-icon {
+        font-size: 17px;
+        line-height: 1.2;
+    }
+    .ocm-banner-text {
+        font-size: 12.5px;
+        color: #92400E;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+    .ocm-list-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #64748B;
+        margin-bottom: 8px;
     }
     .ocm-guest-list {
         list-style: none;
-        margin: 0; padding: 0;
+        margin: 0;
+        padding: 0;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        max-height: 190px;
+        max-height: 180px;
         overflow-y: auto;
     }
     .ocm-guest-list li {
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: space-between;
         padding: 10px 14px;
-        background: #fff8ed;
-        border: 1px solid #fde68a;
-        border-radius: 9px;
-        font-size: 14px;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-left: 4px solid #EA580C;
+        border-radius: 10px;
+        font-size: 13.5px;
         font-weight: 600;
-        color: #92400e;
+        color: #1E293B;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
-    .ocm-guest-list li::before { content: '⚠️'; font-size:16px; flex-shrink:0; }
-    .ocm-timestamp {
-        font-size: 12px;
-        color: #aaa;
-        margin: 14px 0 0;
-        padding-top: 12px;
-        border-top: 1px solid #f0f0f0;
-    }
-    .ocm-footer {
+    .ocm-guest-name {
         display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        padding: 16px 24px 22px;
+        align-items: center;
+        gap: 9px;
     }
-    .ocm-btn-dismiss {
-        padding: 10px 18px;
-        border: 1px solid #e5e7eb;
-        background: #f9fafb;
-        color: #555;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 14px;
-    }
-    .ocm-btn-go {
-        padding: 10px 20px;
-        border: none;
-        background: linear-gradient(135deg,#b45309,#d97706);
-        color: #fff;
-        border-radius: 8px;
-        cursor: pointer;
+    .ocm-guest-badge {
+        font-size: 11px;
         font-weight: 700;
-        font-size: 14px;
-        box-shadow: 0 2px 8px rgba(180,83,9,.35);
-        text-decoration: none;
-        display: inline-flex;
+        padding: 3px 8px;
+        background: #FEE2E2;
+        color: #DC2626;
+        border-radius: 6px;
+        letter-spacing: 0.2px;
+    }
+    .ocm-timestamp {
+        font-size: 11.5px;
+        color: #94A3B8;
+        margin: 14px 0 0;
+        display: flex;
         align-items: center;
         gap: 6px;
     }
-    .ocm-btn-go:hover { filter: brightness(1.08); }
+    .ocm-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 26px 20px;
+        background: #FFFFFF;
+        border-top: 1px solid #F1F5F9;
+    }
+    .ocm-btn-dismiss {
+        padding: 10px 18px;
+        border: 1px solid #E2E8F0;
+        background: #F8FAFC;
+        color: #475569;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.15s ease;
+    }
+    .ocm-btn-dismiss:hover {
+        background: #F1F5F9;
+        color: #1E293B;
+        border-color: #CBD5E1;
+    }
+    .ocm-btn-go {
+        padding: 10px 22px;
+        border: none;
+        background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+        color: #FFFFFF;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+        box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s ease;
+    }
+    .ocm-btn-go:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(217, 119, 6, 0.45);
+        filter: brightness(1.05);
+    }
 </style>
 
 <div id="overdueCheckoutModal" role="dialog" aria-modal="true" aria-labelledby="ocmTitle">
     <div class="ocm-card">
         <div class="ocm-header">
-            <div class="ocm-icon">⏰</div>
-            <div class="ocm-header-text">
-                <h3 id="ocmTitle">Overdue Check-out Alert</h3>
-                <p>Action required — guests are past their departure time</p>
+            <div class="ocm-logo-wrap">
+                <img src="assets/logo.png" alt="Santa Fe Beach Club Logo" onerror="this.src='assets/logo.jpg'">
             </div>
+            <div class="ocm-header-text">
+                <div class="ocm-brand-badge">
+                    <span>★</span> Santa Fe Beach Club
+                </div>
+                <h3 id="ocmTitle">Overdue Check-out Alert</h3>
+                <p>Action required &bull; Scheduled departure time has passed</p>
+            </div>
+            <button class="ocm-close-x" onclick="document.getElementById('overdueCheckoutModal').style.display='none'" title="Close">&times;</button>
         </div>
         <div class="ocm-body">
-            <p class="ocm-desc">
-                The following guest(s) have passed their scheduled check-out time and are still checked in.
-                Please process their departure as soon as possible.
-            </p>
+            <div class="ocm-banner">
+                <span class="ocm-banner-icon">⏰</span>
+                <span class="ocm-banner-text">The following guest(s) have passed their scheduled check-out date and are still marked as <strong>Checked In</strong>. Please process their departure to free up accommodations.</span>
+            </div>
+            <div class="ocm-list-label">Overdue Guest(s)</div>
             <ul class="ocm-guest-list" id="ocmGuestList"></ul>
-            <p class="ocm-timestamp">As of <?php echo htmlspecialchars($_overdue_now_display); ?> &middot; <?php echo htmlspecialchars($_overdue_tz_name); ?></p>
+            <p class="ocm-timestamp">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                As of <?php echo htmlspecialchars($_overdue_now_display); ?> &bull; <?php echo htmlspecialchars($_overdue_tz_name); ?>
+            </p>
         </div>
         <div class="ocm-footer">
             <button class="ocm-btn-dismiss" onclick="document.getElementById('overdueCheckoutModal').style.display='none'">
                 Dismiss
             </button>
-            <a class="ocm-btn-go" href="admin_checkout">➜ Go to Check-out Page</a>
+            <a class="ocm-btn-go" href="admin_checkout">
+                <span>Go to Check-out Page</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
         </div>
     </div>
 </div>
@@ -808,7 +936,9 @@ if (empty($room_types)) {
     var names = <?php echo json_encode($_overdue_guest_names, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
     if (names.length > 0) {
         var list = document.getElementById('ocmGuestList');
-        list.innerHTML = names.map(function(n){ return '<li>' + n + '</li>'; }).join('');
+        list.innerHTML = names.map(function(n){
+            return '<li><div class="ocm-guest-name"><span>👤</span> ' + n + '</div><span class="ocm-guest-badge">Overdue</span></li>';
+        }).join('');
         document.getElementById('overdueCheckoutModal').style.display = 'flex';
     }
 })();
