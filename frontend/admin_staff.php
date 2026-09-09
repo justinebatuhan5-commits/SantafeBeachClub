@@ -336,17 +336,18 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
 <body>
     <?php $active_page = 'staff'; include __DIR__ . '/partials/_sidebar.php'; ?>
 
-    <main class="main-content">
+    <main class="admin-main">
         <?php
         $page_title = 'Staff Management';
         $page_subtitle = 'Manage receptionist and admin accounts, profile photos, roles, and MFA verification emails.';
         include __DIR__ . '/partials/_page_header.php';
         ?>
 
-        <?php if ($success): ?><div class="alert alert-success"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><?php echo htmlspecialchars($success); ?></div><?php endif; ?>
-        <?php if ($error):   ?><div class="alert alert-error"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
+        <div class="admin-body">
+            <?php if ($success): ?><div class="alert alert-success"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><?php echo htmlspecialchars($success); ?></div><?php endif; ?>
+            <?php if ($error):   ?><div class="alert alert-error"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
-        <div style="display:grid;grid-template-columns:1.8fr 1fr;gap:24px;align-items:start;">
+            <div style="display:grid;grid-template-columns:1.8fr 1fr;gap:24px;align-items:start;">
 
             <!-- Staff Table - Modern Card Design -->
             <div class="admin-card" style="overflow:hidden;">
@@ -480,107 +481,112 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                 </div>
             </div>
 
-            <!-- Reception Portal Lockdown & Maintenance Mode Control -->
-            <div class="admin-card" style="margin-bottom:24px;border:1.5px solid <?php echo $isPortalLocked ? '#FCA5A5' : 'var(--border)'; ?>;background:<?php echo $isPortalLocked ? '#FFF5F5' : 'var(--card-bg)'; ?>;">
-                <div class="admin-card-header" style="border-bottom:1px solid <?php echo $isPortalLocked ? '#FEE2E2' : 'var(--border-light)'; ?>;">
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <img src="assets/logo.jpg" alt="Logo" style="width:38px;height:38px;border-radius:10px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.12);border:1.5px solid var(--border);">
+            <!-- Right Column: Portal Lockdown & Permission Reference -->
+            <div style="display:flex;flex-direction:column;gap:24px;">
+                <!-- Reception Portal Lockdown & Maintenance Mode Control -->
+                <div class="admin-card" style="border:1.5px solid <?php echo $isPortalLocked ? '#FCA5A5' : 'var(--border)'; ?>;background:<?php echo $isPortalLocked ? '#FFF5F5' : 'var(--card-bg)'; ?>;">
+                    <div class="admin-card-header" style="border-bottom:1px solid <?php echo $isPortalLocked ? '#FEE2E2' : 'var(--border-light)'; ?>;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img src="assets/logo.jpg" alt="Logo" style="width:38px;height:38px;border-radius:10px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.12);border:1.5px solid var(--border);">
+                            <div>
+                                <h3 style="margin:0;font-size:15px;color:<?php echo $isPortalLocked ? '#991B1B' : 'var(--text-main)'; ?>;">Staff Portal Lockdown</h3>
+                                <p style="margin:2px 0 0;font-size:12px;color:<?php echo $isPortalLocked ? '#B91C1C' : 'var(--text-muted)'; ?>;">
+                                    Control reception desk access &amp; maintenance mode
+                                </p>
+                            </div>
+                        </div>
                         <div>
-                            <h3 style="margin:0;font-size:15px;color:<?php echo $isPortalLocked ? '#991B1B' : 'var(--text-main)'; ?>;">Staff Portal Lockdown</h3>
-                            <p style="margin:2px 0 0;font-size:12px;color:<?php echo $isPortalLocked ? '#B91C1C' : 'var(--text-muted)'; ?>;">
-                                Control reception desk access & maintenance mode
-                            </p>
-                        </div>
-                    </div>
-                    <div>
-                        <?php if ($isPortalLocked): ?>
-                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#991B1B;background:#FEE2E2;padding:4px 10px;border-radius:20px;border:1px solid #FCA5A5;letter-spacing:0.5px;">
-                                <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;display:inline-block;animation:pulse 1.5s infinite;"></span>
-                                LOCKED (OFFLINE)
-                            </span>
-                        <?php else: ?>
-                            <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#166534;background:#DCFCE7;padding:4px 10px;border-radius:20px;border:1px solid #86EFAC;letter-spacing:0.5px;">
-                                <span style="width:7px;height:7px;border-radius:50%;background:#16A34A;display:inline-block;"></span>
-                                PORTAL OPEN
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <div style="padding:18px;">
-                    <p style="font-size:13px;color:<?php echo $isPortalLocked ? '#7F1D1D' : 'var(--text-muted)'; ?>;margin:0 0 16px;line-height:1.5;">
-                        <?php if ($isPortalLocked): ?>
-                            ⚠️ <strong>Maintenance mode is currently ACTIVE.</strong> The receptionist login page is locked. Anyone visiting <code>staff_login</code> will see a maintenance popup modal and cannot sign in.
-                        <?php else: ?>
-                            Lock the <code>staff_login</code> page whenever the front desk is under maintenance, undergoing shift auditing, or closed. Receptionists will see your custom popup message.
-                        <?php endif; ?>
-                    </p>
-
-                    <form method="POST" action="admin_staff" <?php if (!$isPortalLocked): ?>data-confirm-title="Lock Reception Portal?" data-confirm-msg="Are you sure you want to LOCK the staff login portal? All receptionist sign-ins will be blocked and an under-maintenance popup will be shown." data-confirm-icon="🔒" data-confirm-icon-bg="#FEE2E2" data-confirm-color="#DC2626" data-confirm-text="Lock Portal"<?php endif; ?>>
-                        <?php echo csrf_field(); ?>
-                        <input type="hidden" name="action" value="toggle_staff_maintenance">
-                        
-                        <div style="margin-bottom:14px;">
-                            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-main);margin-bottom:6px;">Popup Alert Message for Receptionists:</label>
-                            <textarea name="maintenance_message" rows="2" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;" placeholder="E.g., Front Desk Reception Portal is currently locked for system maintenance. Please contact the Resort Administrator."><?php echo htmlspecialchars($portalLockMsg); ?></textarea>
-                        </div>
-
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px;">
                             <?php if ($isPortalLocked): ?>
-                                <input type="hidden" name="maintenance_mode" value="0">
-                                <button type="submit" class="btn-primary" style="background:#16A34A;border-color:#15803D;padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                                    Unlock Staff Portal (Restore Sign In)
-                                </button>
+                                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#991B1B;background:#FEE2E2;padding:4px 10px;border-radius:20px;border:1px solid #FCA5A5;letter-spacing:0.5px;">
+                                    <span style="width:7px;height:7px;border-radius:50%;background:#DC2626;display:inline-block;animation:pulse 1.5s infinite;"></span>
+                                    LOCKED (OFFLINE)
+                                </span>
                             <?php else: ?>
-                                <input type="hidden" name="maintenance_mode" value="1">
-                                <button type="submit" class="btn-danger" style="padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                    Lock Staff Portal (Activate Maintenance Mode)
-                                </button>
+                                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#166534;background:#DCFCE7;padding:4px 10px;border-radius:20px;border:1px solid #86EFAC;letter-spacing:0.5px;">
+                                    <span style="width:7px;height:7px;border-radius:50%;background:#16A34A;display:inline-block;"></span>
+                                    PORTAL OPEN
+                                </span>
                             <?php endif; ?>
                         </div>
-                    </form>
-                </div>
-            </div>
+                    </div>
 
-            <!-- Permissions Reference -->
-            <div class="admin-card">
-                <div class="admin-card-header"><h3>Permission Reference</h3></div>
-                <table class="admin-table">
-                    <thead><tr><th>Feature</th><th style="text-align:center;">Admin</th><th style="text-align:center;">Reception</th></tr></thead>
-                    <tbody>
-                    <?php
-                    $perms = [
-                        'Dashboard'            => ['admin'=>true, 'rec'=>true],
-                        'Reservations'         => ['admin'=>true, 'rec'=>true],
-                        'Check-in/out'         => ['admin'=>true, 'rec'=>true],
-                        'Payments'             => ['admin'=>true, 'rec'=>true],
-                        'Accommodations'       => ['admin'=>true, 'rec'=>'View Only'],
-                        'Staff Management'     => ['admin'=>true, 'rec'=>false],
-                        'Reports'              => ['admin'=>true, 'rec'=>'Limited'],
-                        'Promotions'           => ['admin'=>true, 'rec'=>false],
-                        'Activity Logs'        => ['admin'=>true, 'rec'=>false],
-                        'Settings'             => ['admin'=>true, 'rec'=>true],
-                    ];
-                    foreach ($perms as $feat => $p):
-                        $chk = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
-                        $ex  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-                    ?>
-                    <tr>
-                        <td style="font-size:13px;"><?php echo $feat; ?></td>
-                        <td style="text-align:center;"><?php echo $p['admin'] ? $chk : $ex; ?></td>
-                        <td style="text-align:center;">
-                            <?php if ($p['rec'] === true): echo $chk;
-                            elseif ($p['rec'] === false): echo $ex;
-                            else: echo '<span style="font-size:11px;color:var(--text-muted);">'.$p['rec'].'</span>'; endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-    </main>
+                    <div style="padding:18px;">
+                        <p style="font-size:13px;color:<?php echo $isPortalLocked ? '#7F1D1D' : 'var(--text-muted)'; ?>;margin:0 0 16px;line-height:1.5;">
+                            <?php if ($isPortalLocked): ?>
+                                ⚠️ <strong>Maintenance mode is currently ACTIVE.</strong> The receptionist login page is locked. Anyone visiting <code>staff_login</code> will see a maintenance popup modal and cannot sign in.
+                            <?php else: ?>
+                                Lock the <code>staff_login</code> page whenever the front desk is under maintenance, undergoing shift auditing, or closed. Receptionists will see your custom popup message.
+                            <?php endif; ?>
+                        </p>
+
+                        <form method="POST" action="admin_staff" <?php if (!$isPortalLocked): ?>data-confirm-title="Lock Reception Portal?" data-confirm-msg="Are you sure you want to LOCK the staff login portal? All receptionist sign-ins will be blocked and an under-maintenance popup will be shown." data-confirm-icon="🔒" data-confirm-icon-bg="#FEE2E2" data-confirm-color="#DC2626" data-confirm-text="Lock Portal"<?php endif; ?>>
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="action" value="toggle_staff_maintenance">
+                            
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block;font-size:12px;font-weight:600;color:var(--text-main);margin-bottom:6px;">Popup Alert Message for Receptionists:</label>
+                                <textarea name="maintenance_message" rows="2" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;" placeholder="E.g., Front Desk Reception Portal is currently locked for system maintenance. Please contact the Resort Administrator."><?php echo htmlspecialchars($portalLockMsg); ?></textarea>
+                            </div>
+
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px;">
+                                <?php if ($isPortalLocked): ?>
+                                    <input type="hidden" name="maintenance_mode" value="0">
+                                    <button type="submit" class="btn-primary" style="background:#16A34A;border-color:#15803D;padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                        Unlock Staff Portal (Restore Sign In)
+                                    </button>
+                                <?php else: ?>
+                                    <input type="hidden" name="maintenance_mode" value="1">
+                                    <button type="submit" class="btn-danger" style="padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        Lock Staff Portal (Activate Maintenance Mode)
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Permissions Reference -->
+                <div class="admin-card">
+                    <div class="admin-card-header"><h3>Permission Reference</h3></div>
+                    <table class="admin-table">
+                        <thead><tr><th>Feature</th><th style="text-align:center;">Admin</th><th style="text-align:center;">Reception</th></tr></thead>
+                        <tbody>
+                        <?php
+                        $perms = [
+                            'Dashboard'            => ['admin'=>true, 'rec'=>true],
+                            'Reservations'         => ['admin'=>true, 'rec'=>true],
+                            'Check-in/out'         => ['admin'=>true, 'rec'=>true],
+                            'Payments'             => ['admin'=>true, 'rec'=>true],
+                            'Accommodations'       => ['admin'=>true, 'rec'=>'View Only'],
+                            'Staff Management'     => ['admin'=>true, 'rec'=>false],
+                            'Reports'              => ['admin'=>true, 'rec'=>'Limited'],
+                            'Promotions'           => ['admin'=>true, 'rec'=>false],
+                            'Activity Logs'        => ['admin'=>true, 'rec'=>false],
+                            'Settings'             => ['admin'=>true, 'rec'=>true],
+                        ];
+                        foreach ($perms as $feat => $p):
+                            $chk = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+                            $ex  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+                        ?>
+                        <tr>
+                            <td style="font-size:13px;"><?php echo $feat; ?></td>
+                            <td style="text-align:center;"><?php echo $p['admin'] ? $chk : $ex; ?></td>
+                            <td style="text-align:center;">
+                                <?php if ($p['rec'] === true): echo $chk;
+                                elseif ($p['rec'] === false): echo $ex;
+                                else: echo '<span style="font-size:11px;color:var(--text-muted);">'.$p['rec'].'</span>'; endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div><!-- /right column -->
+        </div><!-- /grid -->
+    </div><!-- /admin-body -->
+</main>
 
 <!-- Add Staff Modal -->
 <div class="modal-overlay" id="addModal">
