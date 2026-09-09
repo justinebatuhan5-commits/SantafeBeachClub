@@ -1,7 +1,39 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/checkout_notification_helper.php';
 require_once __DIR__ . '/../backend/helpers/room_status_helper.php';
+
+// ── Overdue check-out alert (safe – never breaks the page) ───────────────────────
+$_overdue_guest_names = [];
+$_overdue_now_display = '';
+$_overdue_tz_name     = '';
+try {
+    $_overdue_checkout_time = sf_get_checkout_time_setting($conn);
+    $_overdue_now           = sf_get_current_business_datetime($conn);
+    $_overdue_tz            = $_overdue_now->getTimezone();
+    $_overdue_tz_name       = $_overdue_tz->getName();
+    $_overdue_now_display   = $_overdue_now->format('M d, Y h:i A');
+    $_overdue_result = $conn->query(
+        "SELECT guest_name, check_out FROM bookings WHERE status = 'Checked In' ORDER BY check_out ASC"
+    );
+    if ($_overdue_result) {
+        while ($_ov_row = $_overdue_result->fetch_assoc()) {
+            if (sf_is_due_for_checkout(
+                (string)$_ov_row['check_out'],
+                $_overdue_checkout_time,
+                $_overdue_tz,
+                $_overdue_now
+            )) {
+                $_overdue_guest_names[] = (string)$_ov_row['guest_name'];
+            }
+        }
+    }
+} catch (Throwable $_overdue_err) {
+    // Silently ignore — overdue popup is non-critical
+    $_overdue_guest_names = [];
+}
+
 
 // Calculate live dashboard metrics
 $checkins_today = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(check_in) = CURDATE() AND status != 'Cancelled'")->fetch_assoc()['count'] ?? 0;
@@ -637,6 +669,156 @@ if ($rt_q && $rt_q->num_rows > 0) {
                 }
             });
         }
+        filterArrivals();
     </script>
+
+<!-- ── Overdue Check-out Warning Modal ────────────────────────────────────── -->
+<style>
+    #overdueCheckoutModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+        animation: ocm-fadein .22s ease;
+    }
+    @keyframes ocm-fadein { from { opacity:0; } to { opacity:1; } }
+    .ocm-card {
+        background: #fff;
+        width: min(100%, 480px);
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0,0,0,.25);
+        overflow: hidden;
+        animation: ocm-slidein .25s cubic-bezier(.34,1.36,.64,1);
+    }
+    @keyframes ocm-slidein { from { transform: translateY(30px) scale(.96); } to { transform: none; } }
+    .ocm-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 22px 24px 18px;
+        background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+        color: #fff;
+    }
+    .ocm-icon {
+        width: 42px; height: 42px;
+        background: rgba(255,255,255,.18);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        font-size: 20px;
+    }
+    .ocm-header-text h3 { margin:0; font-size:17px; font-weight:800; }
+    .ocm-header-text p  { margin:4px 0 0; font-size:12px; opacity:.85; }
+    .ocm-body { padding: 20px 24px 6px; }
+    .ocm-desc {
+        font-size: 14px;
+        color: #555;
+        line-height: 1.55;
+        margin: 0 0 14px;
+    }
+    .ocm-guest-list {
+        list-style: none;
+        margin: 0; padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 190px;
+        overflow-y: auto;
+    }
+    .ocm-guest-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #fff8ed;
+        border: 1px solid #fde68a;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #92400e;
+    }
+    .ocm-guest-list li::before { content: '⚠️'; font-size:16px; flex-shrink:0; }
+    .ocm-timestamp {
+        font-size: 12px;
+        color: #aaa;
+        margin: 14px 0 0;
+        padding-top: 12px;
+        border-top: 1px solid #f0f0f0;
+    }
+    .ocm-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 16px 24px 22px;
+    }
+    .ocm-btn-dismiss {
+        padding: 10px 18px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        color: #555;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .ocm-btn-go {
+        padding: 10px 20px;
+        border: none;
+        background: linear-gradient(135deg,#b45309,#d97706);
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 14px;
+        box-shadow: 0 2px 8px rgba(180,83,9,.35);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .ocm-btn-go:hover { filter: brightness(1.08); }
+</style>
+
+<div id="overdueCheckoutModal" role="dialog" aria-modal="true" aria-labelledby="ocmTitle">
+    <div class="ocm-card">
+        <div class="ocm-header">
+            <div class="ocm-icon">⏰</div>
+            <div class="ocm-header-text">
+                <h3 id="ocmTitle">Overdue Check-out Alert</h3>
+                <p>Action required — guests are past their departure time</p>
+            </div>
+        </div>
+        <div class="ocm-body">
+            <p class="ocm-desc">
+                The following guest(s) have passed their scheduled check-out time and are still checked in.
+                Please process their departure as soon as possible.
+            </p>
+            <ul class="ocm-guest-list" id="ocmGuestList"></ul>
+            <p class="ocm-timestamp">As of <?php echo htmlspecialchars($_overdue_now_display); ?> &middot; <?php echo htmlspecialchars($_overdue_tz_name); ?></p>
+        </div>
+        <div class="ocm-footer">
+            <button class="ocm-btn-dismiss" onclick="document.getElementById('overdueCheckoutModal').style.display='none'">
+                Dismiss
+            </button>
+            <a class="ocm-btn-go" href="admin_checkout">➜ Go to Check-out Page</a>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    var names = <?php echo json_encode($_overdue_guest_names, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+    if (names.length > 0) {
+        var list = document.getElementById('ocmGuestList');
+        list.innerHTML = names.map(function(n){ return '<li>' + n + '</li>'; }).join('');
+        document.getElementById('overdueCheckoutModal').style.display = 'flex';
+    }
+})();
+</script>
+
 </body>
 </html>
