@@ -47,7 +47,7 @@ function secure_exception_handler(Throwable $e): void {
         }
         echo json_encode([
             'success' => false,
-            'error'   => 'An unexpected server error occurred. Please try again later.'
+            'error'   => 'Server error: ' . $e->getMessage()
         ]);
         exit;
     }
