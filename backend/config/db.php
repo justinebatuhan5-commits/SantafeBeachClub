@@ -265,6 +265,9 @@ try {
     $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS email VARCHAR(150) DEFAULT NULL");
     // Add profile_photo column to admins
     $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255) DEFAULT NULL");
+    // Add account lockout columns to admins
+    $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS failed_login_count INT NOT NULL DEFAULT 0");
+    $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS locked_until DATETIME NULL DEFAULT NULL");
 
     // -----------------------------------------------------------------------
     // MFA: admin_otps â€” stores hashed OTPs for two-factor admin login

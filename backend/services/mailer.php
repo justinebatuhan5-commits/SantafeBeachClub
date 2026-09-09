@@ -28,7 +28,7 @@ if (!defined('_ENV_LOADED')) {
 }
 
 if (!defined('GMAIL_USER'))         define('GMAIL_USER',         getenv('GMAIL_USER')         ?: 'Justinebatuhan017@gmail.com');
-if (!defined('GMAIL_APP_PASSWORD')) define('GMAIL_APP_PASSWORD', getenv('GMAIL_APP_PASSWORD') ?: 'owxi hskd qzlq nczl');
+if (!defined('GMAIL_APP_PASSWORD')) define('GMAIL_APP_PASSWORD', getenv('GMAIL_APP_PASSWORD') ?: 'zsuq eivw kfmw xxsv');
 if (!defined('MAIL_FROM_NAME'))     define('MAIL_FROM_NAME',     getenv('MAIL_FROM_NAME')     ?: 'Santa Fe Beach Club');
 
 /**
