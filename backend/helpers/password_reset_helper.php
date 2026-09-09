@@ -107,12 +107,6 @@ function pwd_reset_verify_token(string $rawToken, mysqli $conn): array {
 
 /**
  * Complete the password reset: validates new password, updates admins table, and marks token used.
- *
- * @param string $rawToken
- * @param string $newPassword
- * @param string $confirmPassword
- * @param mysqli $conn
- * @return array ['success' => bool, 'message' => string]
  */
 function pwd_reset_complete(string $rawToken, string $newPassword, string $confirmPassword, mysqli $conn): array {
     $verification = pwd_reset_verify_token($rawToken, $conn);
@@ -124,7 +118,6 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
         return ['success' => false, 'message' => 'Passwords do not match.'];
     }
 
-    // Validate password policy (min 8 chars, lowercase, uppercase, number, special char, common blocklist)
     $policyError = pw_validate($newPassword);
     if ($policyError !== null) {
         return ['success' => false, 'message' => $policyError];
@@ -135,20 +128,17 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
 
     $conn->begin_transaction();
     try {
-        // Update user's password
         $upd = $conn->prepare("UPDATE admins SET password = ? WHERE id = ?");
         $upd->bind_param('si', $newHash, $adminId);
         $upd->execute();
         $upd->close();
 
-        // Mark token as used
         $tokenHash = hash('sha256', $rawToken);
         $mark = $conn->prepare("UPDATE password_resets SET used = 1 WHERE token_hash = ?");
         $mark->bind_param('s', $tokenHash);
         $mark->execute();
         $mark->close();
 
-        // Invalidate any active sessions / OTPs for this admin
         $invOtp = $conn->prepare("UPDATE admin_otps SET used = 1 WHERE admin_id = ? AND used = 0");
         if ($invOtp) {
             $invOtp->bind_param('i', $adminId);
@@ -158,7 +148,7 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
 
         $conn->commit();
 
-        // ── Notify user that password was changed (OWASP checklist 1.4) ───
+        // Notify user that password was changed (OWASP checklist 1.4)
         $notifyStmt = $conn->prepare("SELECT email, username FROM admins WHERE id = ?");
         if ($notifyStmt) {
             $notifyStmt->bind_param('i', $adminId);
@@ -176,9 +166,9 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
         }
 
         return [
-            'success'  => true,
-            'message'  => 'Your password has been reset successfully! You can now log in.',
-            'role'     => $verification['role']
+            'success' => true,
+            'message' => 'Your password has been reset successfully! You can now log in.',
+            'role'    => $verification['role']
         ];
     } catch (\Throwable $e) {
         $conn->rollback();
@@ -187,25 +177,23 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
     }
 }
 
-/**
- * Dispatch Password Reset Email via PHPMailer.
- *
- * @param string $toEmail
- * @param string $name
- * @param string $resetUrl
- * @return array ['success' => bool, 'error' => string|null]
- */
-function pwd_reset_send_email(string $toEmail, string $name, string $resetUrl): array {
-    require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
-    require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
-    require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
+// ---------------------------------------------------------------------------
+// Email helpers – SMTP first, PHP mail() fallback for InfinityFree
+// ---------------------------------------------------------------------------
 
+function _pwd_mailer_smtp_send(string $toEmail, string $name, string $subject, string $htmlBody, string $plainBody): bool {
     if (!defined('GMAIL_USER')) {
         require_once __DIR__ . '/../services/mailer.php';
     }
-
+    $smtpFiles = [
+        __DIR__ . '/../libs/PHPMailer/src/Exception.php',
+        __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php',
+        __DIR__ . '/../libs/PHPMailer/src/SMTP.php',
+    ];
+    if (!array_reduce($smtpFiles, fn($c, $f) => $c && file_exists($f), true)) return false;
+    if (!defined('GMAIL_APP_PASSWORD')) return false;
+    foreach ($smtpFiles as $f) { require_once $f; }
     $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-
     try {
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
@@ -215,135 +203,114 @@ function pwd_reset_send_email(string $toEmail, string $name, string $resetUrl): 
         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->Timeout    = 8;
-        $mail->SMTPOptions = [
-            'ssl' => [
-                'verify_peer'       => false,
-                'verify_peer_name'  => false,
-                'allow_self_signed' => true
-            ]
-        ];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+        $mail->setFrom(GMAIL_USER, defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Santa Fe Beach Club');
         $mail->addAddress($toEmail, $name);
-
-        $expiryMin = PWD_RESET_EXPIRY_MINUTES;
         $mail->isHTML(true);
-        $mail->Subject = 'Reset Your Password – Santa Fe Beach Club';
-        $mail->Body    = "
-            <div style='font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
-                <div style='background: #644B39; padding: 28px 32px; text-align: center;'>
-                    <h2 style='color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;'>Password Reset Request</h2>
-                    <p style='color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px;'>Santa Fe Beach Club Portal Security</p>
-                </div>
-                <div style='padding: 32px;'>
-                    <p style='color: #334155; font-size: 15px; margin-top: 0;'>Hello <strong>" . htmlspecialchars($name) . "</strong>,</p>
-                    <p style='color: #475569; font-size: 14px; line-height: 1.6;'>
-                        We received a request to reset the password for your portal account. Click the button below to set a new password.
-                    </p>
-                    <div style='text-align: center; margin: 32px 0;'>
-                        <a href='" . htmlspecialchars($resetUrl) . "' style='background: #644B39; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block; box-shadow: 0 4px 10px rgba(100,75,57,0.3);'>
-                            Reset My Password
-                        </a>
-                    </div>
-                    <p style='color: #64748b; font-size: 13px; line-height: 1.5;'>
-                        ⏱️ This reset link will expire in <strong>{$expiryMin} minutes</strong> and can only be used once.
-                    </p>
-                    <p style='color: #94a3b8; font-size: 12px; line-height: 1.5;'>
-                        If the button doesn't work, copy and paste this link into your browser:<br>
-                        <a href='" . htmlspecialchars($resetUrl) . "' style='color: #644B39; word-break: break-all;'>" . htmlspecialchars($resetUrl) . "</a>
-                    </p>
-                    <hr style='border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;'>
-                    <p style='color: #94a3b8; font-size: 12px; margin: 0;'>
-                        If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
-                    </p>
-                </div>
-            </div>
-        ";
-        $mail->AltBody = "Hello {$name},\n\nWe received a request to reset your Santa Fe Beach Club account password.\n\nPlease visit this link to reset your password:\n{$resetUrl}\n\nThis link expires in {$expiryMin} minutes.\n\nIf you did not request this, please ignore this email.";
-
+        $mail->Subject = $subject;
+        $mail->Body    = $htmlBody;
+        $mail->AltBody = $plainBody;
         $mail->send();
-        error_log("[PWD_RESET] Reset email dispatched successfully to: " . substr($toEmail, 0, 3) . '***@' . explode('@', $toEmail)[1]);
-        return ['success' => true, 'error' => null];
+        return true;
     } catch (\PHPMailer\PHPMailer\Exception $e) {
-        error_log("[PWD_RESET] Failed to send email: " . $mail->ErrorInfo);
-        return ['success' => false, 'error' => $mail->ErrorInfo];
+        error_log("[PWD_RESET] SMTP failed: " . $mail->ErrorInfo);
+        return false;
     }
+}
+
+function _pwd_mailer_native_send(string $toEmail, string $subject, string $htmlBody, string $plainBody): bool {
+    $fromName  = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Santa Fe Beach Club';
+    $fromEmail = defined('GMAIL_USER')     ? GMAIL_USER     : 'noreply@santafebeachclub.com';
+    $boundary  = md5(uniqid((string)rand(), true));
+    $headers   = "MIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
+    $headers  .= "From: {$fromName} <{$fromEmail}>\r\nReply-To: {$fromEmail}\r\nX-Mailer: PHP/" . phpversion();
+    $body  = "--{$boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n{$plainBody}\r\n";
+    $body .= "--{$boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n{$htmlBody}\r\n--{$boundary}--";
+    return (bool) @mail($toEmail, $subject, $body, $headers);
+}
+
+/**
+ * Dispatch Password Reset Email.
+ * Tries Gmail SMTP, falls back to PHP mail() for InfinityFree.
+ */
+function pwd_reset_send_email(string $toEmail, string $name, string $resetUrl): array {
+    if (!defined('GMAIL_USER')) {
+        require_once __DIR__ . '/../services/mailer.php';
+    }
+    $expiryMin = PWD_RESET_EXPIRY_MINUTES;
+    $subject  = 'Reset Your Password - Santa Fe Beach Club';
+    $htmlBody = "
+        <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;'>
+            <div style='background:#644B39;padding:28px 32px;text-align:center;border-radius:12px 12px 0 0;'>
+                <h2 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>Password Reset Request</h2>
+                <p style='color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:13px;'>Santa Fe Beach Club Portal Security</p>
+            </div>
+            <div style='padding:32px;'>
+                <p style='color:#334155;font-size:15px;margin-top:0;'>Hello <strong>" . htmlspecialchars($name) . "</strong>,</p>
+                <p style='color:#475569;font-size:14px;line-height:1.6;'>We received a request to reset the password for your portal account. Click the button below to set a new password.</p>
+                <div style='text-align:center;margin:32px 0;'>
+                    <a href='" . htmlspecialchars($resetUrl) . "' style='background:#644B39;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;display:inline-block;'>Reset My Password</a>
+                </div>
+                <p style='color:#64748b;font-size:13px;'>This link expires in <strong>{$expiryMin} minutes</strong> and can only be used once.</p>
+                <p style='color:#94a3b8;font-size:12px;'>Or copy this link: <a href='" . htmlspecialchars($resetUrl) . "' style='color:#644B39;word-break:break-all;'>" . htmlspecialchars($resetUrl) . "</a></p>
+                <hr style='border:none;border-top:1px solid #f1f5f9;margin:24px 0;'>
+                <p style='color:#94a3b8;font-size:12px;margin:0;'>If you did not request a password reset, you can safely ignore this email.</p>
+            </div>
+        </div>
+    ";
+    $plainBody = "Hello {$name},\n\nReset your Santa Fe Beach Club password:\n{$resetUrl}\n\nExpires in {$expiryMin} minutes. If you did not request this, ignore this email.";
+
+    if (_pwd_mailer_smtp_send($toEmail, $name, $subject, $htmlBody, $plainBody)) {
+        error_log("[PWD_RESET] Reset email sent via SMTP.");
+        return ['success' => true, 'error' => null];
+    }
+    if (_pwd_mailer_native_send($toEmail, $subject, $htmlBody, $plainBody)) {
+        error_log("[PWD_RESET] Reset email sent via PHP mail() fallback.");
+        return ['success' => true, 'error' => null];
+    }
+    error_log("[PWD_RESET] Both SMTP and PHP mail() failed.");
+    return ['success' => false, 'error' => 'Could not send reset email. Please contact the administrator.'];
 }
 
 /**
  * Send a notification email after a password has been successfully changed.
  * OWASP Checklist 1.4: "Notify the user when the password has been changed."
- *
- * @param string $toEmail
- * @param string $name
- * @return array ['success' => bool, 'error' => string|null]
  */
 function pwd_reset_send_change_notification(string $toEmail, string $name): array {
-    require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
-    require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
-    require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
-
     if (!defined('GMAIL_USER')) {
         require_once __DIR__ . '/../services/mailer.php';
     }
-
-    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-
-    try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = [
-            'ssl' => [
-                'verify_peer'       => false,
-                'verify_peer_name'  => false,
-                'allow_self_signed' => true
-            ]
-        ];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
-        $mail->addAddress($toEmail, $name);
-
-        $changedAt = date('F j, Y \a\t g:i A');
-        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Password Was Changed – Santa Fe Beach Club';
-        $mail->Body    = "
-            <div style='font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
-                <div style='background: #644B39; padding: 28px 32px; text-align: center;'>
-                    <h2 style='color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;'>🔒 Password Changed</h2>
-                    <p style='color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px;'>Santa Fe Beach Club — Security Alert</p>
-                </div>
-                <div style='padding: 32px;'>
-                    <p style='color: #334155; font-size: 15px; margin-top: 0;'>Hello <strong>" . htmlspecialchars($name) . "</strong>,</p>
-                    <p style='color: #475569; font-size: 14px; line-height: 1.6;'>
-                        This is a confirmation that the password for your Santa Fe Beach Club portal account was successfully changed.
-                    </p>
-                    <div style='background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; margin: 20px 0;'>
-                        <p style='margin: 0 0 6px; font-size: 13px; color: #64748b;'><strong>Date & Time:</strong> {$changedAt}</p>
-                        <p style='margin: 0; font-size: 13px; color: #64748b;'><strong>IP Address:</strong> {$ipAddress}</p>
-                    </div>
-                    <p style='color: #dc2626; font-size: 13px; line-height: 1.5; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px;'>
-                        ⚠️ <strong>If you did not make this change</strong>, please contact the resort administrator immediately to secure your account.
-                    </p>
-                    <hr style='border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;'>
-                    <p style='color: #94a3b8; font-size: 12px; margin: 0;'>Santa Fe Beach Club · Barangay Poblacion, Santa Fe, Cebu</p>
-                </div>
+    $changedAt = date('F j, Y \at g:i A');
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+    $subject  = 'Your Password Was Changed - Santa Fe Beach Club';
+    $htmlBody = "
+        <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;'>
+            <div style='background:#644B39;padding:28px 32px;text-align:center;border-radius:12px 12px 0 0;'>
+                <h2 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>&#128274; Password Changed</h2>
+                <p style='color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:13px;'>Santa Fe Beach Club - Security Alert</p>
             </div>
-        ";
-        $mail->AltBody = "Hello {$name},\n\nThis confirms that your Santa Fe Beach Club portal password was changed on {$changedAt} from IP {$ipAddress}.\n\nIf you did not make this change, please contact the administrator immediately.\n\nSanta Fe Beach Club";
+            <div style='padding:32px;'>
+                <p>Hello <strong>" . htmlspecialchars($name) . "</strong>,</p>
+                <p style='color:#475569;font-size:14px;line-height:1.6;'>Your Santa Fe Beach Club portal password was successfully changed.</p>
+                <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px;margin:20px 0;'>
+                    <p style='margin:0 0 6px;font-size:13px;color:#64748b;'><strong>Date &amp; Time:</strong> {$changedAt}</p>
+                    <p style='margin:0;font-size:13px;color:#64748b;'><strong>IP Address:</strong> {$ipAddress}</p>
+                </div>
+                <p style='color:#dc2626;font-size:13px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;'>
+                    If you did not make this change, contact the resort administrator immediately.
+                </p>
+                <hr style='border:none;border-top:1px solid #f1f5f9;margin:24px 0;'>
+                <p style='color:#94a3b8;font-size:12px;margin:0;'>Santa Fe Beach Club - Barangay Poblacion, Santa Fe, Cebu</p>
+            </div>
+        </div>
+    ";
+    $plainBody = "Hello {$name},\n\nYour Santa Fe Beach Club portal password was changed on {$changedAt} from IP {$ipAddress}.\nIf you did not make this change, contact the administrator immediately.";
 
-        $mail->send();
-        error_log("[PWD_RESET] Password change notification sent to: " . substr($toEmail, 0, 3) . '***@' . explode('@', $toEmail)[1]);
+    if (_pwd_mailer_smtp_send($toEmail, $name, $subject, $htmlBody, $plainBody)) {
         return ['success' => true, 'error' => null];
-    } catch (\PHPMailer\PHPMailer\Exception $e) {
-        error_log("[PWD_RESET] Failed to send change notification: " . $mail->ErrorInfo);
-        return ['success' => false, 'error' => $mail->ErrorInfo];
     }
+    if (_pwd_mailer_native_send($toEmail, $subject, $htmlBody, $plainBody)) {
+        return ['success' => true, 'error' => null];
+    }
+    return ['success' => false, 'error' => 'Could not send notification email.'];
 }

@@ -224,8 +224,9 @@ function otp_verify_guest(int $bookingId, string $submittedCode, mysqli $conn): 
 // ---------------------------------------------------------------------------
 
 /**
- * Send an OTP email to an admin via Gmail SMTP.
- * IMPORTANT: $rawOtp is NEVER passed to error_log() or any logging function.
+ * Send an OTP email to an admin.
+ * Tries Gmail SMTP first (PHPMailer), falls back to PHP native mail()
+ * for hosts that block port 587 (e.g. InfinityFree free hosting).
  *
  * @param  string $toEmail   Recipient email address.
  * @param  string $rawOtp    The 6-digit OTP code to send.
@@ -233,73 +234,96 @@ function otp_verify_guest(int $bookingId, string $submittedCode, mysqli $conn): 
  * @return array {success: bool, error: string|null}
  */
 function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
-    require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
-    require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
-    require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
-
-    // Import constants from mailer.php if not already defined
+    // Load mailer constants (GMAIL_USER, GMAIL_APP_PASSWORD, MAIL_FROM_NAME)
     if (!defined('GMAIL_USER')) {
         require_once __DIR__ . '/../services/mailer.php';
     }
 
-    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    $expiryMin = defined('OTP_EXPIRY_MINUTES') ? OTP_EXPIRY_MINUTES : 10;
+    $fromName  = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Santa Fe Beach Club';
+    $fromEmail = defined('GMAIL_USER')     ? GMAIL_USER     : 'noreply@santafebeachclub.com';
 
-    try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = [
-            'ssl' => [
-                'verify_peer'       => false,
-                'verify_peer_name'  => false,
-                'allow_self_signed' => true
-            ]
-        ];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
-        $mail->addAddress($toEmail, $name);
-
-        $expiryMin = OTP_EXPIRY_MINUTES;
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Verification Code – Santa Fe Beach Club';
-        $mail->Body    = "
-            <div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto;'>
-                <div style='background:#644B39;padding:28px 32px;border-radius:12px 12px 0 0;'>
-                    <h2 style='color:#fff;margin:0;font-size:20px;'>🔐 Verification Code</h2>
-                    <p style='color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;'>Santa Fe Beach Club – Secure Login</p>
-                </div>
-                <div style='background:#fff;padding:28px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;'>
-                    <p>Hi " . htmlspecialchars($name) . ",</p>
-                    <p>Use the code below to complete your login. This code expires in <strong>{$expiryMin} minutes</strong>.</p>
-                    <div style='text-align:center;margin:28px 0;'>
-                        <div style='display:inline-block;background:#f9fafb;border:2px dashed #644B39;border-radius:12px;padding:18px 36px;'>
-                            <span style='font-size:36px;font-weight:800;letter-spacing:10px;color:#644B39;'>{$rawOtp}</span>
-                        </div>
-                    </div>
-                    <p style='color:#6b7280;font-size:13px;'>⚠️ Never share this code. Santa Fe Beach Club staff will never ask for it.</p>
-                    <p style='color:#6b7280;font-size:13px;'>If you did not request this, please ignore this email.</p>
-                    <hr style='border:none;border-top:1px solid #f0f0f0;margin:20px 0;'>
-                    <p style='color:#9ca3af;font-size:12px;margin:0;'>Santa Fe Beach Club · Barangay Poblacion, Santa Fe, Cebu</p>
-                </div>
+    $subject = 'Your Verification Code - Santa Fe Beach Club';
+    $htmlBody = "
+        <div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto;'>
+            <div style='background:#644B39;padding:28px 32px;border-radius:12px 12px 0 0;'>
+                <h2 style='color:#fff;margin:0;font-size:20px;'>&#128272; Verification Code</h2>
+                <p style='color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;'>Santa Fe Beach Club - Secure Login</p>
             </div>
-        ";
-        $mail->AltBody = "Hi {$name}, your Santa Fe Beach Club verification code is: {$rawOtp}. "
-            . "It expires in {$expiryMin} minutes. Do not share this code.";
+            <div style='background:#fff;padding:28px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;'>
+                <p>Hi " . htmlspecialchars($name) . ",</p>
+                <p>Use the code below to complete your login. This code expires in <strong>{$expiryMin} minutes</strong>.</p>
+                <div style='text-align:center;margin:28px 0;'>
+                    <div style='display:inline-block;background:#f9fafb;border:2px dashed #644B39;border-radius:12px;padding:18px 36px;'>
+                        <span style='font-size:36px;font-weight:800;letter-spacing:10px;color:#644B39;'>{$rawOtp}</span>
+                    </div>
+                </div>
+                <p style='color:#6b7280;font-size:13px;'>Never share this code. Staff will never ask for it.</p>
+                <p style='color:#6b7280;font-size:13px;'>If you did not request this, please ignore this email.</p>
+                <hr style='border:none;border-top:1px solid #f0f0f0;margin:20px 0;'>
+                <p style='color:#9ca3af;font-size:12px;margin:0;'>Santa Fe Beach Club - Barangay Poblacion, Santa Fe, Cebu</p>
+            </div>
+        </div>
+    ";
+    $plainBody = "Hi {$name}, your Santa Fe Beach Club verification code is: {$rawOtp}. "
+        . "It expires in {$expiryMin} minutes. Do not share this code.";
 
-        $mail->send();
+    // ── Attempt 1: PHPMailer via Gmail SMTP ──────────────────────────────────
+    $smtpFiles = [
+        __DIR__ . '/../libs/PHPMailer/src/Exception.php',
+        __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php',
+        __DIR__ . '/../libs/PHPMailer/src/SMTP.php',
+    ];
+    $smtpAvailable = array_reduce($smtpFiles, fn($c, $f) => $c && file_exists($f), true);
 
-        // IMPORTANT: $rawOtp is NOT logged — only success/failure is recorded.
-        error_log("[OTP] Email dispatched to recipient for MFA verification.");
-
-        return ['success' => true, 'error' => null];
-    } catch (\PHPMailer\PHPMailer\Exception $e) {
-        // Log only the mailer error info, NOT the OTP value
-        error_log("[OTP] Failed to send email: " . $mail->ErrorInfo);
-        return ['success' => false, 'error' => $mail->ErrorInfo];
+    if ($smtpAvailable && defined('GMAIL_APP_PASSWORD')) {
+        foreach ($smtpFiles as $f) { require_once $f; }
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = GMAIL_USER;
+            $mail->Password   = GMAIL_APP_PASSWORD;
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+            $mail->Timeout    = 8;
+            $mail->SMTPOptions = ['ssl' => [
+                'verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true
+            ]];
+            $mail->setFrom($fromEmail, $fromName);
+            $mail->addAddress($toEmail, $name);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $htmlBody;
+            $mail->AltBody = $plainBody;
+            $mail->send();
+            error_log("[OTP] Email sent via SMTP.");
+            return ['success' => true, 'error' => null];
+        } catch (\PHPMailer\PHPMailer\Exception $e) {
+            error_log("[OTP] SMTP failed (" . $mail->ErrorInfo . "), trying PHP mail() fallback.");
+        }
     }
+
+    // ── Attempt 2: PHP native mail() fallback (works on InfinityFree) ────────
+    $boundary = md5(uniqid((string)rand(), true));
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
+    $headers .= "From: {$fromName} <{$fromEmail}>\r\n";
+    $headers .= "Reply-To: {$fromEmail}\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion();
+
+    $body  = "--{$boundary}\r\n";
+    $body .= "Content-Type: text/plain; charset=UTF-8\r\n\r\n" . $plainBody . "\r\n";
+    $body .= "--{$boundary}\r\n";
+    $body .= "Content-Type: text/html; charset=UTF-8\r\n\r\n" . $htmlBody . "\r\n";
+    $body .= "--{$boundary}--";
+
+    if (@mail($toEmail, $subject, $body, $headers)) {
+        error_log("[OTP] Email sent via PHP mail() fallback.");
+        return ['success' => true, 'error' => null];
+    }
+
+    error_log("[OTP] Both SMTP and PHP mail() failed for OTP delivery.");
+    return ['success' => false, 'error' => 'Could not send OTP email. Please contact the administrator.'];
 }
