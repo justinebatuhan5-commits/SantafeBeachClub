@@ -958,30 +958,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
 
         // ── Background Auto-Slideshow Controller ─────────
-        (function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const slides = document.querySelectorAll('.bg-slide');
             const dots   = document.querySelectorAll('.slide-dot');
             let current  = 0;
-            let timer;
 
-            function advance(index) {
+            if (!slides.length) return;
+
+            // Preload slide images so transitions are instant
+            const imgs = [
+                'assets/images/admin_bg.jpg',
+                'assets/images/admin_bg2.jpg',
+                'assets/images/admin_bg3.jpg'
+            ];
+            imgs.forEach(function(src) {
+                var img = new Image();
+                img.src = src;
+            });
+
+            function goTo(index) {
                 slides[current].classList.remove('active');
-                dots[current].classList.remove('active');
-                current = (index + slides.length) % slides.length;
+                if (dots[current]) dots[current].classList.remove('active');
+                current = ((index % slides.length) + slides.length) % slides.length;
                 slides[current].classList.add('active');
-                dots[current].classList.add('active');
+                if (dots[current]) dots[current].classList.add('active');
             }
 
-            // Expose for onclick in HTML dots
+            // Allow dot clicks to jump slides
             window.goToSlide = function(i) {
-                clearInterval(timer);
-                advance(i);
-                timer = setInterval(() => advance(current + 1), 6000);
+                clearInterval(slideshowTimer);
+                goTo(i);
+                slideshowTimer = setInterval(function() { goTo(current + 1); }, 5000);
             };
 
-            // Auto-advance every 6 seconds
-            timer = setInterval(() => advance(current + 1), 6000);
-        })();
+            // Start the auto-advance
+            var slideshowTimer = setInterval(function() { goTo(current + 1); }, 5000);
+        });
     </script>
 </body>
 </html>
