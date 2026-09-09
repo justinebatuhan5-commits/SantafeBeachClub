@@ -23,6 +23,9 @@ try {
     $_overdue_guest_names = [];
 }
 
+$_is_admin_user = (($_SESSION['admin_role'] ?? 'receptionist') === 'admin');
+$_checkout_target_url = $_is_admin_user ? 'admin_checkout' : 'checkout';
+
 // Calculate live dashboard metrics
 $checkins_today = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(check_in) = CURDATE() AND status != 'Cancelled'")->fetch_assoc()['count'] ?? 0;
 $checkouts_today = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(check_out) = CURDATE() AND status != 'Cancelled'")->fetch_assoc()['count'] ?? 0;
@@ -923,7 +926,7 @@ if (empty($room_types)) {
             <button class="ocm-btn-dismiss" onclick="document.getElementById('overdueCheckoutModal').style.display='none'">
                 Dismiss
             </button>
-            <a class="ocm-btn-go" href="admin_checkout">
+            <a class="ocm-btn-go" href="<?php echo htmlspecialchars($_checkout_target_url); ?>">
                 <span>Go to Check-out Page</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
