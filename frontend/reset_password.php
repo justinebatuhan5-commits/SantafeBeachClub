@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode([
             'success' => empty($error),
             'message' => $error ?: $success,
+            'error'   => $error,
             'role'    => $verification['role'] ?? 'admin'
         ]);
         exit;
@@ -466,23 +467,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     });
 
                     const data = await res.json();
+                    const feedbackMsg = data.message || data.error || 'Password update failed.';
                     if (data.success) {
                         form.style.display = 'none';
                         const portalUrl = (data.role === 'admin') ? 'admin_login' : 'staff_login';
                         statusContainer.innerHTML = `
                             <div class="alert-box alert-success" style="flex-direction: column; align-items: center; text-align: center;">
                                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                <span style="margin-top: 10px; font-size: 15px;">${data.message}</span>
+                                <span style="margin-top: 10px; font-size: 15px;">${feedbackMsg}</span>
                                 <a href="${portalUrl}" class="login-btn">
                                     Sign In Now &rarr;
                                 </a>
                             </div>
                         `;
                     } else {
-                        showError(data.message);
+                        showError(feedbackMsg);
                     }
                 } catch (err) {
-                    showError('An unexpected error occurred. Please try again.');
+                    showError('An unexpected network error occurred. Please try again.');
                 } finally {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<span>Save New Password</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
