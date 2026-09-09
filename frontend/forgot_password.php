@@ -94,6 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="assets/js/security.js" defer></script>
     <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT" async defer></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -263,6 +264,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transform: none;
         }
 
+        /* Field Validation Errors */
+        .security-field-error {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 7px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #F87171;
+            line-height: 1.4;
+            animation: errorSlideIn 0.22s ease;
+        }
+        .security-field-error .error-icon {
+            flex-shrink: 0;
+            color: #EF4444;
+        }
+        .input-box input.is-invalid {
+            border-color: rgba(239, 68, 68, 0.7) !important;
+            background: rgba(239, 68, 68, 0.06) !important;
+            box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.2) !important;
+        }
+        @keyframes errorSlideIn {
+            from { opacity: 0; transform: translateY(-3px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         .alert-box {
             padding: 14px 16px;
             border-radius: 10px;
@@ -344,7 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="input-block">
                 <label class="input-label" for="email">Account Email</label>
                 <div class="input-box">
-                    <input type="email" id="email" name="email" required autofocus placeholder="name@santabeachclub.com" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+                    <input type="email" id="email" name="email" required autofocus placeholder="name@santabeachclub.com" data-label="Email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
                     <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </div>
             </div>

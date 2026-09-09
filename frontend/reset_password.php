@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="assets/js/security.js" defer></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -276,6 +277,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transform: none;
         }
 
+        /* Field Validation Errors */
+        .security-field-error {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 7px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #F87171;
+            line-height: 1.4;
+            animation: errorSlideIn 0.22s ease;
+        }
+        .security-field-error .error-icon {
+            flex-shrink: 0;
+            color: #EF4444;
+        }
+        .input-box input.is-invalid {
+            border-color: rgba(239, 68, 68, 0.7) !important;
+            background: rgba(239, 68, 68, 0.06) !important;
+            box-shadow: 0 0 0 2.5px rgba(239, 68, 68, 0.2) !important;
+        }
+        @keyframes errorSlideIn {
+            from { opacity: 0; transform: translateY(-3px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         .alert-box {
             padding: 14px 16px;
             border-radius: 10px;
@@ -375,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="input-block">
                     <label class="input-label" for="password">New Password</label>
                     <div class="input-box">
-                        <input type="password" id="password" name="password" required autofocus autocomplete="new-password" placeholder="Enter at least 8 characters">
+                        <input type="password" id="password" name="password" required autofocus autocomplete="new-password" data-label="New Password" placeholder="Enter at least 8 characters">
                         <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         <button type="button" class="toggle-pw-btn" onclick="toggleVisibility('password', this)" aria-label="Toggle password">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -386,7 +413,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="input-block">
                     <label class="input-label" for="confirm_password">Confirm New Password</label>
                     <div class="input-box">
-                        <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password" placeholder="Confirm your password">
+                        <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password" data-label="Confirm Password" placeholder="Confirm your password">
                         <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         <button type="button" class="toggle-pw-btn" onclick="toggleVisibility('confirm_password', this)" aria-label="Toggle password">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
