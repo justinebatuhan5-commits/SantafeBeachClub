@@ -134,7 +134,7 @@ class RateLimiter {
             "SELECT failed_login_count, locked_until FROM admins WHERE id = ? LIMIT 1"
         );
         if (!$stmt) {
-            return ['locked' => false, 'seconds_remaining' => 0];
+            return ['locked' => false, 'seconds_remaining' => 0, 'is_permanent' => false];
         }
         $stmt->bind_param('i', $adminId);
         $stmt->execute();
@@ -142,20 +142,24 @@ class RateLimiter {
         $stmt->close();
 
         if (!$row || empty($row['locked_until'])) {
-            return ['locked' => false, 'seconds_remaining' => 0];
+            return ['locked' => false, 'seconds_remaining' => 0, 'is_permanent' => false];
         }
 
         $lockedUntil = strtotime($row['locked_until']);
         $now         = time();
 
         if ($lockedUntil > $now) {
+            $diff = (int)($lockedUntil - $now);
+            // If locked for more than 24 hours, treat as an administrative/permanent suspension
+            $isPermanent = ($diff > 86400);
             return [
                 'locked'            => true,
-                'seconds_remaining' => (int)($lockedUntil - $now),
+                'seconds_remaining' => $diff,
+                'is_permanent'      => $isPermanent,
             ];
         }
 
-        return ['locked' => false, 'seconds_remaining' => 0];
+        return ['locked' => false, 'seconds_remaining' => 0, 'is_permanent' => false];
     }
 
     /**

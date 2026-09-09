@@ -66,8 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // ── Account lockout check (before password attempt) ──
                 $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id']);
                 if ($lockStatus['locked']) {
-                    $mins = (int)ceil($lockStatus['seconds_remaining'] / 60);
-                    $error = "This account is temporarily locked due to too many failed login attempts. Please try again in {$mins} minute(s).";
+                    if (!empty($lockStatus['is_permanent'])) {
+                        $error = "🔒 Access Denied: This administrator account has been locked / suspended. Please contact executive administration.";
+                    } else {
+                        $mins = (int)ceil($lockStatus['seconds_remaining'] / 60);
+                        $error = "🔒 Account Temporarily Locked: Exceeded maximum allowed login attempts. Please wait {$mins} minute(s) before trying again.";
+                    }
                     SecurityLogger::log($conn, 'ACCOUNT_LOCKED', "Locked account login attempt for user: {$username}", SecurityLogger::LEVEL_WARNING, $username);
                     if ($is_ajax) {
                         header('Content-Type: application/json');

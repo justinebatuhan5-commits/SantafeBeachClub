@@ -234,6 +234,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if ($action === 'toggle_lock') {
+        $target_id = (int)($_POST['staff_id'] ?? 0);
+        $lock_op   = $_POST['lock_op'] ?? '';
+
+        $stmt = $conn->prepare("SELECT username, role, locked_until FROM admins WHERE id = ?");
+        $stmt->bind_param("i", $target_id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($row) {
+            if ($row['username'] === $admin) {
+                $_SESSION['staff_error'] = 'You cannot lock your own account.';
+            } else {
+                if ($lock_op === 'lock') {
+                    // Lock indefinitely (e.g. 10 years into the future)
+                    $lockUntil = date('Y-m-d H:i:s', strtotime('+10 years'));
+                    $upd = $conn->prepare("UPDATE admins SET locked_until = ?, failed_login_count = 5 WHERE id = ?");
+                    $upd->bind_param("si", $lockUntil, $target_id);
+                    $upd->execute();
+                    $upd->close();
+
+                    log_activity($conn, $admin, 'Account Locked', "Suspended account: {$row['username']}");
+                    SecurityLogger::log($conn, 'ACCOUNT_MANUALLY_LOCKED', "Admin {$admin} locked account: {$row['username']}", SecurityLogger::LEVEL_WARNING, $row['username']);
+                    $_SESSION['staff_success'] = "Account \"{$row['username']}\" has been locked and suspended.";
+                } elseif ($lock_op === 'unlock') {
+                    // Unlock account and reset failures
+                    $upd = $conn->prepare("UPDATE admins SET locked_until = NULL, failed_login_count = 0 WHERE id = ?");
+                    $upd->bind_param("i", $target_id);
+                    $upd->execute();
+                    $upd->close();
+
+                    log_activity($conn, $admin, 'Account Unlocked', "Restored access for: {$row['username']}");
+                    SecurityLogger::log($conn, 'ACCOUNT_MANUALLY_UNLOCKED', "Admin {$admin} unlocked account: {$row['username']}", SecurityLogger::LEVEL_INFO, $row['username']);
+                    $_SESSION['staff_success'] = "Account \"{$row['username']}\" has been unlocked.";
+                }
+            }
+        }
+    }
+
     header('Location: admin_staff');
     exit;
 }
@@ -247,7 +287,7 @@ if (isset($_SESSION['staff_error'])) {
     unset($_SESSION['staff_error']);
 }
 
-$staff_list = $conn->query("SELECT id, username, email, role, profile_photo, created_at FROM admins ORDER BY role ASC, created_at ASC");
+$staff_list = $conn->query("SELECT id, username, email, role, profile_photo, locked_until, failed_login_count, created_at FROM admins ORDER BY role ASC, created_at ASC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -283,9 +323,11 @@ $staff_list = $conn->query("SELECT id, username, email, role, profile_photo, cre
                     </button>
                 </div>
                 <table class="admin-table">
-                    <thead><tr><th>Account</th><th>OTP Delivery Email</th><th>Role</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Account</th><th>OTP Delivery Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
-                    <?php while ($s = $staff_list->fetch_assoc()): ?>
+                    <?php while ($s = $staff_list->fetch_assoc()): 
+                        $isLocked = !empty($s['locked_until']) && (strtotime($s['locked_until']) > time());
+                    ?>
                     <tr>
                         <td>
                             <div style="display:flex;align-items:center;gap:12px;">
@@ -331,7 +373,37 @@ $staff_list = $conn->query("SELECT id, username, email, role, profile_photo, cre
                             </form>
                         </td>
                         <td>
-                            <div style="display:flex;gap:6px;">
+                            <?php if ($isLocked): ?>
+                                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#991B1B;background:#FEE2E2;padding:3px 8px;border-radius:6px;">
+                                    🔒 Locked / Suspended
+                                </span>
+                            <?php else: ?>
+                                <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#166534;background:#DCFCE7;padding:3px 8px;border-radius:6px;">
+                                    🟢 Active
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div style="display:flex;gap:6px;align-items:center;">
+                                <?php if ($s['username'] !== $admin): ?>
+                                    <form method="POST" style="display:inline;">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="action" value="toggle_lock">
+                                        <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
+                                        <?php if ($isLocked): ?>
+                                            <input type="hidden" name="lock_op" value="unlock">
+                                            <button type="submit" class="btn-secondary" style="padding:4px 8px;font-size:11px;background:#F0FDF4;border:1px solid #86EFAC;color:#166534;" title="Restore account login access">
+                                                🔓 Unlock
+                                            </button>
+                                        <?php else: ?>
+                                            <input type="hidden" name="lock_op" value="lock">
+                                            <button type="submit" class="btn-secondary" style="padding:4px 8px;font-size:11px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;" title="Immediately lock and suspend account">
+                                                🔒 Lock
+                                            </button>
+                                        <?php endif; ?>
+                                    </form>
+                                <?php endif; ?>
+
                                 <button class="btn-secondary" style="padding:5px 10px;font-size:12px;" onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>')">Reset PW</button>
                                 <form method="POST" onsubmit="return false;" data-confirm-title="Remove Staff Account" data-confirm-msg="Remove <?php echo htmlspecialchars($s['username']); ?>? This cannot be undone." data-confirm-icon="👤" data-confirm-icon-bg="#FEE2E2">
                                     <?php echo csrf_field(); ?>
