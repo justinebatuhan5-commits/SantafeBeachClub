@@ -3,7 +3,7 @@ require_once __DIR__ . '/../helpers/error_handler.php';
 require_once __DIR__ . '/../helpers/business_time_helper.php';
 require_once __DIR__ . '/../helpers/password_helper.php';
 
-// MySQL database connection configuration (Supports Local XAMPP & Live InfinityFree MySQL)
+// MySQL database connection configuration (Supports Cloud Env Vars, Local XAMPP & Live InfinityFree MySQL)
 $is_local_env = in_array($_SERVER['HTTP_HOST'] ?? '127.0.0.1', ['localhost', '127.0.0.1', '::1']);
 
 // Suppress strict reporting during initial connection attempts
@@ -11,15 +11,31 @@ mysqli_report(MYSQLI_REPORT_OFF);
 
 $conn = null;
 
-if ($is_local_env) {
-    // 1. Try Local XAMPP Database
-    $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3307);
+// 1. Check for Cloud Environment Variables (e.g. Render / Cloud MySQL)
+$env_host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? null);
+if ($env_host) {
+    $env_user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
+    $env_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
+    $env_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'santafe_beach_club');
+    $env_port = (int)(getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? 3306));
+
+    $conn = @new mysqli($env_host, $env_user, $env_pass, $env_name, $env_port);
     if ($conn && !$conn->connect_error) {
-        $dbname = 'santafe_beach_club';
+        $dbname = $env_name;
     }
 }
 
-// 2. Connect to Live InfinityFree MySQL Database if hosted online or local is offline
+// 2. Try Local XAMPP Database
+if (!$conn || $conn->connect_error) {
+    if ($is_local_env) {
+        $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3307);
+        if ($conn && !$conn->connect_error) {
+            $dbname = 'santafe_beach_club';
+        }
+    }
+}
+
+// 3. Connect to Live InfinityFree MySQL Database if hosted online or local is offline
 if (!$conn || $conn->connect_error) {
     $inf_host = 'sql111.infinityfree.com';
     $inf_user = 'if0_42717273';
