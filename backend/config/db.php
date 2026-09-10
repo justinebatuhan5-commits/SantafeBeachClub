@@ -60,7 +60,8 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
     if (!$conn || $conn->connect_error) {
-        throw new mysqli_sql_exception("Connection failed: " . ($conn ? $conn->connect_error : 'Unknown error'));
+        $err = $conn ? $conn->connect_error : ($cloud_connect_error ?? 'Unable to connect to database host');
+        throw new mysqli_sql_exception("Connection failed: " . $err . " (Host: " . ($env_host ?: ($is_local_env ? '127.0.0.1' : $inf_host)) . ")");
     }
     
     try {
