@@ -64,8 +64,12 @@ try {
         throw new mysqli_sql_exception("Connection failed: " . ($conn ? $conn->connect_error : 'Unknown error'));
     }
     
-    $conn->query("CREATE DATABASE IF NOT EXISTS $dbname");
-    $conn->select_db($dbname);
+    try {
+        @$conn->query("CREATE DATABASE IF NOT EXISTS $dbname");
+    } catch (Throwable $t) {
+        // Cloud managed databases like Aiven restrict CREATE DATABASE; ignore if db already exists
+    }
+    @$conn->select_db($dbname);
 
     // Verify tables exist, else run the schema
     $tableCheck = $conn->query("SHOW TABLES LIKE 'rooms'");
