@@ -5,8 +5,8 @@
  * Score threshold: 0.5 (0.0 = bot, 1.0 = human)
  */
 
-define('RECAPTCHA_SITE_KEY',   '6LfE7bEtAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT');
-define('RECAPTCHA_SECRET_KEY', '6LfE7bEtAAAACG5jsbOJoByCDJJxDUWVDjlyslt');
+define('RECAPTCHA_SITE_KEY',   '6LdQlbMtAAAAATXKv68Zmk3Bk5x16n2Fd3jT-is');
+define('RECAPTCHA_SECRET_KEY', '6LdQlbMtAAAAJN_oVwQbQal2nmeIrqp88Wlyg7m');
 define('RECAPTCHA_MIN_SCORE',  0.5);
 define('RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify');
 
