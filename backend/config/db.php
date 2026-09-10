@@ -58,6 +58,12 @@ if (!$conn || $conn->connect_error) {
 // Restore strict reporting for application queries
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+// Helper: run schema-migration queries silently (ALTER TABLE, CREATE TABLE IF NOT EXISTS)
+// Aiven and other managed MySQL servers may reject certain DDL syntax; never crash on these.
+function safe_query($conn, $sql) {
+    try { @$conn->query($sql); } catch (Throwable $t) { error_log('[safe_query] ' . $t->getMessage()); }
+}
+
 try {
     if (!$conn || $conn->connect_error) {
         $err = $conn ? $conn->connect_error : ($cloud_connect_error ?? 'Unable to connect to database host');
@@ -85,24 +91,24 @@ try {
     }
 
     // Ensure token & email & payment columns exist (safe to run on every load)
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkin_token VARCHAR(64) DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_token VARCHAR(64) DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelled_at DATETIME DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_email VARCHAR(150) DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Pay at Check-in'");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS room_type_id INT DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkout_notified_at DATETIME DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_deadline DATETIME DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_reason VARCHAR(255) DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS promo_code VARCHAR(50) DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0.00");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_email_sent_at DATETIME DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkin_token VARCHAR(64) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_token VARCHAR(64) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelled_at DATETIME DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_email VARCHAR(150) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Pay at Check-in'");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS room_type_id INT DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkout_notified_at DATETIME DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_deadline DATETIME DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_reason VARCHAR(255) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS promo_code VARCHAR(50) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0.00");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_email_sent_at DATETIME DEFAULT NULL");
     
     // Guest information columns for View Profile feature
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(20) DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(50) DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_special_requests TEXT DEFAULT NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_notes TEXT DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(20) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(50) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_special_requests TEXT DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_notes TEXT DEFAULT NULL");
 
     // Reviews table schema
     $conn->query("CREATE TABLE IF NOT EXISTS reviews (
@@ -137,7 +143,7 @@ try {
         is_active TINYINT(1) DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $conn->query("ALTER TABLE promotions ADD COLUMN IF NOT EXISTS code VARCHAR(50) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE promotions ADD COLUMN IF NOT EXISTS code VARCHAR(50) DEFAULT NULL");
 
     // Pricing Rules table schema support (seasonal and weekend pricing)
     $conn->query("CREATE TABLE IF NOT EXISTS pricing_rules (
@@ -165,8 +171,8 @@ try {
     )");
 
     // Ensure image columns exist on upgrading existing tables
-    $conn->query("ALTER TABLE room_types ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL");
-    $conn->query("ALTER TABLE room_types ADD COLUMN IF NOT EXISTS gallery_images TEXT DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE room_types ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE room_types ADD COLUMN IF NOT EXISTS gallery_images TEXT DEFAULT NULL");
 
     // Enforce current room catalog, counts, capacities and rates.
     $catalogRooms = [
@@ -253,9 +259,9 @@ try {
     )");
     
     // Add accounting_status to payments if upgrading from older schema
-    $conn->query("ALTER TABLE payments ADD COLUMN IF NOT EXISTS accounting_status VARCHAR(20) DEFAULT 'deferred'");
-    $conn->query("ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_tendered DECIMAL(10,2) DEFAULT NULL");
-    $conn->query("ALTER TABLE payments ADD COLUMN IF NOT EXISTS change_amount DECIMAL(10,2) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE payments ADD COLUMN IF NOT EXISTS accounting_status VARCHAR(20) DEFAULT 'deferred'");
+    safe_query($conn, "ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_tendered DECIMAL(10,2) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE payments ADD COLUMN IF NOT EXISTS change_amount DECIMAL(10,2) DEFAULT NULL");
 
     // Keep an immutable audit trail for every payment status action.
     $conn->query("CREATE TABLE IF NOT EXISTS payment_action_history (
@@ -279,7 +285,7 @@ try {
         booking_id INT DEFAULT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $conn->query("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS booking_id INT DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS booking_id INT DEFAULT NULL");
 
     // Ensure admins table exists
     $conn->query("CREATE TABLE IF NOT EXISTS admins (
@@ -291,14 +297,14 @@ try {
     )");
 
     // Add role column if upgrading from older schema
-    $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'receptionist'");
+    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'receptionist'");
     // Add email column to admins if not present (needed for MFA OTP delivery)
-    $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS email VARCHAR(150) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS email VARCHAR(150) DEFAULT NULL");
     // Add profile_photo column to admins
-    $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255) DEFAULT NULL");
     // Add account lockout columns to admins
-    $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS failed_login_count INT NOT NULL DEFAULT 0");
-    $conn->query("ALTER TABLE admins ADD COLUMN IF NOT EXISTS locked_until DATETIME NULL DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS failed_login_count INT NOT NULL DEFAULT 0");
+    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS locked_until DATETIME NULL DEFAULT NULL");
 
     // -----------------------------------------------------------------------
     // MFA: admin_otps â€” stores hashed OTPs for two-factor admin login
