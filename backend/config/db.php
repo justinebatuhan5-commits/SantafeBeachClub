@@ -11,17 +11,28 @@ mysqli_report(MYSQLI_REPORT_OFF);
 
 $conn = null;
 
-// 1. Check for Cloud Environment Variables (e.g. Render / Cloud MySQL)
+// 1. Check for Cloud Environment Variables (e.g. Render / Aiven Cloud MySQL)
 $env_host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? null);
 if ($env_host) {
     $env_user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
     $env_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
-    $env_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'santafe_beach_club');
+    $env_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'defaultdb');
     $env_port = (int)(getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? 3306));
 
-    $conn = @new mysqli($env_host, $env_user, $env_pass, $env_name, $env_port);
-    if ($conn && !$conn->connect_error) {
-        $dbname = $env_name;
+    $conn = mysqli_init();
+    if ($conn) {
+        // Aiven requires SSL; MYSQLI_CLIENT_SSL ensures an encrypted handshake
+        $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
+        $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
+        if (@$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port, NULL, MYSQLI_CLIENT_SSL)) {
+            $dbname = $env_name;
+        } else {
+            // Retry plain if SSL handshake not strictly enforced
+            @$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port);
+            if (!$conn->connect_error) {
+                $dbname = $env_name;
+            }
+        }
     }
 }
 
