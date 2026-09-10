@@ -15,6 +15,7 @@ require_once __DIR__ . '/../../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../../backend/helpers/rate_limiter.php';
 require_once __DIR__ . '/../../backend/helpers/guest_auth_helper.php';
+require_once __DIR__ . '/../../backend/helpers/recaptcha_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -33,6 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 if (!verify_csrf_token()) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Security validation failed. Please refresh and try again.']);
+    exit;
+}
+
+// ── reCAPTCHA v3 Verification ────────────────────────────
+$recaptchaToken  = $_POST['g-recaptcha-response'] ?? '';
+$recaptchaResult = recaptcha_verify($recaptchaToken, 'guest_lookup');
+if (!$recaptchaResult['success']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => $recaptchaResult['error'] ?: 'Security check failed. Please try again.']);
     exit;
 }
 
