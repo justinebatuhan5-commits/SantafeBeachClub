@@ -12,26 +12,25 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $conn = null;
 
 // 1. Check for Cloud Environment Variables (e.g. Render / Aiven Cloud MySQL)
-$env_host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? null);
+$env_host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? null));
 if ($env_host) {
-    $env_user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
-    $env_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
-    $env_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'defaultdb');
-    $env_port = (int)(getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? 3306));
+    $env_user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? ($_SERVER['DB_USER'] ?? 'root'));
+    $env_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? ($_SERVER['DB_PASS'] ?? ''));
+    $env_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? 'defaultdb'));
+    $env_port = (int)(getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? ($_SERVER['DB_PORT'] ?? 3306)));
 
     $conn = mysqli_init();
     if ($conn) {
-        // Aiven requires SSL; MYSQLI_CLIENT_SSL ensures an encrypted handshake
         $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
         $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-        if (@$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port, NULL, MYSQLI_CLIENT_SSL)) {
+        if (!@$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port, NULL, MYSQLI_CLIENT_SSL)) {
+            // Retry plain if SSL handshake not strictly required
+            @$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port);
+        }
+        if (!$conn->connect_error) {
             $dbname = $env_name;
         } else {
-            // Retry plain if SSL handshake not strictly enforced
-            @$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port);
-            if (!$conn->connect_error) {
-                $dbname = $env_name;
-            }
+            $cloud_connect_error = $conn->connect_error;
         }
     }
 }
@@ -476,13 +475,13 @@ try {
     <body>
         <div class='error-container'>
             <div class='error-title'>MySQL Database Offline</div>
-            <div class='error-body'>Cannot connect to MySQL. Please make sure MySQL is started in your XAMPP Control Panel.</div>
+            <div class='error-body'>Cannot connect to MySQL. " . htmlspecialchars($e->getMessage()) . "</div>
             <div class='xampp-instructions'>
-                <strong>How to fix:</strong>
+                <strong>Troubleshooting:</strong>
                 <ol>
-                    <li>Open the <strong>XAMPP Control Panel</strong>.</li>
-                    <li>Click <strong>Start</strong> next to <strong>MySQL</strong> until it turns green.</li>
-                    <li><strong>Refresh this page</strong>.</li>
+                    <li>If hosted locally: Make sure MySQL is running in your <strong>XAMPP Control Panel</strong>.</li>
+                    <li>If hosted on Render: Verify your <strong>DB_HOST</strong>, <strong>DB_USER</strong>, <strong>DB_PASS</strong>, <strong>DB_PORT</strong>, and <strong>DB_NAME</strong> environment variables.</li>
+                    <li>Refresh this page.</li>
                 </ol>
             </div>
         </div>
