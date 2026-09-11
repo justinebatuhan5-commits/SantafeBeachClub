@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="assets/js/security.js" defer></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdQlbMtAAAAATXKv68Zmk3Bk5x16n2Fd3jT-is" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT" async defer></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -1051,7 +1051,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (typeof grecaptcha !== 'undefined') {
             grecaptcha.ready(function() {
                 // Pre-execute a passive token to force badge rendering
-                grecaptcha.execute('6LdQlbMtAAAAATXKv68Zmk3Bk5x16n2Fd3jT-is', { action: 'homepage' }).catch(function() {});
+                grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'homepage' }).catch(function() {});
             });
         }
 
@@ -1086,7 +1086,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             let recaptchaToken = '';
             try {
                 recaptchaToken = await Promise.race([
-                    grecaptcha.execute('6LdQlbMtAAAAATXKv68Zmk3Bk5x16n2Fd3jT-is', { action: 'admin_login' }),
+                    grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'admin_login' }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('reCAPTCHA timeout')), 5000))
                 ]);
                 document.getElementById('g-recaptcha-response').value = recaptchaToken;
