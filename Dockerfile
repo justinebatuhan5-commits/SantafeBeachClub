@@ -28,21 +28,14 @@ RUN mkdir -p /var/www/html/frontend/uploads \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Configure Apache port binding cleanly at runtime
-COPY <<'EOF' /usr/local/bin/start-apache.sh
-#!/bin/sh
-set -e
-PORT="${PORT:-80}"
-sed -i "s/Listen 80/Listen $PORT/" /etc/apache2/ports.conf
-sed -i "s/<VirtualHost \*:80>/<VirtualHost \*:$PORT>/" /etc/apache2/sites-available/000-default.conf
-exec apache2-foreground
-EOF
+# Listen on both 80 and 10000 (standard Render ports)
+RUN echo "Listen 10000" >> /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:80 \*:10000>/' /etc/apache2/sites-available/000-default.conf
 
-RUN chmod +x /usr/local/bin/start-apache.sh
+EXPOSE 80 10000
 
-EXPOSE 80
+CMD ["apache2-foreground"]
 
-CMD ["/usr/local/bin/start-apache.sh"]
 
 
 
