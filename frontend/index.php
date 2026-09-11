@@ -33,8 +33,6 @@ if ($price_q) {
     <meta name="theme-color" content="#7C533C">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Santa Fe BC">
-    <link rel="manifest" href="camera_test.html">
     <title>Santa Fe Beach Club - Escape to Paradise</title>
     <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
     <link rel="shortcut icon" type="image/jpeg" href="assets/logo.jpg">

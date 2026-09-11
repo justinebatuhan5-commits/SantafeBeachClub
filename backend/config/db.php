@@ -113,14 +113,21 @@ try {
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0.00");
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_email_sent_at DATETIME DEFAULT NULL");
     
-    // Guest information columns for View Profile feature
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(20) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_country VARCHAR(50) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_special_requests TEXT DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_notes TEXT DEFAULT NULL");
+    // Helper function to safely add a column if it doesn't already exist (MySQL 8 compatible)
+    $ensure_column = function($conn, $dbname, $table, $col, $col_def) {
+        $check = @$conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = '$table' AND COLUMN_NAME = '$col'");
+        if ($check && $check->num_rows == 0) {
+            @$conn->query("ALTER TABLE `$table` ADD COLUMN `$col` $col_def");
+        }
+    };
 
-    // Ensure room_types has image_url column
-    safe_query($conn, "ALTER TABLE room_types ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) DEFAULT NULL");
+    $ensure_column($conn, $dbname, 'room_types', 'image_url', 'VARCHAR(255) DEFAULT NULL');
+    $ensure_column($conn, $dbname, 'room_types', 'gallery_images', 'TEXT DEFAULT NULL');
+    $ensure_column($conn, $dbname, 'bookings', 'guest_phone', 'VARCHAR(20) DEFAULT NULL');
+    $ensure_column($conn, $dbname, 'bookings', 'guest_country', 'VARCHAR(50) DEFAULT NULL');
+    $ensure_column($conn, $dbname, 'bookings', 'guest_special_requests', 'TEXT DEFAULT NULL');
+    $ensure_column($conn, $dbname, 'bookings', 'guest_notes', 'TEXT DEFAULT NULL');
+
 
     // Reviews table schema
     $conn->query("CREATE TABLE IF NOT EXISTS reviews (
