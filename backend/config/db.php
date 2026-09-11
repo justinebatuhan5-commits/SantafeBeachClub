@@ -110,6 +110,9 @@ try {
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_special_requests TEXT DEFAULT NULL");
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_notes TEXT DEFAULT NULL");
 
+    // Ensure room_types has image_url column
+    safe_query($conn, "ALTER TABLE room_types ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) DEFAULT NULL");
+
     // Reviews table schema
     $conn->query("CREATE TABLE IF NOT EXISTS reviews (
         id INT AUTO_INCREMENT PRIMARY KEY,
