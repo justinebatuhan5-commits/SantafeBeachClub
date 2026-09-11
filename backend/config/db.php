@@ -86,9 +86,22 @@ try {
     }
     @$conn->select_db($dbname);
 
-    // Verify tables exist, else run the schema
+    // ---------------------------------------------------------------------------
+    // SCHEMA MIGRATION: Only runs when tables are missing OR once per session.
+    // This prevents 50+ DDL queries from firing on every page load, which was
+    // causing 5-10 second load times over the remote Aiven MySQL connection.
+    // To force a re-run, add ?migrate=1 to any URL or clear your session.
+    // ---------------------------------------------------------------------------
+    if (session_status() === PHP_SESSION_NONE) { @session_start(); }
+    $force_migrate = isset($_GET['migrate']) && $_GET['migrate'] === '1';
     $tableCheck = $conn->query("SHOW TABLES LIKE 'rooms'");
-    if ($tableCheck->num_rows == 0) {
+    $tables_exist = $tableCheck && $tableCheck->num_rows > 0;
+    $need_migration = !$tables_exist || $force_migrate || empty($_SESSION['_db_migrated']);
+
+    if ($need_migration) {
+
+    // Verify tables exist, else run the schema
+    if (!$tables_exist) {
         $schema = file_get_contents(__DIR__ . '/../database/database.sql');
         $queries = explode(';', $schema);
         foreach ($queries as $q) {
@@ -99,7 +112,7 @@ try {
         }
     }
 
-    // Ensure token & email & payment columns exist (safe to run on every load)
+    // Ensure token & email & payment columns exist
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkin_token VARCHAR(64) DEFAULT NULL");
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_token VARCHAR(64) DEFAULT NULL");
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelled_at DATETIME DEFAULT NULL");
@@ -145,7 +158,7 @@ try {
     if ($chkRev && $chkRev->fetch_assoc()['cnt'] == 0) {
         $conn->query("INSERT INTO reviews (guest_name, guest_location, rating, review_text, is_approved) VALUES
             ('Maria R.', 'Cebu, Philippines', 5, 'Absolutely breathtaking. We woke up to the sound of waves every morning. The staff was warm, attentive, and made our anniversary truly unforgettable.', 1),
-            ('James L.', 'Manila, Philippines', 5, 'The Beachview Duplex was perfect for our family. The kids loved the beach access, and the room was immaculate. We\'ll definitely be back next summer!', 1),
+            ('James L.', 'Manila, Philippines', 5, 'The Beachview Duplex was perfect for our family. The kids loved the beach access, and the room was immaculate. We\\'ll definitely be back next summer!', 1),
             ('Sarah C.', 'Makati, Philippines', 5, 'Santa Fe Beach Club is a hidden gem. The calmer waters were perfect for swimming, and the whole property has a peaceful, boutique hotel feel.', 1)");
     }
 
@@ -326,7 +339,7 @@ try {
     safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS locked_until DATETIME NULL DEFAULT NULL");
 
     // -----------------------------------------------------------------------
-    // MFA: admin_otps â€” stores hashed OTPs for two-factor admin login
+    // MFA: admin_otps — stores hashed OTPs for two-factor admin login
     // Raw OTP codes are NEVER stored here; only SHA-256 hashes.
     // -----------------------------------------------------------------------
     $conn->query("CREATE TABLE IF NOT EXISTS admin_otps (
@@ -342,7 +355,7 @@ try {
     )");
 
     // -----------------------------------------------------------------------
-    // MFA: guest_otps â€” stores hashed OTPs for customer booking portal login
+    // MFA: guest_otps — stores hashed OTPs for customer booking portal login
     // -----------------------------------------------------------------------
     $conn->query("CREATE TABLE IF NOT EXISTS guest_otps (
         id         INT AUTO_INCREMENT PRIMARY KEY,
@@ -466,6 +479,11 @@ try {
         $stmt->execute();
     }
     $stmt->close();
+
+    // Mark migration as done for this session
+    $_SESSION['_db_migrated'] = true;
+
+    } // end if ($need_migration)
 
     $propertyTimezone = sf_get_property_timezone_setting($conn);
     date_default_timezone_set($propertyTimezone);
