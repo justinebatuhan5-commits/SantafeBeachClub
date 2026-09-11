@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/cloudinary_helper.php';
 
 $admin = $_SESSION['admin_username'];
 
@@ -28,7 +29,15 @@ function upload_room_image(array $file, string $type_slug): string|false {
     if (!in_array($file['type'], $allowed_mime, true)) return false;
     if ($file['size'] > $max_size)                  return false;
 
-    $dir = "assets/rooms/" . preg_replace('/[^a-z0-9_]/', '', $type_slug) . "/";
+    // Try Cloudinary first
+    $cleanSlug = preg_replace('/[^a-z0-9_]/', '', $type_slug);
+    $cloudResult = cloudinary_upload($file['tmp_name'], 'sfbc_rooms_' . $cleanSlug);
+    if ($cloudResult['success'] && !empty($cloudResult['url'])) {
+        return $cloudResult['url'];
+    }
+
+    // Local fallback
+    $dir = "assets/rooms/" . $cleanSlug . "/";
     if (!is_dir($dir)) mkdir($dir, 0755, true);
 
     $filename = uniqid($type_slug . '_') . '.' . $ext;

@@ -621,7 +621,7 @@ if (isset($conn)) {
 
         <div class="header-user-menu" id="pageHeaderUserMenu">
             <button class="header-user-trigger" onclick="toggleUserDropdown(event)">
-                <?php if (!empty($_ph_photo) && file_exists(__DIR__ . '/../' . $_ph_photo)): ?>
+                <?php if (!empty($_ph_photo) && (str_starts_with($_ph_photo, 'http') || file_exists(__DIR__ . '/../' . $_ph_photo))): ?>
                     <img src="<?php echo htmlspecialchars($_ph_photo); ?>" alt="Avatar" class="header-user-avatar" style="object-fit:cover; border:1px solid var(--border);">
                 <?php else: ?>
                     <span class="header-user-avatar"><?php echo strtoupper(substr($_ph_username !== '' ? $_ph_username : 'U', 0, 1)); ?></span>

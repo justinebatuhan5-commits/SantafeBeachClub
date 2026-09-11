@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/cloudinary_helper.php';
 $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
 ?>
 <!DOCTYPE html>
@@ -95,7 +96,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
             <div class="photo-grid">
                 <?php while ($p = $photos->fetch_assoc()): ?>
                     <div class="photo-card">
-                        <img src="assets/gallery/<?php echo htmlspecialchars($p['file_name']); ?>" alt="Gallery Image" loading="lazy">
+                        <img src="<?php echo htmlspecialchars(get_image_url($p['file_name'], 'assets/logo.jpg', 'assets/gallery/')); ?>" alt="Gallery Image" loading="lazy">
                     </div>
                 <?php endwhile; ?>
             </div>

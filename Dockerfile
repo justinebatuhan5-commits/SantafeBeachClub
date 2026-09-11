@@ -17,7 +17,7 @@ RUN echo '<Directory /var/www/html>\n\
     AllowOverride All\n\
     Require all granted\n\
 </Directory>\n\
-PassEnv DB_HOST DB_PORT DB_NAME DB_USER DB_PASS GMAIL_USER GMAIL_APP_PASSWORD MAIL_FROM_NAME PORT\n' > /etc/apache2/conf-available/override.conf \
+PassEnv DB_HOST DB_PORT DB_NAME DB_USER DB_PASS GMAIL_USER GMAIL_APP_PASSWORD MAIL_FROM_NAME CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET PORT\n' > /etc/apache2/conf-available/override.conf \
     && a2enconf override
 
 # Copy application source code

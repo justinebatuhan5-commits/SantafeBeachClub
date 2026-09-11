@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/cloudinary_helper.php';
 
 $admin = $_SESSION['admin_username'];
 
@@ -32,22 +33,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($filesize > 5 * 1024 * 1024) {
                 $_SESSION['gal_error'] = "Error: File exceeds maximum allowed size of 5MB.";
             } else {
-                // Cryptographically secure randomized filename
-                $new_filename = 'gal_' . bin2hex(random_bytes(16)) . '.' . $ext;
-                if (!is_dir($target_dir)) {
-                    @mkdir($target_dir, 0755, true);
+                // Try Cloudinary first for permanent cloud storage
+                $cloudResult = cloudinary_upload($tmpFile, 'sfbc_gallery');
+                $savedPath = null;
+
+                if ($cloudResult['success'] && !empty($cloudResult['url'])) {
+                    $savedPath = $cloudResult['url'];
+                } else {
+                    // Fallback to local storage if Cloudinary fails or is unreachable
+                    $new_filename = 'gal_' . bin2hex(random_bytes(16)) . '.' . $ext;
+                    if (!is_dir($target_dir)) {
+                        @mkdir($target_dir, 0755, true);
+                    }
+                    if (move_uploaded_file($tmpFile, $target_dir . $new_filename)) {
+                        $savedPath = $new_filename;
+                    }
                 }
 
-                if (move_uploaded_file($tmpFile, $target_dir . $new_filename)) {
+                if ($savedPath !== null) {
                     $stmt = $conn->prepare("INSERT INTO gallery (file_name) VALUES (?)");
-                    $stmt->bind_param("s", $new_filename);
+                    $stmt->bind_param("s", $savedPath);
                     $stmt->execute();
                     $stmt->close();
-                    log_activity($conn, $admin, 'Gallery Photo Added', "Added: $origName as $new_filename");
-                    SecurityLogger::log($conn, 'FILE_UPLOADED', "Uploaded gallery image: $new_filename", SecurityLogger::LEVEL_INFO, $admin);
+                    log_activity($conn, $admin, 'Gallery Photo Added', "Added: $origName");
+                    SecurityLogger::log($conn, 'FILE_UPLOADED', "Uploaded gallery image: $savedPath", SecurityLogger::LEVEL_INFO, $admin);
                     $_SESSION['gal_success'] = "Photo uploaded successfully.";
                 } else {
-                    $_SESSION['gal_error'] = "File upload failed, please try again.";
+                    $errDetail = $cloudResult['error'] ?? 'Local upload failed';
+                    $_SESSION['gal_error'] = "File upload failed: " . htmlspecialchars($errDetail);
                 }
             }
         } else {
@@ -127,7 +140,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
         <?php while ($p = $photos->fetch_assoc()): ?>
         <div class="admin-card" style="padding:0;overflow:hidden;">
             <div style="height:200px;background:#f3f4f6;">
-                <img src="<?php echo htmlspecialchars($target_dir . $p['file_name']); ?>" style="width:100%;height:100%;object-fit:cover;" alt="Gallery Photo">
+                <img src="<?php echo htmlspecialchars(get_image_url($p['file_name'], 'assets/logo.jpg', $target_dir)); ?>" style="width:100%;height:100%;object-fit:cover;" alt="Gallery Photo">
             </div>
             <div style="padding:15px;display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:12px;color:var(--text-muted);">

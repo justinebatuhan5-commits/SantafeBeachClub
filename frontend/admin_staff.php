@@ -4,6 +4,7 @@ require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/rbac_helper.php';
 require_once __DIR__ . '/../backend/helpers/security_logger.php';
 require_once __DIR__ . '/../backend/helpers/password_helper.php';
+require_once __DIR__ . '/../backend/helpers/cloudinary_helper.php';
 
 $admin = $_SESSION['admin_username'];
 $success = $error = '';
@@ -25,13 +26,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $file = $_FILES['profile_photo'];
             $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && $file['size'] <= 5 * 1024 * 1024) {
-                $uploadDir = __DIR__ . '/uploads/avatars/';
-                if (!is_dir($uploadDir)) {
-                    @mkdir($uploadDir, 0755, true);
-                }
-                $filename = 'avatar_' . md5($uname . time() . uniqid()) . '.' . $fileExt;
-                if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
-                    $photoPath = 'uploads/avatars/' . $filename;
+                $cloudResult = cloudinary_upload($file['tmp_name'], 'sfbc_avatars');
+                if ($cloudResult['success'] && !empty($cloudResult['url'])) {
+                    $photoPath = $cloudResult['url'];
+                } else {
+                    $uploadDir = __DIR__ . '/uploads/avatars/';
+                    if (!is_dir($uploadDir)) {
+                        @mkdir($uploadDir, 0755, true);
+                    }
+                    $filename = 'avatar_' . md5($uname . time() . uniqid()) . '.' . $fileExt;
+                    if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                        $photoPath = 'uploads/avatars/' . $filename;
+                    }
                 }
             }
         }
@@ -72,12 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $file = $_FILES['profile_photo'];
             $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && $file['size'] <= 5 * 1024 * 1024) {
-                $uploadDir = __DIR__ . '/uploads/avatars/';
-                if (!is_dir($uploadDir)) {
-                    @mkdir($uploadDir, 0755, true);
-                }
-
-                // Delete old photo
+                // Delete old local photo if exists
                 $oldStmt = $conn->prepare("SELECT profile_photo, username FROM admins WHERE id = ?");
                 $oldStmt->bind_param("i", $target_id);
                 $oldStmt->execute();
@@ -85,13 +86,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $oldStmt->close();
 
                 if ($staffData) {
-                    if (!empty($staffData['profile_photo']) && file_exists(__DIR__ . '/' . $staffData['profile_photo'])) {
+                    if (!empty($staffData['profile_photo']) && !is_remote_image($staffData['profile_photo']) && file_exists(__DIR__ . '/' . $staffData['profile_photo'])) {
                         @unlink(__DIR__ . '/' . $staffData['profile_photo']);
                     }
 
-                    $filename = 'avatar_' . md5($staffData['username'] . time() . uniqid()) . '.' . $fileExt;
-                    if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
-                        $webPath = 'uploads/avatars/' . $filename;
+                    $cloudResult = cloudinary_upload($file['tmp_name'], 'sfbc_avatars');
+                    $webPath = null;
+                    if ($cloudResult['success'] && !empty($cloudResult['url'])) {
+                        $webPath = $cloudResult['url'];
+                    } else {
+                        $uploadDir = __DIR__ . '/uploads/avatars/';
+                        if (!is_dir($uploadDir)) {
+                            @mkdir($uploadDir, 0755, true);
+                        }
+                        $filename = 'avatar_' . md5($staffData['username'] . time() . uniqid()) . '.' . $fileExt;
+                        if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                            $webPath = 'uploads/avatars/' . $filename;
+                        }
+                    }
+
+                    if ($webPath !== null) {
                         $upd = $conn->prepare("UPDATE admins SET profile_photo = ? WHERE id = ?");
                         $upd->bind_param("si", $webPath, $target_id);
                         $upd->execute();
@@ -108,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             } else {
-                $_SESSION['staff_error'] = 'Invalid image format (must be JPG, PNG, WEBP, max 5MB).';
+                $_SESSION['staff_error'] = 'Invalid image file. Max 5MB, JPG/PNG/WEBP/GIF only.';
             }
         } elseif (isset($_POST['remove_photo']) && $_POST['remove_photo'] === '1') {
             $oldStmt = $conn->prepare("SELECT profile_photo, username FROM admins WHERE id = ?");
@@ -118,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $oldStmt->close();
 
             if ($staffData) {
-                if (!empty($staffData['profile_photo']) && file_exists(__DIR__ . '/' . $staffData['profile_photo'])) {
+                if (!empty($staffData['profile_photo']) && !is_remote_image($staffData['profile_photo']) && file_exists(__DIR__ . '/' . $staffData['profile_photo'])) {
                     @unlink(__DIR__ . '/' . $staffData['profile_photo']);
                 }
                 $upd = $conn->prepare("UPDATE admins SET profile_photo = NULL WHERE id = ?");
@@ -132,6 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $_SESSION['staff_success'] = "Photo removed for {$staffData['username']}.";
             }
+        } else {
+            $_SESSION['staff_error'] = 'No photo uploaded or upload error.';
         }
     }
 
@@ -391,7 +407,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                     <!-- Account -->
                     <div style="display:flex;align-items:center;gap:11px;min-width:0;">
                         <div style="position:relative;flex-shrink:0;">
-                            <?php if (!empty($s['profile_photo']) && file_exists(__DIR__ . '/' . $s['profile_photo'])): ?>
+                            <?php if (!empty($s['profile_photo']) && (is_remote_image($s['profile_photo']) || file_exists(__DIR__ . '/' . $s['profile_photo']))): ?>
                                 <img src="<?php echo htmlspecialchars($s['profile_photo']); ?>" alt="Avatar" style="width:42px;height:42px;border-radius:12px;object-fit:cover;border:2px solid <?php echo $isLocked ? '#FECACA' : 'rgba(124,83,60,0.2)'; ?>;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
                             <?php else: ?>
                                 <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,<?php echo $roleColor; ?>,<?php echo $roleColor; ?>bb);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);"><?php echo strtoupper(substr($s['username'],0,1)); ?></div>

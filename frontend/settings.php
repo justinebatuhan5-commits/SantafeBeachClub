@@ -5,6 +5,7 @@ require_once __DIR__ . '/../backend/helpers/business_time_helper.php';
 require_once __DIR__ . '/../backend/helpers/security_logger.php';
 require_once __DIR__ . '/../backend/helpers/rbac_helper.php';
 require_once __DIR__ . '/../backend/helpers/password_helper.php';
+require_once __DIR__ . '/../backend/helpers/cloudinary_helper.php';
 
 $current_admin = $_SESSION['admin_username'];
 $success = '';
@@ -158,34 +159,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($file['size'] > 5 * 1024 * 1024) { // 5MB max
                 $error = 'Profile photo exceeds maximum size of 5MB.';
             } else {
-                $uploadDir = __DIR__ . '/uploads/avatars/';
-                if (!is_dir($uploadDir)) {
-                    @mkdir($uploadDir, 0755, true);
+                // Delete old local photo if exists
+                $oldStmt = $conn->prepare("SELECT profile_photo FROM admins WHERE username = ?");
+                $oldStmt->bind_param("s", $current_admin);
+                $oldStmt->execute();
+                $oldPhoto = $oldStmt->get_result()->fetch_assoc()['profile_photo'] ?? null;
+                $oldStmt->close();
+
+                if ($oldPhoto && !is_remote_image($oldPhoto) && file_exists(__DIR__ . '/' . $oldPhoto)) {
+                    @unlink(__DIR__ . '/' . $oldPhoto);
                 }
 
-                $filename = 'avatar_' . md5($current_admin . time() . uniqid()) . '.' . $fileExt;
-                $targetPath = $uploadDir . $filename;
-
-                if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                    $webPath = 'uploads/avatars/' . $filename;
-
-                    // Delete old photo if exists
-                    $oldStmt = $conn->prepare("SELECT profile_photo FROM admins WHERE username = ?");
-                    $oldStmt->bind_param("s", $current_admin);
-                    $oldStmt->execute();
-                    $oldPhoto = $oldStmt->get_result()->fetch_assoc()['profile_photo'] ?? null;
-                    $oldStmt->close();
-
-                    if ($oldPhoto && file_exists(__DIR__ . '/' . $oldPhoto)) {
-                        @unlink(__DIR__ . '/' . $oldPhoto);
+                $cloudResult = cloudinary_upload($file['tmp_name'], 'sfbc_avatars');
+                $webPath = null;
+                if ($cloudResult['success'] && !empty($cloudResult['url'])) {
+                    $webPath = $cloudResult['url'];
+                } else {
+                    $uploadDir = __DIR__ . '/uploads/avatars/';
+                    if (!is_dir($uploadDir)) {
+                        @mkdir($uploadDir, 0755, true);
                     }
+                    $filename = 'avatar_' . md5($current_admin . time() . uniqid()) . '.' . $fileExt;
+                    $targetPath = $uploadDir . $filename;
+                    if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+                        $webPath = 'uploads/avatars/' . $filename;
+                    }
+                }
 
+                if ($webPath !== null) {
                     $updStmt = $conn->prepare("UPDATE admins SET profile_photo = ? WHERE username = ?");
                     $updStmt->bind_param("ss", $webPath, $current_admin);
                     $updStmt->execute();
                     $updStmt->close();
 
                     $_SESSION['admin_profile_photo'] = $webPath;
+                    $my_profile_photo = $webPath;
                     SecurityLogger::log($conn, 'PROFILE_PHOTO_UPDATED', "Updated profile photo", SecurityLogger::LEVEL_INFO, $current_admin);
                     $success = 'Profile photo updated successfully.';
                 } else {
@@ -205,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $oldPhoto = $oldStmt->get_result()->fetch_assoc()['profile_photo'] ?? null;
         $oldStmt->close();
 
-        if ($oldPhoto && file_exists(__DIR__ . '/' . $oldPhoto)) {
+        if ($oldPhoto && !is_remote_image($oldPhoto) && file_exists(__DIR__ . '/' . $oldPhoto)) {
             @unlink(__DIR__ . '/' . $oldPhoto);
         }
 
@@ -215,6 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updStmt->close();
 
         unset($_SESSION['admin_profile_photo']);
+        $my_profile_photo = null;
         SecurityLogger::log($conn, 'PROFILE_PHOTO_REMOVED', "Removed profile photo", SecurityLogger::LEVEL_INFO, $current_admin);
         $success = 'Profile photo removed.';
     }
@@ -676,7 +685,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
                     <p class="card-desc">Upload a personal photo for your admin/receptionist profile displayed across the dashboard, sidebar, and headers.</p>
                     <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap; margin-top:16px;">
                         <div style="position:relative;">
-                            <?php if (!empty($my_profile_photo) && file_exists(__DIR__ . '/' . $my_profile_photo)): ?>
+                            <?php if (!empty($my_profile_photo) && (is_remote_image($my_profile_photo) || file_exists(__DIR__ . '/' . $my_profile_photo))): ?>
                                 <img src="<?php echo htmlspecialchars($my_profile_photo); ?>" alt="Profile Photo" style="width:84px; height:84px; border-radius:50%; object-fit:cover; border:3px solid var(--color-primary, #7C533C); box-shadow:0 4px 12px rgba(0,0,0,0.1);">
                             <?php else: ?>
                                 <div style="width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg, #7C533C, #5C3D2B); color:#FFF; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:700; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
@@ -696,7 +705,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
                                 </div>
                             </form>
 
-                            <?php if (!empty($my_profile_photo) && file_exists(__DIR__ . '/' . $my_profile_photo)): ?>
+                            <?php if (!empty($my_profile_photo) && (is_remote_image($my_profile_photo) || file_exists(__DIR__ . '/' . $my_profile_photo))): ?>
                             <form method="POST" style="margin-top:8px;">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="action" value="remove_profile_photo">
