@@ -28,7 +28,11 @@ RUN mkdir -p /var/www/html/frontend/uploads \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Use the PORT environment variable provided by Render (defaults to 80)
+# Configure Apache to listen on $PORT if provided by Render, defaulting to 80
+RUN sed -i 's/80/${PORT:-80}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["sh", "-c", "sed -i \"s/Listen 80/Listen ${PORT:-80}/g\" /etc/apache2/ports.conf 2>/dev/null; apache2-foreground"]
+
+
