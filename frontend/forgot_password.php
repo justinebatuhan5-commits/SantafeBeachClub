@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="assets/js/security.js" defer></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -414,7 +414,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Fetch reCAPTCHA token
             if (typeof grecaptcha !== 'undefined') {
                 try {
-                    const token = await grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'forgot_password' });
+                    const token = await grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT', { action: 'forgot_password' });
                     document.getElementById('g-recaptcha-response').value = token;
                 } catch (e) {
                     console.warn('reCAPTCHA token error:', e);

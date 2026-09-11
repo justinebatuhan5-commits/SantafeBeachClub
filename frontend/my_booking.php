@@ -593,7 +593,7 @@ $csrf_token = get_csrf_token();
         }
     </style>
     <!-- reCAPTCHA v3 -->
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
 </head>
 <body>
 
@@ -1012,7 +1012,7 @@ lookupForm.addEventListener('submit', async function(e) {
     let recaptchaToken = '';
     try {
         recaptchaToken = await Promise.race([
-            grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZluHOyJ7zWT', { action: 'guest_lookup' }),
+            grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT', { action: 'guest_lookup' }),
             new Promise((_, reject) => setTimeout(() => reject(new Error('reCAPTCHA timeout')), 5000))
         ]);
         document.getElementById('g-recaptcha-response').value = recaptchaToken;
