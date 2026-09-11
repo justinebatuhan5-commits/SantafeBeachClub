@@ -35,17 +35,34 @@ if ($env_host) {
     }
 }
 
-// 2. Try Local XAMPP Database
+// 2. Try Local XAMPP Database (Port 3307 or 3306)
 if (!$conn || $conn->connect_error) {
     if ($is_local_env) {
         $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3307);
+        if (!$conn || $conn->connect_error) {
+            $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3306);
+        }
         if ($conn && !$conn->connect_error) {
             $dbname = 'santafe_beach_club';
         }
     }
 }
 
-// 3. Connect to Live Aiven Cloud MySQL Database as permanent default online fallback
+// 3. Try Agila Hosting Local MySQL (when deployed on Agila server)
+if (!$conn || $conn->connect_error) {
+    $agila_host = 'localhost';
+    $agila_user = 'justinebo4ek_user';
+    $agila_pass = 'oWDtO(BCPrI6pM&%';
+    $agila_db   = 'justinebo4ek_db';
+
+    $agila_conn = @new mysqli($agila_host, $agila_user, $agila_pass, $agila_db);
+    if ($agila_conn && !$agila_conn->connect_error) {
+        $conn = $agila_conn;
+        $dbname = $agila_db;
+    }
+}
+
+// 4. Connect to Live Aiven Cloud MySQL Database as permanent default online fallback
 if (!$conn || $conn->connect_error) {
     $aiven_host = 'mysql-d634f1c-justinebatuhan5-70cd.l.aivencloud.com';
     $aiven_port = 13759;

@@ -1,4 +1,4 @@
-name: Deploy to InfinityFree via FTP
+name: Deploy to Agila Hosting via FTP
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
-          server-dir: /santafebeachclub.wuaze.com/htdocs/
+          server-dir: ./
           exclude: |
             **/.git*
             **/.git*/**
