@@ -225,6 +225,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --text-muted: #64748B;
         }
 
+        .grecaptcha-badge {
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 999999999 !important;
+            display: block !important;
+            pointer-events: auto !important;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
             background: #0D1B2A;
@@ -1249,6 +1257,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     capsWarning.classList.remove('active');
                 }
+            });
+        }
+
+        // ── Ensure reCAPTCHA badge is initialized on load ──
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.ready(function() {
+                grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT', { action: 'homepage' }).catch(function() {});
             });
         }
 
