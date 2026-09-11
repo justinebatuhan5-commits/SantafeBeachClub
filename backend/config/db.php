@@ -541,7 +541,7 @@ try {
                 <strong>Troubleshooting:</strong>
                 <ol>
                     <li>If hosted locally: Make sure MySQL is running in your <strong>XAMPP Control Panel</strong>.</li>
-                    <li>If hosted on Render: Verify your <strong>DB_HOST</strong>, <strong>DB_USER</strong>, <strong>DB_PASS</strong>, <strong>DB_PORT</strong>, and <strong>DB_NAME</strong> environment variables.</li>
+                    <li>If hosted on Agila: Verify MySQL is running and your database name and credentials are correct.</li>
                     <li>Refresh this page.</li>
                 </ol>
             </div>
