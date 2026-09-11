@@ -58,9 +58,7 @@ function secure_exception_handler(Throwable $e): void {
         http_response_code(500);
     }
 
-    $detailHtml = $isLocal 
-        ? ('<div class="detail">' . htmlspecialchars($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine()) . '</div>')
-        : '<p style="color:#64748B; font-size:13px; margin: 15px 0;">If this issue persists, please contact resort management or IT support.</p>';
+    $detailHtml = '<div class="detail">' . htmlspecialchars($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine()) . '</div>';
 
     echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error - Santa Fe Beach Club</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#F8FAFC;color:#334155;text-align:center;padding:60px 20px;} .box{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,0.06);} h1{color:#DC2626;font-size:22px;margin-bottom:12px;} p{font-size:14px;color:#64748B;line-height:1.6;} .detail{background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;padding:12px;border-radius:8px;font-family:monospace;font-size:12px;margin:16px 0;text-align:left;word-break:break-all;} a{display:inline-block;margin-top:18px;color:#0284C7;text-decoration:none;font-weight:600;}</style></head><body><div class="box"><h1>Something went wrong</h1><p>We encountered an unexpected error processing your request.</p>' . $detailHtml . '<a href="javascript:history.back()">← Return to previous page</a></div></body></html>';
     exit;
