@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/../backend/helpers/session_init.php';
 $role = $_SESSION['admin_role'] ?? $_SESSION['mfa_pending_admin_role'] ?? null;
 $source = $_SESSION['login_source'] ?? ($role === 'admin' ? 'admin' : 'reception');
 
