@@ -1037,18 +1037,6 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                     </div>
 
                     <!-- REMOVED PAYMENT CURRENCY BLOCK SINCE NO CARDS ARE CHARGED ONLINE -->
-                    <div class="bk-card" style="display:none;">
-                        <h2 class="bk-card-title">Payment currency</h2>
-                        <div class="bk-form-group">
-                            <label>Your card will be charged in the selected currency <span class="info-icon">i</span></label>
-                            <select class="bk-select-full">
-                                <option value="PHP">Philippine Peso</option>
-                            </select>
-                            <div class="bk-warning-msg">
-                                <span style="color:#eab308; margin-right:5px; font-weight:bold;">!</span> If you change the currency, you will need to re-enter your card details to ensure secure payment.
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="bk-card">
                         <h2 class="bk-card-title">Payment schedule</h2>
@@ -1198,21 +1186,39 @@ function bkSelectPayment(method) {
     var gcashOpt     = document.getElementById('opt-online');
 
     // Reset all
-    if (paymongoForm) paymongoForm.style.display = 'none';
+    if (paymongoForm) {
+        paymongoForm.style.display = 'none';
+        paymongoForm.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = true; });
+    }
     if (paymongoOpt)  paymongoOpt.classList.remove('bk-pay-option--active');
-    if (bankForm)     bankForm.style.display = 'none';
+    if (bankForm) {
+        bankForm.style.display = 'none';
+        bankForm.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = true; });
+    }
     if (bankOpt)      bankOpt.classList.remove('bk-pay-option--active');
-    if (gcashForm)    gcashForm.style.display = 'none';
+    if (gcashForm) {
+        gcashForm.style.display = 'none';
+        gcashForm.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = true; });
+    }
     if (gcashOpt)     gcashOpt.classList.remove('bk-pay-option--active');
 
     if (method === 'PayMongo Online') {
-        if (paymongoForm) paymongoForm.style.display = 'block';
+        if (paymongoForm) {
+            paymongoForm.style.display = 'block';
+            paymongoForm.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = false; });
+        }
         if (paymongoOpt)  paymongoOpt.classList.add('bk-pay-option--active');
     } else if (method === 'Bank Deposit') {
-        if (bankForm)  bankForm.style.display = 'block';
+        if (bankForm) {
+            bankForm.style.display = 'block';
+            bankForm.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = false; });
+        }
         if (bankOpt)   bankOpt.classList.add('bk-pay-option--active');
     } else if (method === 'GCash QR' || method === 'Online Payment') {
-        if (gcashForm) gcashForm.style.display = 'flex';
+        if (gcashForm) {
+            gcashForm.style.display = 'flex';
+            gcashForm.querySelectorAll('input, select, textarea').forEach(function(el) { el.disabled = false; });
+        }
         if (gcashOpt)  gcashOpt.classList.add('bk-pay-option--active');
     }
 }

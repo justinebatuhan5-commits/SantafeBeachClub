@@ -31,17 +31,34 @@
 
         // --- 1. INPUT VALIDATION ---
         validateField: function (input) {
-            const value = (input.value || '').trim();
+            // Skip validation for disabled inputs or inputs inside hidden containers
+            if (input.disabled || input.offsetParent === null) {
+                return true;
+            }
+            // Skip checkboxes and radios from generic text validation
             const type = input.getAttribute('type');
+            if (type === 'radio' || type === 'checkbox') {
+                if (input.hasAttribute('required') && !input.checked) {
+                    // Only flag if required and unchecked
+                    if (type === 'checkbox') {
+                        this.toggleFieldError(input, false, 'This field is required.');
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            const value = (input.value || '').trim();
             const patternType = input.getAttribute('data-validate');
             const label = input.getAttribute('data-label');
+            const isRequired = input.hasAttribute('required');
             let isValid = true;
             let errorMessage = '';
 
-            // Show "X is required." if field has a data-label and is empty
-            if (label && value === '') {
+            // Show "X is required." if field is required and empty
+            if (isRequired && value === '') {
                 isValid = false;
-                errorMessage = label + ' is required.';
+                errorMessage = (label || 'This field') + ' is required.';
             } else if (value !== '') {
                 // Email validation
                 if (type === 'email' || patternType === 'email') {
@@ -284,6 +301,7 @@
                 const inputs = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
                 inputs.forEach(input => {
                     if (!self.validateField(input)) {
+                        console.warn('[Security] Field failed validation:', input, 'Label:', input.getAttribute('data-label'));
                         isFormValid = false;
                     }
                 });
@@ -292,6 +310,7 @@
                 const fileInputs = form.querySelectorAll('input[type="file"]');
                 fileInputs.forEach(fileInput => {
                     if (!self.validateFileInput(fileInput)) {
+                        console.warn('[Security] File input failed validation:', fileInput);
                         isFormValid = false;
                     }
                 });
@@ -334,6 +353,11 @@
 
         // --- 6, 7 & 8. FILE UPLOAD, TYPE & SIZE VALIDATION ---
         validateFileInput: function (input) {
+            // Skip validation for disabled or hidden file inputs
+            if (input.disabled || input.offsetParent === null) {
+                return true;
+            }
+
             if (!input.files || input.files.length === 0) {
                 if (input.hasAttribute('required')) {
                     this.toggleFieldError(input, false, 'Please select a file to upload.');
