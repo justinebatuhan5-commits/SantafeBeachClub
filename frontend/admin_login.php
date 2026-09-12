@@ -912,6 +912,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
+                    <div class="input-block">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <label class="input-label" for="password">Password</label>
                         </div>
