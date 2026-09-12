@@ -9,6 +9,8 @@ require_once __DIR__ . '/../backend/helpers/validator_helper.php';
 require_once __DIR__ . '/../backend/helpers/password_helper.php';
 require_once __DIR__ . '/../backend/helpers/recaptcha_helper.php';
 
+/** @var mysqli $conn */
+
 // Already logged in – redirect to correct dashboard
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     $dest = ($_SESSION['admin_role'] ?? 'receptionist') === 'admin' ? 'admin_dashboard' : 'dashboard';
@@ -968,6 +970,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     </style>
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff6b6b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Beach Club">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+    <meta name="description" content="Staff and Reception Portal for Santa Fe Beach Club Booking System">
 </head>
 <body>
     <!-- Auto-sliding background -->
@@ -1342,5 +1353,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
     </script>
+    <!-- PWA Install Prompt -->
+    <?php include __DIR__ . '/assets/pwa-install-prompt.html'; ?>
+    <!-- PWA Install Handler Script -->
+    <script src="assets/pwa-install.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,19 @@
+<div id="pwa-install-prompt" style="display: none; position: fixed; bottom: 20px; left: 20px; right: 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%); color: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; max-width: 500px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+        <div style="flex: 1;">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">Install App</h3>
+            <p style="margin: 0 0 12px 0; font-size: 13px; opacity: 0.95;">Install Santa Fe Beach Club for quick access from your home screen</p>
+            <div style="display: flex; gap: 10px;">
+                <button id="pwa-install-btn" style="background: white; color: #ff6b6b; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: opacity 0.2s;">
+                    Install
+                </button>
+                <button id="pwa-dismiss-btn" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: opacity 0.2s;">
+                    Not now
+                </button>
+            </div>
+        </div>
+        <button id="pwa-close-btn" onclick="document.getElementById('pwa-install-prompt').style.display='none';" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: opacity 0.2s;">
+            ✕
+        </button>
+    </div>
+</div>

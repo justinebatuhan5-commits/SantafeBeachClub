@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+/** @var mysqli $conn */
 $admin = $_SESSION['admin_username'] ?? 'Admin';
 
 // ── Overdue check-out alert (simple, no helper dependencies) ─────────────────
@@ -159,6 +160,15 @@ try {
             .ds-tile:nth-child(5) { border-top: 1px solid var(--border); border-right: none; }
         }
     </style>
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff6b6b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Beach Club">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+    <meta name="description" content="Admin Dashboard for Santa Fe Beach Club Booking System">
 </head>
 <body>
 
@@ -1217,6 +1227,10 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
     }
 })();
 </script>
+    <!-- PWA Install Prompt -->
+    <?php include __DIR__ . '/assets/pwa-install-prompt.html'; ?>
+    <!-- PWA Install Handler Script -->
+    <script src="assets/pwa-install.js" defer></script>
 
 </body>
 </html>

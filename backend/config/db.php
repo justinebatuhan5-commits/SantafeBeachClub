@@ -73,6 +73,9 @@ function safe_query($conn, $sql) {
     try { @$conn->query($sql); } catch (Throwable $t) { error_log('[safe_query] ' . $t->getMessage()); }
 }
 
+// Type assertion: $conn is guaranteed to be mysqli at this point (or script has died above)
+/** @var mysqli $conn */
+
 try {
     if (!$conn || $conn->connect_error) {
         $err = $conn ? $conn->connect_error : ($cloud_connect_error ?? 'Unable to connect to database host');
