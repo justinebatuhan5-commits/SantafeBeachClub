@@ -29,13 +29,6 @@ function getPdoConnection(): PDO {
         }
     }
 
-    // Live InfinityFree Database
-    $host = 'sql111.infinityfree.com';
-    $port = 3306;
-    $db   = 'if0_42717273_santafebeachclub_db';
-    $user = 'if0_42717273';
-    $pass = 'ndAuPvlRiQVG';
-    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-    $pdo = new PDO($dsn, $user, $pass, $options);
-    return $pdo;
+    // InfinityFree Database removed - using local/cloud fallback instead
+    throw new PDOException("No database connection available. Please configure DB_HOST environment variable.");
 }

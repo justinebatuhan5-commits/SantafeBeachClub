@@ -62,24 +62,7 @@ if (!$conn || $conn->connect_error) {
     }
 }
 
-// 4. Connect to Live Aiven Cloud MySQL Database as permanent default online fallback
-if (!$conn || $conn->connect_error) {
-    $aiven_host = 'mysql-d634f1c-justinebatuhan5-70cd.l.aivencloud.com';
-    $aiven_port = 13759;
-    $aiven_user = 'avnadmin';
-    // Decoded fallback so GitHub Push Protection doesn't reject commits with raw Aiven tokens
-    $aiven_pass = getenv('DB_PASS') ?: base64_decode('QVZOU18yQlpnUkJHRWE2QnRWallQUi11cQ==');
-    $dbname     = 'defaultdb';
-
-    $conn = mysqli_init();
-    if ($conn) {
-        $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
-        $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-        if (!@$conn->real_connect($aiven_host, $aiven_user, $aiven_pass, $dbname, $aiven_port, NULL, MYSQLI_CLIENT_SSL)) {
-            @$conn->real_connect($aiven_host, $aiven_user, $aiven_pass, $dbname, $aiven_port);
-        }
-    }
-}
+// Aiven Cloud MySQL Database removed - configure DB_HOST environment variable instead
 
 // Restore strict reporting for application queries
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -93,7 +76,7 @@ function safe_query($conn, $sql) {
 try {
     if (!$conn || $conn->connect_error) {
         $err = $conn ? $conn->connect_error : ($cloud_connect_error ?? 'Unable to connect to database host');
-        throw new mysqli_sql_exception("Connection failed: " . $err . " (Host: " . ($env_host ?: ($is_local_env ? '127.0.0.1' : $inf_host)) . ")");
+        throw new mysqli_sql_exception("Connection failed: " . $err . " (Configure DB_HOST environment variable or use local XAMPP)");
     }
     
     try {
