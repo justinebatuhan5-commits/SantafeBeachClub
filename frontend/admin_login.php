@@ -912,10 +912,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <div class="input-block">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <label class="input-label" for="password">Password</label>
-                            <a href="forgot_password?portal=admin" style="font-size: 12px; color: #38BDF8; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#7DD3FC'; this.style.textDecoration='underline';" onmouseout="this.style.color='#38BDF8'; this.style.textDecoration='none';">Forgot Password?</a>
                         </div>
                         <div class="input-box">
                             <input type="password" id="password" name="password" autocomplete="current-password" data-label="Password" placeholder="Enter administrative password">

@@ -1079,7 +1079,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="input-block">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <label class="input-label" for="password">Password</label>
-                            <a href="forgot_password?portal=staff" style="font-size: 12px; color: #5C4033; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#3F2B22'; this.style.textDecoration='underline';" onmouseout="this.style.color='#5C4033'; this.style.textDecoration='none';">Forgot Password?</a>
                         </div>
                         <div class="input-box">
                             <input type="password" id="password" name="password" autocomplete="current-password" data-label="Password" placeholder="Enter your password" <?php echo $isStaffPortalLocked ? 'disabled style="background:#F1F5F9;cursor:not-allowed;"' : ''; ?>>

@@ -5,15 +5,24 @@
  * Works for both Administrator and Reception Staff accounts.
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../backend/helpers/session_init.php';
 
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/error_handler.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../backend/helpers/password_reset_helper.php';
 require_once __DIR__ . '/../backend/helpers/recaptcha_helper.php';
+
+// ── Access Gate: only accessible when logged in as admin ───────────────────
+// Hackers visiting /forgot_password directly will get a 404-like redirect.
+// The link to this page only appears inside the admin dashboard dropdown.
+if (empty($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true
+    || empty($_SESSION['admin_role'])   || $_SESSION['admin_role'] !== 'admin') {
+    http_response_code(404);
+    header('Location: admin_login');
+    exit;
+}
+
 
 $portal = isset($_GET['portal']) && $_GET['portal'] === 'admin' ? 'admin' : 'staff';
 $error = '';
