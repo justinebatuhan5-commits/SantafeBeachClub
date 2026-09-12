@@ -37,21 +37,21 @@ if ($booking) {
 
     // Status badge colours
     $status_colors = [
-        'Pending Payment' => ['bg' => '#FFF3CD', 'color' => '#856404', 'icon' => '⏳'],
-        'Pending'         => ['bg' => '#FFF3CD', 'color' => '#856404', 'icon' => '⏳'],
-        'Confirmed'       => ['bg' => '#D1FAE5', 'color' => '#065F46', 'icon' => '✅'],
-        'Checked In'      => ['bg' => '#DBEAFE', 'color' => '#1E40AF', 'icon' => '🏖️'],
-        'Checked Out'     => ['bg' => '#F3F4F6', 'color' => '#374151', 'icon' => '🏁'],
-        'Cancelled'       => ['bg' => '#FEE2E2', 'color' => '#991B1B', 'icon' => '❌'],
+        'Pending Payment' => ['bg' => '#FFF3CD', 'color' => '#856404', 'icon' => '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'],
+        'Pending'         => ['bg' => '#FFF3CD', 'color' => '#856404', 'icon' => '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'],
+        'Confirmed'       => ['bg' => '#D1FAE5', 'color' => '#065F46', 'icon' => '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'],
+        'Checked In'      => ['bg' => '#DBEAFE', 'color' => '#1E40AF', 'icon' => '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'],
+        'Checked Out'     => ['bg' => '#F3F4F6', 'color' => '#374151', 'icon' => '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>'],
+        'Cancelled'       => ['bg' => '#FEE2E2', 'color' => '#991B1B', 'icon' => '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>'],
     ];
     $bk_status     = $booking['status'] ?? 'Pending';
     $status_style  = $status_colors[$bk_status] ?? $status_colors['Pending'];
 
     $pay_status_colors = [
-        'pending'  => ['bg' => '#FFF3CD', 'color' => '#856404', 'label' => 'Pending Verification'],
-        'verified' => ['bg' => '#D1FAE5', 'color' => '#065F46', 'label' => 'Verified ✅'],
-        'rejected' => ['bg' => '#FEE2E2', 'color' => '#991B1B', 'label' => 'Rejected ❌'],
-        'refunded' => ['bg' => '#EDE9FE', 'color' => '#5B21B6', 'label' => 'Refunded'],
+        'pending'  => ['bg' => '#FFF3CD', 'color' => '#856404', 'label' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Pending Verification'],
+        'verified' => ['bg' => '#D1FAE5', 'color' => '#065F46', 'label' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Verified'],
+        'rejected' => ['bg' => '#FEE2E2', 'color' => '#991B1B', 'label' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Rejected'],
+        'refunded' => ['bg' => '#EDE9FE', 'color' => '#5B21B6', 'label' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg> Refunded'],
     ];
     $pay_status    = strtolower($payment['payment_status'] ?? 'pending');
     $pay_style     = $pay_status_colors[$pay_status] ?? $pay_status_colors['pending'];
@@ -719,8 +719,9 @@ $csrf_token = get_csrf_token();
                 <span class="ref-chip"><?php echo htmlspecialchars($booking['booking_ref']); ?></span>
             </p>
         </div>
-        <a href="my_booking?logout=1" class="btn-portal-logout">
-            🔒 Look Up Different Booking
+        <a href="my_booking?logout=1" class="btn-portal-logout" style="display:inline-flex; align-items:center; gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Look Up Different Booking
         </a>
     </div>
 
@@ -730,7 +731,13 @@ $csrf_token = get_csrf_token();
         <div class="timer-flex">
             <div class="timer-icon-wrap">
                 <span class="timer-pulse-ring"></span>
-                <span class="timer-icon"><?php echo $is_payment_expired ? '⚠️' : '⏱️'; ?></span>
+                <span class="timer-icon">
+                    <?php if ($is_payment_expired): ?>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <?php else: ?>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <?php endif; ?>
+                </span>
             </div>
             <div class="timer-text">
                 <div class="timer-title" id="timerTitle">
@@ -897,7 +904,7 @@ $csrf_token = get_csrf_token();
                 <a href="javascript:void(0)"
                    class="btn-action btn-action-danger"
                    data-cancel-url="<?php echo htmlspecialchars($cancel_url); ?>"
-                   onclick="(function(el){ showConfirm({ title: 'Cancel Booking', message: 'Are you sure you want to cancel this booking? This cannot be undone.', icon: '❌', iconBg: '#FEE2E2', confirmText: 'Yes, Cancel It', onConfirm: function(){ window.location.href = el.dataset.cancelUrl; } }); })(this)">
+                   onclick="(function(el){ showConfirm({ title: 'Cancel Booking', message: 'Are you sure you want to cancel this booking? This cannot be undone.', icon: 'cancel', iconBg: '#FEE2E2', confirmText: 'Yes, Cancel It', onConfirm: function(){ window.location.href = el.dataset.cancelUrl; } }); })(this)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
                     Cancel Booking
                 </a>
@@ -905,9 +912,9 @@ $csrf_token = get_csrf_token();
                 <a href="javascript:void(0)"
                    class="btn-action btn-action-disabled"
                    title="Cancellation locked (<?php echo htmlspecialchars($cancel_window_label); ?> deadline passed on <?php echo htmlspecialchars($deadline_formatted); ?>)"
-                   onclick="showConfirm({ title: 'Cancellation Locked 🔒', message: 'Self-service cancellation closed on <?php echo addslashes($deadline_formatted); ?> (<?php echo addslashes($cancel_window_label); ?> prior to arrival for a <?php echo (int)$cancel_policy['nights']; ?>-night stay).\n\nTo cancel or reschedule your reservation, please reach out to our Front Desk directly.', icon: '🔒', iconBg: '#FEF3C7', confirmText: 'Contact Front Desk', confirmColor: '#7C533C', onConfirm: function(){ window.location.href = 'contact'; } })">
+                   onclick="showConfirm({ title: 'Cancellation Locked', message: 'Self-service cancellation closed on <?php echo addslashes($deadline_formatted); ?> (<?php echo addslashes($cancel_window_label); ?> prior to arrival for a <?php echo (int)$cancel_policy['nights']; ?>-night stay).\n\nTo cancel or reschedule your reservation, please reach out to our Front Desk directly.', icon: 'lock', iconBg: '#FEF3C7', confirmText: 'Contact Front Desk', confirmColor: '#7C533C', onConfirm: function(){ window.location.href = 'contact'; } })">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    Cancel Booking 🔒
+                    Cancel Booking (Locked)
                 </a>
                 <?php endif; ?>
             </div>
@@ -915,7 +922,7 @@ $csrf_token = get_csrf_token();
             <!-- Cancellation Deadline Notification -->
             <?php if ($bk_status === 'Cancelled'): ?>
                 <div style="background:#FEF2F2; border:1px solid #FECACA; border-radius:10px; padding:12px 14px; margin-top:16px; font-size:12.5px; color:#991B1B; display:flex; align-items:flex-start; gap:10px;">
-                    <span style="font-size:15px;">❌</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                     <div>
                         <strong>Reservation Cancelled</strong>
                         <div style="margin-top:2px; font-size:12px; color:#B91C1C;">
@@ -929,7 +936,7 @@ $csrf_token = get_csrf_token();
                 </div>
             <?php elseif ($can_cancel): ?>
                 <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:11px 14px; margin-top:16px; font-size:12.5px; color:#475569; display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:16px;">⏰</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     <div>
                         <strong style="color:#0F172A;">Free Cancellation Window (<?php echo htmlspecialchars($cancel_window_label); ?> policy):</strong>
                         <span>Online cancellation is open until <strong><?php echo htmlspecialchars($deadline_formatted); ?></strong> (<?php echo $hours_left_to_cancel >= 24 ? $days_left_to_cancel . ' days left' : ($hours_left_to_cancel > 0 ? $hours_left_to_cancel . ' hrs left' : 'closing soon'); ?>).</span>
@@ -937,7 +944,7 @@ $csrf_token = get_csrf_token();
                 </div>
             <?php elseif ($bk_status !== 'Checked Out'): ?>
                 <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; padding:12px 14px; margin-top:16px; font-size:12.5px; color:#92400E; display:flex; align-items:flex-start; gap:10px;">
-                    <span style="font-size:16px; margin-top:1px;">⚠️</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <div>
                         <strong style="display:block; margin-bottom:2px;">Cancellation Deadline Passed</strong>
                         <span>Online cancellations closed on <strong><?php echo htmlspecialchars($deadline_formatted); ?></strong> (<?php echo htmlspecialchars($cancel_window_label); ?> prior to arrival for a <?php echo (int)$cancel_policy['nights']; ?>-night stay). Please contact the Front Desk if you need assistance.</span>
@@ -1209,7 +1216,9 @@ document.getElementById('booking_ref').addEventListener('input', function() {
         max-width:400px; width:calc(100% - 40px);
         box-shadow:0 24px 60px rgba(0,0,0,0.18);
         text-align:center; animation:sfbcSlideUp 0.2s cubic-bezier(0.16,1,0.3,1);">
-        <div id="sfbc-confirm-icon" style="width:60px;height:60px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:28px;">❌</div>
+        <div id="sfbc-confirm-icon" style="width:60px;height:60px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:#DC2626;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        </div>
         <h3 id="sfbc-confirm-title" style="margin:0 0 8px;font-size:18px;font-weight:800;color:#111827;"></h3>
         <p id="sfbc-confirm-message" style="margin:0 0 24px;font-size:14px;color:#6B7280;line-height:1.6;"></p>
         <div style="display:flex;gap:12px;">
@@ -1223,18 +1232,36 @@ document.getElementById('booking_ref').addEventListener('input', function() {
 </style>
 <script>
 function showConfirm(opts) {
-    var overlay  = document.getElementById('sfbc-confirm-overlay');
-    var icon     = document.getElementById('sfbc-confirm-icon');
-    var title    = document.getElementById('sfbc-confirm-title');
-    var message  = document.getElementById('sfbc-confirm-message');
-    var okBtn    = document.getElementById('sfbc-confirm-ok');
+    var overlay   = document.getElementById('sfbc-confirm-overlay');
+    var iconEl    = document.getElementById('sfbc-confirm-icon');
+    var title     = document.getElementById('sfbc-confirm-title');
+    var message   = document.getElementById('sfbc-confirm-message');
+    var okBtn     = document.getElementById('sfbc-confirm-ok');
     var cancelBtn = document.getElementById('sfbc-confirm-cancel');
 
-    icon.textContent      = opts.icon    || '❌';
-    icon.style.background = opts.iconBg  || '#FEE2E2';
-    title.textContent     = opts.title   || 'Are you sure?';
-    message.textContent   = opts.message || 'This action cannot be undone.';
-    okBtn.textContent     = opts.confirmText || 'Confirm';
+    var iconKey = opts.icon || 'cancel';
+    var iconSvg = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+
+    if (iconKey.indexOf('<svg') !== -1) {
+        iconSvg = iconKey;
+    } else if (iconKey === 'lock') {
+        iconSvg = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+    } else if (iconKey === 'trash') {
+        iconSvg = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>';
+    } else if (iconKey === 'warning') {
+        iconSvg = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+    }
+
+    iconEl.innerHTML        = iconSvg;
+    iconEl.style.background = opts.iconBg  || '#FEE2E2';
+    title.textContent       = opts.title   || 'Are you sure?';
+    message.textContent     = opts.message || 'This action cannot be undone.';
+    okBtn.textContent       = opts.confirmText || 'Confirm';
+    if (opts.confirmColor) {
+        okBtn.style.background = opts.confirmColor;
+    } else {
+        okBtn.style.background = '#DC2626';
+    }
 
     overlay.style.display = 'flex';
 

@@ -478,7 +478,10 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                         <?php if (!empty($s['email'])): ?>
                             <span style="font-size:12px;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo htmlspecialchars($s['email']); ?></span>
                         <?php else: ?>
-                            <span style="font-size:10px;font-weight:700;color:#DC2626;background:#FEF2F2;padding:3px 8px;border-radius:5px;border:1px solid #FECACA;white-space:nowrap;">⚠ No email</span>
+                            <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#DC2626;background:#FEF2F2;padding:3px 8px;border-radius:5px;border:1px solid #FECACA;white-space:nowrap;">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                No email
+                            </span>
                         <?php endif; ?>
                         <button type="button" title="Edit OTP Email" onclick="openEditEmail(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['email'] ?? ''); ?>', '<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:4px;color:#CBD5E1;border-radius:5px;display:flex;align-items:center;" onmouseover="this.style.color='#7C533C'" onmouseout="this.style.color='#CBD5E1'">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -524,20 +527,32 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                                 <input type="hidden" name="staff_type" value="<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>">
                                 <?php if ($isLocked): ?>
                                     <input type="hidden" name="lock_op" value="unlock">
-                                    <button type="submit" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F0FDF4;border:1.5px solid #86EFAC;color:#166534;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FDF4'">🔓 Unlock</button>
+                                    <button type="submit" style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F0FDF4;border:1.5px solid #86EFAC;color:#166534;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FDF4'">
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                        Unlock
+                                    </button>
                                 <?php else: ?>
                                     <input type="hidden" name="lock_op" value="lock">
-                                    <button type="submit" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#FEF2F2;border:1.5px solid #FECACA;color:#991B1B;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'">🔒 Lock</button>
+                                    <button type="submit" style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#FEF2F2;border:1.5px solid #FECACA;color:#991B1B;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'">
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        Lock
+                                    </button>
                                 <?php endif; ?>
                             </form>
                         <?php endif; ?>
-                        <button onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>','<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F1F5F9;border:1.5px solid #E2E8F0;color:#475569;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">🔑 Reset</button>
-                        <form method="POST" style="display:inline;" onsubmit="return false;" data-confirm-title="Remove Staff Account" data-confirm-msg="Remove <?php echo htmlspecialchars($s['username']); ?>? This cannot be undone." data-confirm-icon="👤" data-confirm-icon-bg="#FEE2E2">
+                        <button onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>','<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F1F5F9;border:1.5px solid #E2E8F0;color:#475569;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-1.5 1.5L14 9l-3-3 2.5-2.5a2.121 2.121 0 0 1 3 0l4.5 4.5z"/><circle cx="7.5" cy="16.5" r="4.5"/><path d="M10.5 13.5L3 21"/></svg>
+                            Reset
+                        </button>
+                        <form method="POST" style="display:inline;" onsubmit="return false;" data-confirm-title="Remove Staff Account" data-confirm-msg="Remove <?php echo htmlspecialchars($s['username']); ?>? This cannot be undone." data-confirm-icon="user" data-confirm-icon-bg="#FEE2E2">
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="delete_staff">
                             <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
                             <input type="hidden" name="staff_type" value="<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>">
-                            <button type="submit" <?php echo $isMe?'disabled':''; ?> style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:<?php echo $isMe?'#F8FAFC':'#FEF2F2'; ?>;border:1.5px solid <?php echo $isMe?'#E2E8F0':'#FECACA'; ?>;color:<?php echo $isMe?'#CBD5E1':'#991B1B'; ?>;cursor:<?php echo $isMe?'not-allowed':'pointer'; ?>;white-space:nowrap;" <?php if(!$isMe):?>onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'"<?php endif;?>>🗑 Remove</button>
+                            <button type="submit" <?php echo $isMe?'disabled':''; ?> style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:<?php echo $isMe?'#F8FAFC':'#FEF2F2'; ?>;border:1.5px solid <?php echo $isMe?'#E2E8F0':'#FECACA'; ?>;color:<?php echo $isMe?'#CBD5E1':'#991B1B'; ?>;cursor:<?php echo $isMe?'not-allowed':'pointer'; ?>;white-space:nowrap;" <?php if(!$isMe):?>onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'"<?php endif;?>>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Remove
+                            </button>
                         </form>
                     </div>
 
@@ -576,15 +591,16 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                     </div>
 
                     <div style="padding:18px;">
-                        <p style="font-size:13px;color:<?php echo $isPortalLocked ? '#7F1D1D' : 'var(--text-muted)'; ?>;margin:0 0 16px;line-height:1.5;">
+                        <p style="font-size:13px;color:<?php echo $isPortalLocked ? '#7F1D1D' : 'var(--text-muted)'; ?>;margin:0 0 16px;line-height:1.5;display:flex;align-items:flex-start;gap:8px;">
                             <?php if ($isPortalLocked): ?>
-                                ⚠️ <strong>Maintenance mode is currently ACTIVE.</strong> The receptionist login page is locked. Anyone visiting <code>staff_login</code> will see a maintenance popup modal and cannot sign in.
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span><strong>Maintenance mode is currently ACTIVE.</strong> The receptionist login page is locked. Anyone visiting <code>staff_login</code> will see a maintenance popup modal and cannot sign in.</span>
                             <?php else: ?>
-                                Lock the <code>staff_login</code> page whenever the front desk is under maintenance, undergoing shift auditing, or closed. Receptionists will see your custom popup message.
+                                <span>Lock the <code>staff_login</code> page whenever the front desk is under maintenance, undergoing shift auditing, or closed. Receptionists will see your custom popup message.</span>
                             <?php endif; ?>
                         </p>
 
-                        <form method="POST" action="admin_staff" <?php if (!$isPortalLocked): ?>data-confirm-title="Lock Reception Portal?" data-confirm-msg="Are you sure you want to LOCK the staff login portal? All receptionist sign-ins will be blocked and an under-maintenance popup will be shown." data-confirm-icon="🔒" data-confirm-icon-bg="#FEE2E2" data-confirm-color="#DC2626" data-confirm-text="Lock Portal"<?php endif; ?>>
+                        <form method="POST" action="admin_staff" <?php if (!$isPortalLocked): ?>data-confirm-title="Lock Reception Portal?" data-confirm-msg="Are you sure you want to LOCK the staff login portal? All receptionist sign-ins will be blocked and an under-maintenance popup will be shown." data-confirm-icon="lock" data-confirm-icon-bg="#FEE2E2" data-confirm-color="#DC2626" data-confirm-text="Lock Portal"<?php endif; ?>>
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="toggle_staff_maintenance">
                             

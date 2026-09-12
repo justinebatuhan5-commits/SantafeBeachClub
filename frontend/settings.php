@@ -1090,7 +1090,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
             showConfirm({
                 title: 'Remove Admin Account',
                 message: 'Remove admin account "' + username + '"? This cannot be undone.',
-                icon: '👤',
+                icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
                 iconBg: '#FEE2E2',
                 confirmText: 'Remove',
                 onConfirm: () => formEl.submit()

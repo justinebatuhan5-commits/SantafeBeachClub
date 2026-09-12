@@ -704,7 +704,8 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                     <!-- PROMO CODE INPUT BOX -->
                     <div class="bk-card" style="padding:16px 20px;">
                         <h3 style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
-                            <span>🏷️</span> Have a Promo / Coupon Code?
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7C533C" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                            Have a Promo / Coupon Code?
                         </h3>
                         <div style="display:flex; gap:10px; align-items:center;">
                             <input type="text" name="promo_code" value="<?php echo htmlspecialchars($applied_promo_code ?? ''); ?>" placeholder="Enter code (e.g. SUMMER2026)" style="flex:1; padding:10px 14px; border:1px solid #CBD5E1; border-radius:8px; font-size:13px; text-transform:uppercase;">
@@ -963,7 +964,10 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                                 <div class="bk-form-group" style="width:100%; text-align:left; margin-bottom:16px;">
                                     <label style="font-size:11px; font-weight:800; color:#1E293B; margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Upload Payment Receipt (JPG, PNG, PDF &mdash; Max 2MB) <span class="req" style="color:#EF4444;">*</span></label>
                                     <input type="file" name="bank_receipt" id="bankReceiptInput" accept="image/jpeg,image/png,image/webp,application/pdf" data-max-size="2" data-label="Bank receipt" style="width:100%; padding:12px 16px; border:1.5px dashed #BAE6FD; border-radius:10px; font-size:14px; outline:none; background:#F8FAFC; color:#64748B; box-sizing:border-box;" onchange="validateReceiptFile(this, ['jpg','jpeg','png','pdf'], 'bankReceiptError')">
-                                    <div id="bankReceiptError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500; background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; padding:8px 12px;">⚠️ Invalid file. Please upload an actual JPG, PNG, or PDF file — renaming other file types (e.g. .exe renamed to .png) is not allowed.</div>
+                                    <div id="bankReceiptError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500; background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; padding:8px 12px; align-items:center; gap:6px;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        <span>Invalid file. Please upload an actual JPG, PNG, or PDF file — renaming other file types (e.g. .exe renamed to .png) is not allowed.</span>
+                                    </div>
                                 </div>
                                 <p style="font-size:12px; color:#94A3B8; text-align:center; margin:16px 0 0 0;">Your booking remains pending until our front desk verifies the payment.</p>
                             </div>
@@ -1005,7 +1009,7 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                                             GCash Account Details
                                         </div>
                                         <div style="font-size:16px; font-weight:800; color:#005CE6; display:flex; align-items:center; justify-content:center; gap:6px;">
-                                            <span>📱</span> <?php echo htmlspecialchars($gcash_number); ?>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> <?php echo htmlspecialchars($gcash_number); ?>
                                         </div>
                                         <div style="font-size:12px; color:#475569; margin-top:3px;">
                                             Account Name: <strong style="color:#0F172A;"><?php echo htmlspecialchars($gcash_name); ?></strong>
@@ -1021,7 +1025,10 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                                     <div style="width:100%; text-align:left;">
                                         <label style="font-size:12px; font-weight:600; color:#334155; margin-bottom:8px; display:block;">Upload GCash Receipt Screenshot (JPG or PNG &mdash; Max 2MB) <span style="color:#EF4444;">*</span></label>
                                         <input type="file" name="gcash_receipt" id="gcashReceiptInput" accept="image/jpeg,image/png" data-max-size="2" data-label="GCash receipt" style="width:100%; padding:12px 16px; border:2px dashed #007AFF; border-radius:10px; font-size:14px; outline:none; background:#F0F7FF; box-sizing:border-box;" onchange="validateReceiptFile(this, ['jpg','jpeg','png'], 'gcashReceiptError')">
-                                        <div id="gcashReceiptError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500; background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; padding:8px 12px;">⚠️ Invalid file. Please upload an actual JPG or PNG screenshot — renaming other file types is not allowed.</div>
+                                        <div id="gcashReceiptError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500; background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; padding:8px 12px; align-items:center; gap:6px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                            <span>Invalid file. Please upload an actual JPG or PNG screenshot — renaming other file types is not allowed.</span>
+                                        </div>
                                     </div>
                                     <p style="font-size:11px; color:#94A3B8; text-align:center; margin-top:12px; margin-bottom:0;">Our staff will verify your GCash receipt and confirm your booking.</p>
                                 </div>
@@ -1381,7 +1388,7 @@ function validateReceiptFile(input, allowedExts, errorDivId) {
     const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
     if (file.size > MAX_SIZE_BYTES) {
         const sizeInMb = (file.size / (1024 * 1024)).toFixed(2);
-        showFileError(input, errorDiv, '⚠️ File is too large (' + sizeInMb + 'MB). Maximum allowed size is 2MB. Please compress or resize your image.');
+        showFileError(input, errorDiv, 'File is too large (' + sizeInMb + 'MB). Maximum allowed size is 2MB. Please compress or resize your image.');
         return;
     }
 

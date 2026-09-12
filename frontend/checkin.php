@@ -445,7 +445,10 @@ $bookings_query = $conn->query("
                         <?php if ($spec_balance > 0): ?>
                             <div style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 1.5px solid #FDBA74; border-radius: 14px; padding: 14px 16px; margin-bottom: 22px; text-align: left; display: flex; align-items: center; justify-content: space-between;">
                                 <div>
-                                    <div style="font-size: 11px; font-weight: 800; color: #9A3412; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">⚠️ Balance Due</div>
+                                    <div style="font-size: 11px; font-weight: 800; color: #9A3412; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; display: flex; align-items: center; gap: 5px;">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        Balance Due
+                                    </div>
                                     <div style="font-size: 12px; color: #C2410C; font-weight: 500;">Collect before room turnover</div>
                                 </div>
                                 <div style="font-size: 20px; font-weight: 900; color: #C2410C; letter-spacing: -0.02em;">₱<?php echo number_format($spec_balance, 2); ?></div>

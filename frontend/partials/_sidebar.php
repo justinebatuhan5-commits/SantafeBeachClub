@@ -451,9 +451,8 @@ document.addEventListener('DOMContentLoaded', function() {
             border: 2px solid #FECACA;
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 18px;
-            font-size: 28px;
             box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.15);
-        ">⚠️</div>
+        "><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
 
         <h3 id="sfbc-confirm-title" style="margin: 0 0 10px; font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: #0F172A; letter-spacing: -0.3px;"></h3>
         <p id="sfbc-confirm-message" style="margin: 0 0 26px; font-size: 14px; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 12px 16px; border-radius: 12px; border: 1px solid #E2E8F0;"></p>
@@ -512,7 +511,24 @@ function showConfirm(opts) {
     var okBtn    = document.getElementById('sfbc-confirm-ok');
     var cancelBtn = document.getElementById('sfbc-confirm-cancel');
 
-    icon.textContent        = opts.icon     || '⚠️';
+    var defaultWarningSvg = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    var iconVal = opts.icon || defaultWarningSvg;
+    if (iconVal === '⚠️') iconVal = defaultWarningSvg;
+    if (iconVal === '👤' || iconVal === 'user') {
+        iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+    } else if (iconVal === '🔒' || iconVal === 'lock') {
+        iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+    } else if (iconVal === '🗑️' || iconVal === 'trash') {
+        iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+    } else if (iconVal === '🖼️' || iconVal === 'image') {
+        iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    }
+
+    if (iconVal.indexOf('<svg') !== -1) {
+        icon.innerHTML = iconVal;
+    } else {
+        icon.textContent = iconVal;
+    }
     icon.style.background   = opts.iconBg   || '#FEF3C7';
     title.textContent       = opts.title    || 'Are you sure?';
     message.textContent     = opts.message  || 'This action cannot be undone.';

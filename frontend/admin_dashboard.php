@@ -760,8 +760,8 @@ async function loadDashboardData() {
                 const title = document.getElementById('sec-banner-title');
                 title.style.color = isCrit ? '#991B1B' : '#92400E';
                 title.textContent = isCrit 
-                    ? `⚠️ Security Alert: ${threats.critical_count} critical incident(s) detected in the last 24h`
-                    : `⚠️ Security Warning: ${threats.warning_count} security warning(s) detected in the last 24h`;
+                    ? `Security Alert: ${threats.critical_count} critical incident(s) detected in the last 24h`
+                    : `Security Warning: ${threats.warning_count} security warning(s) detected in the last 24h`;
 
                 const desc = document.getElementById('sec-banner-desc');
                 desc.style.color = isCrit ? '#B91C1C' : '#B45309';

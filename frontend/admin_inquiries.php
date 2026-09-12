@@ -193,7 +193,7 @@ $inquiriesResult = $conn->query("SELECT * FROM inquiries ORDER BY created_at DES
                                 <?php if ($inq['status'] !== 'Resolved'): ?>
                                     <button type="submit" name="action" value="mark_resolved" class="btn-action btn-resolved">Mark Resolved</button>
                                 <?php endif; ?>
-                                <button type="button" class="btn-action btn-delete" onclick="showConfirm({ title: 'Delete Message', message: 'Are you sure you want to delete this message? This cannot be undone.', icon: '🗑️', iconBg: '#FEE2E2', confirmText: 'Delete', onConfirm: () => this.closest('form').submit() })">Delete</button>
+                                <button type="button" class="btn-action btn-delete" onclick="showConfirm({ title: 'Delete Message', message: 'Are you sure you want to delete this message? This cannot be undone.', icon: 'trash', iconBg: '#FEE2E2', confirmText: 'Delete', onConfirm: () => this.closest('form').submit() })">Delete</button>
                             </form>
                             <a href="mailto:<?php echo htmlspecialchars($inq['guest_email']); ?>?subject=Re: <?php echo urlencode($inq['subject']); ?>" class="btn-action" style="background: #475569; text-decoration: none; display: inline-block;">Reply via Email</a>
                         </div>

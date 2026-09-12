@@ -439,7 +439,7 @@ $default_prices = [
             <span class="rp-primary-badge">Primary Photo</span>
             <?php if ($primary): ?>
             <div class="rp-primary-actions">
-                <form method="POST" onsubmit="return false;" data-confirm-title="Reset Photo" data-confirm-msg="Reset to the default photo? Your current primary photo will be removed." data-confirm-icon="🖼️" data-confirm-icon-bg="#FEF3C7">
+                <form method="POST" onsubmit="return false;" data-confirm-title="Reset Photo" data-confirm-msg="Reset to the default photo? Your current primary photo will be removed." data-confirm-icon="image" data-confirm-icon-bg="#FEF3C7">
                     <?php echo csrf_field(); ?>
                     <input type="hidden" name="action" value="clear_primary">
                     <input type="hidden" name="type_slug" value="<?php echo $slug; ?>">
@@ -497,7 +497,7 @@ $default_prices = [
                     <div class="rp-thumb-wrap">
                         <img src="<?php echo htmlspecialchars($gpath); ?>" alt="Gallery"
                              onclick="openAdminLightbox(this)" style="cursor:zoom-in;">
-                        <form method="POST" onsubmit="return false;" data-confirm-title="Remove Photo" data-confirm-msg="Remove this gallery photo? This cannot be undone." data-confirm-icon="🗑️" data-confirm-icon-bg="#FEE2E2" style="margin:0">
+                        <form method="POST" onsubmit="return false;" data-confirm-title="Remove Photo" data-confirm-msg="Remove this gallery photo? This cannot be undone." data-confirm-icon="trash" data-confirm-icon-bg="#FEE2E2" style="margin:0">
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="remove_gallery">
                             <input type="hidden" name="type_slug" value="<?php echo $slug; ?>">

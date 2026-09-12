@@ -251,7 +251,7 @@ if ($tab === 'security') {
         $page_subtitle = number_format($total_rows).' total entries. Page '.$page_num.' of '.$total_pages.'.';
         $clearAction = $tab === 'security' ? 'clear_security_logs' : 'clear_logs';
         $header_extra_html = '
-            <form method="POST" onsubmit="return false;" data-confirm-title="Clear Logs" data-confirm-msg="Clear these logs? This cannot be undone." data-confirm-icon="🗑️" data-confirm-icon-bg="#FEE2E2">
+            <form method="POST" onsubmit="return false;" data-confirm-title="Clear Logs" data-confirm-msg="Clear these logs? This cannot be undone." data-confirm-icon="trash" data-confirm-icon-bg="#FEE2E2">
                 ' . csrf_field() . '
                 <input type="hidden" name="action" value="' . $clearAction . '">
                 <button type="submit" style="cursor:pointer;border:1px solid #FCA5A5;color:#DC2626;background:none;padding:7px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:6px;">

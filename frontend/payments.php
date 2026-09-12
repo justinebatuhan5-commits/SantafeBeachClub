@@ -678,7 +678,7 @@ if ($bk_res) {
                     <input type="text" id="customReasonInput" placeholder="Describe the reason..." style="width:100%; padding:11px 14px; border:1.5px solid #E2E8F0; border-radius:10px; font-size:14px; font-family:inherit; box-sizing:border-box; background:#fff;">
                 </div>
                 <div style="background:#FFF7ED; border:1px solid #FED7AA; border-radius:12px; padding:12px 14px; margin-bottom:20px; font-size:12.5px; color:#9A3412; display:flex; gap:8px; align-items:flex-start;">
-                    <span style="font-size:16px; line-height:1;">⚠️</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     <div>This will mark the payment as <strong>Refunded</strong> and cancel the associated booking. This action cannot be undone.</div>
                 </div>
                 <div style="display:flex; gap:12px;">
@@ -736,7 +736,7 @@ if ($bk_res) {
                     <input type="text" id="rejectCustomReasonInput" placeholder="Describe the reason..." style="width:100%; padding:11px 14px; border:1.5px solid #E2E8F0; border-radius:10px; font-size:14px; font-family:inherit; box-sizing:border-box; background:#fff;">
                 </div>
                 <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:12px; padding:12px 14px; margin-bottom:20px; font-size:12.5px; color:#92400E; display:flex; gap:8px; align-items:flex-start;">
-                    <span style="font-size:16px; line-height:1;">⚠️</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     <div>The guest will receive an email notification with the rejection reason. This will <strong>cancel the booking</strong> and cannot be undone.</div>
                 </div>
                 <div style="display:flex; gap:12px;">
@@ -759,7 +759,10 @@ if ($bk_res) {
             </div>
             <div style="padding:14px 20px; display:flex; gap:12px; justify-content:flex-end; background:#FAFAFA; border-top:1px solid #f0f0f0;">
                 <button type="button" onclick="closeReceiptModal()" style="background:#fff; border:1px solid #D1D5DB; color:#374151; padding:9px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Close</button>
-                <button type="button" onclick="doPrintReceipt()" style="background:#7C533C; border:none; color:#fff; padding:9px 24px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(124,83,60,0.3);">🖨️ Print Receipt</button>
+                <button type="button" onclick="doPrintReceipt()" style="background:#7C533C; border:none; color:#fff; padding:9px 24px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(124,83,60,0.3); display:inline-flex; align-items:center; gap:6px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Print Receipt
+                </button>
             </div>
         </div>
     </div>

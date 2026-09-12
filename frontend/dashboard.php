@@ -534,7 +534,10 @@ if (empty($room_types)) {
                 badge.style.background = '#FEF2F2';
                 badge.style.color = '#EF4444';
                 body.innerHTML = `
-                    <div style="color:#EF4444; font-weight:700; margin-bottom:4px;">⚠️ Room in Turnover / Maintenance</div>
+                    <div style="color:#EF4444; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Room in Turnover / Maintenance
+                    </div>
                     <p style="margin:0; color:var(--text-muted); font-size:12.5px;">Under cleaning inspection or scheduled repairs.</p>
                 `;
                 btnSlot.innerHTML = `
@@ -940,7 +943,7 @@ if (empty($room_types)) {
     if (names.length > 0) {
         var list = document.getElementById('ocmGuestList');
         list.innerHTML = names.map(function(n){
-            return '<li><div class="ocm-guest-name"><span>👤</span> ' + n + '</div><span class="ocm-guest-badge">Overdue</span></li>';
+            return '<li><div class="ocm-guest-name"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + n + '</div><span class="ocm-guest-badge">Overdue</span></li>';
         }).join('');
         document.getElementById('overdueCheckoutModal').style.display = 'flex';
     }

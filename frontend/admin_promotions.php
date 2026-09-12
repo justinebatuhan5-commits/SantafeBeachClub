@@ -155,7 +155,7 @@ $promos = $conn->query("SELECT * FROM promotions ORDER BY is_active DESC, valid_
                         <?php echo $p['is_active'] ? 'Deactivate' : 'Activate'; ?>
                     </button>
                 </form>
-                <form method="POST" onsubmit="return false;" data-confirm-title="Delete Promotion" data-confirm-msg="This promotion will be permanently deleted." data-confirm-icon="🗑️" data-confirm-icon-bg="#FEE2E2">
+                <form method="POST" onsubmit="return false;" data-confirm-title="Delete Promotion" data-confirm-msg="This promotion will be permanently deleted." data-confirm-icon="trash" data-confirm-icon-bg="#FEE2E2">
                     <?php echo csrf_field(); ?>
                     <input type="hidden" name="action" value="delete_promo">
                     <input type="hidden" name="promo_id" value="<?php echo $p['id']; ?>">

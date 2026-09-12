@@ -37,7 +37,7 @@ $staffPortalLockMsg  = !empty($portalSettings['staff_portal_locked_msg'])
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // If portal is locked, block receptionists from signing in
     if ($isStaffPortalLocked) {
-        $error = "🔒 " . $staffPortalLockMsg;
+        $error = $staffPortalLockMsg;
         if ($is_ajax) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => $error, 'portal_locked' => true]);
@@ -89,10 +89,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id'], 'receptionists');
                 if ($lockStatus['locked']) {
                     if (!empty($lockStatus['is_permanent'])) {
-                        $error = "🔒 Access Denied: This staff account has been administrative-locked / suspended by the Resort Administrator. Please contact management.";
+                        $error = "Access Denied: This staff account has been administrative-locked / suspended by the Resort Administrator. Please contact management.";
                     } else {
                         $mins = (int)ceil($lockStatus['seconds_remaining'] / 60);
-                        $error = "🔒 Account Temporarily Locked: Exceeded maximum allowed login attempts. For security reasons, please wait {$mins} minute(s) before trying again.";
+                        $error = "Account Temporarily Locked: Exceeded maximum allowed login attempts. For security reasons, please wait {$mins} minute(s) before trying again.";
                     }
                     SecurityLogger::log($conn, 'ACCOUNT_LOCKED', "Locked account login attempt for user: {$username}", SecurityLogger::LEVEL_WARNING, $username);
                     if ($is_ajax) {
@@ -1128,7 +1128,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h3 class="portal-lock-title" id="lockModalTitle">Staff Portal Offline</h3>
             
             <div class="portal-lock-msg">
-                <strong style="display:block;color:#991B1B;margin-bottom:6px;">⚠️ Reception Sign-In Restricted</strong>
+                <strong style="display:flex;align-items:center;justify-content:center;gap:6px;color:#991B1B;margin-bottom:6px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Reception Sign-In Restricted
+                </strong>
                 <?php echo nl2br(htmlspecialchars($staffPortalLockMsg)); ?>
             </div>
 

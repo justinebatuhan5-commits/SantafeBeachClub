@@ -620,8 +620,9 @@ $checkout_fmt = $booking ? date('D, d M Y', strtotime($booking['check_out'])) : 
                                 <textarea name="custom_details" class="form-textarea" placeholder="Help us improve our service with any extra details or feedback..."></textarea>
                             </div>
 
-                            <p style="font-size:12.5px; color:var(--text-muted); margin:18px 0; line-height:1.5;">
-                                ⚠️ <strong>Note:</strong> Once confirmed, this reservation will be released immediately and a cancellation confirmation will be emailed to your inbox.
+                            <p style="font-size:12.5px; color:var(--text-muted); margin:18px 0; line-height:1.5; display:flex; align-items:center; gap:6px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <span><strong>Note:</strong> Once confirmed, this reservation will be released immediately and a cancellation confirmation will be emailed to your inbox.</span>
                             </p>
 
                             <div class="btn-row">
