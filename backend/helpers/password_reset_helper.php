@@ -18,18 +18,19 @@ define('PWD_RESET_EXPIRY_MINUTES', 15);
 
 /**
  * Generate a cryptographically secure token and store its SHA-256 hash in DB.
- * Invalidates any existing unused tokens for this admin.
+ * Invalidates any existing unused tokens for this user.
  *
  * @param int    $adminId
  * @param mysqli $conn
  * @param string $ipAddress
+ * @param string $userType  'admin' or 'receptionist'
  * @return string The raw 64-char hex token (to be emailed, never logged)
  */
-function pwd_reset_create_token(int $adminId, mysqli $conn, string $ipAddress = ''): string {
+function pwd_reset_create_token(int $adminId, mysqli $conn, string $ipAddress = '', string $userType = 'admin'): string {
     // Invalidate previous unused tokens for this user
-    $stmt = $conn->prepare("UPDATE password_resets SET used = 1 WHERE admin_id = ? AND used = 0");
+    $stmt = $conn->prepare("UPDATE password_resets SET used = 1 WHERE admin_id = ? AND user_type = ? AND used = 0");
     if ($stmt) {
-        $stmt->bind_param('i', $adminId);
+        $stmt->bind_param('is', $adminId, $userType);
         $stmt->execute();
         $stmt->close();
     }
@@ -39,10 +40,10 @@ function pwd_reset_create_token(int $adminId, mysqli $conn, string $ipAddress = 
     $expiresAt = date('Y-m-d H:i:s', strtotime('+' . PWD_RESET_EXPIRY_MINUTES . ' minutes'));
 
     $stmt = $conn->prepare(
-        "INSERT INTO password_resets (admin_id, token_hash, expires_at, ip_address) VALUES (?, ?, ?, ?)"
+        "INSERT INTO password_resets (admin_id, user_type, token_hash, expires_at, ip_address) VALUES (?, ?, ?, ?, ?)"
     );
     if ($stmt) {
-        $stmt->bind_param('isss', $adminId, $tokenHash, $expiresAt, $ipAddress);
+        $stmt->bind_param('issss', $adminId, $userType, $tokenHash, $expiresAt, $ipAddress);
         $stmt->execute();
         $stmt->close();
     }
@@ -52,29 +53,29 @@ function pwd_reset_create_token(int $adminId, mysqli $conn, string $ipAddress = 
 
 /**
  * Verify if a submitted raw token is valid and unexpired.
+ * Checks both administrators and receptionists by user_type stored in the reset record.
  *
  * @param string $rawToken
  * @param mysqli $conn
- * @return array ['valid' => bool, 'admin_id' => int|null, 'username' => string|null, 'role' => string|null, 'error' => string|null]
+ * @return array ['valid' => bool, 'admin_id' => int|null, 'username' => string|null, 'role' => string|null, 'user_type' => string|null, 'error' => string|null]
  */
 function pwd_reset_verify_token(string $rawToken, mysqli $conn): array {
     if (empty($rawToken) || strlen($rawToken) < 32) {
-        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'error' => 'Invalid or missing reset token.'];
+        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'user_type' => null, 'error' => 'Invalid or missing reset token.'];
     }
 
     $tokenHash = hash('sha256', $rawToken);
 
     $stmt = $conn->prepare(
-        "SELECT pr.id AS reset_id, pr.admin_id, pr.expires_at, pr.used, a.username, a.role
+        "SELECT pr.id AS reset_id, pr.admin_id, pr.user_type, pr.expires_at, pr.used
          FROM password_resets pr
-         JOIN admins a ON pr.admin_id = a.id
          WHERE pr.token_hash = ?
          ORDER BY pr.id DESC
          LIMIT 1"
     );
 
     if (!$stmt) {
-        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'error' => 'Database error.'];
+        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'user_type' => null, 'error' => 'Database error.'];
     }
 
     $stmt->bind_param('s', $tokenHash);
@@ -84,29 +85,44 @@ function pwd_reset_verify_token(string $rawToken, mysqli $conn): array {
     $stmt->close();
 
     if (!$row) {
-        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'error' => 'Reset link is invalid or has expired.'];
+        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'user_type' => null, 'error' => 'Reset link is invalid or has expired.'];
     }
 
     if ((int)$row['used'] === 1) {
-        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'error' => 'This reset link has already been used.'];
+        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'user_type' => null, 'error' => 'This reset link has already been used.'];
     }
 
     if (strtotime($row['expires_at']) < time()) {
-        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'error' => 'This reset link has expired. Please request a new one.'];
+        return ['valid' => false, 'admin_id' => null, 'username' => null, 'role' => null, 'user_type' => null, 'error' => 'This reset link has expired. Please request a new one.'];
+    }
+
+    // Resolve the user from the correct table based on user_type
+    $userType = $row['user_type'] ?? 'admin';
+    $userTable = ($userType === 'receptionist') ? 'receptionists' : 'administrators';
+    $roleValue = ($userType === 'receptionist') ? 'receptionist' : 'admin';
+
+    $uStmt = $conn->prepare("SELECT username FROM `{$userTable}` WHERE id = ? LIMIT 1");
+    $uRow = null;
+    if ($uStmt) {
+        $uStmt->bind_param('i', $row['admin_id']);
+        $uStmt->execute();
+        $uRow = $uStmt->get_result()->fetch_assoc();
+        $uStmt->close();
     }
 
     return [
         'valid'     => true,
         'reset_id'  => (int)$row['reset_id'],
         'admin_id'  => (int)$row['admin_id'],
-        'username'  => $row['username'],
-        'role'      => $row['role'],
+        'username'  => $uRow['username'] ?? null,
+        'role'      => $roleValue,
+        'user_type' => $userType,
         'error'     => null,
     ];
 }
 
 /**
- * Complete the password reset: validates new password, updates admins table, and marks token used.
+ * Complete the password reset: validates new password, updates correct user table, and marks token used.
  */
 function pwd_reset_complete(string $rawToken, string $newPassword, string $confirmPassword, mysqli $conn): array {
     $verification = pwd_reset_verify_token($rawToken, $conn);
@@ -123,12 +139,14 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
         return ['success' => false, 'message' => $policyError];
     }
 
-    $adminId = $verification['admin_id'];
-    $newHash = pw_hash($newPassword);
+    $adminId  = $verification['admin_id'];
+    $userType = $verification['user_type'] ?? 'admin';
+    $userTable = ($userType === 'receptionist') ? 'receptionists' : 'administrators';
+    $newHash  = pw_hash($newPassword);
 
     $conn->begin_transaction();
     try {
-        $upd = $conn->prepare("UPDATE admins SET password = ? WHERE id = ?");
+        $upd = $conn->prepare("UPDATE `{$userTable}` SET password = ? WHERE id = ?");
         $upd->bind_param('si', $newHash, $adminId);
         $upd->execute();
         $upd->close();
@@ -139,9 +157,10 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
         $mark->execute();
         $mark->close();
 
-        $invOtp = $conn->prepare("UPDATE admin_otps SET used = 1 WHERE admin_id = ? AND used = 0");
+        // Invalidate any pending OTPs for this user
+        $invOtp = $conn->prepare("UPDATE admin_otps SET used = 1 WHERE admin_id = ? AND user_type = ? AND used = 0");
         if ($invOtp) {
-            $invOtp->bind_param('i', $adminId);
+            $invOtp->bind_param('is', $adminId, $userType);
             $invOtp->execute();
             $invOtp->close();
         }
@@ -149,7 +168,7 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
         $conn->commit();
 
         // Notify user that password was changed (OWASP checklist 1.4)
-        $notifyStmt = $conn->prepare("SELECT email, username FROM admins WHERE id = ?");
+        $notifyStmt = $conn->prepare("SELECT email, username FROM `{$userTable}` WHERE id = ?");
         if ($notifyStmt) {
             $notifyStmt->bind_param('i', $adminId);
             $notifyStmt->execute();

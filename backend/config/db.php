@@ -336,40 +336,48 @@ try {
     )");
     safe_query($conn, "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS booking_id INT DEFAULT NULL");
 
-    // Ensure admins table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS admins (
+    // -----------------------------------------------------------------------
+    // SEPARATE TABLES: administrators and receptionists
+    // -----------------------------------------------------------------------
+    $conn->query("CREATE TABLE IF NOT EXISTS administrators (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(50) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
-        role VARCHAR(20) DEFAULT 'receptionist',
+        email VARCHAR(150) DEFAULT NULL,
+        profile_photo VARCHAR(255) DEFAULT NULL,
+        failed_login_count INT NOT NULL DEFAULT 0,
+        locked_until DATETIME NULL DEFAULT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 
-    // Add role column if upgrading from older schema
-    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'receptionist'");
-    // Add email column to admins if not present (needed for MFA OTP delivery)
-    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS email VARCHAR(150) DEFAULT NULL");
-    // Add profile_photo column to admins
-    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255) DEFAULT NULL");
-    // Add account lockout columns to admins
-    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS failed_login_count INT NOT NULL DEFAULT 0");
-    safe_query($conn, "ALTER TABLE admins ADD COLUMN IF NOT EXISTS locked_until DATETIME NULL DEFAULT NULL");
+    $conn->query("CREATE TABLE IF NOT EXISTS receptionists (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(150) DEFAULT NULL,
+        profile_photo VARCHAR(255) DEFAULT NULL,
+        failed_login_count INT NOT NULL DEFAULT 0,
+        locked_until DATETIME NULL DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
 
     // -----------------------------------------------------------------------
-    // MFA: admin_otps — stores hashed OTPs for two-factor admin login
-    // Raw OTP codes are NEVER stored here; only SHA-256 hashes.
+    // MFA: admin_otps — stores hashed OTPs for two-factor login
+    // Supports both 'admin' and 'receptionist' user types via user_type column
     // -----------------------------------------------------------------------
     $conn->query("CREATE TABLE IF NOT EXISTS admin_otps (
         id         INT AUTO_INCREMENT PRIMARY KEY,
         admin_id   INT          NOT NULL,
+        user_type  VARCHAR(20)  NOT NULL DEFAULT 'admin',
         otp_hash   VARCHAR(64)  NOT NULL,
         expires_at DATETIME     NOT NULL,
         attempts   TINYINT      NOT NULL DEFAULT 0,
         used       TINYINT(1)   NOT NULL DEFAULT 0,
         created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_admin_otp_lookup (admin_id, used, expires_at),
-        FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+        INDEX idx_admin_otp_lookup (admin_id, used, expires_at)
     )");
+    safe_query($conn, "ALTER TABLE admin_otps ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) NOT NULL DEFAULT 'admin'");
+    safe_query($conn, "ALTER TABLE admin_otps DROP FOREIGN KEY admin_otps_ibfk_1");
 
     // -----------------------------------------------------------------------
     // MFA: guest_otps — stores hashed OTPs for customer booking portal login
@@ -388,32 +396,27 @@ try {
 
     // -----------------------------------------------------------------------
     // Password Resets: stores hashed tokens for forgotten password recovery
+    // Supports both 'admin' and 'receptionist' user types via user_type column
     // -----------------------------------------------------------------------
     $conn->query("CREATE TABLE IF NOT EXISTS password_resets (
         id         INT AUTO_INCREMENT PRIMARY KEY,
         admin_id   INT          NOT NULL,
+        user_type  VARCHAR(20)  NOT NULL DEFAULT 'admin',
         token_hash VARCHAR(64)  NOT NULL,
         expires_at DATETIME     NOT NULL,
         used       TINYINT(1)   NOT NULL DEFAULT 0,
         ip_address VARCHAR(45)  DEFAULT NULL,
         created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_reset_token (token_hash, used, expires_at),
-        FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+        INDEX idx_reset_token (token_hash, used, expires_at)
     )");
+    safe_query($conn, "ALTER TABLE password_resets ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) NOT NULL DEFAULT 'admin'");
+    safe_query($conn, "ALTER TABLE password_resets DROP FOREIGN KEY password_resets_ibfk_1");
 
-    // Seed default admin if no admins exist.
-    // Default credentials: admin@beachclub.com / BeachAdmin@2024!
-    // IMPORTANT: Change this password immediately after first login.
-    $adminCheck = $conn->query("SELECT id FROM admins LIMIT 1");
-    if ($adminCheck->num_rows == 0) {
+    // Seed default admin in administrators table if empty
+    $adminCheck = $conn->query("SELECT id FROM administrators LIMIT 1");
+    if (!$adminCheck || $adminCheck->num_rows == 0) {
         $hashedPassword = pw_hash('BeachAdmin@2024!');
-        $conn->query("INSERT INTO admins (username, password, role) VALUES ('admin@beachclub.com', '$hashedPassword', 'admin')");
-    } else {
-        // Ensure at least one admin-role user exists (upgrade guard)
-        $adminRoleCheck = $conn->query("SELECT id FROM admins WHERE role = 'admin' LIMIT 1");
-        if ($adminRoleCheck->num_rows == 0) {
-            $conn->query("UPDATE admins SET role = 'admin' WHERE id = (SELECT id FROM (SELECT id FROM admins ORDER BY id ASC LIMIT 1) t)");
-        }
+        $conn->query("INSERT INTO administrators (username, password, email) VALUES ('admin@beachclub.com', '$hashedPassword', 'admin@beachclub.com')");
     }
 
     // Ensure activity_logs table exists

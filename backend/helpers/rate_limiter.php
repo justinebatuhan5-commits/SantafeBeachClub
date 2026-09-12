@@ -127,11 +127,15 @@ class RateLimiter {
      *
      * @param mysqli $conn
      * @param int    $adminId
+     * @param string $table Target user table ('administrators', 'receptionists', or 'admins')
      * @return array ['locked' => bool, 'seconds_remaining' => int]
      */
-    public static function checkAccountLockout(mysqli $conn, int $adminId): array {
+    public static function checkAccountLockout(mysqli $conn, int $adminId, string $table = 'administrators'): array {
+        $allowedTables = ['administrators', 'receptionists', 'admins'];
+        $tbl = in_array($table, $allowedTables, true) ? $table : 'administrators';
+
         $stmt = $conn->prepare(
-            "SELECT failed_login_count, locked_until FROM admins WHERE id = ? LIMIT 1"
+            "SELECT failed_login_count, locked_until FROM `{$tbl}` WHERE id = ? LIMIT 1"
         );
         if (!$stmt) {
             return ['locked' => false, 'seconds_remaining' => 0, 'is_permanent' => false];
@@ -170,16 +174,21 @@ class RateLimiter {
      * @param int    $adminId
      * @param int    $maxAttempts   Default 5 consecutive failures
      * @param int    $lockoutMinutes Default 15 minutes
+     * @param string $table Target user table ('administrators', 'receptionists', or 'admins')
      */
     public static function recordFailedLogin(
         mysqli $conn,
         int $adminId,
         int $maxAttempts = 5,
-        int $lockoutMinutes = 15
+        int $lockoutMinutes = 15,
+        string $table = 'administrators'
     ): void {
+        $allowedTables = ['administrators', 'receptionists', 'admins'];
+        $tbl = in_array($table, $allowedTables, true) ? $table : 'administrators';
+
         // Increment counter
         $stmt = $conn->prepare(
-            "UPDATE admins SET failed_login_count = failed_login_count + 1 WHERE id = ?"
+            "UPDATE `{$tbl}` SET failed_login_count = failed_login_count + 1 WHERE id = ?"
         );
         if ($stmt) {
             $stmt->bind_param('i', $adminId);
@@ -189,7 +198,7 @@ class RateLimiter {
 
         // Check new count and lock if threshold reached
         $stmt = $conn->prepare(
-            "SELECT failed_login_count FROM admins WHERE id = ? LIMIT 1"
+            "SELECT failed_login_count FROM `{$tbl}` WHERE id = ? LIMIT 1"
         );
         if (!$stmt) return;
         $stmt->bind_param('i', $adminId);
@@ -200,7 +209,7 @@ class RateLimiter {
         if ($row && (int)$row['failed_login_count'] >= $maxAttempts) {
             $lockUntil = date('Y-m-d H:i:s', time() + ($lockoutMinutes * 60));
             $stmt = $conn->prepare(
-                "UPDATE admins SET locked_until = ? WHERE id = ?"
+                "UPDATE `{$tbl}` SET locked_until = ? WHERE id = ?"
             );
             if ($stmt) {
                 $stmt->bind_param('si', $lockUntil, $adminId);
@@ -212,7 +221,7 @@ class RateLimiter {
             require_once __DIR__ . '/security_logger.php';
             $username = 'Account ID #' . $adminId;
             // Fetch username if possible
-            $uStmt = $conn->prepare("SELECT username FROM admins WHERE id = ? LIMIT 1");
+            $uStmt = $conn->prepare("SELECT username FROM `{$tbl}` WHERE id = ? LIMIT 1");
             if ($uStmt) {
                 $uStmt->bind_param('i', $adminId);
                 $uStmt->execute();
@@ -225,7 +234,7 @@ class RateLimiter {
             SecurityLogger::log(
                 $conn,
                 'BRUTE_FORCE_LOCKOUT',
-                "Account {$username} locked for {$lockoutMinutes} minutes after {$maxAttempts} consecutive failed password attempts.",
+                "Account {$username} in {$tbl} locked for {$lockoutMinutes} minutes after {$maxAttempts} consecutive failed password attempts.",
                 SecurityLogger::LEVEL_CRITICAL,
                 $username
             );
@@ -237,10 +246,14 @@ class RateLimiter {
      *
      * @param mysqli $conn
      * @param int    $adminId
+     * @param string $table Target user table ('administrators', 'receptionists', or 'admins')
      */
-    public static function clearFailedLogins(mysqli $conn, int $adminId): void {
+    public static function clearFailedLogins(mysqli $conn, int $adminId, string $table = 'administrators'): void {
+        $allowedTables = ['administrators', 'receptionists', 'admins'];
+        $tbl = in_array($table, $allowedTables, true) ? $table : 'administrators';
+
         $stmt = $conn->prepare(
-            "UPDATE admins SET failed_login_count = 0, locked_until = NULL WHERE id = ?"
+            "UPDATE `{$tbl}` SET failed_login_count = 0, locked_until = NULL WHERE id = ?"
         );
         if ($stmt) {
             $stmt->bind_param('i', $adminId);

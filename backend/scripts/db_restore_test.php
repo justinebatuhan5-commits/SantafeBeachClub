@@ -74,9 +74,10 @@ echo "[*] Verifying restored data..." . PHP_EOL;
 $conn->select_db($test_db);
 
 $checks = [
-    'rooms'   => 'SELECT COUNT(*) AS c FROM rooms',
-    'admins'  => 'SELECT COUNT(*) AS c FROM admins',
-    'bookings'=> 'SELECT COUNT(*) AS c FROM bookings',
+    'rooms'          => 'SELECT COUNT(*) AS c FROM rooms',
+    'administrators' => 'SELECT COUNT(*) AS c FROM administrators',
+    'receptionists'  => 'SELECT COUNT(*) AS c FROM receptionists',
+    'bookings'       => 'SELECT COUNT(*) AS c FROM bookings',
 ];
 
 $all_ok = true;
@@ -92,7 +93,7 @@ foreach ($checks as $table => $sql) {
 }
 
 // ── 6. Admin password hashes still valid (bcrypt) ────────────────────────────
-$adminRes = $conn->query("SELECT username, LEFT(password, 4) AS prefix FROM admins LIMIT 1");
+$adminRes = $conn->query("SELECT username, LEFT(password, 4) AS prefix FROM administrators LIMIT 1");
 if ($adminRes && $adminRes->num_rows > 0) {
     $admin = $adminRes->fetch_assoc();
     if ($admin['prefix'] === '$2y$') {

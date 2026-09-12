@@ -26,6 +26,8 @@ if (!isset($_SESSION['mfa_pending_admin_id'])) {
 $adminId   = (int)$_SESSION['mfa_pending_admin_id'];
 $username  = $_SESSION['mfa_pending_admin_username'] ?? 'Admin';
 $role      = $_SESSION['mfa_pending_admin_role'] ?? 'receptionist';
+$userType  = $_SESSION['mfa_pending_admin_usertype'] ?? ($role === 'admin' ? 'admin' : 'receptionist');
+$userTable = ($userType === 'receptionist') ? 'receptionists' : 'administrators';
 $emailHint = $_SESSION['mfa_pending_email_hint'] ?? 'your registered email';
 
 $error = '';
@@ -44,8 +46,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'resend') {
             $wait = OTP_RESEND_COOLDOWN - $elapsed;
             $res = ['success' => false, 'message' => "Please wait {$wait} seconds before requesting a new code."];
         } else {
-            // Find destination email
-            $stmt = $conn->prepare("SELECT email FROM admins WHERE id = ?");
+            // Find destination email from correct table
+            $stmt = $conn->prepare("SELECT email FROM `{$userTable}` WHERE id = ?");
             $stmt->bind_param('i', $adminId);
             $stmt->execute();
             $emailRes = $stmt->get_result()->fetch_assoc();
@@ -54,11 +56,11 @@ if (isset($_POST['action']) && $_POST['action'] === 'resend') {
             $targetEmail = !empty($emailRes['email']) ? $emailRes['email'] : $username;
             
             $newOtp = otp_generate();
-            otp_store_for_admin($adminId, $newOtp, $conn);
+            otp_store_for_admin($adminId, $newOtp, $conn, $userType);
             $sendRes = otp_send_email($targetEmail, $newOtp, $username);
             
             $_SESSION['otp_sent_at'] = time();
-            SecurityLogger::log($conn, 'MFA_OTP_RESEND', "Admin requested OTP resend", SecurityLogger::LEVEL_INFO, $username);
+            SecurityLogger::log($conn, 'MFA_OTP_RESEND', "User requested OTP resend ({$userType})", SecurityLogger::LEVEL_INFO, $username);
             
             if ($sendRes['success']) {
                 $res = ['success' => true, 'message' => 'A new 6-digit code has been sent to your email.'];
@@ -88,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
         } elseif (!preg_match('/^[0-9]{6}$/', $otp)) {
             $error = 'Verification code must be exactly 6 numeric digits.';
         } else {
-            $verify = otp_verify_admin($adminId, $otp, $conn);
+            $verify = otp_verify_admin($adminId, $otp, $conn, $userType);
             
             if ($verify['success']) {
                 // Complete login

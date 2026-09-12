@@ -266,7 +266,7 @@ def executive_stats():
         cursor.execute("SELECT COUNT(*) AS v FROM payments WHERE status='pending'")
         pending_payments = cursor.fetchone()['v']
         
-        cursor.execute("SELECT COUNT(*) AS v FROM admins")
+        cursor.execute("SELECT (SELECT COUNT(*) FROM administrators) + (SELECT COUNT(*) FROM receptionists) AS v")
         total_staff = cursor.fetchone()['v']
         
         occupancy_rate = round((occupied_rooms / total_rooms) * 100) if total_rooms > 0 else 0

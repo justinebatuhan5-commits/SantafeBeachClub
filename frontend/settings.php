@@ -8,6 +8,8 @@ require_once __DIR__ . '/../backend/helpers/password_helper.php';
 require_once __DIR__ . '/../backend/helpers/cloudinary_helper.php';
 
 $current_admin = $_SESSION['admin_username'];
+$current_role  = $_SESSION['admin_role'] ?? 'receptionist';
+$current_table = ($current_role === 'admin') ? 'administrators' : 'receptionists';
 $success = '';
 $error = '';
 
@@ -23,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_pw      = $_POST['new_password'] ?? '';
         $confirm_pw  = $_POST['confirm_password'] ?? '';
 
-        $stmt = $conn->prepare("SELECT password FROM admins WHERE username = ?");
+        $stmt = $conn->prepare("SELECT password FROM `{$current_table}` WHERE username = ?");
         $stmt->bind_param("s", $current_admin);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
@@ -38,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = $pwError;
         } else {
             $hash = pw_hash($new_pw);
-            $stmt = $conn->prepare("UPDATE admins SET password = ? WHERE username = ?");
+            $stmt = $conn->prepare("UPDATE `{$current_table}` SET password = ? WHERE username = ?");
             $stmt->bind_param("ss", $hash, $current_admin);
             $stmt->execute();
             $stmt->close();
@@ -53,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_username = trim($_POST['new_username'] ?? '');
         $pw_confirm   = $_POST['password_for_username'] ?? '';
 
-        $stmt = $conn->prepare("SELECT id, password FROM admins WHERE username = ?");
+        $stmt = $conn->prepare("SELECT id, password FROM `{$current_table}` WHERE username = ?");
         $stmt->bind_param("s", $current_admin);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
@@ -66,16 +68,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (!str_ends_with($new_username, '@santafebeachclub.com') && !str_ends_with($new_username, '@beachclub.com')) {
             $error = 'Username must end with @santafebeachclub.com.';
         } else {
-            $stmt = $conn->prepare("SELECT id FROM admins WHERE username = ? AND id != ?");
-            $stmt->bind_param("si", $new_username, $row['id']);
-            $stmt->execute();
-            $check = $stmt->get_result();
-            $stmt->close();
+            // Check username uniqueness across both administrators and receptionists
+            $stmtA = $conn->prepare("SELECT id FROM administrators WHERE username = ? AND NOT (id = ? AND '{$current_table}' = 'administrators')");
+            $stmtA->bind_param("si", $new_username, $row['id']);
+            $stmtA->execute();
+            $existsA = $stmtA->get_result()->num_rows > 0;
+            $stmtA->close();
 
-            if ($check->num_rows > 0) {
+            $stmtR = $conn->prepare("SELECT id FROM receptionists WHERE username = ? AND NOT (id = ? AND '{$current_table}' = 'receptionists')");
+            $stmtR->bind_param("si", $new_username, $row['id']);
+            $stmtR->execute();
+            $existsR = $stmtR->get_result()->num_rows > 0;
+            $stmtR->close();
+
+            if ($existsA || $existsR) {
                 $error = 'That username is already taken.';
             } else {
-                $stmt = $conn->prepare("UPDATE admins SET username = ? WHERE id = ?");
+                $stmt = $conn->prepare("UPDATE `{$current_table}` SET username = ? WHERE id = ?");
                 $stmt->bind_param("si", $new_username, $row['id']);
                 $stmt->execute();
                 $stmt->close();
@@ -100,17 +109,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (($pwError = pw_validate($new_pass)) !== null) {
             $error = $pwError;
         } else {
-            $stmt = $conn->prepare("SELECT id FROM admins WHERE username = ?");
-            $stmt->bind_param("s", $new_user);
-            $stmt->execute();
-            $check = $stmt->get_result();
-            $stmt->close();
+            $stmtA = $conn->prepare("SELECT id FROM administrators WHERE username = ?");
+            $stmtA->bind_param("s", $new_user);
+            $stmtA->execute();
+            $existsA = $stmtA->get_result()->num_rows > 0;
+            $stmtA->close();
 
-            if ($check->num_rows > 0) {
+            $stmtR = $conn->prepare("SELECT id FROM receptionists WHERE username = ?");
+            $stmtR->bind_param("s", $new_user);
+            $stmtR->execute();
+            $existsR = $stmtR->get_result()->num_rows > 0;
+            $stmtR->close();
+
+            if ($existsA || $existsR) {
                 $error = 'An account with that username already exists.';
             } else {
                 $hash = pw_hash($new_pass);
-                $stmt = $conn->prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
+                $stmt = $conn->prepare("INSERT INTO administrators (username, password) VALUES (?, ?)");
                 $stmt->bind_param("ss", $new_user, $hash);
                 $stmt->execute();
                 $stmt->close();
@@ -124,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete_admin') {
         RBAC::requireRole('admin');
         $del_id = (int)($_POST['admin_id'] ?? 0);
-        $stmt = $conn->prepare("SELECT username FROM admins WHERE id = ?");
+        $stmt = $conn->prepare("SELECT username FROM administrators WHERE id = ?");
         $stmt->bind_param("i", $del_id);
         $stmt->execute();
         $del_user_row = $stmt->get_result()->fetch_assoc();
@@ -133,12 +148,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($del_user_row && $del_user_row['username'] === $current_admin) {
             $error = 'You cannot delete your own account.';
         } elseif ($del_id > 0) {
-            $stmt = $conn->prepare("DELETE FROM admins WHERE id = ?");
-            $stmt->bind_param("i", $del_id);
-            $stmt->execute();
-            $stmt->close();
-            SecurityLogger::log($conn, 'ADMIN_DELETED', "Admin user ID {$del_id} deleted", SecurityLogger::LEVEL_WARNING, $current_admin);
-            $success = 'Admin account removed.';
+            $adminCount = (int)$conn->query("SELECT COUNT(*) AS c FROM administrators")->fetch_assoc()['c'];
+            if ($adminCount <= 1) {
+                $error = 'Cannot delete the last admin account.';
+            } else {
+                $stmt = $conn->prepare("DELETE FROM administrators WHERE id = ?");
+                $stmt->bind_param("i", $del_id);
+                $stmt->execute();
+                $stmt->close();
+                SecurityLogger::log($conn, 'ADMIN_DELETED', "Admin user ID {$del_id} deleted", SecurityLogger::LEVEL_WARNING, $current_admin);
+                $success = 'Admin account removed.';
+            }
         }
     }
 
@@ -160,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Profile photo exceeds maximum size of 5MB.';
             } else {
                 // Delete old local photo if exists
-                $oldStmt = $conn->prepare("SELECT profile_photo FROM admins WHERE username = ?");
+                $oldStmt = $conn->prepare("SELECT profile_photo FROM `{$current_table}` WHERE username = ?");
                 $oldStmt->bind_param("s", $current_admin);
                 $oldStmt->execute();
                 $oldPhoto = $oldStmt->get_result()->fetch_assoc()['profile_photo'] ?? null;
@@ -187,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($webPath !== null) {
-                    $updStmt = $conn->prepare("UPDATE admins SET profile_photo = ? WHERE username = ?");
+                    $updStmt = $conn->prepare("UPDATE `{$current_table}` SET profile_photo = ? WHERE username = ?");
                     $updStmt->bind_param("ss", $webPath, $current_admin);
                     $updStmt->execute();
                     $updStmt->close();
@@ -207,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- Remove Profile Photo ---
     if ($action === 'remove_profile_photo') {
-        $oldStmt = $conn->prepare("SELECT profile_photo FROM admins WHERE username = ?");
+        $oldStmt = $conn->prepare("SELECT profile_photo FROM `{$current_table}` WHERE username = ?");
         $oldStmt->bind_param("s", $current_admin);
         $oldStmt->execute();
         $oldPhoto = $oldStmt->get_result()->fetch_assoc()['profile_photo'] ?? null;
@@ -217,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             @unlink(__DIR__ . '/' . $oldPhoto);
         }
 
-        $updStmt = $conn->prepare("UPDATE admins SET profile_photo = NULL WHERE username = ?");
+        $updStmt = $conn->prepare("UPDATE `{$current_table}` SET profile_photo = NULL WHERE username = ?");
         $updStmt->bind_param("s", $current_admin);
         $updStmt->execute();
         $updStmt->close();
@@ -246,9 +266,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ── FETCH DATA ─────────────────────────────────────────────────────────────────
-$admins = $conn->query("SELECT id, username, profile_photo, created_at FROM admins ORDER BY created_at ASC");
+$admins = $conn->query("SELECT id, username, profile_photo, created_at FROM administrators ORDER BY created_at ASC");
 
-$myProfileStmt = $conn->prepare("SELECT profile_photo, role, email FROM admins WHERE username = ? LIMIT 1");
+$myProfileStmt = $conn->prepare("SELECT profile_photo, email FROM `{$current_table}` WHERE username = ? LIMIT 1");
 $myProfileStmt->bind_param("s", $current_admin);
 $myProfileStmt->execute();
 $myProfileData = $myProfileStmt->get_result()->fetch_assoc();

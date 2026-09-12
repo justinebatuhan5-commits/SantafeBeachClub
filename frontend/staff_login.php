@@ -79,14 +79,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'] ?? '';
 
         if (!empty($username) && !empty($password)) {
-            $stmt = $conn->prepare("SELECT id, password, role FROM admins WHERE username = ?");
+            $stmt = $conn->prepare("SELECT id, password, email FROM receptionists WHERE username = ?");
             $stmt->bind_param("s", $username);
             $stmt->execute();
             $result = $stmt->get_result();
 
             if ($row = $result->fetch_assoc()) {
                 // ── Account lockout check (before password attempt) ──
-                $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id']);
+                $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id'], 'receptionists');
                 if ($lockStatus['locked']) {
                     if (!empty($lockStatus['is_permanent'])) {
                         $error = "🔒 Access Denied: This staff account has been administrative-locked / suspended by the Resort Administrator. Please contact management.";
@@ -104,77 +104,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Transparently upgrade hash if cost/algo has changed
                     if (pw_needs_rehash($row['password'])) {
                         $newHash = pw_hash($password);
-                        $upd = $conn->prepare("UPDATE admins SET password = ? WHERE id = ?");
+                        $upd = $conn->prepare("UPDATE receptionists SET password = ? WHERE id = ?");
                         $upd->bind_param("si", $newHash, $row['id']);
                         $upd->execute();
                         $upd->close();
                     }
 
-                    // Check role: prevent admin from using reception portal without clarity
-                    if ($row['role'] === 'admin') {
-                        RateLimiter::hit($conn, 'login_attempt');
-                        $error = 'This portal is for Front Desk / Reception staff only. Administrators please use the Executive Admin Portal.';
-                        SecurityLogger::log($conn, 'UNAUTHORIZED_PORTAL_ATTEMPT', "Admin account ({$username}) attempted reception login", SecurityLogger::LEVEL_INFO, $username);
-                    } else {
-                        // --- MFA: Password verified. Now require OTP. ---
-                        // Do NOT create a full session yet.
-                        require_once __DIR__ . '/../backend/helpers/otp_helper.php';
-                        require_once __DIR__ . '/../backend/services/mailer.php';
+                    // --- MFA: Password verified. Now require OTP. ---
+                    // Do NOT create a full session yet.
+                    require_once __DIR__ . '/../backend/helpers/otp_helper.php';
+                    require_once __DIR__ . '/../backend/services/mailer.php';
 
-                        // Fetch receptionist email for OTP delivery
-                        $emailRow = null;
-                        $emailStmt = $conn->prepare("SELECT email FROM admins WHERE id = ?");
-                        $emailStmt->bind_param('i', $row['id']);
-                        $emailStmt->execute();
-                        $emailResult = $emailStmt->get_result();
-                        if ($emailResult) { $emailRow = $emailResult->fetch_assoc(); }
-                        $emailStmt->close();
+                    $adminEmail = $row['email'] ?? null;
 
-                        $adminEmail = $emailRow['email'] ?? null;
-
-                        // If no email set on account, fall back to username (which is an email)
-                        if (empty($adminEmail)) {
-                            $adminEmail = $username;
-                        }
-
-                        $rawOtp = otp_generate();
-                        otp_store_for_admin((int)$row['id'], $rawOtp, $conn);
-                        $sendResult = otp_send_email($adminEmail, $rawOtp, $username);
-
-                        // Prevent session fixation before writing partial session
-                        session_regenerate_id(true);
-
-                        // Partial session — identifies who is pending MFA, NOT a full auth session
-                        $_SESSION['mfa_pending_admin_id']       = (int)$row['id'];
-                        $_SESSION['mfa_pending_admin_username'] = $username;
-                        $_SESSION['mfa_pending_admin_role']     = $row['role'];
-                        $_SESSION['mfa_pending_email_hint']     = substr($adminEmail, 0, 3) . '***' . strstr($adminEmail, '@');
-                        $_SESSION['otp_sent_at']                = time();
-                        $_SESSION['login_source']               = 'reception';
-
-                        RateLimiter::clearFailedLogins($conn, (int)$row['id']);
-                        SecurityLogger::log($conn, 'MFA_OTP_SENT', "OTP dispatched for Receptionist MFA (step 2)", SecurityLogger::LEVEL_INFO, $username);
+                    // If no email set on account, fall back to username (which is an email)
+                    if (empty($adminEmail)) {
+                        $adminEmail = $username;
                     }
- 
-                    // Note: $rawOtp is NOT logged above — only a generic event is recorded.
- 
-                    if (empty($error)) {
-                        if ($is_ajax) {
-                            header('Content-Type: application/json');
-                            echo json_encode([
-                                'success'  => true,
-                                'mfa'      => true,
-                                'redirect' => 'verify_otp'
-                            ]);
-                            exit;
-                        }
 
-                        header("Location: verify_otp");
+                    $rawOtp = otp_generate();
+                    otp_store_for_admin((int)$row['id'], $rawOtp, $conn, 'receptionist');
+                    $sendResult = otp_send_email($adminEmail, $rawOtp, $username);
+
+                    // Prevent session fixation before writing partial session
+                    session_regenerate_id(true);
+
+                    // Partial session — identifies who is pending MFA, NOT a full auth session
+                    $_SESSION['mfa_pending_admin_id']       = (int)$row['id'];
+                    $_SESSION['mfa_pending_admin_username'] = $username;
+                    $_SESSION['mfa_pending_admin_role']     = 'receptionist';
+                    $_SESSION['mfa_pending_admin_usertype'] = 'receptionist';
+                    $_SESSION['mfa_pending_email_hint']     = substr($adminEmail, 0, 3) . '***' . strstr($adminEmail, '@');
+                    $_SESSION['otp_sent_at']                = time();
+                    $_SESSION['login_source']               = 'reception';
+
+                    RateLimiter::clearFailedLogins($conn, (int)$row['id'], 'receptionists');
+                    SecurityLogger::log($conn, 'MFA_OTP_SENT', "OTP dispatched for Receptionist MFA (step 2)", SecurityLogger::LEVEL_INFO, $username);
+
+                    // Note: $rawOtp is NOT logged above — only a generic event is recorded.
+
+                    if ($is_ajax) {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success'  => true,
+                            'mfa'      => true,
+                            'redirect' => 'verify_otp'
+                        ]);
                         exit;
                     }
+
+                    header("Location: verify_otp");
+                    exit;
                 } else {
                     RateLimiter::hit($conn, 'login_attempt');
-                    RateLimiter::recordFailedLogin($conn, (int)$row['id']);
+                    RateLimiter::recordFailedLogin($conn, (int)$row['id'], 5, 15, 'receptionists');
                     $error = 'Invalid username or password.';
                     SecurityLogger::log($conn, 'FAILED_LOGIN', "Failed login attempt (bad password) for user: {$username}", SecurityLogger::LEVEL_WARNING, $username);
                 }

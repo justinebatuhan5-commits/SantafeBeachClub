@@ -13,7 +13,8 @@ $_ph_role_label = $_ph_is_admin ? 'Administrator' : 'Receptionist';
 $_ph_photo      = $_SESSION['admin_profile_photo'] ?? null;
 
 if (empty($_ph_photo) && isset($conn) && !empty($_ph_username)) {
-    if ($st = $conn->prepare("SELECT profile_photo FROM admins WHERE username = ? LIMIT 1")) {
+    $tbl = ($_ph_role === 'admin') ? 'administrators' : 'receptionists';
+    if ($st = $conn->prepare("SELECT profile_photo FROM `{$tbl}` WHERE username = ? LIMIT 1")) {
         $st->bind_param("s", $_ph_username);
         $st->execute();
         $rowP = $st->get_result()->fetch_assoc();

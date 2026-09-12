@@ -47,31 +47,36 @@ function otp_hash(string $rawOtp): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Store a hashed OTP for an admin user.
- * Any existing unused OTPs for that admin are invalidated first.
+ * Store a hashed OTP for an admin or receptionist user.
+ * Any existing unused OTPs for that user and user_type are invalidated first.
  *
- * @param int    $adminId   The admin's primary key.
+ * @param int    $adminId   The user's primary key.
  * @param string $rawOtp    The raw 6-digit code (NOT stored — only hashed).
  * @param mysqli $conn      Active MySQLi connection.
+ * @param string $userType  'admin' or 'receptionist'
  */
-function otp_store_for_admin(int $adminId, string $rawOtp, mysqli $conn): void {
-    // Invalidate all previous unused OTPs for this admin
+function otp_store_for_admin(int $adminId, string $rawOtp, mysqli $conn, string $userType = 'admin'): void {
+    // Invalidate all previous unused OTPs for this user and type
     $stmt = $conn->prepare(
-        "UPDATE admin_otps SET used = 1 WHERE admin_id = ? AND used = 0"
+        "UPDATE admin_otps SET used = 1 WHERE admin_id = ? AND user_type = ? AND used = 0"
     );
-    $stmt->bind_param('i', $adminId);
-    $stmt->execute();
-    $stmt->close();
+    if ($stmt) {
+        $stmt->bind_param('is', $adminId, $userType);
+        $stmt->execute();
+        $stmt->close();
+    }
 
     $hash      = otp_hash($rawOtp);
     $expiresAt = date('Y-m-d H:i:s', strtotime('+' . OTP_EXPIRY_MINUTES . ' minutes'));
 
     $stmt = $conn->prepare(
-        "INSERT INTO admin_otps (admin_id, otp_hash, expires_at) VALUES (?, ?, ?)"
+        "INSERT INTO admin_otps (admin_id, user_type, otp_hash, expires_at) VALUES (?, ?, ?, ?)"
     );
-    $stmt->bind_param('iss', $adminId, $hash, $expiresAt);
-    $stmt->execute();
-    $stmt->close();
+    if ($stmt) {
+        $stmt->bind_param('isss', $adminId, $userType, $hash, $expiresAt);
+        $stmt->execute();
+        $stmt->close();
+    }
 
     // IMPORTANT: $rawOtp is NOT logged anywhere in this function.
 }
@@ -113,26 +118,30 @@ function otp_store_for_guest(int $bookingId, string $rawOtp, mysqli $conn): void
 // ---------------------------------------------------------------------------
 
 /**
- * Verify a submitted OTP for an admin.
+ * Verify a submitted OTP for an admin or receptionist.
  *
- * @param  int    $adminId       Admin primary key.
+ * @param  int    $adminId       User primary key.
  * @param  string $submittedCode The raw code entered by the user.
  * @param  mysqli $conn          Active MySQLi connection.
+ * @param  string $userType      'admin' or 'receptionist'
  * @return array {
  *   success:   bool,
  *   reason:    string  ('ok'|'expired_or_not_found'|'locked_out'|'invalid'),
  *   remaining: int     (attempts remaining, present on 'invalid')
  * }
  */
-function otp_verify_admin(int $adminId, string $submittedCode, mysqli $conn): array {
+function otp_verify_admin(int $adminId, string $submittedCode, mysqli $conn, string $userType = 'admin'): array {
     $stmt = $conn->prepare(
         "SELECT id, otp_hash, attempts
          FROM admin_otps
-         WHERE admin_id = ? AND used = 0 AND expires_at > NOW()
+         WHERE admin_id = ? AND user_type = ? AND used = 0 AND expires_at > NOW()
          ORDER BY created_at DESC
          LIMIT 1"
     );
-    $stmt->bind_param('i', $adminId);
+    if (!$stmt) {
+        return ['success' => false, 'reason' => 'expired_or_not_found'];
+    }
+    $stmt->bind_param('is', $adminId, $userType);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();

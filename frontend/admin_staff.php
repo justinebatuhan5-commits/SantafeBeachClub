@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim($_POST['email'] ?? '');
         $pw    = $_POST['password'] ?? '';
         $role  = in_array($_POST['role'] ?? '', ['admin','receptionist']) ? $_POST['role'] : 'receptionist';
+        $targetTable = ($role === 'admin') ? 'administrators' : 'receptionists';
         $photoPath = null;
 
         // Check if avatar was uploaded
@@ -51,18 +52,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (($pwError = pw_validate($pw)) !== null) { 
             $_SESSION['staff_error'] = $pwError; 
         } else {
-            $stmt = $conn->prepare("SELECT id FROM admins WHERE username = ?");
-            $stmt->bind_param("s", $uname);
-            $stmt->execute();
-            $chk = $stmt->get_result();
-            $stmt->close();
+            // Check both tables for duplicate username
+            $dupFound = false;
+            foreach (['administrators', 'receptionists'] as $tbl) {
+                $stmt = $conn->prepare("SELECT id FROM `{$tbl}` WHERE username = ?");
+                $stmt->bind_param("s", $uname);
+                $stmt->execute();
+                if ($stmt->get_result()->num_rows > 0) { $dupFound = true; }
+                $stmt->close();
+                if ($dupFound) break;
+            }
 
-            if ($chk->num_rows > 0) { 
+            if ($dupFound) { 
                 $_SESSION['staff_error'] = 'Username already exists.'; 
             } else {
                 $hash = pw_hash($pw);
-                $stmt = $conn->prepare("INSERT INTO admins (username, email, password, role, profile_photo) VALUES (?,?,?,?,?)");
-                $stmt->bind_param("sssss", $uname, $email, $hash, $role, $photoPath);
+                $stmt = $conn->prepare("INSERT INTO `{$targetTable}` (username, email, password, profile_photo) VALUES (?,?,?,?)");
+                $stmt->bind_param("ssss", $uname, $email, $hash, $photoPath);
                 $stmt->execute(); 
                 $stmt->close();
                 log_activity($conn, $admin, 'Staff Created', "Added $role account: $uname with OTP email: $email");
@@ -73,13 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'update_staff_photo') {
-        $target_id = (int)($_POST['staff_id'] ?? 0);
+        $target_id   = (int)($_POST['staff_id'] ?? 0);
+        $staff_utype = in_array($_POST['staff_type'] ?? '', ['admin','receptionist']) ? $_POST['staff_type'] : 'receptionist';
+        $staffTable  = ($staff_utype === 'admin') ? 'administrators' : 'receptionists';
+
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['profile_photo'];
             $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && $file['size'] <= 5 * 1024 * 1024) {
                 // Delete old local photo if exists
-                $oldStmt = $conn->prepare("SELECT profile_photo, username FROM admins WHERE id = ?");
+                $oldStmt = $conn->prepare("SELECT profile_photo, username FROM `{$staffTable}` WHERE id = ?");
                 $oldStmt->bind_param("i", $target_id);
                 $oldStmt->execute();
                 $staffData = $oldStmt->get_result()->fetch_assoc();
@@ -106,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     if ($webPath !== null) {
-                        $upd = $conn->prepare("UPDATE admins SET profile_photo = ? WHERE id = ?");
+                        $upd = $conn->prepare("UPDATE `{$staffTable}` SET profile_photo = ? WHERE id = ?");
                         $upd->bind_param("si", $webPath, $target_id);
                         $upd->execute();
                         $upd->close();
@@ -125,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['staff_error'] = 'Invalid image file. Max 5MB, JPG/PNG/WEBP/GIF only.';
             }
         } elseif (isset($_POST['remove_photo']) && $_POST['remove_photo'] === '1') {
-            $oldStmt = $conn->prepare("SELECT profile_photo, username FROM admins WHERE id = ?");
+            $oldStmt = $conn->prepare("SELECT profile_photo, username FROM `{$staffTable}` WHERE id = ?");
             $oldStmt->bind_param("i", $target_id);
             $oldStmt->execute();
             $staffData = $oldStmt->get_result()->fetch_assoc();
@@ -135,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($staffData['profile_photo']) && !is_remote_image($staffData['profile_photo']) && file_exists(__DIR__ . '/' . $staffData['profile_photo'])) {
                     @unlink(__DIR__ . '/' . $staffData['profile_photo']);
                 }
-                $upd = $conn->prepare("UPDATE admins SET profile_photo = NULL WHERE id = ?");
+                $upd = $conn->prepare("UPDATE `{$staffTable}` SET profile_photo = NULL WHERE id = ?");
                 $upd->bind_param("i", $target_id);
                 $upd->execute();
                 $upd->close();
@@ -154,22 +163,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'edit_email') {
         $target_id  = (int)($_POST['staff_id'] ?? 0);
         $new_email  = trim($_POST['email'] ?? '');
+        $staff_utype = in_array($_POST['staff_type'] ?? '', ['admin','receptionist']) ? $_POST['staff_type'] : 'receptionist';
+        $staffTable  = ($staff_utype === 'admin') ? 'administrators' : 'receptionists';
 
         if (!empty($new_email) && !filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
             $_SESSION['staff_error'] = 'Please provide a valid email address for OTP delivery.';
         } else {
-            $stmt = $conn->prepare("UPDATE admins SET email = ? WHERE id = ?");
+            $stmt = $conn->prepare("UPDATE `{$staffTable}` SET email = ? WHERE id = ?");
             $stmt->bind_param("si", $new_email, $target_id);
             $stmt->execute();
             $stmt->close();
-            log_activity($conn, $admin, 'Staff OTP Email Updated', "Updated MFA email for staff ID: $target_id");
+            log_activity($conn, $admin, 'Staff OTP Email Updated', "Updated MFA email for staff ID: $target_id ($staff_utype)");
             $_SESSION['staff_success'] = "OTP Delivery Email updated successfully.";
         }
     }
 
     if ($action === 'delete_staff') {
-        $del_id = (int)($_POST['staff_id'] ?? 0);
-        $stmt = $conn->prepare("SELECT username, role FROM admins WHERE id = ?");
+        $del_id      = (int)($_POST['staff_id'] ?? 0);
+        $staff_utype = in_array($_POST['staff_type'] ?? '', ['admin','receptionist']) ? $_POST['staff_type'] : 'receptionist';
+        $delTable    = ($staff_utype === 'admin') ? 'administrators' : 'receptionists';
+
+        $stmt = $conn->prepare("SELECT username FROM `{$delTable}` WHERE id = ?");
         $stmt->bind_param("i", $del_id);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
@@ -179,56 +193,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['staff_error'] = 'You cannot delete your own account.';
         } elseif ($row) {
             // Prevent deleting last admin
-            $adminCount = (int)$conn->query("SELECT COUNT(*) AS c FROM admins WHERE role='admin'")->fetch_assoc()['c'];
-            if ($row['role'] === 'admin' && $adminCount <= 1) {
-                $_SESSION['staff_error'] = 'Cannot delete the last admin account.';
-            } else {
-                $stmt = $conn->prepare("DELETE FROM admins WHERE id = ?");
-                $stmt->bind_param("i", $del_id);
-                $stmt->execute();
-                $stmt->close();
-                log_activity($conn, $admin, 'Staff Deleted', "Removed account: {$row['username']}");
-                SecurityLogger::log($conn, 'STAFF_DELETED', "Removed staff account: {$row['username']}", SecurityLogger::LEVEL_WARNING, $admin);
-                $_SESSION['staff_success'] = "Staff account \"{$row['username']}\" removed.";
+            if ($staff_utype === 'admin') {
+                $adminCount = (int)$conn->query("SELECT COUNT(*) AS c FROM administrators")->fetch_assoc()['c'];
+                if ($adminCount <= 1) {
+                    $_SESSION['staff_error'] = 'Cannot delete the last admin account.';
+                    header('Location: admin_staff'); exit;
+                }
             }
+            $stmt = $conn->prepare("DELETE FROM `{$delTable}` WHERE id = ?");
+            $stmt->bind_param("i", $del_id);
+            $stmt->execute();
+            $stmt->close();
+            log_activity($conn, $admin, 'Staff Deleted', "Removed {$staff_utype} account: {$row['username']}");
+            SecurityLogger::log($conn, 'STAFF_DELETED', "Removed {$staff_utype} account: {$row['username']}", SecurityLogger::LEVEL_WARNING, $admin);
+            $_SESSION['staff_success'] = "Staff account \"{$row['username']}\" removed.";
         }
     }
 
     if ($action === 'change_role') {
-        $target_id = (int)($_POST['staff_id'] ?? 0);
-        $new_role  = in_array($_POST['new_role'] ?? '', ['admin','receptionist']) ? $_POST['new_role'] : 'receptionist';
-        
-        $stmt = $conn->prepare("SELECT username, role FROM admins WHERE id = ?");
+        $target_id   = (int)($_POST['staff_id'] ?? 0);
+        $current_type = in_array($_POST['staff_type'] ?? '', ['admin','receptionist']) ? $_POST['staff_type'] : 'receptionist';
+        $new_role    = in_array($_POST['new_role'] ?? '', ['admin','receptionist']) ? $_POST['new_role'] : 'receptionist';
+        $new_type    = ($new_role === 'admin') ? 'admin' : 'receptionist';
+
+        if ($current_type === $new_type) {
+            // No change
+            header('Location: admin_staff'); exit;
+        }
+
+        $srcTable = ($current_type === 'admin') ? 'administrators' : 'receptionists';
+        $dstTable = ($new_type === 'admin') ? 'administrators' : 'receptionists';
+
+        $stmt = $conn->prepare("SELECT username, password, email, profile_photo FROM `{$srcTable}` WHERE id = ?");
         $stmt->bind_param("i", $target_id);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
         if ($row) {
-            if ($row['username'] === $admin && $new_role !== 'admin') {
+            if ($row['username'] === $admin && $new_type !== 'admin') {
                 $_SESSION['staff_error'] = 'You cannot remove your own admin role.';
             } else {
-                $adminCount = (int)$conn->query("SELECT COUNT(*) AS c FROM admins WHERE role='admin'")->fetch_assoc()['c'];
-                if ($row['role'] === 'admin' && $new_role === 'receptionist' && $adminCount <= 1) {
-                    $_SESSION['staff_error'] = 'Cannot demote the last admin account.';
-                } else {
-                    $stmt = $conn->prepare("UPDATE admins SET role=? WHERE id=?");
-                    $stmt->bind_param("si", $new_role, $target_id);
-                    $stmt->execute(); 
-                    $stmt->close();
-                    log_activity($conn, $admin, 'Role Changed', "{$row['username']} changed to $new_role");
-                    SecurityLogger::log($conn, 'ROLE_CHANGED', "{$row['username']} changed to {$new_role}", SecurityLogger::LEVEL_INFO, $admin);
-                    $_SESSION['staff_success'] = "{$row['username']}'s role updated to $new_role.";
+                if ($current_type === 'admin') {
+                    $adminCount = (int)$conn->query("SELECT COUNT(*) AS c FROM administrators")->fetch_assoc()['c'];
+                    if ($adminCount <= 1) {
+                        $_SESSION['staff_error'] = 'Cannot demote the last admin account.';
+                        header('Location: admin_staff'); exit;
+                    }
                 }
+
+                // INSERT into destination table
+                $ins = $conn->prepare("INSERT INTO `{$dstTable}` (username, password, email, profile_photo) VALUES (?,?,?,?)");
+                $ins->bind_param('ssss', $row['username'], $row['password'], $row['email'], $row['profile_photo']);
+                $ins->execute();
+                $ins->close();
+
+                // DELETE from source table
+                $del = $conn->prepare("DELETE FROM `{$srcTable}` WHERE id = ?");
+                $del->bind_param('i', $target_id);
+                $del->execute();
+                $del->close();
+
+                log_activity($conn, $admin, 'Role Changed', "{$row['username']} changed to $new_role");
+                SecurityLogger::log($conn, 'ROLE_CHANGED', "{$row['username']} changed to {$new_role}", SecurityLogger::LEVEL_INFO, $admin);
+                $_SESSION['staff_success'] = "{$row['username']}'s role updated to $new_role.";
             }
         }
     }
 
     if ($action === 'reset_password') {
-        $target_id = (int)($_POST['staff_id'] ?? 0);
-        $new_pw    = $_POST['new_password'] ?? '';
+        $target_id   = (int)($_POST['staff_id'] ?? 0);
+        $new_pw      = $_POST['new_password'] ?? '';
+        $staff_utype = in_array($_POST['staff_type'] ?? '', ['admin','receptionist']) ? $_POST['staff_type'] : 'receptionist';
+        $staffTable  = ($staff_utype === 'admin') ? 'administrators' : 'receptionists';
         
-        $stmt = $conn->prepare("SELECT username FROM admins WHERE id = ?");
+        $stmt = $conn->prepare("SELECT username FROM `{$staffTable}` WHERE id = ?");
         $stmt->bind_param("i", $target_id);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
@@ -236,12 +275,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($row && ($pwError = pw_validate($new_pw)) === null) {
             $hash = pw_hash($new_pw);
-            $stmt = $conn->prepare("UPDATE admins SET password=? WHERE id=?");
+            $stmt = $conn->prepare("UPDATE `{$staffTable}` SET password=? WHERE id=?");
             $stmt->bind_param("si", $hash, $target_id);
             $stmt->execute(); 
             $stmt->close();
             log_activity($conn, $admin, 'Password Reset', "Reset password for: {$row['username']}");
-            SecurityLogger::log($conn, 'PASSWORD_RESET', "Reset password for staff: {$row['username']}", SecurityLogger::LEVEL_INFO, $admin);
+            SecurityLogger::log($conn, 'PASSWORD_RESET', "Reset password for {$staff_utype}: {$row['username']}", SecurityLogger::LEVEL_INFO, $admin);
             $_SESSION['staff_success'] = "Password reset for \"{$row['username']}\"."; 
         } elseif ($row && $pwError !== null) {
             $_SESSION['staff_error'] = $pwError;
@@ -251,10 +290,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'toggle_lock') {
-        $target_id = (int)($_POST['staff_id'] ?? 0);
-        $lock_op   = $_POST['lock_op'] ?? '';
+        $target_id   = (int)($_POST['staff_id'] ?? 0);
+        $lock_op     = $_POST['lock_op'] ?? '';
+        $staff_utype = in_array($_POST['staff_type'] ?? '', ['admin','receptionist']) ? $_POST['staff_type'] : 'receptionist';
+        $staffTable  = ($staff_utype === 'admin') ? 'administrators' : 'receptionists';
 
-        $stmt = $conn->prepare("SELECT username, role, locked_until FROM admins WHERE id = ?");
+        $stmt = $conn->prepare("SELECT username, locked_until FROM `{$staffTable}` WHERE id = ?");
         $stmt->bind_param("i", $target_id);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
@@ -267,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($lock_op === 'lock') {
                     // Lock indefinitely (e.g. 10 years into the future)
                     $lockUntil = date('Y-m-d H:i:s', strtotime('+10 years'));
-                    $upd = $conn->prepare("UPDATE admins SET locked_until = ?, failed_login_count = 5 WHERE id = ?");
+                    $upd = $conn->prepare("UPDATE `{$staffTable}` SET locked_until = ?, failed_login_count = 5 WHERE id = ?");
                     $upd->bind_param("si", $lockUntil, $target_id);
                     $upd->execute();
                     $upd->close();
@@ -277,7 +318,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['staff_success'] = "Account \"{$row['username']}\" has been locked and suspended.";
                 } elseif ($lock_op === 'unlock') {
                     // Unlock account and reset failures
-                    $upd = $conn->prepare("UPDATE admins SET locked_until = NULL, failed_login_count = 0 WHERE id = ?");
+                    $upd = $conn->prepare("UPDATE `{$staffTable}` SET locked_until = NULL, failed_login_count = 0 WHERE id = ?");
                     $upd->bind_param("i", $target_id);
                     $upd->execute();
                     $upd->close();
@@ -329,7 +370,12 @@ if (isset($_SESSION['staff_error'])) {
     unset($_SESSION['staff_error']);
 }
 
-$staff_list = $conn->query("SELECT id, username, email, role, profile_photo, locked_until, failed_login_count, created_at FROM admins ORDER BY role ASC, created_at ASC");
+$staff_list = $conn->query("
+    SELECT id, username, email, 'admin' AS role, 'admin' AS user_type, profile_photo, locked_until, failed_login_count, created_at FROM administrators
+    UNION ALL
+    SELECT id, username, email, 'receptionist' AS role, 'receptionist' AS user_type, profile_photo, locked_until, failed_login_count, created_at FROM receptionists
+    ORDER BY role ASC, created_at ASC
+");
 
 // Fetch Staff Portal Lockdown / Maintenance Mode settings
 $portalSettingsRes = $conn->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('staff_portal_locked', 'staff_portal_locked_msg')");
@@ -412,7 +458,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                             <?php else: ?>
                                 <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,<?php echo $roleColor; ?>,<?php echo $roleColor; ?>bb);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);"><?php echo strtoupper(substr($s['username'],0,1)); ?></div>
                             <?php endif; ?>
-                            <button type="button" title="Update Photo" onclick="openEditPhoto(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['profile_photo'] ?? ''); ?>')" style="position:absolute;bottom:-3px;right:-3px;width:19px;height:19px;background:#fff;border:1.5px solid #E2E8F0;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
+                            <button type="button" title="Update Photo" onclick="openEditPhoto(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['profile_photo'] ?? ''); ?>', '<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="position:absolute;bottom:-3px;right:-3px;width:19px;height:19px;background:#fff;border:1.5px solid #E2E8F0;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
                                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7C533C" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                             </button>
                         </div>
@@ -434,7 +480,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                         <?php else: ?>
                             <span style="font-size:10px;font-weight:700;color:#DC2626;background:#FEF2F2;padding:3px 8px;border-radius:5px;border:1px solid #FECACA;white-space:nowrap;">⚠ No email</span>
                         <?php endif; ?>
-                        <button type="button" title="Edit OTP Email" onclick="openEditEmail(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['email'] ?? ''); ?>')" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:4px;color:#CBD5E1;border-radius:5px;display:flex;align-items:center;" onmouseover="this.style.color='#7C533C'" onmouseout="this.style.color='#CBD5E1'">
+                        <button type="button" title="Edit OTP Email" onclick="openEditEmail(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['email'] ?? ''); ?>', '<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:4px;color:#CBD5E1;border-radius:5px;display:flex;align-items:center;" onmouseover="this.style.color='#7C533C'" onmouseout="this.style.color='#CBD5E1'">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                         </button>
                     </div>
@@ -445,6 +491,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="change_role">
                             <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
+                            <input type="hidden" name="staff_type" value="<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>">
                             <select name="new_role" onchange="this.form.submit()" style="padding:5px 8px;border-radius:7px;border:1.5px solid <?php echo $roleColor; ?>33;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;color:<?php echo $roleColor; ?>;background:<?php echo $roleBg; ?>;cursor:pointer;">
                                 <option value="admin"        <?php echo $s['role']==='admin'?'selected':''; ?>>Admin</option>
                                 <option value="receptionist" <?php echo $s['role']==='receptionist'?'selected':''; ?>>Reception</option>
@@ -474,6 +521,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="action" value="toggle_lock">
                                 <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
+                                <input type="hidden" name="staff_type" value="<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>">
                                 <?php if ($isLocked): ?>
                                     <input type="hidden" name="lock_op" value="unlock">
                                     <button type="submit" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F0FDF4;border:1.5px solid #86EFAC;color:#166534;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FDF4'">🔓 Unlock</button>
@@ -483,11 +531,12 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                                 <?php endif; ?>
                             </form>
                         <?php endif; ?>
-                        <button onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>')" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F1F5F9;border:1.5px solid #E2E8F0;color:#475569;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">🔑 Reset</button>
+                        <button onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>','<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F1F5F9;border:1.5px solid #E2E8F0;color:#475569;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">🔑 Reset</button>
                         <form method="POST" style="display:inline;" onsubmit="return false;" data-confirm-title="Remove Staff Account" data-confirm-msg="Remove <?php echo htmlspecialchars($s['username']); ?>? This cannot be undone." data-confirm-icon="👤" data-confirm-icon-bg="#FEE2E2">
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="delete_staff">
                             <input type="hidden" name="staff_id" value="<?php echo $s['id']; ?>">
+                            <input type="hidden" name="staff_type" value="<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>">
                             <button type="submit" <?php echo $isMe?'disabled':''; ?> style="display:inline-flex;align-items:center;gap:3px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:<?php echo $isMe?'#F8FAFC':'#FEF2F2'; ?>;border:1.5px solid <?php echo $isMe?'#E2E8F0':'#FECACA'; ?>;color:<?php echo $isMe?'#CBD5E1':'#991B1B'; ?>;cursor:<?php echo $isMe?'not-allowed':'pointer'; ?>;white-space:nowrap;" <?php if(!$isMe):?>onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'"<?php endif;?>>🗑 Remove</button>
                         </form>
                     </div>
@@ -642,6 +691,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="update_staff_photo">
             <input type="hidden" name="staff_id" id="editPhotoStaffId">
+            <input type="hidden" name="staff_type" id="editPhotoStaffType">
             <div class="admin-form-group">
                 <label>Select Photo (JPG, PNG, WEBP, max 5MB)</label>
                 <input type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp,image/gif" required>
@@ -652,6 +702,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="update_staff_photo">
             <input type="hidden" name="staff_id" id="removePhotoStaffId">
+            <input type="hidden" name="staff_type" id="removePhotoStaffType">
             <input type="hidden" name="remove_photo" value="1">
             <button type="submit" class="btn-danger" style="width:100%;justify-content:center;background:none;border:1px solid #FCA5A5;color:#DC2626;" id="removePhotoBtn">Remove Existing Photo</button>
         </form>
@@ -668,6 +719,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="edit_email">
             <input type="hidden" name="staff_id" id="editEmailStaffId">
+            <input type="hidden" name="staff_type" id="editEmailStaffType">
             <div class="admin-form-group">
                 <label>Personal / Delivery Email (Gmail, etc.)</label>
                 <input type="email" name="email" id="editEmailInput" required placeholder="name@gmail.com">
@@ -687,6 +739,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="reset_password">
             <input type="hidden" name="staff_id" id="resetStaffId">
+            <input type="hidden" name="staff_type" id="resetStaffType">
             <div class="admin-form-group"><label>New Password</label><input type="password" name="new_password" required minlength="8" placeholder="Min 8 chars: upper, lower, number, symbol" title="Must be 8+ characters with uppercase, lowercase, number, and special character"></div>
             <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Save New Password</button>
         </form>
@@ -694,22 +747,26 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
 </div>
 
 <script>
-function openReset(id, name) {
+function openReset(id, name, type) {
     document.getElementById('resetStaffId').value = id;
+    document.getElementById('resetStaffType').value = type || 'receptionist';
     document.getElementById('resetModalSub').textContent = 'Set a new password for "' + name + '".';
     document.getElementById('resetModal').classList.add('open');
 }
 
-function openEditEmail(id, username, email) {
+function openEditEmail(id, username, email, type) {
     document.getElementById('editEmailStaffId').value = id;
+    document.getElementById('editEmailStaffType').value = type || 'receptionist';
     document.getElementById('editEmailInput').value = email;
     document.getElementById('editEmailModalSub').textContent = 'Update OTP delivery email for "' + username + '".';
     document.getElementById('editEmailModal').classList.add('open');
 }
 
-function openEditPhoto(id, username, currentPhoto) {
+function openEditPhoto(id, username, currentPhoto, type) {
     document.getElementById('editPhotoStaffId').value = id;
+    document.getElementById('editPhotoStaffType').value = type || 'receptionist';
     document.getElementById('removePhotoStaffId').value = id;
+    document.getElementById('removePhotoStaffType').value = type || 'receptionist';
     document.getElementById('editPhotoModalSub').textContent = 'Upload or change profile photo for "' + username + '".';
     document.getElementById('removePhotoBtn').style.display = currentPhoto ? 'flex' : 'none';
     document.getElementById('editPhotoModal').classList.add('open');

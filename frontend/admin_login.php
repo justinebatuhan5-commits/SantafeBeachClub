@@ -57,14 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'] ?? '';
 
         if (!empty($username) && !empty($password)) {
-            $stmt = $conn->prepare("SELECT id, password, role, email FROM admins WHERE username = ?");
+            $stmt = $conn->prepare("SELECT id, password, email FROM administrators WHERE username = ?");
             $stmt->bind_param("s", $username);
             $stmt->execute();
             $result = $stmt->get_result();
 
             if ($row = $result->fetch_assoc()) {
                 // ── Account lockout check (before password attempt) ──
-                $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id']);
+                $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id'], 'administrators');
                 if ($lockStatus['locked']) {
                     if (!empty($lockStatus['is_permanent'])) {
                         $error = "🔒 Access Denied: This administrator account has been locked / suspended. Please contact executive administration.";
@@ -79,64 +79,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         exit;
                     }
                 } elseif (pw_verify($password, $row['password'])) {
-                    // Check if role is admin
-                    if ($row['role'] !== 'admin') {
-                        RateLimiter::hit($conn, 'login_attempt_admin');
-                        $error = 'Access restricted. This portal is for Administrators only. Receptionists must sign in via the Front Desk portal.';
-                        SecurityLogger::log($conn, 'UNAUTHORIZED_PORTAL_ATTEMPT', "Non-admin user ({$username}) attempted admin login", SecurityLogger::LEVEL_WARNING, $username);
-                    } else {
-                        // Transparently upgrade hash if cost/algo has changed
-                        if (pw_needs_rehash($row['password'])) {
-                            $newHash = pw_hash($password);
-                            $upd = $conn->prepare("UPDATE admins SET password = ? WHERE id = ?");
-                            $upd->bind_param("si", $newHash, $row['id']);
-                            $upd->execute();
-                            $upd->close();
-                        }
+                    // Transparently upgrade hash if cost/algo has changed
+                    if (pw_needs_rehash($row['password'])) {
+                        $newHash = pw_hash($password);
+                        $upd = $conn->prepare("UPDATE administrators SET password = ? WHERE id = ?");
+                        $upd->bind_param("si", $newHash, $row['id']);
+                        $upd->execute();
+                        $upd->close();
+                    }
 
-                        // --- MFA: Password verified. Now require OTP. ---
-                        require_once __DIR__ . '/../backend/helpers/otp_helper.php';
-                        require_once __DIR__ . '/../backend/services/mailer.php';
+                    // --- MFA: Password verified. Now require OTP. ---
+                    require_once __DIR__ . '/../backend/helpers/otp_helper.php';
+                    require_once __DIR__ . '/../backend/services/mailer.php';
 
-                        $adminEmail = $row['email'] ?? null;
-                        if (empty($adminEmail)) {
-                            $adminEmail = $username;
-                        }
+                    $adminEmail = $row['email'] ?? null;
+                    if (empty($adminEmail)) {
+                        $adminEmail = $username;
+                    }
 
-                        $rawOtp = otp_generate();
-                        otp_store_for_admin((int)$row['id'], $rawOtp, $conn);
-                        $sendResult = otp_send_email($adminEmail, $rawOtp, $username);
+                    $rawOtp = otp_generate();
+                    otp_store_for_admin((int)$row['id'], $rawOtp, $conn, 'admin');
+                    $sendResult = otp_send_email($adminEmail, $rawOtp, $username);
 
-                        // Prevent session fixation
-                        session_regenerate_id(true);
+                    // Prevent session fixation
+                    session_regenerate_id(true);
 
-                        // Partial session identifying MFA status and login portal
-                        $_SESSION['mfa_pending_admin_id']       = (int)$row['id'];
-                        $_SESSION['mfa_pending_admin_username'] = $username;
-                        $_SESSION['mfa_pending_admin_role']     = 'admin';
-                        $_SESSION['mfa_pending_email_hint']     = substr($adminEmail, 0, 3) . '***' . strstr($adminEmail, '@');
-                        $_SESSION['otp_sent_at']                = time();
-                        $_SESSION['login_source']               = 'admin';
+                    // Partial session identifying MFA status and login portal
+                    $_SESSION['mfa_pending_admin_id']       = (int)$row['id'];
+                    $_SESSION['mfa_pending_admin_username'] = $username;
+                    $_SESSION['mfa_pending_admin_role']     = 'admin';
+                    $_SESSION['mfa_pending_admin_usertype'] = 'admin';
+                    $_SESSION['mfa_pending_email_hint']     = substr($adminEmail, 0, 3) . '***' . strstr($adminEmail, '@');
+                    $_SESSION['otp_sent_at']                = time();
+                    $_SESSION['login_source']               = 'admin';
 
-                        RateLimiter::clearFailedLogins($conn, (int)$row['id']);
-                        SecurityLogger::log($conn, 'MFA_OTP_SENT', "OTP dispatched for Executive Admin MFA", SecurityLogger::LEVEL_INFO, $username);
+                    RateLimiter::clearFailedLogins($conn, (int)$row['id'], 'administrators');
+                    SecurityLogger::log($conn, 'MFA_OTP_SENT', "OTP dispatched for Executive Admin MFA", SecurityLogger::LEVEL_INFO, $username);
 
-                        if ($is_ajax) {
-                            header('Content-Type: application/json');
-                            echo json_encode([
-                                'success'  => true,
-                                'mfa'      => true,
-                                'redirect' => 'verify_otp'
-                            ]);
-                            exit;
-                        }
-
-                        header("Location: verify_otp");
+                    if ($is_ajax) {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success'  => true,
+                            'mfa'      => true,
+                            'redirect' => 'verify_otp'
+                        ]);
                         exit;
                     }
+
+                    header("Location: verify_otp");
+                    exit;
                 } else {
                     RateLimiter::hit($conn, 'login_attempt_admin');
-                    RateLimiter::recordFailedLogin($conn, (int)$row['id']);
+                    RateLimiter::recordFailedLogin($conn, (int)$row['id'], 5, 15, 'administrators');
                     $error = 'Invalid username or password.';
                     SecurityLogger::log($conn, 'FAILED_LOGIN', "Failed admin login (bad password) for user: {$username}", SecurityLogger::LEVEL_WARNING, $username);
                 }

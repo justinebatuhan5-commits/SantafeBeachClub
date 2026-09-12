@@ -14,20 +14,39 @@ if (!isset($conn)) {
 }
 
 if (!empty($_user) && isset($conn)) {
-    if ($roleStmt = $conn->prepare("SELECT role, profile_photo FROM admins WHERE username = ?")) {
+    // Check administrators first, then receptionists
+    $userTable = ($_role === 'admin') ? 'administrators' : 'receptionists';
+    $photoFound = null;
+
+    if ($roleStmt = $conn->prepare("SELECT profile_photo FROM `{$userTable}` WHERE username = ? LIMIT 1")) {
         $roleStmt->bind_param("s", $_user);
         $roleStmt->execute();
-        $roleResult = $roleStmt->get_result()->fetch_assoc();
+        $res = $roleStmt->get_result()->fetch_assoc();
         $roleStmt->close();
+        if ($res) {
+            $photoFound = $res['profile_photo'] ?? null;
+        }
+    }
 
-        if ($roleResult && !empty($roleResult['role'])) {
-            $_SESSION['admin_role'] = $roleResult['role'];
-            $_role = $roleResult['role'];
+    // Fallback if not found in expected table (e.g. role changed in another session)
+    if ($photoFound === null) {
+        $otherTable = ($userTable === 'administrators') ? 'receptionists' : 'administrators';
+        if ($otherStmt = $conn->prepare("SELECT profile_photo FROM `{$otherTable}` WHERE username = ? LIMIT 1")) {
+            $otherStmt->bind_param("s", $_user);
+            $otherStmt->execute();
+            $res = $otherStmt->get_result()->fetch_assoc();
+            $otherStmt->close();
+            if ($res) {
+                $photoFound = $res['profile_photo'] ?? null;
+                $_role = ($otherTable === 'administrators') ? 'admin' : 'receptionist';
+                $_SESSION['admin_role'] = $_role;
+            }
         }
-        if (!empty($roleResult['profile_photo'])) {
-            $_sidebar_photo = $roleResult['profile_photo'];
-            $_SESSION['admin_profile_photo'] = $_sidebar_photo;
-        }
+    }
+
+    if (!empty($photoFound)) {
+        $_sidebar_photo = $photoFound;
+        $_SESSION['admin_profile_photo'] = $_sidebar_photo;
     }
 }
 

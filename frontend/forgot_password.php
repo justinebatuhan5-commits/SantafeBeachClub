@@ -38,13 +38,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $error = 'Please enter a valid email address.';
             } else {
-                // Find account by email or username
-                $stmt = $conn->prepare("SELECT id, username, email, role FROM admins WHERE email = ? OR username = ? LIMIT 1");
-                if ($stmt) {
-                    $stmt->bind_param('ss', $email, $email);
-                    $stmt->execute();
-                    $user = $stmt->get_result()->fetch_assoc();
-                    $stmt->close();
+                // Find account by email or username — check administrators first, then receptionists
+                $user = null;
+                $foundUserType = null;
+
+                $lookups = [
+                    'admin'       => 'administrators',
+                    'receptionist' => 'receptionists',
+                ];
+
+                // If ?portal=admin, only look in administrators; otherwise check both
+                if ($portal === 'admin') {
+                    $lookups = ['admin' => 'administrators'];
+                }
+
+                foreach ($lookups as $uType => $tableName) {
+                    $stmt = $conn->prepare("SELECT id, username, email FROM `{$tableName}` WHERE email = ? OR username = ? LIMIT 1");
+                    if ($stmt) {
+                        $stmt->bind_param('ss', $email, $email);
+                        $stmt->execute();
+                        $row = $stmt->get_result()->fetch_assoc();
+                        $stmt->close();
+                        if ($row) {
+                            $user          = $row;
+                            $foundUserType = $uType;
+                            break;
+                        }
+                    }
+                }
 
                     if ($user) {
                         // Deliver reset link to user's registered email
@@ -53,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             : (filter_var($user['username'], FILTER_VALIDATE_EMAIL) ? $user['username'] : '');
 
                         if ($recipientEmail) {
-                            $rawToken = pwd_reset_create_token((int)$user['id'], $conn, $_SERVER['REMOTE_ADDR'] ?? '');
+                            $rawToken = pwd_reset_create_token((int)$user['id'], $conn, $_SERVER['REMOTE_ADDR'] ?? '', $foundUserType);
 
                             // Build absolute reset URL
                             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? 80) == 443 ? 'https://' : 'http://';
@@ -65,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             pwd_reset_send_email($recipientEmail, ucfirst($displayName), $resetUrl);
                         }
                     }
-                }
 
                 // OWASP: Always display identical success message to prevent user enumeration
                 $success = 'If an account exists with that email, we have sent password reset instructions to your inbox.';

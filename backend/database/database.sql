@@ -60,3 +60,27 @@ INSERT INTO bookings (guest_name, guest_type, check_in, check_out, guests_count,
 ('Elena Rodriguez', 'VIP Member', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 2 DAY), 2, 3, 'Beach Villa', '14:00', 'Pending'),
 ('Marcus Thorne', 'First Visit', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), 4, 6, 'Standard Family Room', '15:30', 'Pending'),
 ('Sarah Lin', 'Corporate', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 DAY), 2, 8, 'Standard Room', '16:15', 'Pending');
+
+-- Administrators Table
+CREATE TABLE IF NOT EXISTS administrators (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(150) DEFAULT NULL,
+    profile_photo VARCHAR(255) DEFAULT NULL,
+    failed_login_count INT NOT NULL DEFAULT 0,
+    locked_until DATETIME NULL DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Receptionists Table
+CREATE TABLE IF NOT EXISTS receptionists (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(150) DEFAULT NULL,
+    profile_photo VARCHAR(255) DEFAULT NULL,
+    failed_login_count INT NOT NULL DEFAULT 0,
+    locked_until DATETIME NULL DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
