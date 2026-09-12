@@ -680,7 +680,18 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <input type="hidden" name="action" value="add_staff">
             <div class="admin-form-group"><label>System Username (Login ID)</label><input type="email" name="username" required pattern=".+@(santafebeachclub|beachclub)\.com$" title="Must end with @santafebeachclub.com" placeholder="name@santafebeachclub.com"></div>
             <div class="admin-form-group"><label>Personal Email (Receives Login OTPs)</label><input type="email" name="email" required placeholder="personal@gmail.com"></div>
-            <div class="admin-form-group"><label>Password</label><input type="password" name="password" required minlength="8" placeholder="Min 8 chars: upper, lower, number, symbol" title="Must be 8+ characters with uppercase, lowercase, number, and special character"></div>
+            <div class="admin-form-group">
+                <label>Password</label>
+                <input type="password" id="staffPassword" name="password" required minlength="8" placeholder="Min 8 chars: upper, lower, number, symbol" title="Must be 8+ characters with uppercase, lowercase, number, and special character" oninput="checkPasswordStrength()">
+                <div id="passwordStrengthBar" style="margin-top: 8px; display: none;">
+                    <div style="background: #e5e7eb; height: 6px; border-radius: 3px; overflow: hidden;">
+                        <div id="passwordStrengthMeter" style="height: 100%; width: 0%; transition: width 0.3s, background-color 0.3s; background-color: #ef4444;"></div>
+                    </div>
+                    <div style="font-size: 12px; margin-top: 4px; font-weight: 500;">
+                        Strength: <span id="passwordStrengthText" style="color: #ef4444;">Weak</span>
+                    </div>
+                </div>
+            </div>
             <div class="admin-form-group">
                 <label>Profile Photo (Optional)</label>
                 <input type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp,image/gif">
@@ -786,6 +797,61 @@ function openEditPhoto(id, username, currentPhoto, type) {
     document.getElementById('editPhotoModalSub').textContent = 'Upload or change profile photo for "' + username + '".';
     document.getElementById('removePhotoBtn').style.display = currentPhoto ? 'flex' : 'none';
     document.getElementById('editPhotoModal').classList.add('open');
+}
+
+// Password Strength Checker
+function checkPasswordStrength() {
+    const password = document.getElementById('staffPassword').value;
+    const strengthBar = document.getElementById('passwordStrengthBar');
+    const strengthMeter = document.getElementById('passwordStrengthMeter');
+    const strengthText = document.getElementById('passwordStrengthText');
+    
+    if (!password) {
+        strengthBar.style.display = 'none';
+        return;
+    }
+    
+    strengthBar.style.display = 'block';
+    
+    let strength = 0;
+    const feedback = [];
+    
+    // Check length
+    if (password.length >= 8) strength += 20;
+    if (password.length >= 12) strength += 10;
+    if (password.length >= 16) strength += 10;
+    
+    // Check for lowercase
+    if (/[a-z]/.test(password)) strength += 15;
+    
+    // Check for uppercase
+    if (/[A-Z]/.test(password)) strength += 15;
+    
+    // Check for numbers
+    if (/\d/.test(password)) strength += 15;
+    
+    // Check for special characters
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 15;
+    
+    // Determine strength level
+    let level = 'Weak';
+    let color = '#ef4444'; // red
+    
+    if (strength >= 80) {
+        level = 'Strong';
+        color = '#22c55e'; // green
+    } else if (strength >= 60) {
+        level = 'Good';
+        color = '#eab308'; // yellow
+    } else if (strength >= 40) {
+        level = 'Fair';
+        color = '#f97316'; // orange
+    }
+    
+    strengthMeter.style.width = strength + '%';
+    strengthMeter.style.backgroundColor = color;
+    strengthText.textContent = level;
+    strengthText.style.color = color;
 }
 </script>
 <script src="assets/js/sidebar-toggle.js"></script>
