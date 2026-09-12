@@ -1100,7 +1100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
 
                 <div class="switch-portal-wrap">
-                    Management / Administrator? <a href="admin_login">Executive Login &rarr;</a>
+                    🔒 For password changes, please contact your administrator.
                 </div>
             </div>
         </section>

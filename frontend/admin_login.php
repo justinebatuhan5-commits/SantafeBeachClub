@@ -936,7 +936,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
 
                 <div class="switch-portal-wrap">
-                    Front Desk / Receptionist? <a href="staff_login">Go to Staff Portal &rarr;</a>
+                    🔒 Authorized personnel only. Unauthorized access is strictly prohibited.
                 </div>
             </div>
         </section>
