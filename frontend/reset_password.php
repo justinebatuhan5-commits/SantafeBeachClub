@@ -5,9 +5,7 @@
  * Validates token, enforces OWASP password policies, and updates password.
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../backend/helpers/session_init.php';
 
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/error_handler.php';
@@ -15,8 +13,19 @@ require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../backend/helpers/password_helper.php';
 require_once __DIR__ . '/../backend/helpers/password_reset_helper.php';
 
-$rawToken = trim($_GET['token'] ?? $_POST['token'] ?? '');
+// ── Token-to-Session: absorb GET token into session, then redirect to clean URL ──
+// This prevents the token from sitting in browser history, server access logs,
+// and leaking via HTTP Referrer headers.
+if (isset($_GET['token']) && $_GET['token'] !== '') {
+    $_SESSION['pwd_reset_token'] = trim($_GET['token']);
+    header('Location: reset_password');
+    exit;
+}
+
+// Read token from session (after redirect) or POST fallback
+$rawToken = trim($_SESSION['pwd_reset_token'] ?? $_POST['token'] ?? '');
 $verification = pwd_reset_verify_token($rawToken, $conn);
+
 
 $error = '';
 $success = '';
@@ -34,6 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = pwd_reset_complete($rawToken, $newPassword, $confirmPassword, $conn);
         if ($result['success']) {
             $success = $result['message'];
+            // Clear token from session after successful reset (prevent replay)
+            unset($_SESSION['pwd_reset_token']);
         } else {
             $error = $result['message'];
         }
