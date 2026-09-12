@@ -39,6 +39,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Skip non-http(s) requests (chrome-extension://, data:, blob:, etc.)
+    if (!event.request.url.startsWith('http://') && !event.request.url.startsWith('https://')) {
+        return;
+    }
+
     const url = new URL(event.request.url);
     const isAdminPage = url.pathname.includes('admin_login') || 
                         url.pathname.includes('admin_dashboard') || 
@@ -54,12 +59,25 @@ self.addEventListener('fetch', (event) => {
                     if (response) return response;
                     
                     return fetch(event.request).then((fetchedResponse) => {
-                        if (fetchedResponse && fetchedResponse.status === 200) {
-                            cache.put(event.request, fetchedResponse.clone());
+                        // Only cache successful responses (status 200-299)
+                        if (fetchedResponse && fetchedResponse.ok) {
+                            try {
+                                cache.put(event.request, fetchedResponse.clone());
+                            } catch (e) {
+                                // Ignore cache.put errors (response might be used elsewhere)
+                                console.debug('Cache put error:', e);
+                            }
                         }
                         return fetchedResponse;
-                    }).catch(() => {
-                        return caches.match(event.request);
+                    }).catch((error) => {
+                        // Network error - try cache
+                        return caches.match(event.request).catch(() => {
+                            return new Response('Asset not available offline', {
+                                status: 503,
+                                statusText: 'Service Unavailable',
+                                headers: { 'Content-Type': 'text/plain' }
+                            });
+                        });
                     });
                 });
             })
@@ -72,19 +90,29 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(event.request)
                 .then((response) => {
-                    if (response && response.status === 200) {
-                        caches.open(ADMIN_CACHE).then((cache) => {
-                            cache.put(event.request, response.clone());
-                        });
+                    // Only cache successful responses
+                    if (response && response.ok) {
+                        try {
+                            caches.open(ADMIN_CACHE).then((cache) => {
+                                cache.put(event.request, response.clone());
+                            });
+                        } catch (e) {
+                            console.debug('Cache admin page error:', e);
+                        }
                     }
                     return response;
                 })
                 .catch(async () => {
                     // Serve from cache if offline
-                    const cachedResponse = await caches.match(event.request);
-                    if (cachedResponse) {
-                        return cachedResponse;
+                    try {
+                        const cachedResponse = await caches.match(event.request);
+                        if (cachedResponse) {
+                            return cachedResponse;
+                        }
+                    } catch (e) {
+                        console.debug('Cache match error:', e);
                     }
+                    
                     // Fallback offline page
                     return new Response(
                         '<html><body style="font-family:sans-serif; padding:20px;"><h1>Offline</h1><p>You are currently offline. This page was cached on your last visit.</p></body></html>',
@@ -99,7 +127,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Backend APIs: don't cache, always fetch
+    // Backend APIs: don't cache, always fetch (network only)
     if (isBackendAPI) {
         event.respondWith(fetch(event.request));
         return;
@@ -109,15 +137,21 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request)
             .catch(async () => {
-                const cachedResponse = await caches.match(event.request);
-                if (cachedResponse) {
-                    return cachedResponse;
+                try {
+                    const cachedResponse = await caches.match(event.request);
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                } catch (e) {
+                    console.debug('Cache fallback error:', e);
                 }
+                
                 return new Response('Network connection failed. Please check your internet connection.', {
                     status: 503,
                     statusText: 'Service Unavailable',
                     headers: { 'Content-Type': 'text/plain; charset=utf-8' }
                 });
+            })
             })
     );
 });
