@@ -29,6 +29,17 @@ function getPdoConnection(): PDO {
         }
     }
 
-    // InfinityFree Database removed - using local/cloud fallback instead
-    throw new PDOException("No database connection available. Please configure DB_HOST environment variable.");
+    // Try Agila Hosting MySQL
+    try {
+        $host = 'localhost';
+        $db   = 'justinebo4ek_db';
+        $user = 'justinebo4ek_user';
+        $pass = 'oWDtO(BCPrI6pM&%';
+        $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
+        $pdo = new PDO($dsn, $user, $pass, $options);
+        return $pdo;
+    } catch (PDOException $e) {
+        // Fallback failed, throw error
+        throw new PDOException("No database connection available. Agila: " . $e->getMessage());
+    }
 }
