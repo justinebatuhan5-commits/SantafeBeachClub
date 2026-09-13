@@ -788,7 +788,8 @@ $active_tab = $_GET['tab'] ?? 'profile';
                 </div>
                 <?php endif; ?>
 
-                <!-- Change Password -->
+                <!-- Change Password (Hidden for Admin) -->
+                <?php if (!$_is_admin): ?>
                 <div class="settings-card">
                     <h3>Password</h3>
                     <p class="card-desc">Choose a strong password. Must be at least 8 characters and include uppercase, lowercase, a number, and a special character (e.g. !@#$%).</p>
@@ -816,6 +817,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         </div>
                     </form>
                 </div>
+                <?php endif; ?>
 
             </div>
 
