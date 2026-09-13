@@ -197,7 +197,7 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
 }
 
 // ---------------------------------------------------------------------------
-// Email helpers – SMTP first, PHP mail() fallback for InfinityFree
+// Email helpers – SMTP first, PHP mail() fallback for Agila Hosting
 // ---------------------------------------------------------------------------
 
 function _pwd_mailer_smtp_send(string $toEmail, string $name, string $subject, string $htmlBody, string $plainBody): bool {
@@ -252,7 +252,7 @@ function _pwd_mailer_native_send(string $toEmail, string $subject, string $htmlB
 
 /**
  * Dispatch Password Reset Email.
- * Tries Gmail SMTP, falls back to PHP mail() for InfinityFree.
+ * Tries Gmail SMTP, falls back to PHP mail() for Agila Hosting.
  */
 function pwd_reset_send_email(string $toEmail, string $name, string $resetUrl): array {
     if (!defined('GMAIL_USER')) {

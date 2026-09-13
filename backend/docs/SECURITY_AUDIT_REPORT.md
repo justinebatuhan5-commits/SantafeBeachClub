@@ -295,7 +295,7 @@ The Santa Fe Beach Club Booking System has undergone a thorough security audit a
 - **Full OWASP Top 10 coverage** through implemented controls
 - **Defence-in-depth** — multiple layers of protection at server, application, and process levels
 - **Documented procedures** for incident response, disaster recovery, and team security awareness
-- **Production-ready hardening** compatible with InfinityFree shared hosting and automated FTP deployment
+- **Production-ready hardening** compatible with Agila Hosting shared hosting and automated FTP deployment
 
 > *This audit was conducted as part of the capstone project for the Santa Fe Beach Club Booking System. All security controls were implemented, tested, and verified by the development team.*
 

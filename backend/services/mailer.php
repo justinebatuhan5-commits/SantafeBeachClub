@@ -693,4 +693,170 @@ function sendRefundRejectedEmail(
         return ['success' => false, 'error' => $mail->ErrorInfo];
     }
 }
+
+/**
+ * Sends a Pre-Arrival Check-in Reminder email to the guest.
+ * Includes booking details, check-in instructions, and a link to
+ * cancel or send an explanation if the guest cannot attend.
+ *
+ * @param string $to_email        Guest email address
+ * @param string $guest_name      Guest full name
+ * @param string $booking_ref     Booking reference (e.g. REF-001)
+ * @param string $room_name       Accommodation name
+ * @param string $check_in        Check-in date (Y-m-d)
+ * @param string $check_out       Check-out date (Y-m-d)
+ * @param float  $balance_due     Remaining balance, if any
+ * @param string $explanation_url Link to cancel / send explanation form
+ * @param string $checkin_url     Link to the Check-in QR pass page
+ * @return array ['success' => bool, 'error' => string|null]
+ */
+function sendPreArrivalReminderEmail(
+    ?string $to_email,
+    string $guest_name,
+    string $booking_ref,
+    string $room_name,
+    string $check_in,
+    string $check_out,
+    float $balance_due,
+    string $explanation_url,
+    string $checkin_url
+): array {
+    if (empty($to_email)) {
+        return ['success' => false, 'error' => 'No email address provided for this guest.'];
+    }
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = GMAIL_USER;
+        $mail->Password   = GMAIL_APP_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->Timeout    = 8;
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+
+        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+        $mail->addAddress($to_email, $guest_name);
+
+        // Format dates nicely
+        $check_in_fmt = date('F j, Y (l)', strtotime($check_in));
+        $check_out_fmt = date('F j, Y (l)', strtotime($check_out));
+        $nights = max(1, (int)((strtotime($check_out) - strtotime($check_in)) / 86400));
+
+        $safe_name = htmlspecialchars($guest_name);
+        $safe_ref = htmlspecialchars($booking_ref);
+        $safe_room = htmlspecialchars($room_name);
+
+        // Balance section
+        $balance_section = '';
+        if ($balance_due > 0) {
+            $balance_section = "
+                <div style='background:#fef3c7;border-left:4px solid #f59e0b;padding:14px 18px;margin:18px 0;border-radius:6px;'>
+                    <p style='margin:0;color:#92400e;font-weight:600;font-size:14px;'>💰 Balance Due: ₱" . number_format($balance_due, 2) . "</p>
+                    <p style='margin:4px 0 0;color:#a16207;font-size:13px;'>Please settle the remaining balance upon check-in at the Front Desk.</p>
+                </div>";
+        }
+
+        $mail->isHTML(true);
+        $mail->Subject = "🏖️ Your Check-in is Coming Up! – {$booking_ref} – Santa Fe Beach Club";
+        $mail->Body = "
+            <div style='font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;background:#f9fafb;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);'>
+                <!-- Header -->
+                <div style='background:linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);padding:32px;text-align:center;'>
+                    <p style='font-size:40px;margin:0;'>🏖️</p>
+                    <h2 style='color:#fff;margin:10px 0 4px;font-size:22px;'>Your Check-in is Almost Here!</h2>
+                    <p style='color:rgba(255,255,255,0.9);margin:0;font-size:14px;'>Santa Fe Beach Club — Booking {$safe_ref}</p>
+                </div>
+
+                <!-- Body -->
+                <div style='padding:28px 32px;background:#fff;'>
+                    <p style='color:#1f2937;font-size:15px;line-height:1.6;'>
+                        Hi <strong>{$safe_name}</strong>,
+                    </p>
+                    <p style='color:#4b5563;font-size:14px;line-height:1.6;'>
+                        We're excited to welcome you! This is a friendly reminder that your stay at <strong>Santa Fe Beach Club</strong> is coming up. Here are your booking details:
+                    </p>
+
+                    <!-- Booking Details Card -->
+                    <div style='background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:20px;margin:20px 0;'>
+                        <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
+                            <tr>
+                                <td style='padding:6px 0;font-weight:600;width:130px;color:#0369a1;'>📋 Reference</td>
+                                <td style='padding:6px 0;'>{$safe_ref}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>🏨 Accommodation</td>
+                                <td style='padding:6px 0;'>{$safe_room}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>📅 Check-in</td>
+                                <td style='padding:6px 0;'>{$check_in_fmt} — <em>2:00 PM</em></td>
+                            </tr>
+                            <tr>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>📅 Check-out</td>
+                                <td style='padding:6px 0;'>{$check_out_fmt} — <em>12:00 PM</em></td>
+                            </tr>
+                            <tr>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>🌙 Duration</td>
+                                <td style='padding:6px 0;'>{$nights} night" . ($nights > 1 ? 's' : '') . "</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    {$balance_section}
+
+                    <!-- CTA Buttons -->
+                    <div style='text-align:center;margin:28px 0 12px;'>
+                        <a href='{$checkin_url}' style='display:inline-block;background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(14,165,233,0.35);'>
+                            ✅ View My Check-in Pass
+                        </a>
+                    </div>
+
+                    <p style='text-align:center;color:#6b7280;font-size:13px;margin:16px 0 6px;'>
+                        Show your check-in pass or QR code at the Front Desk for quick check-in.
+                    </p>
+
+                    <!-- Divider -->
+                    <hr style='border:none;border-top:1px solid #e5e7eb;margin:24px 0;' />
+
+                    <!-- Can't make it section -->
+                    <div style='background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;'>
+                        <p style='margin:0 0 8px;color:#991b1b;font-weight:600;font-size:15px;'>
+                            ❌ Can't make it?
+                        </p>
+                        <p style='margin:0 0 16px;color:#7f1d1d;font-size:13px;line-height:1.5;'>
+                            If you won't be able to come on your scheduled date, please let us know as soon as possible. You can request a reschedule, cancellation, or send us an explanation.
+                        </p>
+                        <a href='{$explanation_url}' style='display:inline-block;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(239,68,68,0.3);'>
+                            📝 Send Explanation / Cancel Booking
+                        </a>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style='margin-top:28px;text-align:center;'>
+                        <p style='color:#9ca3af;font-size:12px;line-height:1.5;margin:0;'>
+                            This is an automated reminder from Santa Fe Beach Club.<br>
+                            If you have questions, please contact our Front Desk.<br>
+                            📞 Phone: (032) 401-xxxx &nbsp;|&nbsp; 📧 Email: info@santafebeachclub.com
+                        </p>
+                    </div>
+                </div>
+            </div>
+        ";
+
+        $mail->AltBody = "Hi {$guest_name}, your check-in at Santa Fe Beach Club is coming up on {$check_in}! "
+            . "Booking: {$booking_ref}, Room: {$room_name}, Check-out: {$check_out}. "
+            . ($balance_due > 0 ? "Balance due: P" . number_format($balance_due, 2) . ". " : "")
+            . "View your check-in pass: {$checkin_url} . "
+            . "Can't make it? Send an explanation: {$explanation_url}";
+
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo];
+    }
+}
 ?>

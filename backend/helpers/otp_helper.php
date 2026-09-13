@@ -235,7 +235,7 @@ function otp_verify_guest(int $bookingId, string $submittedCode, mysqli $conn): 
 /**
  * Send an OTP email to an admin.
  * Tries Gmail SMTP first (PHPMailer), falls back to PHP native mail()
- * for hosts that block port 587 (e.g. InfinityFree free hosting).
+ * for hosts that block port 587 (e.g. Agila Hosting shared hosting).
  *
  * @param  string $toEmail   Recipient email address.
  * @param  string $rawOtp    The 6-digit OTP code to send.
@@ -314,7 +314,7 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
         }
     }
 
-    // ── Attempt 2: PHP native mail() fallback (works on InfinityFree) ────────
+    // ── Attempt 2: PHP native mail() fallback (works on Agila Hosting) ────────
     $boundary = md5(uniqid((string)rand(), true));
     $headers  = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";

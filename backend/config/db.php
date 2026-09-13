@@ -3,7 +3,7 @@ require_once __DIR__ . '/../helpers/error_handler.php';
 require_once __DIR__ . '/../helpers/business_time_helper.php';
 require_once __DIR__ . '/../helpers/password_helper.php';
 
-// MySQL database connection configuration (Supports Cloud Env Vars, Local XAMPP & Live InfinityFree MySQL)
+// MySQL database connection configuration (Supports Cloud Env Vars, Local XAMPP & Live Agila Hosting MySQL)
 $is_local_env = in_array($_SERVER['HTTP_HOST'] ?? '127.0.0.1', ['localhost', '127.0.0.1', '::1']);
 
 // Suppress strict reporting during initial connection attempts
@@ -142,6 +142,7 @@ try {
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS promo_code VARCHAR(50) DEFAULT NULL");
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0.00");
     safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_email_sent_at DATETIME DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS prearrival_reminder_sent_at DATETIME DEFAULT NULL");
     
     // Helper function to safely add a column if it doesn't already exist (MySQL 8 compatible)
     $ensure_column = function($conn, $dbname, $table, $col, $col_def) {

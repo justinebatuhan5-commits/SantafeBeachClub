@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/prearrival_reminder_helper.php';
+
+// Trigger automated pre-arrival reminders for upcoming check-ins (1-2 days ahead)
+@sf_send_prearrival_checkin_reminders($conn, 2);
 
 // Handle POST request to check-in
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'checkin') {
@@ -175,6 +179,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle POST request to mark booking as Cancelled / No-Show
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'cancel_noshow') {
+    $booking_id = intval($_POST['booking_id'] ?? 0);
+    $cancel_reason = trim($_POST['cancel_reason'] ?? 'No-Show / Overdue Check-in');
+    if (empty($cancel_reason)) {
+        $cancel_reason = 'No-Show / Overdue Check-in';
+    }
+
+    if ($booking_id > 0) {
+        // Fetch booking details for logging & room release
+        $b_stmt = $conn->prepare("SELECT guest_name, accommodation_name, room_id, status FROM bookings WHERE id = ?");
+        $b_stmt->bind_param("i", $booking_id);
+        $b_stmt->execute();
+        $b_data = $b_stmt->get_result()->fetch_assoc();
+        $b_stmt->close();
+
+        if ($b_data && in_array($b_data['status'], ['Pending', 'Confirmed'])) {
+            // Update booking status to Cancelled
+            $u_stmt = $conn->prepare("UPDATE bookings SET status = 'Cancelled', cancelled_at = NOW(), cancellation_reason = ? WHERE id = ?");
+            $u_stmt->bind_param("si", $cancel_reason, $booking_id);
+            $u_stmt->execute();
+            $u_stmt->close();
+
+            // Release room if assigned
+            if (!empty($b_data['room_id'])) {
+                $conn->query("UPDATE rooms SET status = 'ready' WHERE id = " . intval($b_data['room_id']));
+            }
+
+            // Audit Log
+            $admin_user = $_SESSION['admin_username'] ?? 'Staff';
+            log_activity($conn, $admin_user, 'Mark No-Show / Cancelled', 'Marked booking #' . $booking_id . ' (' . $b_data['guest_name'] . ') as Cancelled (' . $cancel_reason . ')');
+
+            // Add notification
+            $notif_title = 'Reservation Marked No-Show';
+            $notif_message = 'Booking #' . $booking_id . ' (' . $b_data['guest_name'] . ' - ' . $b_data['accommodation_name'] . ') was marked as No-Show / Cancelled by ' . $admin_user . '. Room released.';
+            $n_stmt = $conn->prepare("INSERT INTO notifications (title, message, type, booking_id) VALUES (?, ?, 'warning', ?)");
+            $n_stmt->bind_param("ssi", $notif_title, $notif_message, $booking_id);
+            $n_stmt->execute();
+            $n_stmt->close();
+
+            header("Location: admin_checkin?cancelled=1&bid=" . urlencode($booking_id));
+            exit;
+        }
+    }
+    header("Location: admin_checkin");
+    exit;
+}
+
 $ref = isset($_GET['ref']) ? $_GET['ref'] : '';
 $token = isset($_GET['token']) ? $_GET['token'] : '';
 $specific_booking = null;
@@ -265,13 +317,71 @@ $bookings_query = $conn->query("
             border-radius: 4px;
             cursor: pointer;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
         }
         .btn-checkin:hover {
             background-color: #1B5E20;
         }
+        .btn-noshow {
+            background-color: #FFF1F2;
+            color: #BE123C;
+            border: 1px solid #FECDD3;
+            padding: 7px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            transition: all 0.15s ease;
+        }
+        .btn-noshow:hover {
+            background-color: #FFE4E6;
+            color: #9F1239;
+            border-color: #FDA4AF;
+        }
+        .badge-overdue {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #FEF2F2;
+            color: #DC2626;
+            border: 1px solid #FCA5A5;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .badge-today {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
         .alert-success {
             background-color: #E8F5E9;
             color: #2E7D32;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .alert-warning {
+            background-color: #FFFBEB;
+            color: #B45309;
+            border: 1px solid #FDE68A;
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
@@ -437,6 +547,13 @@ $bookings_query = $conn->query("
                 <?php endif; ?>
             <?php endif; ?>
 
+            <?php if (isset($_GET['cancelled'])): ?>
+                <div class="alert-warning" style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px;">⚠️</span>
+                    <span>Reservation #<?php echo htmlspecialchars($_GET['bid'] ?? ''); ?> has been marked as <strong>Cancelled / No-Show</strong>. Room availability has been released.</span>
+                </div>
+            <?php endif; ?>
+
             <?php if ($specific_booking): ?>
                 <?php
                 $spec_id = htmlspecialchars($specific_booking['id']);
@@ -552,7 +669,22 @@ $bookings_query = $conn->query("
                                 echo "<td>{$email}</td>";
                                 echo "<td>{$type}</td>";
                                 echo "<td>{$accommodation}</td>";
-                                echo "<td>{$checkin}</td>";
+                                
+                                // Check-in date with Overdue / Due Today badge
+                                $today_date = date('Y-m-d');
+                                $checkin_date_only = date('Y-m-d', strtotime($row['check_in']));
+                                $is_overdue = ($checkin_date_only < $today_date);
+                                $is_today = ($checkin_date_only === $today_date);
+                                
+                                echo "<td>";
+                                echo "<div>" . date('M j, Y', strtotime($row['check_in'])) . "</div>";
+                                if ($is_overdue) {
+                                    $days_late = (int)ceil((strtotime($today_date) - strtotime($checkin_date_only)) / 86400);
+                                    echo "<span class='badge-overdue' title='Check-in date has passed by {$days_late} day(s)'>⚠️ Overdue (" . $days_late . "d)</span>";
+                                } elseif ($is_today) {
+                                    echo "<span class='badge-today'>📅 Arriving Today</span>";
+                                }
+                                echo "</td>";
                                 
                                 // Render balance badge
                                 if ($balance_due > 0) {
@@ -562,11 +694,20 @@ $bookings_query = $conn->query("
                                 }
                                 
                                 echo "<td>
-                                    <form method='POST' action='admin_checkin' style='display:inline;'>
-                                        <input type='hidden' name='action' value='checkin'>
-                                        <input type='hidden' name='booking_id' value='{$id}'>
-                                        <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . addslashes($name) . "', '" . addslashes($accommodation) . "', {$total_cost}, {$balance_due})\">Check-in</button>
-                                    </form>
+                                    <div style='display:flex; align-items:center; gap:8px; flex-wrap:wrap;'>
+                                        <form method='POST' action='admin_checkin' style='display:inline; margin:0;'>
+                                            <input type='hidden' name='action' value='checkin'>
+                                            <input type='hidden' name='booking_id' value='{$id}'>
+                                            <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . addslashes($name) . "', '" . addslashes($accommodation) . "', {$total_cost}, {$balance_due})\">
+                                                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>
+                                                Check-in
+                                            </button>
+                                        </form>
+                                        <button type='button' class='btn-noshow' onclick=\"openNoshowModal({$id}, '" . addslashes($name) . "', '" . addslashes($accommodation) . "', '{$checkin_date_only}')\" title='Mark this booking as No-Show / Cancelled'>
+                                            <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='15' y1='9' x2='9' y2='15'></line><line x1='9' y1='9' x2='15' y2='15'></line></svg>
+                                            No-Show
+                                        </button>
+                                    </div>
                                 </td>";
                                 echo "</tr>";
                             }
@@ -734,6 +875,71 @@ $bookings_query = $conn->query("
                 <button type="button" onclick="closeWalkinModal()" style="width:100%; background:transparent; border:1px solid #E5E7EB; color:#666; padding:9px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;">
                     Cancel
                 </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mark No-Show Confirmation Modal -->
+    <div class="gcash-overlay" id="noshowModalOverlay">
+        <div class="gcash-modal" style="max-width: 480px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #eee; padding-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; background: #FEE2E2; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #DC2626; flex-shrink: 0;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 18px; font-weight: 800; color: #1f2937; margin: 0;">Mark Guest as No-Show</h2>
+                        <p style="color: #6b7280; font-size: 13px; margin: 2px 0 0;">Cancel overdue booking and release room</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeNoshowModal()" style="background:none; border:none; font-size:22px; color:#9ca3af; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+
+            <div style="background: #FFF5F5; border: 1px solid #FED7D7; border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13.5px;">
+                    <span style="color: #666;">Guest:</span>
+                    <strong id="noshowGuestName" style="color: #1f2937;">—</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13.5px;">
+                    <span style="color: #666;">Accommodation:</span>
+                    <strong id="noshowAccName" style="color: #1f2937;">—</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13.5px;">
+                    <span style="color: #666;">Scheduled Check-in:</span>
+                    <strong id="noshowCheckinDate" style="color: #DC2626;">—</strong>
+                </div>
+            </div>
+
+            <p style="font-size: 13px; color: #4B5563; line-height: 1.5; margin-bottom: 14px;">
+                ⚠️ This action will mark this reservation as <strong>Cancelled</strong> and immediately make the room available again for other guests and walk-ins.
+            </p>
+
+            <form method="POST" id="noshowForm" action="admin_checkin">
+                <input type="hidden" name="action" value="cancel_noshow">
+                <input type="hidden" name="booking_id" id="noshowBookingId" value="">
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Reason / Note</label>
+                    <select name="cancel_reason" id="noshowReasonSelect" style="width:100%; padding:9px 12px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:13px; background:#fff; margin-bottom:8px;">
+                        <option value="Guest did not arrive (No-Show)">Guest did not arrive (No-Show)</option>
+                        <option value="Contacted guest - unable to arrive / cancelled travel">Contacted guest - unable to arrive / cancelled travel</option>
+                        <option value="Check-in date overdue by >24 hours with no response">Check-in date overdue by &gt;24 hours with no response</option>
+                        <option value="Other / Staff cancellation">Other / Staff cancellation</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <button type="submit" style="flex:1; background:#DC2626; color:#fff; border:none; padding:11px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='#B91C1C'" onmouseout="this.style.background='#DC2626'">
+                        Yes, Mark No-Show
+                    </button>
+                    <button type="button" onclick="closeNoshowModal()" style="flex:1; background:transparent; border:1.5px solid #D1D5DB; color:#4B5563; padding:11px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
+                        Keep Booking
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -1064,6 +1270,23 @@ document.getElementById('balanceForm').addEventListener('submit', function(e) {
 
 document.getElementById('balanceModalOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeBalanceModal();
+});
+
+// --- Mark No-Show Modal Logic ---
+function openNoshowModal(bookingId, guestName, accName, checkinDate) {
+    document.getElementById('noshowBookingId').value = bookingId;
+    document.getElementById('noshowGuestName').textContent = guestName;
+    document.getElementById('noshowAccName').textContent = accName;
+    document.getElementById('noshowCheckinDate').textContent = checkinDate;
+    document.getElementById('noshowModalOverlay').classList.add('active');
+}
+
+function closeNoshowModal() {
+    document.getElementById('noshowModalOverlay').classList.remove('active');
+}
+
+document.getElementById('noshowModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeNoshowModal();
 });
 
 // Search filter
