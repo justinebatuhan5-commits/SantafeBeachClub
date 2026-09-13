@@ -50,16 +50,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // --- Change own username ---
+    // --- Change own username (Admin only) ---
     if ($action === 'change_username') {
-        $new_username = trim($_POST['new_username'] ?? '');
-        $pw_confirm   = $_POST['password_for_username'] ?? '';
+        if ($current_role !== 'admin') {
+            $error = 'Only administrators are permitted to change usernames. Please contact an admin.';
+        } else {
+            $new_username = trim($_POST['new_username'] ?? '');
+            $pw_confirm   = $_POST['password_for_username'] ?? '';
 
-        $stmt = $conn->prepare("SELECT id, password FROM `{$current_table}` WHERE username = ?");
-        $stmt->bind_param("s", $current_admin);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
+            $stmt = $conn->prepare("SELECT id, password FROM `{$current_table}` WHERE username = ?");
+            $stmt->bind_param("s", $current_admin);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
 
         if (!$row || !password_verify($pw_confirm, $row['password'])) {
             $error = 'Password confirmation is incorrect.';
@@ -93,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $current_admin = $new_username;
                 $success = 'Username updated successfully.';
             }
+        }
         }
     }
 
@@ -739,7 +743,8 @@ $active_tab = $_GET['tab'] ?? 'profile';
                     </div>
                 </div>
 
-                <!-- Change Username -->
+                <!-- Username Card (Admin can change; Receptionist is read-only) -->
+                <?php if ($_is_admin): ?>
                 <div class="settings-card">
                     <h3>Username</h3>
                     <p class="card-desc">Update the username you use to sign in.</p>
@@ -767,6 +772,21 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         </div>
                     </form>
                 </div>
+                <?php else: ?>
+                <div class="settings-card">
+                    <h3>Username</h3>
+                    <p class="card-desc">Your staff login username assigned by management.</p>
+                    <div class="form-row single">
+                        <div>
+                            <label>Current Username</label>
+                            <input type="text" value="<?php echo htmlspecialchars($current_admin); ?>" disabled style="background:#F9FAFB; color:#6B7280; font-weight:600; cursor:not-allowed;">
+                            <span style="display:inline-block; font-size:12px; color:#9CA3AF; margin-top:6px;">
+                                🔒 Receptionist usernames can only be modified by a resort administrator.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <!-- Change Password -->
                 <div class="settings-card">
