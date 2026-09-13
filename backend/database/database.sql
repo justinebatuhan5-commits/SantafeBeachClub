@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS bookings (
     eta VARCHAR(10) DEFAULT '14:00',
     status VARCHAR(20) DEFAULT 'Pending', -- Pending, Checked In, Cancelled
     cancellation_token VARCHAR(64) DEFAULT NULL,
+    checkin_token VARCHAR(64) DEFAULT NULL,
     cancelled_at DATETIME DEFAULT NULL,
+    prearrival_reminder_sent_at DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
 );

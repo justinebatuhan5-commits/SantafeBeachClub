@@ -29,6 +29,16 @@ function sf_send_prearrival_checkin_reminders(mysqli $conn, int $days_ahead = 2)
     $target_date_str = $current_business_time->modify("+{$days_ahead} days")->format('Y-m-d');
     $now_timestamp = $current_business_time->format('Y-m-d H:i:s');
 
+    // Self-healing schema check: Ensure 'prearrival_reminder_sent_at' column exists in bookings table
+    static $col_verified = false;
+    if (!$col_verified) {
+        $col_check = @$conn->query("SHOW COLUMNS FROM `bookings` LIKE 'prearrival_reminder_sent_at'");
+        if (!$col_check || $col_check->num_rows === 0) {
+            @$conn->query("ALTER TABLE `bookings` ADD COLUMN `prearrival_reminder_sent_at` DATETIME DEFAULT NULL");
+        }
+        $col_verified = true;
+    }
+
     // Select upcoming confirmed or pending bookings within window that haven't received reminder
     $query = "
         SELECT 
