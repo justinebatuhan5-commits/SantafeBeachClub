@@ -63,4 +63,29 @@ function require_api_auth(mysqli $conn, ?string $requiredRole = null): void {
         }
     }
 }
+
+/**
+ * require_admin_access() — Guard for admin-only refund/API actions.
+ * Alias of require_api_auth() used throughout refund_request_api.php.
+ * Terminates with 401 JSON if admin session is not authenticated.
+ */
+function require_admin_access(): void {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $isAdmin = (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true)
+            || isset($_SESSION['admin_username'])
+            || isset($_SESSION['receptionist_username']);
+
+    if (!$isAdmin) {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Unauthorized: Admin authentication required.'
+        ]);
+        exit;
+    }
+}
 ?>

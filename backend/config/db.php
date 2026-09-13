@@ -324,6 +324,38 @@ try {
         INDEX idx_payment_history_time (performed_at)
     )");
 
+    // Refund Requests — Multi-step approval workflow
+    $conn->query("CREATE TABLE IF NOT EXISTS refund_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        booking_id INT NOT NULL,
+        payment_id INT,
+        requested_by VARCHAR(100) NOT NULL,
+        request_type VARCHAR(20) DEFAULT 'guest', -- 'guest' or 'admin'
+        status VARCHAR(30) DEFAULT 'requested', -- requested, approved, rejected, processing, completed, failed
+        reason TEXT,
+        refund_amount DECIMAL(10, 2) NOT NULL,
+        refund_fee DECIMAL(10, 2) DEFAULT 0.00,
+        net_refund DECIMAL(10, 2) NOT NULL,
+        approved_by VARCHAR(100) DEFAULT NULL,
+        approved_at DATETIME DEFAULT NULL,
+        rejection_reason TEXT DEFAULT NULL,
+        paymongo_refund_id VARCHAR(100) DEFAULT NULL,
+        paymongo_status VARCHAR(50) DEFAULT NULL,
+        completed_at DATETIME DEFAULT NULL,
+        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+        FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE SET NULL,
+        INDEX idx_booking_status (booking_id, status),
+        INDEX idx_status_time (status, requested_at),
+        INDEX idx_approved_by (approved_by)
+    )");
+
+    // Refund tracking in bookings table
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_status VARCHAR(50) DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_request_id INT DEFAULT NULL");
+    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_reason VARCHAR(255) DEFAULT NULL");
+
     // Ensure notifications table exists
     $conn->query("CREATE TABLE IF NOT EXISTS notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,

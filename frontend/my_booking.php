@@ -889,17 +889,7 @@ $csrf_token = get_csrf_token();
                 <!-- Rebook: pre-fill booking form with same guest details -->
                 <a href="book?rebook=1&email=<?php echo urlencode($booking['guest_email']); ?>&first_name=<?php echo urlencode(strtok($booking['guest_name'], ' ')); ?>&last_name=<?php echo urlencode(strstr($booking['guest_name'], ' ')); ?>&phone=<?php echo urlencode($booking['guest_phone'] ?? ''); ?>&country=<?php echo urlencode($booking['guest_country'] ?? ''); ?>"
                    class="btn-action btn-action-primary">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                    Book Again
-                </a>
-
-                <!-- Contact us -->
-                <a href="contact" class="btn-action btn-action-outline">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Contact Us
-                </a>
-
-                <!-- Cancel Booking (Active or Locked state) -->
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><po                <!-- Cancel Booking (Active or Locked state) -->
                 <?php if ($can_cancel): ?>
                 <a href="javascript:void(0)"
                    class="btn-action btn-action-danger"
@@ -912,10 +902,39 @@ $csrf_token = get_csrf_token();
                 <a href="javascript:void(0)"
                    class="btn-action btn-action-disabled"
                    title="Cancellation locked (<?php echo htmlspecialchars($cancel_window_label); ?> deadline passed on <?php echo htmlspecialchars($deadline_formatted); ?>)"
-                   onclick="showConfirm({ title: 'Cancellation Locked', message: 'Self-service cancellation closed on <?php echo addslashes($deadline_formatted); ?> (<?php echo addslashes($cancel_window_label); ?> prior to arrival for a <?php echo (int)$cancel_policy['nights']; ?>-night stay).\n\nTo cancel or reschedule your reservation, please reach out to our Front Desk directly.', icon: 'lock', iconBg: '#FEF3C7', confirmText: 'Contact Front Desk', confirmColor: '#7C533C', onConfirm: function(){ window.location.href = 'contact'; } })">
+                   onclick="showConfirm({ title: 'Cancellation Locked', message: 'Self-service cancellation closed on <?php echo addslashes($deadline_formatted); ?> (<?php echo addslashes($cancel_window_label); ?> prior to arrival for a <?php echo (int)$cancel_policy['nights']; ?>-night stay).\\n\\nTo cancel or reschedule your reservation, please reach out to our Front Desk directly.', icon: 'lock', iconBg: '#FEF3C7', confirmText: 'Contact Front Desk', confirmColor: '#7C533C', onConfirm: function(){ window.location.href = 'contact'; } })">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     Cancel Booking (Locked)
                 </a>
+                <?php endif; ?>
+
+                <?php
+                // Show Request Refund button if payment exists and booking is not yet checked out/cancelled
+                $has_payment = !empty($payment);
+                $refund_eligible_status = in_array($bk_status, ['Pending Payment', 'Pending', 'Confirmed', 'Checked In']);
+                $refund_token = $booking['cancellation_token'] ?? '';
+                $existing_refund_status = $booking['refund_status'] ?? null;
+                if ($has_payment && $refund_eligible_status && !empty($refund_token)):
+                ?>
+                <?php if ($existing_refund_status && in_array($existing_refund_status, ['requested','approved','processing'])): ?>
+                    <!-- Refund already in progress -->
+                    <span class="btn-action" style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; cursor:default; opacity:0.85;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Refund <?php echo ucfirst($existing_refund_status); ?>
+                    </span>
+                <?php elseif ($existing_refund_status === 'completed'): ?>
+                    <span class="btn-action" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; cursor:default;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Refund Completed
+                    </span>
+                <?php else: ?>
+                    <a href="refund_request_form?token=<?php echo urlencode($refund_token); ?>"
+                       class="btn-action"
+                       style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        Request Refund
+                    </a>
+                <?php endif; ?>
                 <?php endif; ?>
             </div>
 

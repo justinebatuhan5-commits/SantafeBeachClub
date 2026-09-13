@@ -98,6 +98,20 @@ if (isset($conn)) {
     }
 }
 
+// Pending refund requests count
+$_pending_refunds = 0;
+if (isset($conn)) {
+    $tableCheckRefund = @$conn->query("SHOW TABLES LIKE 'refund_requests'");
+    if ($tableCheckRefund && $tableCheckRefund->num_rows > 0) {
+        if ($countRefStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM refund_requests WHERE status = 'requested'")) {
+            $countRefStmt->execute();
+            $countRefResult = $countRefStmt->get_result()->fetch_assoc();
+            $_pending_refunds = (int)($countRefResult['cnt'] ?? 0);
+            $countRefStmt->close();
+        }
+    }
+}
+
 // Helper: returns 'active' css class if page matches
 function _sb_active($page, $current) {
     return $page === $current ? 'active' : '';
@@ -196,6 +210,11 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 Payments
                 <?php echo _sb_badge($_pending_payments, 'payments'); ?>
+            </a></li>
+            <li><a href="admin_refunds" class="sidebar-link <?php echo _sb_active('admin_refunds',$_page); ?>" title="Refund Requests">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Refund Requests
+                <?php echo _sb_badge($_pending_refunds, 'refunds'); ?>
             </a></li>
             <li><a href="accommodations" class="sidebar-link <?php echo _sb_active('accommodations',$_page); ?>" title="Accommodations">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -321,6 +340,11 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="10" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                 Payments & Billing
                 <?php echo _sb_badge($_pending_payments, 'payments'); ?>
+            </a></li>
+            <li><a href="admin_refunds" class="nav-item <?php echo _sb_active('admin_refunds',$_page); ?>" title="Refund Requests">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Refund Requests
+                <?php echo _sb_badge($_pending_refunds, 'refunds'); ?>
             </a></li>
 
             <li><a href="admin_inquiries" class="nav-item <?php echo _sb_active('inquiries',$_page); ?>" title="Guest Inquiries">

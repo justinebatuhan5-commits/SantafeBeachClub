@@ -362,3 +362,335 @@ function sendPaymentRejectedEmail(
         return ['success' => false, 'error' => $mail->ErrorInfo];
     }
 }
+
+/**
+ * Sends a refund completion email to the guest.
+ * Called when a refund has been processed to PayMongo.
+ *
+ * @param string $to_email      Guest email address
+ * @param string $guest_name    Guest full name
+ * @param string $booking_ref   Booking reference (e.g. REF-001)
+ * @param float  $refund_amount Amount refunded
+ * @param string $reason        Cancellation reason
+ * @return array ['success' => bool, 'error' => string|null]
+ */
+function sendRefundCompletedEmail(
+    string $to_email,
+    string $guest_name,
+    string $booking_ref,
+    float $refund_amount,
+    string $reason = ''
+): array {
+    if (empty($to_email)) {
+        return ['success' => false, 'error' => 'No email address provided for this guest.'];
+    }
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = GMAIL_USER;
+        $mail->Password   = GMAIL_APP_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->Timeout    = 8;
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+
+        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+        $mail->addAddress($to_email, $guest_name);
+
+        $amount_fmt = number_format($refund_amount, 2);
+
+        $mail->isHTML(true);
+        $mail->Subject = "Refund Processed – {$booking_ref} – Santa Fe Beach Club";
+        $mail->Body    = "
+            <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;'>
+                <div style='background:linear-gradient(135deg, #10b981 0%, #059669 100%);padding:28px 32px;border-radius:12px 12px 0 0;'>
+                    <h2 style='color:#fff;margin:0;font-size:22px;'>✓ Refund Processed</h2>
+                    <p style='color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;'>Santa Fe Beach Club — Your money is on its way</p>
+                </div>
+                <div style='background:#fff;padding:28px 32px;border:1px solid #f3f4f6;border-top:none;border-radius:0 0 12px 12px;'>
+                    <p>Hi " . htmlspecialchars($guest_name) . ",</p>
+                    <p>Your refund has been successfully processed! The following amount has been credited back to your original payment method:</p>
+                    
+                    <div style='background:#ecfdf5;border-left:4px solid #10b981;padding:16px;margin:20px 0;border-radius:6px;'>
+                        <p style='margin:0 0 8px;color:#047857;font-weight:600;'>Refund Amount</p>
+                        <p style='margin:0;font-size:24px;font-weight:700;color:#065f46;'>₱ " . $amount_fmt . "</p>
+                    </div>
+
+                    <table style='width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;'>
+                        <tr style='border-bottom:1px solid #f0f0f0;'>
+                            <td style='padding:8px 0;color:#6b7280;'>Booking Reference</td>
+                            <td style='padding:8px 0;text-align:right;font-weight:700;'>" . htmlspecialchars($booking_ref) . "</td>
+                        </tr>
+                        <tr>
+                            <td style='padding:8px 0;color:#6b7280;'>Status</td>
+                            <td style='padding:8px 0;text-align:right;'>
+                                <span style='display:inline-block;background:#ecfdf5;color:#065f46;padding:4px 8px;border-radius:4px;font-weight:600;font-size:12px;'>Completed</span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <p style='color:#4b5563;font-size:13px;margin:20px 0 0;line-height:1.6;'>
+                        <strong>Processing Time:</strong> Refunds typically appear in your account within 3-5 business days, depending on your bank or payment provider.
+                    </p>
+
+                    <div style='background:#fef3c7;border-left:4px solid #f59e0b;padding:16px;margin:20px 0;border-radius:6px;font-size:13px;'>
+                        <p style='margin:0 0 8px;color:#92400e;'><strong>💡 Tip:</strong> If you don't see the refund within 5-7 business days, please contact your bank or payment provider first, as delays can occur on their end.</p>
+                    </div>
+
+                    <p style='color:#9ca3af;font-size:12px;margin-top:28px;'>We hope to welcome you back to Santa Fe Beach Club again in the future!</p>
+                </div>
+            </div>
+        ";
+        $mail->AltBody = "Hi {$guest_name}, your refund of PHP {$amount_fmt} for booking {$booking_ref} has been successfully processed. "
+            . "The amount will be credited back to your original payment method within 3-5 business days. "
+            . "Reference: {$booking_ref}. "
+            . ($reason ? "Reason: {$reason}." : "")
+            . " Thank you!";
+
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo];
+    }
+}
+
+/**
+ * Sends a confirmation email when a refund request is submitted.
+ *
+ * @param string $to_email Guest email address
+ * @param string $guest_name Guest full name
+ * @param string $booking_ref Booking reference (e.g. REF-001)
+ * @param float  $estimated_refund Estimated refund amount
+ * @param string $reason Reason submitted by guest
+ * @return array ['success' => bool, 'error' => string|null]
+ */
+function sendRefundRequestConfirmationEmail(
+    string $to_email,
+    string $guest_name,
+    string $booking_ref,
+    float $estimated_refund,
+    string $reason = ''
+): array {
+    if (empty($to_email)) {
+        return ['success' => false, 'error' => 'No email address provided for this guest.'];
+    }
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = GMAIL_USER;
+        $mail->Password   = GMAIL_APP_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->Timeout    = 8;
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+
+        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+        $mail->addAddress($to_email, $guest_name);
+
+        $amount_fmt = number_format($estimated_refund, 2);
+
+        $mail->isHTML(true);
+        $mail->Subject = "Refund Request Received – {$booking_ref} – Santa Fe Beach Club";
+        $mail->Body    = "
+            <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;'>
+                <div style='background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);padding:28px 32px;border-radius:12px 12px 0 0;'>
+                    <h2 style='color:#fff;margin:0;font-size:22px;'>Refund Request Received</h2>
+                    <p style='color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;'>Santa Fe Beach Club — We're reviewing your request</p>
+                </div>
+                <div style='background:#fff;padding:28px 32px;border:1px solid #f3f4f6;border-top:none;border-radius:0 0 12px 12px;'>
+                    <p>Hi " . htmlspecialchars($guest_name) . ",</p>
+                    <p>We have received your refund request for booking <strong>" . htmlspecialchars($booking_ref) . "</strong>. Our management team will review it according to our cancellation & refund policy.</p>
+
+                    <div style='background:#fef3c7;border-left:4px solid #f59e0b;padding:16px;margin:20px 0;border-radius:6px;'>
+                        <p style='margin:0 0 4px;color:#92400e;font-weight:600;'>Estimated Refund Amount</p>
+                        <p style='margin:0;font-size:24px;font-weight:700;color:#78350f;'>₱ " . $amount_fmt . "</p>
+                    </div>
+
+                    <table style='width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;'>
+                        <tr style='border-bottom:1px solid #f0f0f0;'>
+                            <td style='padding:8px 0;color:#6b7280;'>Booking Reference</td>
+                            <td style='padding:8px 0;text-align:right;font-weight:700;'>" . htmlspecialchars($booking_ref) . "</td>
+                        </tr>
+                        <tr style='border-bottom:1px solid #f0f0f0;'>
+                            <td style='padding:8px 0;color:#6b7280;'>Status</td>
+                            <td style='padding:8px 0;text-align:right;'>
+                                <span style='display:inline-block;background:#fef3c7;color:#92400e;padding:4px 8px;border-radius:4px;font-weight:600;font-size:12px;'>Under Review</span>
+                            </td>
+                        </tr>
+                        " . ($reason ? "
+                        <tr>
+                            <td style='padding:8px 0;color:#6b7280;'>Reason</td>
+                            <td style='padding:8px 0;text-align:right;color:#374151;'>" . htmlspecialchars($reason) . "</td>
+                        </tr>" : "") . "
+                    </table>
+
+                    <p style='color:#4b5563;font-size:13px;line-height:1.6;'>
+                        Our team typically reviews refund requests within <strong>24 to 48 hours</strong>. You will receive another notification once a decision is made.
+                    </p>
+
+                    <p style='color:#9ca3af;font-size:12px;margin-top:28px;'>Thank you for your patience.</p>
+                </div>
+            </div>
+        ";
+        $mail->AltBody = "Hi {$guest_name}, we received your refund request of PHP {$amount_fmt} for booking {$booking_ref}. "
+            . "Our management team is reviewing it and will notify you within 24-48 hours. Thank you!";
+
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo];
+    }
+}
+
+/**
+ * Sends an email when a refund request is approved by management.
+ *
+ * @param string $to_email Guest email address
+ * @param string $guest_name Guest full name
+ * @param string $booking_ref Booking reference (e.g. REF-001)
+ * @param float  $approved_amount Approved net refund amount
+ * @return array ['success' => bool, 'error' => string|null]
+ */
+function sendRefundApprovedEmail(
+    string $to_email,
+    string $guest_name,
+    string $booking_ref,
+    float $approved_amount
+): array {
+    if (empty($to_email)) {
+        return ['success' => false, 'error' => 'No email address provided for this guest.'];
+    }
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = GMAIL_USER;
+        $mail->Password   = GMAIL_APP_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->Timeout    = 8;
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+
+        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+        $mail->addAddress($to_email, $guest_name);
+
+        $amount_fmt = number_format($approved_amount, 2);
+
+        $mail->isHTML(true);
+        $mail->Subject = "Refund Approved – {$booking_ref} – Santa Fe Beach Club";
+        $mail->Body    = "
+            <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;'>
+                <div style='background:linear-gradient(135deg, #10b981 0%, #059669 100%);padding:28px 32px;border-radius:12px 12px 0 0;'>
+                    <h2 style='color:#fff;margin:0;font-size:22px;'>Refund Approved!</h2>
+                    <p style='color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;'>Santa Fe Beach Club — Good news regarding your request</p>
+                </div>
+                <div style='background:#fff;padding:28px 32px;border:1px solid #f3f4f6;border-top:none;border-radius:0 0 12px 12px;'>
+                    <p>Hi " . htmlspecialchars($guest_name) . ",</p>
+                    <p>Great news! Your refund request for booking <strong>" . htmlspecialchars($booking_ref) . "</strong> has been approved by management.</p>
+
+                    <div style='background:#ecfdf5;border-left:4px solid #10b981;padding:16px;margin:20px 0;border-radius:6px;'>
+                        <p style='margin:0 0 4px;color:#047857;font-weight:600;'>Approved Refund</p>
+                        <p style='margin:0;font-size:24px;font-weight:700;color:#065f46;'>₱ " . $amount_fmt . "</p>
+                    </div>
+
+                    <p style='color:#4b5563;font-size:13px;line-height:1.6;'>
+                        The payment will be refunded to your original payment method. You will receive a final confirmation once the transaction is complete.
+                    </p>
+
+                    <p style='color:#9ca3af;font-size:12px;margin-top:28px;'>Thank you for choosing Santa Fe Beach Club.</p>
+                </div>
+            </div>
+        ";
+        $mail->AltBody = "Hi {$guest_name}, your refund request for booking {$booking_ref} has been approved for PHP {$amount_fmt}. "
+            . "It will be processed to your original payment method shortly.";
+
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo];
+    }
+}
+
+/**
+ * Sends an email when a refund request is rejected.
+ *
+ * @param string $to_email Guest email address
+ * @param string $guest_name Guest full name
+ * @param string $booking_ref Booking reference (e.g. REF-001)
+ * @param string $reason Rejection reason
+ * @return array ['success' => bool, 'error' => string|null]
+ */
+function sendRefundRejectedEmail(
+    string $to_email,
+    string $guest_name,
+    string $booking_ref,
+    string $reason = ''
+): array {
+    if (empty($to_email)) {
+        return ['success' => false, 'error' => 'No email address provided for this guest.'];
+    }
+
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = GMAIL_USER;
+        $mail->Password   = GMAIL_APP_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->Timeout    = 8;
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+
+        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+        $mail->addAddress($to_email, $guest_name);
+
+        $mail->isHTML(true);
+        $mail->Subject = "Update on Refund Request – {$booking_ref} – Santa Fe Beach Club";
+        $mail->Body    = "
+            <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;'>
+                <div style='background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);padding:28px 32px;border-radius:12px 12px 0 0;'>
+                    <h2 style='color:#fff;margin:0;font-size:22px;'>Refund Request Status</h2>
+                    <p style='color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;'>Santa Fe Beach Club — Booking {$booking_ref}</p>
+                </div>
+                <div style='background:#fff;padding:28px 32px;border:1px solid #f3f4f6;border-top:none;border-radius:0 0 12px 12px;'>
+                    <p>Hi " . htmlspecialchars($guest_name) . ",</p>
+                    <p>We are writing to inform you that your refund request for booking <strong>" . htmlspecialchars($booking_ref) . "</strong> could not be approved at this time.</p>
+
+                    " . ($reason ? "
+                    <div style='background:#fef2f2;border-left:4px solid #ef4444;padding:16px;margin:20px 0;border-radius:6px;'>
+                        <p style='margin:0 0 4px;color:#991b1b;font-weight:600;'>Reason for Decision</p>
+                        <p style='margin:0;color:#7f1d1d;font-size:14px;'>" . htmlspecialchars($reason) . "</p>
+                    </div>" : "") . "
+
+                    <p style='color:#4b5563;font-size:13px;line-height:1.6;'>
+                        If you believe this was in error or have further questions, please contact our Front Desk directly.
+                    </p>
+
+                    <p style='color:#9ca3af;font-size:12px;margin-top:28px;'>Thank you for your understanding.</p>
+                </div>
+            </div>
+        ";
+        $mail->AltBody = "Hi {$guest_name}, your refund request for booking {$booking_ref} could not be approved. "
+            . ($reason ? "Reason: {$reason}. " : "")
+            . "Please contact our Front Desk if you have questions.";
+
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo];
+    }
+}
+?>
