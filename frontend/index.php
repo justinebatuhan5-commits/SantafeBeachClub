@@ -272,10 +272,10 @@ if ($price_q) {
     <!-- Hero Banner Section -->
     <section class="hero-section">
         <div class="hero-bg-slider" aria-hidden="true">
-            <div class="hero-bg-slide is-active" style="background-image: url('assets/hero-slide-1.jpg');"></div>
-            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-2.jpg');"></div>
-            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-3.jpg');"></div>
-            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-4.jpg');"></div>
+            <div class="hero-bg-slide is-active" style="background-image: url('assets/hero-slide-1.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-1.jpg'); ?>');"></div>
+            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-2.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-2.jpg'); ?>');"></div>
+            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-3.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-3.jpg'); ?>');"></div>
+            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-4.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-4.jpg'); ?>');"></div>
         </div>
         <div class="hero-content">
             <p class="hero-kicker">Luxury resort escape</p>
