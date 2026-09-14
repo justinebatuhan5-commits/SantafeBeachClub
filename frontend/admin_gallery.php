@@ -13,35 +13,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'add_photo') {
-        if (isset($_FILES["photo"]) && $_FILES["photo"]["error"] === UPLOAD_ERR_OK) {
-            $tmpFile = $_FILES["photo"]["tmp_name"];
-            $origName = basename($_FILES["photo"]["name"]);
-            $filesize = $_FILES["photo"]["size"];
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        $allowedExts  = ['jpg', 'jpeg', 'png', 'webp'];
+        $uploaded = 0;
+        $errors   = [];
 
-            $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-            $allowedExts  = ['jpg', 'jpeg', 'png', 'webp'];
+        // Normalise $_FILES['photos'] into a list of individual file entries
+        $files = [];
+        if (isset($_FILES['photos']) && is_array($_FILES['photos']['name'])) {
+            $count = count($_FILES['photos']['name']);
+            for ($i = 0; $i < $count; $i++) {
+                $files[] = [
+                    'name'     => $_FILES['photos']['name'][$i],
+                    'tmp_name' => $_FILES['photos']['tmp_name'][$i],
+                    'error'    => $_FILES['photos']['error'][$i],
+                    'size'     => $_FILES['photos']['size'][$i],
+                ];
+            }
+        }
 
-            // 1. Magic bytes MIME inspection
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $realMime = finfo_file($finfo, $tmpFile);
-            finfo_close($finfo);
+        if (empty($files)) {
+            $_SESSION['gal_error'] = 'No files selected.';
+        } else {
+            foreach ($files as $file) {
+                if ($file['error'] !== UPLOAD_ERR_OK) {
+                    $errors[] = "{$file['name']}: upload error code {$file['error']}";
+                    continue;
+                }
 
-            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                $tmpFile  = $file['tmp_name'];
+                $origName = basename($file['name']);
+                $filesize = $file['size'];
+                $ext      = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-            if (!in_array($ext, $allowedExts, true) || !in_array($realMime, $allowedMimes, true)) {
-                $_SESSION['gal_error'] = "Error: Invalid image format. Allowed formats: JPG, PNG, WebP.";
-                SecurityLogger::log($conn, 'FILE_UPLOAD_REJECTED', "Rejected invalid mime ($realMime) for $origName", SecurityLogger::LEVEL_WARNING, $admin);
-            } elseif ($filesize > 5 * 1024 * 1024) {
-                $_SESSION['gal_error'] = "Error: File exceeds maximum allowed size of 5MB.";
-            } else {
-                // Try Cloudinary first for permanent cloud storage
+                // Magic bytes MIME inspection
+                $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+                $realMime = finfo_file($finfo, $tmpFile);
+                finfo_close($finfo);
+
+                if (!in_array($ext, $allowedExts, true) || !in_array($realMime, $allowedMimes, true)) {
+                    $errors[] = "$origName: invalid format (only JPG, PNG, WebP).";
+                    SecurityLogger::log($conn, 'FILE_UPLOAD_REJECTED', "Rejected invalid mime ($realMime) for $origName", SecurityLogger::LEVEL_WARNING, $admin);
+                    continue;
+                }
+
+                if ($filesize > 5 * 1024 * 1024) {
+                    $errors[] = "$origName: exceeds 5 MB limit.";
+                    continue;
+                }
+
+                // Try Cloudinary first, fall back to local
                 $cloudResult = cloudinary_upload($tmpFile, 'sfbc_gallery');
-                $savedPath = null;
+                $savedPath   = null;
 
                 if ($cloudResult['success'] && !empty($cloudResult['url'])) {
                     $savedPath = $cloudResult['url'];
                 } else {
-                    // Fallback to local storage if Cloudinary fails or is unreachable
                     $new_filename = 'gal_' . bin2hex(random_bytes(16)) . '.' . $ext;
                     if (!is_dir($target_dir)) {
                         @mkdir($target_dir, 0755, true);
@@ -58,14 +85,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->close();
                     log_activity($conn, $admin, 'Gallery Photo Added', "Added: $origName");
                     SecurityLogger::log($conn, 'FILE_UPLOADED', "Uploaded gallery image: $savedPath", SecurityLogger::LEVEL_INFO, $admin);
-                    $_SESSION['gal_success'] = "Photo uploaded successfully.";
+                    $uploaded++;
                 } else {
                     $errDetail = $cloudResult['error'] ?? 'Local upload failed';
-                    $_SESSION['gal_error'] = "File upload failed: " . htmlspecialchars($errDetail);
+                    $errors[]  = "$origName: " . htmlspecialchars($errDetail);
                 }
             }
-        } else {
-            $_SESSION['gal_error'] = "Error: " . ($_FILES["photo"]["error"] ?? 'No file selected.');
+
+            if ($uploaded > 0) {
+                $_SESSION['gal_success'] = "$uploaded photo(s) uploaded successfully." . (count($errors) ? ' Some files had errors.' : '');
+            }
+            if (!empty($errors) && $uploaded === 0) {
+                $_SESSION['gal_error'] = implode(' | ', $errors);
+            }
         }
     }
 
@@ -161,21 +193,153 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
 
 <!-- Add Photo Modal -->
 <div class="modal-overlay" id="addModal">
-    <div class="modal-box">
-        <button class="modal-close" onclick="document.getElementById('addModal').classList.remove('open')">×</button>
-        <h3>Add Photo</h3>
-        <p class="modal-sub">Upload a new image to the gallery.</p>
-        <form method="POST" enctype="multipart/form-data">
+    <div class="modal-box" style="max-width:520px;width:95%;">
+        <button class="modal-close" onclick="closeGalleryModal()">×</button>
+        <h3>Add Photos</h3>
+        <p class="modal-sub">Drag &amp; drop or click to select multiple images (JPG, PNG, WebP — max 5 MB each).</p>
+        <form method="POST" enctype="multipart/form-data" id="galleryUploadForm">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="add_photo">
-            <div class="admin-form-group">
-                <label>Select Image (JPG, PNG, WebP &mdash; Max 5MB)</label>
-                <input type="file" name="photo" required accept="image/jpeg,image/png,image/webp" data-max-size="5" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;">
+
+            <!-- Drop Zone -->
+            <div id="dropZone" style="
+                border: 2px dashed #c8a97e;
+                border-radius: 12px;
+                padding: 36px 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: background .2s, border-color .2s;
+                background: #fdf8f3;
+                margin-bottom: 16px;
+            ">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c8a97e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px">
+                    <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                </svg>
+                <p style="margin:0 0 6px;font-weight:600;color:#555;">Drop images here</p>
+                <p style="margin:0;font-size:13px;color:#999;">or <span style="color:#c8a97e;text-decoration:underline;cursor:pointer;" onclick="document.getElementById('photoInput').click()">browse files</span></p>
+                <input type="file" id="photoInput" name="photos[]" multiple accept="image/jpeg,image/png,image/webp" style="display:none;">
             </div>
-            <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Upload Photo</button>
+
+            <!-- Preview Grid -->
+            <div id="previewGrid" style="display:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:16px;"></div>
+
+            <!-- Upload count badge -->
+            <p id="fileCountBadge" style="display:none;font-size:13px;color:#555;margin:0 0 14px;"></p>
+
+            <button type="submit" class="btn-primary" id="uploadBtn" style="width:100%;justify-content:center;" disabled>
+                Upload Photos
+            </button>
         </form>
     </div>
 </div>
+
+<style>
+#dropZone.drag-over { background:#fff3e5; border-color:#a0724f; }
+#previewGrid .thumb-wrap {
+    position:relative; border-radius:8px; overflow:hidden;
+    aspect-ratio:1; background:#eee;
+}
+#previewGrid .thumb-wrap img { width:100%;height:100%;object-fit:cover; display:block; }
+#previewGrid .thumb-remove {
+    position:absolute;top:3px;right:3px;
+    background:rgba(0,0,0,.55);color:#fff;
+    border:none;border-radius:50%;width:20px;height:20px;
+    font-size:12px;line-height:20px;text-align:center;
+    cursor:pointer;padding:0;
+}
+</style>
+
+<script>
+(function(){
+    const dropZone   = document.getElementById('dropZone');
+    const input      = document.getElementById('photoInput');
+    const grid       = document.getElementById('previewGrid');
+    const badge      = document.getElementById('fileCountBadge');
+    const uploadBtn  = document.getElementById('uploadBtn');
+    const form       = document.getElementById('galleryUploadForm');
+    const allowedTypes = ['image/jpeg','image/png','image/webp'];
+    const maxBytes     = 5 * 1024 * 1024;
+
+    let selectedFiles = []; // DataTransfer-backed list
+
+    function syncInputFiles() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+    }
+
+    function renderPreviews() {
+        grid.innerHTML = '';
+        if (selectedFiles.length === 0) {
+            grid.style.display = 'none';
+            badge.style.display = 'none';
+            uploadBtn.disabled = true;
+            return;
+        }
+        grid.style.display = 'grid';
+        badge.style.display = 'block';
+        badge.textContent = selectedFiles.length + ' file(s) ready to upload';
+        uploadBtn.disabled = false;
+
+        selectedFiles.forEach((file, idx) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'thumb-wrap';
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.onload = () => URL.revokeObjectURL(img.src);
+
+            const btn = document.createElement('button');
+            btn.className = 'thumb-remove';
+            btn.type = 'button';
+            btn.textContent = '×';
+            btn.title = 'Remove ' + file.name;
+            btn.addEventListener('click', () => {
+                selectedFiles.splice(idx, 1);
+                syncInputFiles();
+                renderPreviews();
+            });
+
+            wrap.appendChild(img);
+            wrap.appendChild(btn);
+            grid.appendChild(wrap);
+        });
+    }
+
+    function addFiles(fileList) {
+        Array.from(fileList).forEach(f => {
+            if (!allowedTypes.includes(f.type)) { alert(f.name + ' is not a supported format.'); return; }
+            if (f.size > maxBytes) { alert(f.name + ' exceeds the 5 MB limit.'); return; }
+            selectedFiles.push(f);
+        });
+        syncInputFiles();
+        renderPreviews();
+    }
+
+    // Click on drop zone opens picker
+    dropZone.addEventListener('click', (e) => {
+        if (e.target !== document.querySelector('#dropZone span')) input.click();
+    });
+    input.addEventListener('change', () => addFiles(input.files));
+
+    // Drag events
+    dropZone.addEventListener('dragover',  (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        addFiles(e.dataTransfer.files);
+    });
+
+    // Reset state when modal closes
+    window.closeGalleryModal = function() {
+        document.getElementById('addModal').classList.remove('open');
+        selectedFiles = [];
+        renderPreviews();
+    };
+})();
+</script>
 <script src="assets/js/sidebar-toggle.js"></script>
 </body>
 </html>
