@@ -779,20 +779,6 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         </div>
                     </form>
                 </div>
-                <?php else: ?>
-                <div class="settings-card">
-                    <h3>Username</h3>
-                    <p class="card-desc">Your staff login username assigned by management.</p>
-                    <div class="form-row single">
-                        <div>
-                            <label>Current Username</label>
-                            <input type="text" value="<?php echo htmlspecialchars($current_admin); ?>" disabled style="background:#F9FAFB; color:#6B7280; font-weight:600; cursor:not-allowed;">
-                            <span style="display:inline-block; font-size:12px; color:#9CA3AF; margin-top:6px;">
-                                🔒 Receptionist usernames can only be modified by a resort administrator.
-                            </span>
-                        </div>
-                    </div>
-                </div>
                 <?php endif; ?>
 
                 <!-- Change Password (Hidden for Admin) -->
