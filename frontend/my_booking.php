@@ -598,7 +598,7 @@ $csrf_token = get_csrf_token();
 <body>
 
 <!-- Header Navigation -->
-<header class="main-header">
+<header class="main-header site-navbar">
     <div class="brand-logo">
         <a href="index" class="logo-link">
             <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">

@@ -184,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
 </head>
 <body>
 
-    <header class="main-header" style="background: rgba(15, 23, 42, 0.95);">
+    <header class="main-header site-navbar">
         <div class="brand-logo">
             <a href="index" class="logo-link">
                 <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
@@ -192,11 +192,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
         </div>
         <nav class="nav-menu">
             <ul>
-                <li><a href="index" style="color: #fff;">Home</a></li>
-                <li><a href="rooms" style="color: #fff;">Rooms</a></li>
-                <li><a href="gallery" style="color: #fff;">Gallery</a></li>
-                <li class="active"><a href="contact" style="color: #fff;">Contact</a></li>
-                <li><a href="my_booking" style="color: #fff;">My Booking</a></li>
+                <li><a href="index">Home</a></li>
+                <li><a href="rooms">Rooms</a></li>
+                <li><a href="gallery">Gallery</a></li>
+                <li class="active"><a href="contact">Contact</a></li>
+                <li><a href="my_booking">My Booking</a></li>
             </ul>
         </nav>
         <div class="header-action">

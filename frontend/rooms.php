@@ -341,7 +341,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
 <body class="rooms-page">
 
     <!-- â”€â”€ Header â”€â”€ -->
-    <header class="main-header">
+    <header class="main-header site-navbar">
         <div class="brand-logo">
             <a href="index" class="logo-link">
                 <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">

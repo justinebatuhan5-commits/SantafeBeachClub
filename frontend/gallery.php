@@ -61,7 +61,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
 </head>
 <body>
     <!-- Header Navigation -->
-    <header class="main-header" style="background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <header class="main-header site-navbar">
         <div class="brand-logo">
             <a href="index" class="logo-link">
                 <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
