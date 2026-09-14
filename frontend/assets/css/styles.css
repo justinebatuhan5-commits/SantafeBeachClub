@@ -2012,7 +2012,7 @@ body.home-page {
     border-radius: 50%;
 }
 
-/* Inline navigation fills the desktop header; mobile uses the drawer. */
+/* Inline navigation remains accessible at every screen size. */
 .home-page .header-navigation {
     display: flex;
     align-items: center;
@@ -2036,5 +2036,15 @@ body.home-page {
     border-bottom-color: #8a5a3a;
 }
 @media (max-width: 900px) {
-    .home-page .header-navigation { display: none; }
+    .home-page .main-header { flex-wrap: wrap; }
+    .home-page .header-navigation {
+        order: 3;
+        flex: 0 0 100%;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        padding: 8px 0 0;
+        margin-top: 8px;
+        border-top: 1px solid #e5d6c8;
+    }
+    .home-page .header-navigation a { font-size: 14px; padding: 6px 0; }
 }

@@ -39,7 +39,6 @@ if ($price_q) {
     <link rel="apple-touch-icon" href="assets/logo.jpg">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <script src="assets/js/dark-mode-toggle.js" defer></script>
-    <script src="assets/js/navigation-drawer.js?v=<?php echo (int) filemtime(__DIR__ . '/assets/js/navigation-drawer.js'); ?>" defer></script>
     <style>
         .chatbot-toggle {
             position: fixed;
@@ -258,28 +257,10 @@ if ($price_q) {
         </nav>
         <div class="header-action" style="display:flex; align-items:center; gap:10px;">
             <a href="rooms" class="btn-book-header"><?php echo __t('book_now'); ?></a>
-            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-controls="navigationDrawer" aria-haspopup="dialog" aria-label="Open navigation" aria-expanded="false">
-
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-            </button>
         </div>
     </header>
 
-<dialog class="navigation-drawer" id="navigationDrawer" aria-label="Main navigation"><div class="drawer-heading"><h2>Explore Santa Fe</h2><button type="button" id="drawerClose" aria-label="Close navigation" autofocus>&times;</button></div>        <nav class="nav-menu" id="mainNavMenu" aria-label="Main navigation">
-            <ul>
-                <li class="active"><a href="index"><?php echo __t('home'); ?></a></li>
-                <li><a href="rooms"><?php echo __t('rooms'); ?></a></li>
-                <li><a href="gallery"><?php echo __t('gallery'); ?></a></li>
-                <li><a href="contact"><?php echo __t('contact'); ?></a></li>
-                <li><a href="my_booking"><?php echo __t('my_booking'); ?></a></li>
-            </ul>
-        </nav>
-</dialog>
-    <!-- Hero Banner Section -->
+<!-- Hero Banner Section -->
     <section class="hero-section">
         <div class="hero-bg-slider" aria-hidden="true">
             <div class="hero-bg-slide is-active" style="background-image: url('assets/hero-slide-1.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-1.jpg'); ?>');"></div>
