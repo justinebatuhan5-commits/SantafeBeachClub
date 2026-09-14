@@ -263,9 +263,6 @@ if ($price_q) {
     <section class="hero-section">
         <div class="hero-bg-slider" aria-hidden="true">
             <div class="hero-bg-slide is-active" style="background-image: url('assets/hero-slide-1-hd.png?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-1-hd.png'); ?>');"></div>
-            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-2.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-2.jpg'); ?>');"></div>
-            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-3.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-3.jpg'); ?>');"></div>
-            <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-4.jpg?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-4.jpg'); ?>');"></div>
             <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-5-hd.webp?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-5-hd.webp'); ?>');"></div>
             <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-6-hd.webp?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-6-hd.webp'); ?>');"></div>
             <div class="hero-bg-slide" style="background-image: url('assets/hero-slide-7-hd.webp?v=<?php echo (int)@filemtime(__DIR__ . '/assets/hero-slide-7-hd.webp'); ?>');"></div>
