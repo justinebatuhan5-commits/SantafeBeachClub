@@ -1946,3 +1946,42 @@ body.rooms-page {
 
     .perks-inner { grid-template-columns: 1fr; gap: 22px; }
 }
+
+/* Photo-led room browsing and consistent comparison details. */
+.rate-card { grid-template-columns: minmax(0, 1fr) minmax(260px, 0.85fr); }
+.rate-card-left { display: contents; }
+.rate-photo { grid-column: 1 / -1; aspect-ratio: 16 / 9; height: auto; max-height: 480px; background-size: cover; background-position: center; }
+.rate-photo-overlay { padding: 24px; }
+.rate-photo-copy { padding-right: 70px; }
+.rate-photo-kicker { color: #fff; font-size: 13px; }
+.rate-photo-title { font-size: clamp(20px, 2.2vw, 28px); }
+.rate-photo-count { bottom: 24px; right: 24px; font-size: 12px; }
+.rate-photo-clickable:focus-visible { outline: 3px solid #12766e; outline-offset: -5px; }
+.rts-title { font-family: 'Playfair Display', serif; font-size: 22px; letter-spacing: 0; text-transform: none; }
+.rts-header { background: #fff; padding: 20px 24px; }
+.rate-info { padding: 26px; }
+.rate-details-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.6px; font-weight: 700; color: var(--rooms-muted); }
+.rate-comparison { margin: 14px 0 20px; }
+.rate-comparison > div { padding: 12px 0; border-bottom: 1px solid var(--rooms-border); display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px; }
+.rate-comparison dt { color: var(--rooms-muted); font-size: 13px; }
+.rate-comparison dd { margin: 0; font-size: 14px; font-weight: 600; color: var(--rooms-text); }
+.rate-info .rate-bed { display: none; }
+.rate-desc { flex: none; }
+.rate-card-right { border-left: 1px solid var(--rooms-border); padding: 26px; background: #f7f8f4; }
+.rate-card-right--unavailable { background: #f7f6f4; }
+.room-type-section { margin-bottom: 36px; }
+.btn-view-room-info { color: #12665f; border-color: #b7cec8; border-radius: 10px; min-height: 44px; }
+@media (max-width: 1100px) and (min-width: 901px) {
+    .rate-card { grid-template-columns: minmax(0, 1fr); }
+    .rate-card-right { border-left: 0; border-top: 1px solid var(--rooms-border); }
+}
+@media (max-width: 640px) {
+    .rate-card { grid-template-columns: minmax(0, 1fr); }
+    .rate-photo { aspect-ratio: 4 / 3; height: auto; }
+    .rate-photo-overlay { padding: 18px; }
+    .rate-photo-copy { padding-right: 0; padding-bottom: 34px; }
+    .rate-photo-count { bottom: 14px; right: 16px; }
+    .rts-header, .rate-info, .rate-card-right { padding: 20px; }
+    .rts-title { font-size: 20px; }
+    .rate-card-right { border-left: 0; border-top: 1px solid var(--rooms-border); }
+}
