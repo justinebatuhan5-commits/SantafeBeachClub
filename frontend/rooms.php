@@ -596,15 +596,15 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
 
     <!-- â”€â”€ Tab Navigation â”€â”€ -->
     <div class="room-tabs-bar">
-        <div class="room-tabs-inner">
-            <button class="room-tab room-tab--active" data-tab="recommended" onclick="switchTab('recommended', this)">
-                Rooms Recommended For You
-                <?php if (!empty($recommended_by_type)): ?><span style="font-size:11px;background:rgba(124,83,60,0.1);color:#7c533c;border-radius:999px;padding:2px 8px;margin-left:6px;font-weight:700;"><?php echo count($recommended_by_type); ?></span><?php endif; ?>
+        <div class="room-tabs-inner" role="group" aria-label="Browse room categories">
+            <button class="room-tab room-tab--active" type="button" aria-pressed="true" data-tab="recommended" onclick="switchTab('recommended', this)">
+                Recommended stays
+                <?php if (!empty($recommended_by_type)): ?><span class="room-tab-count"><?php echo count($recommended_by_type); ?></span><?php endif; ?>
             </button>
-            <button class="room-tab" data-tab="other" onclick="switchTab('other', this)">
-                Other Available Rooms
+            <button class="room-tab" type="button" aria-pressed="false" data-tab="other" onclick="switchTab('other', this)">
+                More rooms
                 <?php $other_total_count = count($other_available_by_type) + count($unavail_by_type); ?>
-                <?php if ($other_total_count > 0): ?><span style="font-size:11px;background:rgba(124,83,60,0.1);color:#7c533c;border-radius:999px;padding:2px 8px;margin-left:6px;font-weight:700;"><?php echo $other_total_count; ?></span><?php endif; ?>
+                <?php if ($other_total_count > 0): ?><span class="room-tab-count"><?php echo $other_total_count; ?></span><?php endif; ?>
             </button>
         </div>
     </div>
@@ -1240,7 +1240,11 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
 <script>
 /* â”€â”€ Tab switching â”€â”€ */
 function switchTab(tab, btn) {
-    document.querySelectorAll('.room-tab').forEach(b => b.classList.remove('room-tab--active'));
+    document.querySelectorAll('.room-tab').forEach(function(b) {
+        b.classList.remove('room-tab--active');
+        b.setAttribute('aria-pressed', 'false');
+    });
+    btn.setAttribute('aria-pressed', 'true');
     btn.classList.add('room-tab--active');
 
     var target = document.getElementById('tab-' + tab);
