@@ -2051,11 +2051,12 @@ body.home-page {
 
 /* Shared rounded navbar for inner guest pages. */
 .site-navbar {
-    top: 12px;
+    top: 8px;
     width: calc(100% - 48px);
-    max-width: 1600px;
+    max-width: none;
+    height: 84px;
     min-height: 84px;
-    margin: 12px auto;
+    margin: 8px auto;
     padding: 10px 22px;
     flex-wrap: nowrap;
     background: rgba(255, 251, 246, 0.96);
@@ -2092,7 +2093,7 @@ body.home-page {
     box-shadow: 0 10px 24px rgba(138, 90, 58, 0.22);
 }
 @media (max-width: 768px) {
-    .site-navbar { top: 8px; width: calc(100% - 20px); margin: 8px auto; padding: 10px 14px; flex-wrap: wrap; border-radius: 22px; }
+    .site-navbar { top: 8px; width: calc(100% - 20px); height: auto; margin: 8px auto; padding: 10px 14px; flex-wrap: wrap; border-radius: 22px; }
     .site-navbar .nav-menu { order: 3; width: 100%; margin-top: 8px; overflow-x: auto; }
     .site-navbar .nav-menu ul { gap: 16px; width: max-content; }
     .site-navbar .nav-menu ul li a,
