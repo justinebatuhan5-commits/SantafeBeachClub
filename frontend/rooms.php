@@ -1248,9 +1248,9 @@ function switchTab(tab, btn) {
 
     var header = document.querySelector('.main-header');
     var tabsBar = document.querySelector('.room-tabs-bar');
-    var headerHeight = header ? Math.ceil(header.getBoundingClientRect().height) : 0;
+    var headerHeight = header ? Math.ceil(header.getBoundingClientRect().bottom) : 0;
     var tabsHeight = tabsBar ? Math.ceil(tabsBar.getBoundingClientRect().height) : 0;
-    var topOffset = headerHeight + tabsHeight + 8;
+    var topOffset = headerHeight + tabsHeight + 24;
     var targetTop = window.scrollY + target.getBoundingClientRect().top - topOffset;
 
     window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
@@ -1259,8 +1259,11 @@ function switchTab(tab, btn) {
 function syncRoomTabsOffset() {
     var header = document.querySelector('.main-header');
     if (!header) return;
-    var headerHeight = Math.ceil(header.getBoundingClientRect().height);
-    document.documentElement.style.setProperty('--rooms-sticky-tabs-top', headerHeight + 'px');
+    var headerBottom = Math.ceil(header.getBoundingClientRect().bottom);
+    var tabsBar = document.querySelector('.room-tabs-bar');
+    var tabsHeight = tabsBar ? Math.ceil(tabsBar.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--rooms-sticky-tabs-top', (headerBottom + 8) + 'px');
+    document.documentElement.style.setProperty('--rooms-summary-top', (headerBottom + tabsHeight + 24) + 'px');
 }
 
 /* â”€â”€ Booking summary state â”€â”€ */
@@ -1973,6 +1976,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.addEventListener('resize', syncRoomTabsOffset);
+    if (window.ResizeObserver) {
+        var stickyObserver = new ResizeObserver(syncRoomTabsOffset);
+        document.querySelectorAll('.main-header, .room-tabs-bar').forEach(function(el) { stickyObserver.observe(el); });
+    }
+    if (document.fonts) document.fonts.ready.then(syncRoomTabsOffset);
 });
 </script>
 </body>

@@ -1985,3 +1985,36 @@ body.rooms-page {
     .rts-title { font-size: 20px; }
     .rate-card-right { border-left: 0; border-top: 1px solid var(--rooms-border); }
 }
+
+/* Keep room navigation and the summary clear of the fixed header. */
+.be-bar-wrapper { position: relative; top: auto; z-index: 20; }
+.room-tabs-bar { padding-top: 10px; }
+.room-tabs-inner { max-width: 1440px; }
+.rooms-layout {
+    max-width: 1600px;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 32px;
+    padding-top: 32px;
+}
+.booking-sidebar {
+    top: var(--rooms-summary-top, 180px);
+    max-height: calc(100dvh - var(--rooms-summary-top, 180px) - 20px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 24px;
+    gap: 16px;
+}
+.bs-date-time { color: var(--rooms-muted); }
+.tab-panel, .room-type-section { scroll-margin-top: var(--rooms-summary-top, 180px); }
+@media (max-width: 1100px) {
+    .rooms-layout { grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; }
+    .booking-sidebar { padding: 20px; }
+}
+@media (max-width: 900px) {
+    .rooms-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+    .room-tabs-bar { padding-top: 8px; }
+    .room-tab { font-size: 13px; margin-right: 18px; }
+    .rooms-layout { padding-top: 24px; }
+}
