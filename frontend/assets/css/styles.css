@@ -1910,3 +1910,67 @@ body.home-page {
         font-size: 8px !important;
     }
 }
+
+/* Compact homepage navigation; links stay tucked away until requested. */
+.home-page .main-header {
+    top: 12px;
+    margin: 12px auto;
+    width: calc(100% - 32px);
+    max-width: 1280px;
+    padding: 10px 18px;
+    flex-wrap: nowrap;
+    border: 1px solid rgba(138, 90, 58, 0.16);
+    border-radius: 24px;
+    background: rgba(255, 251, 246, 0.96);
+    box-shadow: 0 8px 28px rgba(91, 61, 43, 0.1);
+}
+.home-page .brand-logo .logo-mark { width: 46px; height: 46px; }
+.home-page .brand-logo .logo-link { display: flex; }
+.home-page .mobile-menu-btn {
+    display: inline-flex;
+    gap: 10px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1px solid #d9c5b3;
+    border-radius: 999px;
+    background: transparent;
+    color: #5c3d2b;
+    font: 500 14px var(--font-body);
+}
+.home-page .mobile-menu-btn:hover,
+.home-page .mobile-menu-btn[aria-expanded="true"] { background: #f0e8dd; }
+.home-page .btn-book-header { border-radius: 999px; padding: 11px 22px; }
+.home-page .nav-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(320px, 100%);
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #e5d6c8;
+    border-radius: 20px;
+    background: #fffbf6;
+    box-shadow: 0 16px 40px rgba(91, 61, 43, 0.16);
+    max-height: calc(100dvh - 120px);
+    overflow-y: auto;
+}
+.home-page .nav-menu[hidden] { display: none; }
+.home-page .nav-menu ul { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.home-page .nav-menu ul li a {
+    display: block;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    font-size: 15px;
+    color: #5c3d2b;
+}
+.home-page .nav-menu ul li.active a,
+.home-page .nav-menu ul li a:hover { background: #f0e8dd; color: #5c3d2b !important; }
+.home-page .main-header a:focus-visible,
+.home-page .mobile-menu-btn:focus-visible { outline: 3px solid #8a5a3a; outline-offset: 3px; }
+@media (max-width: 480px) {
+    .home-page .main-header { top: 8px; width: calc(100% - 20px); margin: 8px auto; padding: 8px 10px; }
+    .home-page .btn-book-header { padding: 10px 14px; }
+    .home-page .mobile-menu-btn { padding: 10px 12px; gap: 6px; }
+}

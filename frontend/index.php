@@ -248,7 +248,7 @@ if ($price_q) {
                 <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
             </a>
         </div>
-        <nav class="nav-menu" id="mainNavMenu">
+        <nav class="nav-menu" id="mainNavMenu" aria-label="Main navigation" hidden>
             <ul>
                 <li class="active"><a href="index"><?php echo __t('home'); ?></a></li>
                 <li><a href="rooms"><?php echo __t('rooms'); ?></a></li>
@@ -259,7 +259,8 @@ if ($price_q) {
         </nav>
         <div class="header-action" style="display:flex; align-items:center; gap:10px;">
             <a href="rooms" class="btn-book-header"><?php echo __t('book_now'); ?></a>
-            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation Menu">
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-controls="mainNavMenu" aria-expanded="false">
+                <span id="navMenuLabel">Menu</span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -785,13 +786,30 @@ if ($price_q) {
             }
         }
 
-        // Mobile Navigation Menu Toggle
+        // Collapsible navigation on desktop and mobile.
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mainNavMenu = document.getElementById('mainNavMenu');
         if (mobileMenuBtn && mainNavMenu) {
+            const menuLabel = document.getElementById('navMenuLabel');
+            function setMenuOpen(open) {
+                mainNavMenu.hidden = !open;
+                mobileMenuBtn.setAttribute('aria-expanded', String(open));
+                menuLabel.textContent = open ? 'Close' : 'Menu';
+            }
             mobileMenuBtn.addEventListener('click', function() {
-                const isHidden = window.getComputedStyle(mainNavMenu).display === 'none';
-                mainNavMenu.style.display = isHidden ? 'block' : 'none';
+                setMenuOpen(mainNavMenu.hidden);
+            });
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.main-header')) setMenuOpen(false);
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && !mainNavMenu.hidden) {
+                    setMenuOpen(false);
+                    mobileMenuBtn.focus();
+                }
+            });
+            document.addEventListener('focusin', function(event) {
+                if (!event.target.closest('.main-header')) setMenuOpen(false);
             });
         }
     </script>
