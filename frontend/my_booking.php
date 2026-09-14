@@ -112,10 +112,61 @@ $csrf_token = get_csrf_token();
     <style>
         /* ── Page shell ── */
         .portal-wrapper {
+            position: relative;
+            isolation: isolate;
             min-height: 100vh;
             background: linear-gradient(145deg, #f5ede6 0%, #ede0d4 100%);
             display: flex;
             flex-direction: column;
+        }
+        .booking-slideshow {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+            background: url('assets/hero-slide-1.jpg') center/cover no-repeat;
+        }
+        .booking-slideshow::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(20, 25, 28, 0.38);
+        }
+        .booking-slide {
+            position: absolute;
+            inset: 0;
+            background-position: center;
+            background-size: cover;
+            opacity: 0;
+            animation: booking-photo-fade 24s infinite;
+        }
+        .booking-slide:nth-child(1) { background-image: url('assets/hero-slide-1.jpg'); }
+        .booking-slide:nth-child(2) { background-image: url('assets/hero-slide-2.jpg'); animation-delay: 6s; }
+        .booking-slide:nth-child(3) { background-image: url('assets/hero-slide-3.jpg'); animation-delay: 12s; }
+        .booking-slide:nth-child(4) { background-image: url('assets/hero-slide-4.jpg'); animation-delay: 18s; }
+        @keyframes booking-photo-fade {
+            0%, 100% { opacity: 0; }
+            5%, 25% { opacity: 1; }
+            30% { opacity: 0; }
+        }
+        .slideshow-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 8px 14px;
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 20px;
+            background: #4e3226;
+            color: #fff;
+            cursor: pointer;
+            font: inherit;
+            font-size: 12px;
+        }
+        .portal-wrapper.slideshow-paused .booking-slide { animation-play-state: paused; }
+        @media (prefers-reduced-motion: reduce) {
+            .booking-slide { animation: none; }
+            .slideshow-toggle { display: none; }
         }
 
         /* ── Lookup Form Card ── */
@@ -619,6 +670,13 @@ $csrf_token = get_csrf_token();
 </header>
 
 <div class="portal-wrapper">
+    <div class="booking-slideshow" aria-hidden="true">
+        <div class="booking-slide"></div>
+        <div class="booking-slide"></div>
+        <div class="booking-slide"></div>
+        <div class="booking-slide"></div>
+    </div>
+    <button type="button" class="slideshow-toggle" aria-pressed="false">Pause slideshow</button>
 
 <?php if (!$booking): ?>
 <!-- ═══════════════════════════════════════════
@@ -977,6 +1035,13 @@ $csrf_token = get_csrf_token();
 <?php endif; ?>
 
 </div><!-- /.portal-wrapper -->
+<script>
+document.querySelector('.slideshow-toggle').addEventListener('click', function () {
+    const paused = document.querySelector('.portal-wrapper').classList.toggle('slideshow-paused');
+    this.setAttribute('aria-pressed', String(paused));
+    this.textContent = paused ? 'Resume slideshow' : 'Pause slideshow';
+});
+</script>
 
 <!-- ── Footer ── -->
 <footer style="background:#1E293B; color:#94A3B8; text-align:center; padding:20px 16px; font-size:12px;">
