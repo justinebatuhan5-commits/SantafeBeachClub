@@ -2011,3 +2011,30 @@ body.home-page {
     flex-shrink: 0;
     border-radius: 50%;
 }
+
+/* Inline navigation fills the desktop header; mobile uses the drawer. */
+.home-page .header-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 2.5vw, 36px);
+    flex: 1;
+    padding: 0 24px;
+}
+.home-page .header-navigation a {
+    color: #5c3d2b;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 10px 0;
+    border-bottom: 2px solid transparent;
+}
+.home-page .header-navigation a:hover,
+.home-page .header-navigation a[aria-current="page"] {
+    color: #8a5a3a;
+    border-bottom-color: #8a5a3a;
+}
+@media (max-width: 900px) {
+    .home-page .header-navigation { display: none; }
+}

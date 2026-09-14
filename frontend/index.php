@@ -249,6 +249,13 @@ if ($price_q) {
                 <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
             </a>
         </div>
+        <nav class="header-navigation" aria-label="Main navigation">
+            <a href="index" aria-current="page"><?php echo __t('home'); ?></a>
+            <a href="rooms"><?php echo __t('rooms'); ?></a>
+            <a href="gallery"><?php echo __t('gallery'); ?></a>
+            <a href="contact"><?php echo __t('contact'); ?></a>
+            <a href="my_booking"><?php echo __t('my_booking'); ?></a>
+        </nav>
         <div class="header-action" style="display:flex; align-items:center; gap:10px;">
             <a href="rooms" class="btn-book-header"><?php echo __t('book_now'); ?></a>
             <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-controls="navigationDrawer" aria-haspopup="dialog" aria-label="Open navigation" aria-expanded="false">
