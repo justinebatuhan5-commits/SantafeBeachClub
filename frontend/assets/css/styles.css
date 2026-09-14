@@ -2068,12 +2068,12 @@ body.home-page {
 /* Shared rounded navbar for inner guest pages. */
 .site-navbar {
     top: 8px;
-    width: calc(100% - 48px);
-    max-width: none;
-    height: 68px;
+    width: calc(100% - 32px);
+    max-width: 1280px;
+    height: auto;
     min-height: 68px;
     margin: 8px auto;
-    padding: 7px 18px;
+    padding: 10px 18px;
     flex-wrap: nowrap;
     background: rgba(255, 251, 246, 0.96);
     border: 1px solid rgba(138, 90, 58, 0.16);
@@ -2082,9 +2082,10 @@ body.home-page {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
 }
-.site-navbar .logo-mark { width: 44px; height: 44px; }
-.site-navbar .nav-menu { margin: 0; padding: 0; width: auto; overflow: visible; }
-.site-navbar .nav-menu ul { gap: clamp(20px, 3vw, 46px); width: auto; }
+.site-navbar .logo-mark { width: 46px; height: 46px; }
+.site-navbar .brand-logo .logo-link { display: flex; }
+.site-navbar .nav-menu { flex: 1; margin: 0; padding: 0 24px; width: auto; overflow: visible; }
+.site-navbar .nav-menu ul { justify-content: center; gap: clamp(16px, 2.5vw, 36px); width: auto; }
 .site-navbar .nav-menu ul li a,
 .site-navbar .nav-menu ul li a[style] {
     padding: 10px 0;
@@ -2102,17 +2103,20 @@ body.home-page {
     border-bottom-color: #8a5a3a;
 }
 .site-navbar .btn-book-header {
-    padding: 10px 24px;
+    padding: 11px 22px;
     border-radius: 999px;
     background: linear-gradient(135deg, #c58f5f 0%, #8a5a3a 100%);
     color: #fff;
     box-shadow: 0 10px 24px rgba(138, 90, 58, 0.22);
 }
-@media (max-width: 768px) {
-    .site-navbar { top: 8px; width: calc(100% - 20px); height: auto; margin: 8px auto; padding: 10px 14px; flex-wrap: wrap; border-radius: 22px; }
-    .site-navbar .nav-menu { order: 3; width: 100%; margin-top: 8px; overflow-x: auto; }
-    .site-navbar .nav-menu ul { gap: 16px; width: max-content; }
+@media (max-width: 900px) {
+    .site-navbar { flex-wrap: wrap; }
+    .site-navbar .nav-menu { order: 3; flex: 0 0 100%; width: 100%; margin-top: 8px; padding: 8px 0 0; border-top: 1px solid #e5d6c8; }
+    .site-navbar .nav-menu ul { flex-wrap: wrap; gap: 4px 18px; width: 100%; }
     .site-navbar .nav-menu ul li a,
-    .site-navbar .nav-menu ul li a[style] { font-size: 13px; padding: 7px 2px; }
-    .site-navbar .btn-book-header { padding: 10px 16px; }
+    .site-navbar .nav-menu ul li a[style] { font-size: 14px; padding: 6px 0; }
+}
+@media (max-width: 480px) {
+    .site-navbar { width: calc(100% - 20px); padding: 8px 10px; }
+    .site-navbar .btn-book-header { padding: 10px 14px; }
 }
