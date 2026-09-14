@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
     <script src="assets/js/security.js" defer></script>
     <style>
         .contact-hero {
-            background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('assets/hero-slide-4.jpg') center/cover no-repeat;
+            background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('assets/hero-slide-4-hd.png') center/cover no-repeat;
             padding: 120px 20px 80px;
             text-align: center;
             color: #fff;

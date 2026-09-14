@@ -59,7 +59,7 @@ body.rooms-page {
 .rooms-hero {
     background:
         linear-gradient(to bottom, rgba(20,12,8,0.55) 0%, rgba(20,12,8,0.3) 100%),
-        url('../hero-slide-4.jpg') center/cover no-repeat;
+        url('../hero-slide-4-hd.png') center/cover no-repeat;
     padding: 112px 5% 48px;
     color: #fff;
 }

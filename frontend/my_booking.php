@@ -143,7 +143,7 @@ $csrf_token = get_csrf_token();
         .booking-slide:nth-child(1) { background-image: url('assets/hero-slide-1.jpg'); }
         .booking-slide:nth-child(2) { background-image: url('assets/hero-slide-2.jpg'); animation-delay: 6s; }
         .booking-slide:nth-child(3) { background-image: url('assets/hero-slide-3.jpg'); animation-delay: 12s; }
-        .booking-slide:nth-child(4) { background-image: url('assets/hero-slide-4.jpg'); animation-delay: 18s; }
+        .booking-slide:nth-child(4) { background-image: url('assets/hero-slide-4-hd.png'); animation-delay: 18s; }
         @keyframes booking-photo-fade {
             0%, 100% { opacity: 0; }
             5%, 25% { opacity: 1; }

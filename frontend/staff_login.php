@@ -251,9 +251,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             opacity: 1;
         }
 
-        .bg-slide:nth-child(1) { background-image: url('assets/images/staff_bg1.jpg'); animation-delay: 0s; }
-        .bg-slide:nth-child(2) { background-image: url('assets/images/staff_bg2.jpg'); animation-delay: -5s; }
-        .bg-slide:nth-child(3) { background-image: url('assets/images/staff_bg3.jpg'); animation-delay: -10s; }
+        .bg-slide:nth-child(1) { background-image: url('assets/hero-slide-4-hd.png'); animation-delay: 0s; }
+        .bg-slide:nth-child(2) { background-image: url('assets/images/admin-bg-beach.png'); animation-delay: -5s; }
+        .bg-slide:nth-child(3) { background-image: url('assets/images/admin-bg-resort-day.png'); animation-delay: -10s; }
 
         @keyframes kenBurns {
             from { transform: scale(1.0) translateX(0px); }

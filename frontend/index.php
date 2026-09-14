@@ -322,7 +322,7 @@ if ($price_q) {
             <div class="gallery-item" style="background-image: url('assets/hero-slide-3.jpg');">
                 <div class="gallery-item-overlay"><span>Tropical Gardens</span></div>
             </div>
-            <div class="gallery-item" style="background-image: url('assets/hero-slide-4.jpg');">
+            <div class="gallery-item" style="background-image: url('assets/hero-slide-4-hd.png');">
                 <div class="gallery-item-overlay"><span>Sunset Serenity</span></div>
             </div>
         </div>
