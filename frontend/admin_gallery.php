@@ -57,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     continue;
                 }
 
-                if ($filesize > 5 * 1024 * 1024) {
-                    $errors[] = "$origName: exceeds 5 MB limit.";
+                if ($filesize > 2 * 1024 * 1024) {
+                    $errors[] = "$origName: exceeds 2 MB limit.";
                     continue;
                 }
 
@@ -196,7 +196,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     <div class="modal-box" style="max-width:520px;width:95%;">
         <button class="modal-close" onclick="closeGalleryModal()">×</button>
         <h3>Add Photos</h3>
-        <p class="modal-sub">Drag &amp; drop or click to select multiple images (JPG, PNG, WebP — max 5 MB each).</p>
+        <p class="modal-sub">Drag &amp; drop or click to select multiple images (JPG, PNG, WebP — max 2 MB each).</p>
         <form method="POST" enctype="multipart/form-data" id="galleryUploadForm">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="add_photo">
@@ -259,7 +259,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     const uploadBtn  = document.getElementById('uploadBtn');
     const form       = document.getElementById('galleryUploadForm');
     const allowedTypes = ['image/jpeg','image/png','image/webp'];
-    const maxBytes     = 5 * 1024 * 1024;
+    const maxBytes     = 2 * 1024 * 1024;
 
     let selectedFiles = []; // DataTransfer-backed list
 
@@ -310,7 +310,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     function addFiles(fileList) {
         Array.from(fileList).forEach(f => {
             if (!allowedTypes.includes(f.type)) { alert(f.name + ' is not a supported format.'); return; }
-            if (f.size > maxBytes) { alert(f.name + ' exceeds the 5 MB limit.'); return; }
+            if (f.size > maxBytes) { alert(f.name + ' exceeds the 2 MB limit.'); return; }
             selectedFiles.push(f);
         });
         syncInputFiles();
