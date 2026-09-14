@@ -14,8 +14,20 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     <link rel="apple-touch-icon" href="assets/logo.jpg">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <style>
+        .gallery-page .site-navbar {
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            margin: 0;
+        }
         .page-header {
-            background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('assets/hero-slide-3.jpg') center/cover;
+            background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('assets/hero-slide-3.jpg') center/cover no-repeat;
+            min-height: 100vh;
+            min-height: 100svh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
             padding: 120px 20px 60px;
             text-align: center;
             color: white;
@@ -24,6 +36,9 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
             font-size: 42px;
             margin-bottom: 15px;
             font-family: 'Playfair Display', serif;
+        }
+        @media (max-width: 768px) {
+            .page-header { padding-top: 170px; }
         }
         .gallery-container {
             max-width: 1200px;
@@ -59,7 +74,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
         }
     </style>
 </head>
-<body>
+<body class="gallery-page">
     <!-- Header Navigation -->
     <header class="main-header site-navbar">
         <div class="brand-logo">
