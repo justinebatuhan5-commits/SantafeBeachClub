@@ -1640,7 +1640,7 @@ body.home-page {
         flex-direction: column;
         align-items: center;
         position: relative;
-        background: linear-gradient(rgba(20, 12, 8, 0.45), rgba(20, 12, 8, 0.7)), url('../hero-slide-1.jpg') center/cover no-repeat;
+        background: linear-gradient(rgba(20, 12, 8, 0.45), rgba(20, 12, 8, 0.7)), url('../hero-slide-1-hd.png') center/cover no-repeat;
     }
 
     .hero-content {
