@@ -250,7 +250,7 @@ $bookings_query = $conn->query("
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
@@ -1080,7 +1080,7 @@ window.onload = function() {
     const printWin = window.open('', '', 'width=420,height=700');
     printWin.document.write(`<html>
     <head>
-    <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
         <title>Receipt - <?php echo $rcpt; ?></title>
         <style>
             @page { size: 80mm auto; margin: 0; }

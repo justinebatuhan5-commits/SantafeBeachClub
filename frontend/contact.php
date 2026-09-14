@@ -34,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us - Santa Fe Beach Club</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-    <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
-    <link rel="shortcut icon" type="image/jpeg" href="assets/logo.jpg">
-    <link rel="apple-touch-icon" href="assets/logo.jpg">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="shortcut icon" type="image/png" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png?v=1">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <script src="assets/js/security.js" defer></script>
     <style>

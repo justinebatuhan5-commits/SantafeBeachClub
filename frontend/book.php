@@ -532,9 +532,9 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Reservation - Santa Fe Beach Club</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-    <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
-    <link rel="shortcut icon" type="image/jpeg" href="assets/logo.jpg">
-    <link rel="apple-touch-icon" href="assets/logo.jpg">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="shortcut icon" type="image/png" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png?v=1">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="assets/css/book.css?v=<?= time(); ?>">
     <script src="assets/js/security.js?v=<?= time(); ?>" defer></script>
