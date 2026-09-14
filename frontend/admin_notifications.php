@@ -9,6 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Handle POST actions for notifications
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    require_csrf_token();
     $action = $_POST['action'];
     
     if ($action === 'mark_read' && isset($_POST['notif_id'])) {
@@ -258,6 +259,234 @@ unset($_SESSION['notif_flash']);
             background: #f0f0f0;
         }
 
+        /* Modern notification workspace */
+        .notifications-page {
+            max-width: 1680px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .summary-banner {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            position: relative;
+            min-height: 112px;
+            padding: 20px 22px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        .summary-card::after {
+            content: '';
+            position: absolute;
+            right: -18px;
+            bottom: -28px;
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: var(--summary-tint);
+        }
+        .summary-card:nth-child(1) { --summary-color: #2563EB; --summary-tint: rgba(37, 99, 235, .09); }
+        .summary-card:nth-child(2) { --summary-color: #D97706; --summary-tint: rgba(217, 119, 6, .10); }
+        .summary-card:nth-child(3) { --summary-color: #DC2626; --summary-tint: rgba(220, 38, 38, .09); }
+        .summary-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--summary-tint) !important;
+            color: var(--summary-color);
+        }
+        .summary-value {
+            font-family: var(--font-heading);
+            font-size: 26px;
+            line-height: 1;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .summary-label {
+            margin-top: 7px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .dashboard-grid {
+            grid-template-columns: minmax(0, 1.8fr) minmax(320px, .8fr) !important;
+            gap: 20px;
+            align-items: start;
+        }
+        .card {
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow-sm);
+        }
+        .card-header {
+            margin-bottom: 0;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .card-header h2 {
+            font-family: var(--font-heading);
+            font-size: 17px;
+            color: var(--text-main);
+        }
+        .section-count {
+            display: inline-flex;
+            align-items: center;
+            min-height: 26px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .notif-card-list {
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .notif-item {
+            position: relative;
+            padding: 17px 18px 17px 20px;
+            border: 1px solid var(--border-light);
+            border-left-width: 3px;
+            border-radius: 13px;
+            background: var(--bg-surface);
+            box-shadow: none;
+        }
+        .notif-item:hover {
+            border-color: var(--border);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        .notif-item.unread {
+            background: color-mix(in srgb, var(--bg-surface) 94%, var(--notif-accent, #2563EB));
+        }
+        .notif-item.type-info { --notif-accent: #2563EB; border-left-color: var(--notif-accent); }
+        .notif-item.type-success { --notif-accent: #059669; border-left-color: var(--notif-accent); }
+        .notif-item.type-warning { --notif-accent: #D97706; border-left-color: var(--notif-accent); }
+        .notif-item.type-alert { --notif-accent: #DC2626; border-left-color: var(--notif-accent); }
+        .notif-item.unread::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--notif-accent);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--notif-accent) 14%, transparent);
+        }
+        .notif-content { min-width: 0; padding-right: 12px; }
+        .notif-item.unread .notif-content { padding-right: 28px; }
+        .notif-badge {
+            margin-bottom: 7px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            letter-spacing: .45px;
+        }
+        .notif-title {
+            font-family: var(--font-heading);
+            font-size: 15px;
+            color: var(--text-main);
+        }
+        .notif-msg {
+            color: var(--text-muted);
+            line-height: 1.55;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .notif-time { color: var(--text-subtle); margin-top: 9px; }
+        .notif-actions { align-items: center; margin-top: 2px; }
+        .btn-action-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0 10px;
+            border-color: var(--border);
+            border-radius: 9px;
+            background: var(--bg-surface);
+            color: var(--text-muted);
+        }
+        .btn-action-icon:hover { background: var(--sidebar-hover); color: var(--text-main); }
+        .btn-delete-notif { width: 34px; padding: 0; color: var(--red); }
+        .broadcast-card { position: sticky; top: 98px; }
+        .broadcast-intro {
+            margin: 10px 0 18px;
+            color: var(--text-muted);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+        .broadcast-form { display: flex; flex-direction: column; gap: 15px; }
+        .form-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .55px;
+            text-transform: uppercase;
+        }
+        .form-control {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font: 500 13px/1.5 var(--font-body);
+            transition: border-color .18s ease, box-shadow .18s ease;
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        textarea.form-control { resize: vertical; min-height: 118px; }
+        .broadcast-submit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            margin-top: 2px;
+            border: 0;
+            border-radius: 11px;
+            background: var(--primary-grad);
+            color: #fff;
+            font: 700 13px var(--font-body);
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(132, 86, 60, .22);
+        }
+        .broadcast-submit:hover { transform: translateY(-1px); box-shadow: 0 9px 20px rgba(132, 86, 60, .3); }
+        .notif-flash {
+            margin-bottom: 20px;
+            padding: 13px 16px;
+            border: 1px solid var(--green-border);
+            border-radius: 11px;
+            background: var(--green-bg);
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .notif-empty { padding: 64px 20px; text-align: center; color: var(--text-muted); }
+        @media (max-width: 1180px) {
+            .dashboard-grid { grid-template-columns: 1fr !important; }
+            .broadcast-card { position: static; }
+        }
+        @media (max-width: 700px) {
+            .summary-banner { grid-template-columns: 1fr; }
+            .summary-card { min-height: 90px; padding: 16px; }
+            .card { padding: 18px 14px; border-radius: 14px; }
+            .notif-item { flex-direction: column; padding: 15px; }
+            .notif-actions { width: 100%; justify-content: flex-end; }
+        }
+
     </style>
 </head>
 <body>
@@ -266,13 +495,14 @@ unset($_SESSION['notif_flash']);
 
     <!-- Main Dashboard Panel -->
     <main class="admin-main">
-        <div class="admin-body">
+        <div class="admin-body notifications-page">
         <!-- Top Bar (shared component, same as Dashboard) -->
         <?php
         $page_title = 'Admin Notifications';
         $page_subtitle = 'System alerts & booking updates';
         $header_extra_html = '
             <form method="POST" action="admin_notifications" style="margin: 0;">
+                ' . csrf_field() . '
                 <input type="hidden" name="action" value="mark_all_read">
                 <button type="submit" class="header-icon-btn" title="Mark All as Read" style="width: auto; padding: 0 15px; gap: 8px; font-weight: 600; font-size: 13px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -284,7 +514,7 @@ unset($_SESSION['notif_flash']);
         ?>
 
         <?php if ($notif_flash): ?>
-            <div style="background:#E8F5E9; color:#2E7D32; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:14px; font-weight:600;">
+            <div class="notif-flash">
                 <?php echo htmlspecialchars($notif_flash); ?>
             </div>
         <?php endif; ?>
@@ -296,8 +526,8 @@ unset($_SESSION['notif_flash']);
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path></svg>
                 </div>
                 <div>
-                    <h3 style="font-size: 20px; font-weight: 700; margin: 0;"><?php echo $unread_count; ?></h3>
-                    <p style="font-size: 12px; color: #777; margin: 0;">Unread Alerts</p>
+                    <h3 class="summary-value"><?php echo $unread_count; ?></h3>
+                    <p class="summary-label">Unread Alerts</p>
                 </div>
             </div>
 
@@ -306,8 +536,8 @@ unset($_SESSION['notif_flash']);
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path></svg>
                 </div>
                 <div>
-                    <h3 style="font-size: 20px; font-weight: 700; margin: 0;"><?php echo $pending_cnt; ?></h3>
-                    <p style="font-size: 12px; color: #777; margin: 0;">Pending Check-ins</p>
+                    <h3 class="summary-value"><?php echo $pending_cnt; ?></h3>
+                    <p class="summary-label">Pending Check-ins</p>
                 </div>
             </div>
 
@@ -316,18 +546,19 @@ unset($_SESSION['notif_flash']);
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
                 </div>
                 <div>
-                    <h3 style="font-size: 20px; font-weight: 700; margin: 0;"><?php echo $maint_cnt; ?></h3>
-                    <p style="font-size: 12px; color: #777; margin: 0;">Rooms in Maintenance</p>
+                    <h3 class="summary-value"><?php echo $maint_cnt; ?></h3>
+                    <p class="summary-label">Rooms in Maintenance</p>
                 </div>
             </div>
         </div>
 
-        <section class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+        <section class="dashboard-grid">
             
             <!-- Notifications List -->
             <div class="card">
                 <div class="card-header">
                     <h2>Recent Notifications</h2>
+                    <span class="section-count"><?php echo (int)$unread_count; ?> unread</span>
                 </div>
 
                 <div class="notif-card-list">
@@ -343,7 +574,7 @@ unset($_SESSION['notif_flash']);
                                 $badgeClass = 'badge-' . $type;
                             ?>
                             <div class="notif-item type-<?php echo $type; ?> <?php echo ($is_read ? '' : 'unread'); ?>">
-                                <div style="flex: 1; cursor: pointer;" onclick="showNotificationDetailModal({id: <?php echo $id; ?>, title: <?php echo json_encode($n['title']); ?>, message: <?php echo json_encode($n['message']); ?>, type: <?php echo json_encode($type); ?>, booking_id: <?php echo (int)($n['booking_id'] ?? 0); ?>, time: <?php echo json_encode($time); ?>})">
+                                <div class="notif-content" style="flex: 1; cursor: pointer;" onclick="showNotificationDetailModal({id: <?php echo $id; ?>, title: <?php echo json_encode($n['title']); ?>, message: <?php echo json_encode($n['message']); ?>, type: <?php echo json_encode($type); ?>, booking_id: <?php echo (int)($n['booking_id'] ?? 0); ?>, time: <?php echo json_encode($time); ?>})">
                                     <span class="notif-badge <?php echo $badgeClass; ?>"><?php echo strtoupper($type); ?></span>
                                     <div class="notif-title"><?php echo $title; ?></div>
                                     <div class="notif-msg"><?php echo $msg; ?></div>
@@ -352,42 +583,46 @@ unset($_SESSION['notif_flash']);
                                 <div class="notif-actions" onclick="event.stopPropagation();">
                                     <?php if (!$is_read): ?>
                                         <form method="POST" action="admin_notifications" style="margin:0;">
+                                            <?php echo csrf_field(); ?>
                                             <input type="hidden" name="action" value="mark_read">
                                             <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
                                             <button type="submit" class="btn-action-icon" title="Mark as read">✓ Read</button>
                                         </form>
                                     <?php endif; ?>
                                     <form method="POST" action="admin_notifications" style="margin:0;">
+                                        <?php echo csrf_field(); ?>
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
-                                        <button type="submit" class="btn-action-icon" style="color: #c62828;" title="Delete notification">✕</button>
+                                        <button type="submit" class="btn-action-icon btn-delete-notif" title="Delete notification" aria-label="Delete notification">✕</button>
                                     </form>
                                 </div>
                             </div>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <div style="text-align: center; color: #888; padding: 40px;">No notifications found</div>
+                        <div class="notif-empty">No notifications found</div>
                     <?php endif; ?>
                 </div>
             </div>
 
             <!-- Create New Broadcast Notification -->
-            <div class="card">
+            <div class="card broadcast-card">
                 <div class="card-header">
                     <h2>Send Alert Broadcast</h2>
                 </div>
 
-                <form method="POST" action="admin_notifications" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                <p class="broadcast-intro">Share an operational update with the front desk team. Choose the alert level that matches its urgency.</p>
+                <form method="POST" action="admin_notifications" class="broadcast-form">
+                    <?php echo csrf_field(); ?>
                     <input type="hidden" name="action" value="create_notif">
                     
                     <div>
-                        <label style="font-size: 12px; font-weight: 700; color: #555; display: block; margin-bottom: 6px;">TITLE</label>
-                        <input type="text" name="title" required placeholder="e.g. VIP Transfer Request" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                        <label class="form-label" for="broadcastTitle">Title</label>
+                        <input class="form-control" id="broadcastTitle" type="text" name="title" required maxlength="120" placeholder="e.g. VIP transfer request">
                     </div>
 
                     <div>
-                        <label style="font-size: 12px; font-weight: 700; color: #555; display: block; margin-bottom: 6px;">ALERT TYPE</label>
-                        <select name="type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: white;">
+                        <label class="form-label" for="broadcastType">Alert type</label>
+                        <select class="form-control" id="broadcastType" name="type">
                             <option value="info">Info (Blue)</option>
                             <option value="success">Success (Green)</option>
                             <option value="warning">Warning (Orange)</option>
@@ -396,11 +631,14 @@ unset($_SESSION['notif_flash']);
                     </div>
 
                     <div>
-                        <label style="font-size: 12px; font-weight: 700; color: #555; display: block; margin-bottom: 6px;">MESSAGE</label>
-                        <textarea name="message" required rows="4" placeholder="Enter broadcast message details..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit;"></textarea>
+                        <label class="form-label" for="broadcastMessage">Message</label>
+                        <textarea class="form-control" id="broadcastMessage" name="message" required rows="4" maxlength="1000" placeholder="Enter the broadcast details..."></textarea>
                     </div>
 
-                    <button type="submit" style="background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 5px;">Post Notification</button>
+                    <button type="submit" class="broadcast-submit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                        Post Notification
+                    </button>
                 </form>
             </div>
 
