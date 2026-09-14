@@ -1,13 +1,7 @@
 <?php
-require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
+require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
 $active_page = 'inquiries';
-
-// Ensure user is logged in
-if (!isset($_SESSION['admin_username'])) {
-    header("Location: admin_login");
-    exit;
-}
 
 // Handle marking as read/resolved
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {

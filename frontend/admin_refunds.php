@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
+require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -7,6 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $page_title = 'Refund Requests Management';
+$is_admin_user = (($_SESSION['admin_role'] ?? 'receptionist') === 'admin');
 
 // Get filter status
 $filter_status = trim($_GET['status'] ?? 'requested');
@@ -503,7 +504,7 @@ foreach ($valid_statuses as $s) {
 
                     <!-- Actions -->
                     <div class="refund-actions">
-                        <?php if ($filter_status === 'requested'): ?>
+                        <?php if ($is_admin_user && $filter_status === 'requested'): ?>
                             <button class="btn-approve" onclick="approveRefund(<?php echo $refund['id']; ?>, '<?php echo htmlspecialchars(addslashes($refund['guest_name'])); ?>', '<?php echo number_format($refund['net_refund'], 2); ?>')">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                 Approve Request
@@ -512,7 +513,7 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 Reject
                             </button>
-                        <?php elseif ($filter_status === 'approved'): ?>
+                        <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
                             <button class="btn-process" id="process-btn-<?php echo $refund['id']; ?>" onclick="processRefund(<?php echo $refund['id']; ?>)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                                 Process to PayMongo
