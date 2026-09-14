@@ -248,19 +248,10 @@ if ($price_q) {
                 <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
             </a>
         </div>
-        <nav class="nav-menu" id="mainNavMenu" aria-label="Main navigation" hidden>
-            <ul>
-                <li class="active"><a href="index"><?php echo __t('home'); ?></a></li>
-                <li><a href="rooms"><?php echo __t('rooms'); ?></a></li>
-                <li><a href="gallery"><?php echo __t('gallery'); ?></a></li>
-                <li><a href="contact"><?php echo __t('contact'); ?></a></li>
-                <li><a href="my_booking"><?php echo __t('my_booking'); ?></a></li>
-            </ul>
-        </nav>
         <div class="header-action" style="display:flex; align-items:center; gap:10px;">
             <a href="rooms" class="btn-book-header"><?php echo __t('book_now'); ?></a>
-            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-controls="mainNavMenu" aria-expanded="false">
-                <span id="navMenuLabel">Menu</span>
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-controls="navigationDrawer" aria-haspopup="dialog" aria-label="Open navigation" aria-expanded="false">
+
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -270,6 +261,16 @@ if ($price_q) {
         </div>
     </header>
 
+<dialog class="navigation-drawer" id="navigationDrawer" aria-label="Main navigation"><div class="drawer-heading"><h2>Explore Santa Fe</h2><button type="button" id="drawerClose" aria-label="Close navigation" autofocus>&times;</button></div>        <nav class="nav-menu" id="mainNavMenu" aria-label="Main navigation">
+            <ul>
+                <li class="active"><a href="index"><?php echo __t('home'); ?></a></li>
+                <li><a href="rooms"><?php echo __t('rooms'); ?></a></li>
+                <li><a href="gallery"><?php echo __t('gallery'); ?></a></li>
+                <li><a href="contact"><?php echo __t('contact'); ?></a></li>
+                <li><a href="my_booking"><?php echo __t('my_booking'); ?></a></li>
+            </ul>
+        </nav>
+</dialog>
     <!-- Hero Banner Section -->
     <section class="hero-section">
         <div class="hero-bg-slider" aria-hidden="true">
@@ -786,32 +787,23 @@ if ($price_q) {
             }
         }
 
-        // Collapsible navigation on desktop and mobile.
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mainNavMenu = document.getElementById('mainNavMenu');
-        if (mobileMenuBtn && mainNavMenu) {
-            const menuLabel = document.getElementById('navMenuLabel');
-            function setMenuOpen(open) {
-                mainNavMenu.hidden = !open;
-                mobileMenuBtn.setAttribute('aria-expanded', String(open));
-                menuLabel.textContent = open ? 'Close' : 'Menu';
-            }
-            mobileMenuBtn.addEventListener('click', function() {
-                setMenuOpen(mainNavMenu.hidden);
-            });
-            document.addEventListener('click', function(event) {
-                if (!event.target.closest('.main-header')) setMenuOpen(false);
-            });
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape' && !mainNavMenu.hidden) {
-                    setMenuOpen(false);
-                    mobileMenuBtn.focus();
-                }
-            });
-            document.addEventListener('focusin', function(event) {
-                if (!event.target.closest('.main-header')) setMenuOpen(false);
-            });
-        }
+        const drawer = document.getElementById('navigationDrawer');
+        mobileMenuBtn.addEventListener('click', () => {
+            drawer.showModal();
+            mobileMenuBtn.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('navigation-open');
+        });
+        document.getElementById('drawerClose').addEventListener('click', () => drawer.close());
+        drawer.addEventListener('click', event => {
+            const r = drawer.getBoundingClientRect();
+            if (event.target === drawer && (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)) drawer.close();
+        });
+        drawer.addEventListener('close', () => {
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('navigation-open');
+            mobileMenuBtn.focus();
+        });
     </script>
 
 </body>
