@@ -124,7 +124,7 @@ function booking_room_type(array $booking): string {
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=5">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
     <style>
         /* ── KPI Stat Cards ──────────────────────────────────── */
         .guest-stats-grid {

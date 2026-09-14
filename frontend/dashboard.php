@@ -101,7 +101,7 @@ if (empty($room_types)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reception Cockpit — Santa Fe Beach Club</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=5">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
     <style>
         /* Room Quick Action Modal & Interactive Elements */
         .room-block {
@@ -630,6 +630,7 @@ if (empty($room_types)) {
             formData.append('action', 'checkin');
             formData.append('booking_id', bookingId);
             formData.append('format', 'json');
+            formData.append('csrf_token', <?php echo json_encode(get_csrf_token()); ?>);
 
             fetch('checkin', {
                 method: 'POST',
@@ -670,7 +671,7 @@ if (empty($room_types)) {
                 }
             });
         }
-        filterArrivals();
+        filterArrivalsTable();
     </script>
 
 <!-- ── Overdue Check-out Warning Modal ────────────────────────────────────── -->

@@ -284,7 +284,7 @@ if ($bk_res) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Payment Processing — Santa Fe Beach Club</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=4">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
     <style>
         .table-responsive {
             width: 100%;

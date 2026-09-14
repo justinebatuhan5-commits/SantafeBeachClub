@@ -150,7 +150,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery — Santa Fe Beach Club</title>
-    <link rel="stylesheet" href="assets/css/admin.css?v=5">
+    <link rel="stylesheet" href="assets/css/admin.css?v=6">
 </head>
 <body>
     <?php $active_page = 'gallery'; include __DIR__ . '/partials/_sidebar.php'; ?>

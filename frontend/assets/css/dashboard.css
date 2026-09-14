@@ -3,7 +3,7 @@
    Builds upon modern design tokens with specialized reception UI components.
    ========================================================================== */
 
-@import url('admin.css?v=4');
+@import url('admin.css?v=6');
 
 :root {
     --color-sidebar-bg: var(--sidebar-bg);
@@ -27,14 +27,38 @@
 /* Reception Specific Grid Styles */
 .metrics-row {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 28px;
 }
 
-@media (max-width: 1300px) {
+.main-content > .admin-body {
+    width: 100%;
+    min-width: 0;
+}
+
+.metric-card,
+.dashboard-grid > .card {
+    min-width: 0;
+}
+
+.dashboard-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+}
+
+@media (max-width: 1500px) {
     .metrics-row {
         grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1250px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header .search-wrapper {
+        display: none;
     }
 }
 
@@ -207,4 +231,3 @@
         min-height: 44px;
     }
 }
-

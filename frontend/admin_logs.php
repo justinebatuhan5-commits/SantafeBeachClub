@@ -240,7 +240,7 @@ if ($tab === 'security') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System & Security Logs — Santa Fe Beach Club</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-    <link rel="stylesheet" href="assets/css/admin.css?v=5">
+    <link rel="stylesheet" href="assets/css/admin.css?v=6">
     <script src="assets/js/security.js" defer></script>
 </head>
 <body>
