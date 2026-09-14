@@ -541,11 +541,7 @@ if (empty($room_types)) {
                     </div>
                     <p style="margin:0; color:var(--text-muted); font-size:12.5px;">Under cleaning inspection or scheduled repairs.</p>
                 `;
-                btnSlot.innerHTML = `
-                    <a href="settings" class="btn-secondary" style="height:38px; padding:0 16px; font-size:13px; text-decoration:none; display:inline-flex; align-items:center;">
-                        Manage Rooms
-                    </a>
-                `;
+                btnSlot.innerHTML = '';
             }
             
             modal.classList.add('open');
