@@ -67,6 +67,19 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
             border-radius: 12px;
             color: #6b7280;
         }
+        .photo-card { padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+        .photo-card:focus-visible { outline: 3px solid #7c533c; outline-offset: 4px; }
+        .gallery-lightbox { margin: auto; padding: 0; border: 1px solid #ffffff26; border-radius: 16px; width: min(1200px, 94vw); max-width: 94vw; max-height: 94dvh; background: #171614; color: white; box-shadow: 0 24px 80px #0008; }
+        .gallery-lightbox::backdrop { background: rgba(0,0,0,.85); }
+        .lightbox-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; gap: 16px; }
+        .lightbox-toolbar h2 { font-size: 16px; color: white; margin: 0; }
+        .lightbox-image { display: block; width: 100%; height: min(72dvh, 850px); object-fit: contain; background: #111; }
+        .gallery-lightbox button { min-width: 44px; min-height: 44px; border: 1px solid #ffffff40; border-radius: 8px; padding: 8px 14px; color: white; background: #ffffff12; cursor: pointer; font: inherit; }
+        .gallery-lightbox button:hover { background: #ffffff26; }
+        .gallery-lightbox button:focus-visible { outline: 2px solid #e6c5a4; outline-offset: 3px; }
+        .lightbox-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 18px; }
+        .lightbox-controls span { font-size: 13px; color: #e0d6cc; }
+        @media (max-width: 400px) { .photo-grid { grid-template-columns: minmax(0, 1fr); } }
     </style>
 </head>
 <body class="gallery-page">
@@ -105,9 +118,9 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
         <?php else: ?>
             <div class="photo-grid">
                 <?php while ($p = $photos->fetch_assoc()): ?>
-                    <div class="photo-card">
+                    <button type="button" class="photo-card" aria-label="Enlarge gallery photo" aria-haspopup="dialog">
                         <img src="<?php echo htmlspecialchars(get_image_url($p['file_name'], 'assets/logo.jpg', 'assets/gallery/')); ?>" alt="Gallery Image" loading="lazy">
-                    </div>
+                    </button>
                 <?php endwhile; ?>
             </div>
         <?php endif; ?>
@@ -139,5 +152,62 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
             <p>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved.</p>
         </div>
     </footer>
+<dialog class="gallery-lightbox" aria-labelledby="lightbox-title">
+    <div class="lightbox-toolbar">
+        <h2 id="lightbox-title">Santa Fe Beach Club</h2>
+        <button type="button" class="lightbox-close" aria-label="Close photo viewer" autofocus>&times;</button>
+    </div>
+    <img class="lightbox-image" alt="">
+    <div class="lightbox-controls">
+        <button type="button" class="lightbox-prev" aria-label="Previous photo">&larr;</button>
+        <span class="lightbox-counter" aria-live="polite"></span>
+        <button type="button" class="lightbox-next" aria-label="Next photo">&rarr;</button>
+    </div>
+</dialog>
+<script>
+(function () {
+    const cards = Array.from(document.querySelectorAll('.photo-card'));
+    const viewer = document.querySelector('.gallery-lightbox');
+    const image = viewer.querySelector('.lightbox-image');
+    const counter = viewer.querySelector('.lightbox-counter');
+    let index = 0;
+    let opener = null;
+    let previousOverflow = '';
+    function showPhoto(next) {
+        index = (next + cards.length) % cards.length;
+        const source = cards[index].querySelector('img');
+        image.src = source.currentSrc || source.src;
+        image.alt = source.alt + ' ' + (index + 1);
+        counter.textContent = (index + 1) + ' / ' + cards.length;
+    }
+    cards.forEach(function (card, i) {
+        card.setAttribute('aria-label', 'Enlarge gallery photo ' + (i + 1));
+        card.addEventListener('click', function () {
+            opener = card;
+            showPhoto(i);
+            previousOverflow = document.body.style.overflow;
+            viewer.showModal();
+            document.body.style.overflow = 'hidden';
+        });
+    });
+    viewer.querySelector('.lightbox-close').addEventListener('click', function () { viewer.close(); });
+    viewer.querySelector('.lightbox-prev').addEventListener('click', function () { showPhoto(index - 1); });
+    viewer.querySelector('.lightbox-next').addEventListener('click', function () { showPhoto(index + 1); });
+    viewer.querySelectorAll('.lightbox-prev, .lightbox-next').forEach(function (button) { button.hidden = cards.length < 2; });
+    viewer.addEventListener('keydown', function (event) {
+        if (event.key === 'ArrowLeft') { event.preventDefault(); showPhoto(index - 1); }
+        if (event.key === 'ArrowRight') { event.preventDefault(); showPhoto(index + 1); }
+    });
+    viewer.addEventListener('click', function (event) {
+        const bounds = viewer.getBoundingClientRect();
+        if (event.target === viewer && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) viewer.close();
+    });
+    viewer.addEventListener('close', function () {
+        document.body.style.overflow = previousOverflow;
+        image.removeAttribute('src');
+        if (opener) opener.focus({ preventScroll: true });
+    });
+})();
+</script>
 </body>
 </html>
