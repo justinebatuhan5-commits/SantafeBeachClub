@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../backend/helpers/session_init.php';
+require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
 $active_page = 'inquiries';
 
@@ -11,6 +11,7 @@ if (!isset($_SESSION['admin_username'])) {
 
 // Handle marking as read/resolved
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    require_csrf_token();
     $inquiry_id = (int)($_POST['inquiry_id'] ?? 0);
     $action = $_POST['action'];
 
@@ -194,7 +195,8 @@ $inquiriesResult = $conn->query("SELECT * FROM inquiries ORDER BY created_at DES
                                 <?php if ($inq['status'] !== 'Resolved'): ?>
                                     <button type="submit" name="action" value="mark_resolved" class="btn-action btn-resolved">Mark Resolved</button>
                                 <?php endif; ?>
-                                <button type="button" class="btn-action btn-delete" onclick="showConfirm({ title: 'Delete Message', message: 'Are you sure you want to delete this message? This cannot be undone.', icon: 'trash', iconBg: '#FEE2E2', confirmText: 'Delete', onConfirm: () => this.closest('form').submit() })">Delete</button>
+                                <button type="button" class="btn-action btn-delete" onclick="showConfirm({ title: 'Delete Message', message: 'Are you sure you want to delete this message? This cannot be undone.', icon: 'trash', iconBg: '#FEE2E2', confirmText: 'Delete', onConfirm: () => this.form.requestSubmit(this.form.querySelector('[value=delete]')) })">Delete</button>
+                                <button type="submit" name="action" value="delete" hidden>Confirm Delete</button>
                             </form>
                             <a href="mailto:<?php echo htmlspecialchars($inq['guest_email']); ?>?subject=Re: <?php echo urlencode($inq['subject']); ?>" class="btn-action" style="background: #475569; text-decoration: none; display: inline-block;">Reply via Email</a>
                         </div>
