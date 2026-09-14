@@ -150,23 +150,8 @@ $csrf_token = get_csrf_token();
             5%, 25% { opacity: 1; }
             30% { opacity: 0; }
         }
-        .slideshow-toggle {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            padding: 8px 14px;
-            border: 1px solid rgba(255,255,255,0.6);
-            border-radius: 20px;
-            background: #4e3226;
-            color: #fff;
-            cursor: pointer;
-            font: inherit;
-            font-size: 12px;
-        }
-        .portal-wrapper.slideshow-paused .booking-slide { animation-play-state: paused; }
         @media (prefers-reduced-motion: reduce) {
             .booking-slide { animation: none; }
-            .slideshow-toggle { display: none; }
         }
 
         /* ── Lookup Form Card ── */
@@ -676,7 +661,6 @@ $csrf_token = get_csrf_token();
         <div class="booking-slide"></div>
         <div class="booking-slide"></div>
     </div>
-    <button type="button" class="slideshow-toggle" aria-pressed="false">Pause slideshow</button>
 
 <?php if (!$booking): ?>
 <!-- ═══════════════════════════════════════════
@@ -1035,13 +1019,6 @@ $csrf_token = get_csrf_token();
 <?php endif; ?>
 
 </div><!-- /.portal-wrapper -->
-<script>
-document.querySelector('.slideshow-toggle').addEventListener('click', function () {
-    const paused = document.querySelector('.portal-wrapper').classList.toggle('slideshow-paused');
-    this.setAttribute('aria-pressed', String(paused));
-    this.textContent = paused ? 'Resume slideshow' : 'Pause slideshow';
-});
-</script>
 
 <!-- ── Footer ── -->
 <footer style="background:#1E293B; color:#94A3B8; text-align:center; padding:20px 16px; font-size:12px;">
