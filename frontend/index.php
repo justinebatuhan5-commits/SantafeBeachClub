@@ -638,6 +638,11 @@ if ($price_q) {
                 var reply = data && data.reply ? data.reply : 'Sorry, I could not process that.';
                 addMessage('bot', reply);
                 renderQuickMenu(data && data.quick_menu ? data.quick_menu : []);
+                if (data && data.redirect_url) {
+                    window.setTimeout(function () {
+                        window.location.assign(data.redirect_url);
+                    }, 650);
+                }
             })
             .catch(function () {
                 addMessage('bot', 'Sorry, chatbot is unavailable right now.');

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/room_status_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -27,6 +28,7 @@ function chatbot_init_session(): void
                 'time' => '',
                 'name' => '',
             ],
+            'finder' => [],
         ];
     }
 }
@@ -41,6 +43,7 @@ function chatbot_reset_session(): void
             'time' => '',
             'name' => '',
         ],
+        'finder' => [],
     ];
 }
 
@@ -369,7 +372,84 @@ function chatbot_missing_prompt(array $missing): string
 
 function chatbot_quick_menu_start(): array
 {
-    return ['Book a room', 'See available rooms', 'Ask something else'];
+    return ['Find a room', 'Book a room', 'Ask a question'];
+}
+
+function chatbot_valid_stay_dates(string $checkIn, string $checkOut): bool
+{
+    $in = DateTimeImmutable::createFromFormat('!Y-m-d', $checkIn);
+    $out = DateTimeImmutable::createFromFormat('!Y-m-d', $checkOut);
+    return $in !== false && $out !== false && $in->format('Y-m-d') === $checkIn
+        && $out->format('Y-m-d') === $checkOut && $in >= new DateTimeImmutable('today') && $out > $in;
+}
+
+function chatbot_budget_from_message(string $message): ?float
+{
+    $clean = preg_replace('/[^0-9.]/', '', $message);
+    if ($clean === '' || !is_numeric($clean)) {
+        return null;
+    }
+    $budget = (float)$clean;
+    return $budget > 0 && $budget <= 1000000 ? $budget : null;
+}
+
+function chatbot_room_finder_results(mysqli $conn, string $checkIn, string $checkOut, int $guests, ?float $budget): array
+{
+    $sql = "SELECT r.type, MAX(r.capacity) AS capacity, COUNT(r.id) AS available_rooms
+            FROM rooms r
+            WHERE LOWER(COALESCE(r.status, '')) <> 'maintenance'
+              AND NOT EXISTS (
+                  SELECT 1 FROM bookings b
+                  WHERE b.room_id = r.id
+                    AND LOWER(COALESCE(b.status, '')) IN ('confirmed', 'checked in', 'pending', 'pending payment')
+                    AND b.check_in < ? AND b.check_out > ?
+              )
+            GROUP BY r.type
+            HAVING MAX(r.capacity) >= ?
+            ORDER BY r.type ASC";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        return [];
+    }
+    $stmt->bind_param('ssi', $checkOut, $checkIn, $guests);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $matches = [];
+
+    while ($result && ($room = $result->fetch_assoc())) {
+        $type = (string)$room['type'];
+        $pricing = calculateStayPricing($conn, $type, $checkIn, $checkOut, null, $guests);
+        if ($budget !== null && $pricing['total_amount'] > $budget) {
+            continue;
+        }
+        $matches[] = [
+            'type' => $type,
+            'label' => chatbot_service_label($type),
+            'capacity' => (int)$room['capacity'],
+            'available_rooms' => (int)$room['available_rooms'],
+            'nights' => (int)$pricing['nights'],
+            'total' => (float)$pricing['total_amount'],
+        ];
+    }
+    $stmt->close();
+
+    usort($matches, static function (array $a, array $b): int {
+        return $a['total'] <=> $b['total'];
+    });
+    return $matches;
+}
+
+function chatbot_room_finder_reply(array $finder, array $matches): string
+{
+    $nights = (int)$matches[0]['nights'];
+    $lines = ['I found these rooms for ' . $finder['guests'] . ' guest' . ($finder['guests'] === 1 ? '' : 's')
+        . ', ' . $nights . ' night' . ($nights === 1 ? '' : 's') . ':'];
+    foreach ($matches as $match) {
+        $lines[] = '• ' . $match['label'] . ' — fits up to ' . $match['capacity'] . ', ₱'
+            . number_format($match['total'], 2) . ' total (' . $match['available_rooms'] . ' available)';
+    }
+    $lines[] = "\nChoose a room below to continue to the secure booking page.";
+    return implode("\n", $lines);
 }
 
 function chatbot_detect_intent(string $message): string
@@ -601,10 +681,100 @@ $lowerMessage = strtolower($message);
 
 if ($lowerMessage === 'restart') {
     chatbot_reset_session();
-    chatbot_reply('Booking reset. I can help you: 1) Book a room 2) Show available rooms 3) Answer questions. What would you like to do?', [
+    chatbot_reply('Hi! Welcome to Santa Fe Beach Club. Tell me your travel dates and number of guests, and I will help you find a room.', [
         'current_step' => 'INTENT',
         'slots' => $_SESSION['chatbot']['slots'],
         'quick_menu' => chatbot_quick_menu_start(),
+    ]);
+}
+
+// Smart room finder: collect a stay range, party size, and optional total-stay budget.
+if ($currentStep === 'FINDER_CHECKIN') {
+    if (!chatbot_valid_date($message)) {
+        chatbot_reply('Please enter a valid check-in date in YYYY-MM-DD.', ['current_step' => 'FINDER_CHECKIN'], 422);
+    }
+    $state['finder'] = ['checkin' => $message];
+    $state['current_step'] = 'FINDER_CHECKOUT';
+    chatbot_reply('What is your check-out date? (YYYY-MM-DD)', ['current_step' => 'FINDER_CHECKOUT']);
+}
+
+if ($currentStep === 'FINDER_CHECKOUT') {
+    $finder = $state['finder'] ?? [];
+    if (empty($finder['checkin']) || !chatbot_valid_stay_dates((string)$finder['checkin'], $message)) {
+        chatbot_reply('Your check-out date must be after check-in. Please enter it in YYYY-MM-DD.', ['current_step' => 'FINDER_CHECKOUT'], 422);
+    }
+    $state['finder']['checkout'] = $message;
+    $state['current_step'] = 'FINDER_GUESTS';
+    chatbot_reply('How many guests will be staying?', ['current_step' => 'FINDER_GUESTS']);
+}
+
+if ($currentStep === 'FINDER_GUESTS') {
+    $guests = filter_var($message, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 20]]);
+    if ($guests === false) {
+        chatbot_reply('Please enter the number of guests, from 1 to 20.', ['current_step' => 'FINDER_GUESTS'], 422);
+    }
+    $state['finder']['guests'] = (int)$guests;
+    $state['current_step'] = 'FINDER_BUDGET';
+    chatbot_reply('Do you have a total-stay budget in pesos? Enter an amount, or type "skip".', [
+        'current_step' => 'FINDER_BUDGET',
+        'quick_menu' => ['Skip budget'],
+    ]);
+}
+
+if ($lowerMessage === 'find a room') {
+    $state['finder'] = [];
+    $state['current_step'] = 'FINDER_CHECKIN';
+    chatbot_reply('What is your check-in date? Please use YYYY-MM-DD.', ['current_step' => 'FINDER_CHECKIN']);
+}
+
+if ($currentStep === 'FINDER_BUDGET') {
+    $finder = $state['finder'] ?? [];
+    $budget = in_array($lowerMessage, ['skip', 'skip budget', 'no'], true) ? null : chatbot_budget_from_message($message);
+    if (!in_array($lowerMessage, ['skip', 'skip budget', 'no'], true) && $budget === null) {
+        chatbot_reply('Please enter a budget such as ₱8,000, or type "skip".', ['current_step' => 'FINDER_BUDGET'], 422);
+    }
+    $finder['budget'] = $budget;
+    $matches = chatbot_room_finder_results($conn, (string)$finder['checkin'], (string)$finder['checkout'], (int)$finder['guests'], $budget);
+    $state['finder'] = $finder;
+    $state['current_step'] = 'FINDER_RESULTS';
+    if (empty($matches)) {
+        chatbot_reply('I could not find a room that matches those dates, guests, and budget. Try a larger budget or different dates.', [
+            'current_step' => 'FINDER_BUDGET',
+            'quick_menu' => ['Skip budget', 'Find a room'],
+        ]);
+    }
+    $buttons = [];
+    foreach ($matches as $match) {
+        $buttons[] = 'Choose ' . $match['label'];
+    }
+    $buttons[] = 'Find a room';
+    chatbot_reply(chatbot_room_finder_reply($finder, $matches), [
+        'current_step' => 'FINDER_RESULTS',
+        'quick_menu' => $buttons,
+    ]);
+}
+
+if ($currentStep === 'FINDER_RESULTS' && preg_match('/^choose\s+(.+)$/i', $message, $choice)) {
+    $selectedLabel = trim($choice[1]);
+    $finder = $state['finder'] ?? [];
+    $typeStmt = $conn->prepare("SELECT name FROM room_types WHERE REPLACE(LOWER(name), '_', ' ') = LOWER(?) LIMIT 1");
+    $typeStmt->bind_param('s', $selectedLabel);
+    $typeStmt->execute();
+    $typeResult = $typeStmt->get_result();
+    $selectedType = $typeResult && $typeResult->num_rows ? (string)$typeResult->fetch_assoc()['name'] : '';
+    $typeStmt->close();
+    if ($selectedType === '' || empty($finder['checkin']) || empty($finder['checkout']) || empty($finder['guests'])) {
+        chatbot_reply('That room selection has expired. Please search again.', ['current_step' => 'INTENT'], 409);
+    }
+    $query = http_build_query([
+        'checkin' => $finder['checkin'],
+        'checkout' => $finder['checkout'],
+        'guests' => $finder['guests'],
+        'room_type' => $selectedType,
+    ]);
+    chatbot_reply('Opening your booking form for ' . chatbot_service_label($selectedType) . '.', [
+        'redirect_url' => 'book?' . $query,
+        'current_step' => 'FINDER_RESULTS',
     ]);
 }
 
@@ -625,7 +795,7 @@ if ($currentStep === 'INTENT') {
         ]);
     }
 
-    if ($lowerMessage === '3' || $lowerMessage === 'ask something else') {
+    if ($lowerMessage === '3' || $lowerMessage === 'ask something else' || $lowerMessage === 'ask a question') {
         chatbot_reply('Sure. Ask me your question, or type "book" if you want to reserve.', [
             'current_step' => 'INTENT',
             'slots' => $slots,
@@ -667,7 +837,7 @@ if ($currentStep === 'INTENT') {
         ]);
     }
 
-    chatbot_reply('I can help you: 1) Book a room 2) Show available rooms 3) Answer questions. What would you like to do?', [
+    chatbot_reply('I can help you find a room, make a booking, or answer a question. What would you like to do?', [
         'current_step' => 'INTENT',
         'slots' => $slots,
         'quick_menu' => chatbot_quick_menu_start(),
