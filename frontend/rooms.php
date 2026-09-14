@@ -322,6 +322,8 @@ $checkout_fmt = date('D, d M Y', strtotime($filter_checkout));
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-circle-32.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
 <?php
 $_sf_scheme = (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] === "on") ? "https" : "http";
 $_sf_host   = $_SERVER["HTTP_HOST"] ?? "localhost";
@@ -332,9 +334,6 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rooms & Accommodations â€“ Santa Fe Beach Club</title>
-    <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icons/favicon-circle.svg?v=2">
-    <link rel="shortcut icon" type="image/svg+xml" href="assets/icons/favicon-circle.svg?v=2">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png?v=1">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/rooms.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/rooms.css'); ?>">
 </head>

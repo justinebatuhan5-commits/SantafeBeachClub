@@ -7,6 +7,8 @@ require_once 'frontend/partials/_page_header.php';
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" sizes="32x32" href="frontend/assets/icons/favicon-circle-32.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="frontend/assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy & Terms - Santa Fe Beach Club</title>

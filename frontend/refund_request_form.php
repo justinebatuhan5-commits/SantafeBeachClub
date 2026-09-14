@@ -137,6 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-circle-32.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request Refund - Santa Fe Beach Club</title>
