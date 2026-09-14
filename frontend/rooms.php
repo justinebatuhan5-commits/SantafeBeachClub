@@ -332,8 +332,8 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rooms & Accommodations â€“ Santa Fe Beach Club</title>
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
-    <link rel="shortcut icon" type="image/png" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icons/favicon-circle.svg?v=2">
+    <link rel="shortcut icon" type="image/svg+xml" href="assets/icons/favicon-circle.svg?v=2">
     <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png?v=1">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/rooms.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/rooms.css'); ?>">

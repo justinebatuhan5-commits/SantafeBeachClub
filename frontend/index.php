@@ -34,8 +34,8 @@ if ($price_q) {
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Santa Fe Beach Club - Escape to Paradise</title>
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
-    <link rel="shortcut icon" type="image/png" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icons/favicon-circle.svg?v=2">
+    <link rel="shortcut icon" type="image/svg+xml" href="assets/icons/favicon-circle.svg?v=2">
     <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png?v=1">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <script src="assets/js/dark-mode-toggle.js" defer></script>

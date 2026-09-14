@@ -211,7 +211,7 @@ $default_prices = [
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icons/favicon-circle.svg?v=2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Types & Photos — Santa Fe Beach Club</title>

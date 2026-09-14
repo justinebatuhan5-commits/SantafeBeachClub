@@ -30,7 +30,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Command Dashboard — Santa Fe Beach Club</title>
-    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png?v=1">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="assets/icons/favicon-circle.svg?v=2">
     <link rel="stylesheet" href="assets/css/admin.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
