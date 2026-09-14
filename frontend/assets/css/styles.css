@@ -2002,3 +2002,12 @@ body.home-page {
 .home-page .navigation-drawer :focus-visible { outline: 3px solid #8a5a3a; outline-offset: 3px; }
 @keyframes drawer-enter { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @media (prefers-reduced-motion: reduce) { .home-page .navigation-drawer[open] { animation: none; } }
+
+/* Keep the drawer trigger at the far right beside Book Now. */
+.home-page .header-action .mobile-menu-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    flex-shrink: 0;
+    border-radius: 50%;
+}

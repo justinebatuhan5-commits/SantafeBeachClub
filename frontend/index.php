@@ -39,6 +39,7 @@ if ($price_q) {
     <link rel="apple-touch-icon" href="assets/logo.jpg">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <script src="assets/js/dark-mode-toggle.js" defer></script>
+    <script src="assets/js/navigation-drawer.js?v=<?php echo (int) filemtime(__DIR__ . '/assets/js/navigation-drawer.js'); ?>" defer></script>
     <style>
         .chatbot-toggle {
             position: fixed;
@@ -787,23 +788,6 @@ if ($price_q) {
             }
         }
 
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const drawer = document.getElementById('navigationDrawer');
-        mobileMenuBtn.addEventListener('click', () => {
-            drawer.showModal();
-            mobileMenuBtn.setAttribute('aria-expanded', 'true');
-            document.body.classList.add('navigation-open');
-        });
-        document.getElementById('drawerClose').addEventListener('click', () => drawer.close());
-        drawer.addEventListener('click', event => {
-            const r = drawer.getBoundingClientRect();
-            if (event.target === drawer && (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)) drawer.close();
-        });
-        drawer.addEventListener('close', () => {
-            mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            document.body.classList.remove('navigation-open');
-            mobileMenuBtn.focus();
-        });
     </script>
 
 </body>
