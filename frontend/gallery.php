@@ -23,11 +23,6 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
         }
         .page-header {
             background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('assets/hero-slide-3.jpg') center/cover no-repeat;
-            min-height: 100vh;
-            min-height: 100svh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
             padding: 120px 20px 60px;
             text-align: center;
             color: white;
