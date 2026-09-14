@@ -21,6 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- Change own password ---
     if ($action === 'change_password') {
+        if ($current_role !== 'admin') {
+            $error = 'Receptionist passwords can only be changed by an administrator.';
+        } else {
         $current_pw  = $_POST['current_password'] ?? '';
         $new_pw      = $_POST['new_password'] ?? '';
         $confirm_pw  = $_POST['confirm_password'] ?? '';
@@ -47,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Upgrade hash if stored with old algorithm
             SecurityLogger::log($conn, 'PASSWORD_CHANGED', 'User successfully changed password', SecurityLogger::LEVEL_INFO, $current_admin);
             $success = 'Password updated successfully.';
+        }
         }
     }
 
@@ -776,37 +780,6 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn-save">Update Username</button>
-                        </div>
-                    </form>
-                </div>
-                <?php endif; ?>
-
-                <!-- Change Password (Hidden for Admin) -->
-                <?php if (!$_is_admin): ?>
-                <div class="settings-card">
-                    <h3>Password</h3>
-                    <p class="card-desc">Choose a strong password. Must be at least 8 characters and include uppercase, lowercase, a number, and a special character (e.g. !@#$%).</p>
-                    <form method="POST" class="settings-form">
-                        <?php echo csrf_field(); ?>
-                        <input type="hidden" name="action" value="change_password">
-                        <div class="form-row single">
-                            <div>
-                                <label>Current Password</label>
-                                <input type="password" name="current_password" required placeholder="Enter current password">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div>
-                                <label>New Password</label>
-                                <input type="password" name="new_password" required minlength="8" placeholder="Min. 8 chars, upper, lower, number, symbol">
-                            </div>
-                            <div>
-                                <label>Confirm New Password</label>
-                                <input type="password" name="confirm_password" required minlength="8" placeholder="Repeat new password">
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-save">Update Password</button>
                         </div>
                     </form>
                 </div>
