@@ -216,7 +216,7 @@ $default_prices = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Types & Photos — Santa Fe Beach Club</title>
-    <link rel="stylesheet" href="assets/css/admin.css?v=4">
+    <link rel="stylesheet" href="assets/css/admin.css?v=5">
     <style>
         .rp-grid {
             display: grid;
