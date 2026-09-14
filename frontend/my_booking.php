@@ -630,8 +630,9 @@ $csrf_token = get_csrf_token();
     </style>
     <!-- reCAPTCHA v3 -->
     <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
+    <link rel="stylesheet" href="assets/css/my-booking.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/my-booking.css'); ?>">
 </head>
-<body>
+<body class="booking-page<?php echo !$booking ? ' booking-lookup-page' : ''; ?>">
 
 <!-- Header Navigation -->
 <header class="main-header site-navbar">
@@ -667,8 +668,15 @@ $csrf_token = get_csrf_token();
      LOOKUP FORM — Guest not authenticated yet
 ════════════════════════════════════════════ -->
 <div class="lookup-section">
+    <div class="booking-welcome">
+        <span class="booking-eyebrow">Santa Fe Beach Club</span>
+        <h2>A little closer<br>to your getaway.</h2>
+        <p>Your island plans, all in one place. View your reservation and get ready for your stay by the sea.</p>
+        <div class="booking-welcome-note">Sun, sand &amp; a stay to remember.</div>
+    </div>
     <div class="lookup-card">
         <div class="lookup-card-header">
+            <span class="booking-eyebrow">Your stay, made simple</span>
             <h1>My Booking</h1>
             <p>Enter your email and booking reference to view your reservation</p>
         </div>
