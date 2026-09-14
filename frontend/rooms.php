@@ -595,6 +595,11 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     </script>
 
     <!-- â”€â”€ Tab Navigation â”€â”€ -->
+    <!-- â”€â”€ Main Content + Sidebar â”€â”€ -->
+    <div class="rooms-layout">
+
+        <!-- â•â• Rooms Main Column â•â• -->
+        <main class="rooms-main">
     <div class="room-tabs-bar">
         <div class="room-tabs-inner" role="group" aria-label="Browse room categories">
             <button class="room-tab room-tab--active" type="button" aria-pressed="true" data-tab="recommended" onclick="switchTab('recommended', this)">
@@ -609,11 +614,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
         </div>
     </div>
 
-    <!-- â”€â”€ Main Content + Sidebar â”€â”€ -->
-    <div class="rooms-layout">
 
-        <!-- â•â• Rooms Main Column â•â• -->
-        <main class="rooms-main">
 
             <!-- RECOMMENDED TAB -->
             <div id="tab-recommended" class="tab-panel">
@@ -1254,7 +1255,7 @@ function switchTab(tab, btn) {
     var tabsBar = document.querySelector('.room-tabs-bar');
     var headerHeight = header ? Math.ceil(header.getBoundingClientRect().bottom) : 0;
     var tabsHeight = tabsBar ? Math.ceil(tabsBar.getBoundingClientRect().height) : 0;
-    var topOffset = headerHeight + tabsHeight + 24;
+    var topOffset = headerHeight + 24;
     var targetTop = window.scrollY + target.getBoundingClientRect().top - topOffset;
 
     window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
@@ -1267,7 +1268,7 @@ function syncRoomTabsOffset() {
     var tabsBar = document.querySelector('.room-tabs-bar');
     var tabsHeight = tabsBar ? Math.ceil(tabsBar.getBoundingClientRect().height) : 0;
     document.documentElement.style.setProperty('--rooms-sticky-tabs-top', (headerBottom + 8) + 'px');
-    document.documentElement.style.setProperty('--rooms-summary-top', (headerBottom + tabsHeight + 24) + 'px');
+    document.documentElement.style.setProperty('--rooms-summary-top', (headerBottom + 24) + 'px');
 }
 
 /* â”€â”€ Booking summary state â”€â”€ */
