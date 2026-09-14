@@ -54,6 +54,26 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
+// ── Absolute Session Lifetime Check (8 hours = 28800 seconds) ───────────
+$absolute_limit = 28800;
+if (isset($_SESSION['session_start_time']) && (time() - $_SESSION['session_start_time'] > $absolute_limit)) {
+    $role   = $_SESSION['admin_role'] ?? 'receptionist';
+    $source = $_SESSION['login_source'] ?? ($role === 'admin' ? 'admin' : 'reception');
+
+    session_unset();
+    session_destroy();
+
+    $dest = ($source === 'admin') ? 'admin_login?timeout=1' : 'staff_login?timeout=1';
+    if ($is_api_request) {
+        http_response_code(401);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'Session expired, please log in again', 'redirect' => $dest]);
+        exit;
+    }
+    header("Location: $dest");
+    exit;
+}
+
 // ── Inactivity Timeout Check (15 minutes = 900 seconds) ─────────────────
 $inactivity_limit = 900;
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $inactivity_limit)) {

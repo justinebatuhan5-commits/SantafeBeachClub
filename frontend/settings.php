@@ -183,7 +183,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($file['size'] > 5 * 1024 * 1024) { // 5MB max
                 $error = 'Profile photo exceeds maximum size of 5MB.';
             } else {
-                // Delete old local photo if exists
+                require_once __DIR__ . '/../backend/helpers/file_scanner.php';
+                $scanResult = scan_uploaded_file($file['tmp_name'], $fileExt);
+                if (!$scanResult['safe']) {
+                    $error = 'File rejected: ' . ($scanResult['reason'] ?? 'unsafe content detected');
+                } else {
+                    // Delete old local photo if exists
                 $oldStmt = $conn->prepare("SELECT profile_photo FROM `{$current_table}` WHERE username = ?");
                 $oldStmt->bind_param("s", $current_admin);
                 $oldStmt->execute();
@@ -222,6 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success = 'Profile photo updated successfully.';
                 } else {
                     $error = 'Failed to save uploaded image.';
+                }
                 }
             }
         } else {

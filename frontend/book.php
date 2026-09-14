@@ -286,9 +286,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Handle receipt upload for Bank Deposit
             if ($payment_method === 'Bank Deposit' && empty($error)) {
+                require_once __DIR__ . '/../backend/helpers/file_scanner.php';
                 $file_key = 'bank_receipt';
                 if (isset($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
-                    $upload_dir = __DIR__ . '/uploads/receipts/';
+                    // Store outside web root — protected by storage/.htaccess (Require all denied)
+                    $upload_dir = __DIR__ . '/../storage/receipts/';
                     if (!is_dir($upload_dir)) {
                         @mkdir($upload_dir, 0755, true);
                     }
@@ -304,17 +306,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($_FILES[$file_key]['size'] > $max_size) {
                         $error = 'File size exceeds 2MB limit. Please upload an image under 2MB.';
                         $step  = 3; $skip_insert = true;
-                    } elseif (in_array($file_ext, $allowed_exts, true) && in_array($realMime, $allowed_mimes, true)) {
-                        $new_filename = 'rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
-                        if (move_uploaded_file($tmpFile, $upload_dir . $new_filename)) {
-                            $receipt_url = 'uploads/receipts/' . $new_filename;
-                        } else {
-                            $error = 'Failed to upload receipt image. Please try again.';
-                            $step  = 3; $skip_insert = true;
-                        }
-                    } else {
+                    } elseif (!in_array($file_ext, $allowed_exts, true) || !in_array($realMime, $allowed_mimes, true)) {
                         $error = 'Invalid receipt file type. Only JPG, PNG, and PDF are allowed.';
                         $step  = 3; $skip_insert = true;
+                    } else {
+                        // Malware / dangerous content scan
+                        $scanResult = scan_uploaded_file($tmpFile, $file_ext);
+                        if (!$scanResult['safe']) {
+                            $error = 'File rejected: ' . ($scanResult['reason'] ?? 'unsafe content detected');
+                            $step  = 3; $skip_insert = true;
+                        } else {
+                            $new_filename = 'rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
+                            if (move_uploaded_file($tmpFile, $upload_dir . $new_filename)) {
+                                $receipt_url = 'storage/receipts/' . $new_filename;
+                            } else {
+                                $error = 'Failed to upload receipt image. Please try again.';
+                                $step  = 3; $skip_insert = true;
+                            }
+                        }
                     }
                 } else {
                     $error = 'Please upload a screenshot or image of your bank receipt.';
@@ -324,9 +333,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Handle receipt upload for GCash QR
             if ($payment_method === 'GCash QR' && empty($error)) {
+                require_once __DIR__ . '/../backend/helpers/file_scanner.php';
                 $file_key = 'gcash_receipt';
                 if (isset($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
-                    $upload_dir = __DIR__ . '/uploads/receipts/';
+                    // Store outside web root — protected by storage/.htaccess (Require all denied)
+                    $upload_dir = __DIR__ . '/../storage/receipts/';
                     if (!is_dir($upload_dir)) {
                         @mkdir($upload_dir, 0755, true);
                     }
@@ -342,17 +353,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($_FILES[$file_key]['size'] > $max_size) {
                         $error = 'File size exceeds 2MB limit. Please upload an image under 2MB.';
                         $step  = 3; $skip_insert = true;
-                    } elseif (in_array($file_ext, $allowed_exts, true) && in_array($realMime, $allowed_mimes, true)) {
-                        $new_filename = 'gcash_rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
-                        if (move_uploaded_file($tmpFile, $upload_dir . $new_filename)) {
-                            $receipt_url = 'uploads/receipts/' . $new_filename;
-                        } else {
-                            $error = 'Failed to upload GCash receipt. Please try again.';
-                            $step  = 3; $skip_insert = true;
-                        }
-                    } else {
+                    } elseif (!in_array($file_ext, $allowed_exts, true) || !in_array($realMime, $allowed_mimes, true)) {
                         $error = 'Invalid file type. Please upload a JPG or PNG screenshot of your GCash payment.';
                         $step  = 3; $skip_insert = true;
+                    } else {
+                        // Malware / dangerous content scan
+                        $scanResult = scan_uploaded_file($tmpFile, $file_ext);
+                        if (!$scanResult['safe']) {
+                            $error = 'File rejected: ' . ($scanResult['reason'] ?? 'unsafe content detected');
+                            $step  = 3; $skip_insert = true;
+                        } else {
+                            $new_filename = 'gcash_rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
+                            if (move_uploaded_file($tmpFile, $upload_dir . $new_filename)) {
+                                $receipt_url = 'storage/receipts/' . $new_filename;
+                            } else {
+                                $error = 'Failed to upload GCash receipt. Please try again.';
+                                $step  = 3; $skip_insert = true;
+                            }
+                        }
                     }
                 } else {
                     $error = 'Please upload a screenshot of your GCash payment receipt.';

@@ -96,9 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                 // Complete login
                 session_regenerate_id(true);
                 
-                $_SESSION['admin_logged_in'] = true;
-                $_SESSION['admin_username']  = $username;
-                $_SESSION['admin_role']      = $role;
+                $_SESSION['admin_logged_in']    = true;
+                $_SESSION['admin_username']     = $username;
+                $_SESSION['admin_role']         = $role;
+                $_SESSION['session_start_time'] = time(); // Absolute session expiry anchor
                 
                 // Clear MFA pending state
                 unset($_SESSION['mfa_pending_admin_id']);

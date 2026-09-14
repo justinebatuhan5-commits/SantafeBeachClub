@@ -10,10 +10,24 @@
  */
 
 $host     = '127.0.0.1';
-$port     = 3307;
+$port     = 3306;
 $user     = 'root';
 $pass     = '';
 $dbname   = 'santafe_beach_club';
+
+// Suppress strict exceptions during port detection
+mysqli_report(MYSQLI_REPORT_OFF);
+$testConn = @new mysqli($host, $user, $pass, $dbname, 3306);
+if ($testConn && !$testConn->connect_error) {
+    $port = 3306;
+    $testConn->close();
+} else {
+    $testConn2 = @new mysqli($host, $user, $pass, $dbname, 3307);
+    if ($testConn2 && !$testConn2->connect_error) {
+        $port = 3307;
+        $testConn2->close();
+    }
+}
 $mysqldump = 'C:\\xampp\\mysql\\bin\\mysqldump.exe';
 $backup_dir = __DIR__ . '/../logs/backups/';
 

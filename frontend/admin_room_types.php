@@ -25,9 +25,19 @@ function upload_room_image(array $file, string $type_slug): string|false {
     if ($file['error'] !== UPLOAD_ERR_OK) return false;
 
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    if (!in_array($ext, $allowed_ext, true))        return false;
-    if (!in_array($file['type'], $allowed_mime, true)) return false;
-    if ($file['size'] > $max_size)                  return false;
+    if (!in_array($ext, $allowed_ext, true)) return false;
+
+    // Magic bytes MIME inspection
+    $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+    $realMime = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    if (!in_array($realMime, $allowed_mime, true)) return false;
+    if ($file['size'] > $max_size) return false;
+
+    // Malware / dangerous content scan
+    require_once __DIR__ . '/../backend/helpers/file_scanner.php';
+    $scanResult = scan_uploaded_file($file['tmp_name'], $ext);
+    if (!$scanResult['safe']) return false;
 
     // Try Cloudinary first
     $cleanSlug = preg_replace('/[^a-z0-9_]/', '', $type_slug);

@@ -962,8 +962,29 @@ if ($bk_res) {
             printWin.document.close();
         }
     </script>
-
     <script>
+        function openProofImageModal(url) {
+            var img = document.getElementById("proofModalImg");
+            if (img) {
+                // If the receipt path points to private storage/receipts, route through authenticated serve_file API
+                if (url.startsWith("storage/")) {
+                    var relativePath = url.replace(/^storage\//, "");
+                    img.src = "../backend/api/serve_file.php?file=" + encodeURIComponent(relativePath);
+                } else {
+                    img.src = url;
+                }
+            }
+            var overlay = document.getElementById("proofOverlay");
+            if (overlay) overlay.classList.add("active");
+        }
+
+        function closeProofModal() {
+            var overlay = document.getElementById("proofOverlay");
+            if (overlay) overlay.classList.remove("active");
+            var img = document.getElementById("proofModalImg");
+            if (img) img.src = "";
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const searchInput = document.getElementById("paymentSearch");
             const statusFilter = document.getElementById("paymentStatusFilter");

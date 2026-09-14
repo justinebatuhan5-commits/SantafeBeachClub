@@ -25,8 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Check if avatar was uploaded
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['profile_photo'];
-            $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && $file['size'] <= 5 * 1024 * 1024) {
+            $allowedExts  = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            $fileExt  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+            $realMime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            require_once __DIR__ . '/../backend/helpers/file_scanner.php';
+            $scanResult = scan_uploaded_file($file['tmp_name'], $fileExt);
+            if (!$scanResult['safe']) {
+                $_SESSION['staff_error'] = 'File rejected: ' . ($scanResult['reason'] ?? 'unsafe content detected');
+            } elseif (in_array($fileExt, $allowedExts, true) && in_array($realMime, $allowedMimes, true) && $file['size'] <= 5 * 1024 * 1024) {
                 $cloudResult = cloudinary_upload($file['tmp_name'], 'sfbc_avatars');
                 if ($cloudResult['success'] && !empty($cloudResult['url'])) {
                     $photoPath = $cloudResult['url'];
@@ -40,6 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $photoPath = 'uploads/avatars/' . $filename;
                     }
                 }
+            } else {
+                $_SESSION['staff_error'] = 'Invalid image format or file too large. Allowed: JPG, PNG, WebP, GIF (max 5MB).';
             }
         }
 
@@ -85,8 +96,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['profile_photo'];
-            $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            if (in_array($fileExt, ['jpg', 'jpeg', 'png', 'webp', 'gif']) && $file['size'] <= 5 * 1024 * 1024) {
+            $allowedExts  = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            $fileExt  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+            $realMime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            require_once __DIR__ . '/../backend/helpers/file_scanner.php';
+            $scanResult = scan_uploaded_file($file['tmp_name'], $fileExt);
+            if (!$scanResult['safe']) {
+                $_SESSION['staff_error'] = 'File rejected: ' . ($scanResult['reason'] ?? 'unsafe content detected');
+            } elseif (in_array($fileExt, $allowedExts, true) && in_array($realMime, $allowedMimes, true) && $file['size'] <= 5 * 1024 * 1024) {
                 // Delete old local photo if exists
                 $oldStmt = $conn->prepare("SELECT profile_photo, username FROM `{$staffTable}` WHERE id = ?");
                 $oldStmt->bind_param("i", $target_id);

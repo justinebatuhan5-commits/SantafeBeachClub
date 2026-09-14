@@ -1,0 +1,19 @@
+# ════════════════════════════════════════════════════════════════════════════
+#  Santa Fe Beach Club — Private Storage Access Policy
+#  Deny ALL direct HTTP access to files stored here.
+#  Files must be served through backend/api/serve_file.php (authenticated).
+# ════════════════════════════════════════════════════════════════════════════
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2 fallback
+<IfModule !mod_authz_core.c>
+    Order Deny,Allow
+    Deny from all
+</IfModule>
+
+# Disable script execution and directory listing as extra layers
+Options -ExecCGI -Indexes

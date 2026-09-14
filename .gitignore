@@ -1,4 +1,4 @@
-# Environment / Secrets — NEVER commit real credentials (Checklist 7)
+                        # Environment / Secrets — NEVER commit real credentials (Checklist 7)
 .env
 .env.*
 .env.local
@@ -35,6 +35,10 @@ frontend/uploads/receipts/*
 !frontend/uploads/receipts/.gitkeep
 frontend/assets/qrcodes/*
 !frontend/assets/qrcodes/.gitkeep
+storage/receipts/*
+!storage/receipts/.gitkeep
+storage/avatars/*
+!storage/avatars/.gitkeep
 
 # OS / Editor files
 .DS_Store

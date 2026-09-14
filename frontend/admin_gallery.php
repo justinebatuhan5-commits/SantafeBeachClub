@@ -62,6 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     continue;
                 }
 
+                require_once __DIR__ . '/../backend/helpers/file_scanner.php';
+                $scanResult = scan_uploaded_file($tmpFile, $ext);
+                if (!$scanResult['safe']) {
+                    $errors[] = "$origName rejected: " . ($scanResult['reason'] ?? 'unsafe content detected');
+                    SecurityLogger::log($conn, 'FILE_UPLOAD_MALICIOUS', "Rejected unsafe content in $origName: " . ($scanResult['reason'] ?? ''), SecurityLogger::LEVEL_WARNING, $admin);
+                    continue;
+                }
+
                 // Try Cloudinary first, fall back to local
                 $cloudResult = cloudinary_upload($tmpFile, 'sfbc_gallery');
                 $savedPath   = null;
