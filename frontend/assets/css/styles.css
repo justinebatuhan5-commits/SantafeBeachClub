@@ -1911,10 +1911,13 @@ body.home-page {
     }
 }
 
-/* Compact homepage navigation; links stay tucked away until requested. */
+/* Float homepage navigation over the full-screen background. */
 .home-page .main-header {
+    position: fixed;
     top: 12px;
-    margin: 12px auto;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
     width: calc(100% - 32px);
     max-width: 1280px;
     padding: 10px 18px;
@@ -1970,7 +1973,7 @@ body.home-page {
 .home-page .main-header a:focus-visible,
 .home-page .mobile-menu-btn:focus-visible { outline: 3px solid #8a5a3a; outline-offset: 3px; }
 @media (max-width: 480px) {
-    .home-page .main-header { top: 8px; width: calc(100% - 20px); margin: 8px auto; padding: 8px 10px; }
+    .home-page .main-header { top: 8px; width: calc(100% - 20px); margin: 0; padding: 8px 10px; }
     .home-page .btn-book-header { padding: 10px 14px; }
     .home-page .mobile-menu-btn { padding: 10px 12px; gap: 6px; }
 }
@@ -2047,6 +2050,19 @@ body.home-page {
         border-top: 1px solid #e5d6c8;
     }
     .home-page .header-navigation a { font-size: 14px; padding: 6px 0; }
+}
+
+/* Keep the photo edge-to-edge and allow content to grow on smaller screens. */
+.home-page .hero-section {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding-top: 140px;
+    padding-bottom: 140px;
+}
+
+@media (max-width: 900px) {
+    .home-page .hero-section { padding-top: 180px; }
 }
 
 /* Shared rounded navbar for inner guest pages. */
