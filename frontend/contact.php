@@ -181,8 +181,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
             }
         }
     </style>
+    <link rel="stylesheet" href="assets/css/contact.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/contact.css'); ?>">
 </head>
-<body>
+<body class="contact-page">
 
     <header class="main-header site-navbar">
         <div class="brand-logo">
@@ -205,15 +206,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
     </header>
 
     <div class="contact-hero">
-        <h1>Get in Touch</h1>
+        <span class="contact-eyebrow">Santa Fe Beach Club · Contact</span>
+        <h1>Your island escape starts here.</h1>
         <p>We're here to help you plan your perfect island getaway. Reach out to us with any questions.</p>
     </div>
 
     <div class="contact-container">
         <!-- Contact Info -->
-        <div class="contact-card">
-            <h2 style="margin-top: 0; color: #0F172A;">Contact Information</h2>
-            <p style="color: #64748B;">Our reception desk is open 24/7. Feel free to contact us anytime.</p>
+        <div class="contact-card contact-details">
+            <span class="contact-eyebrow">We're here for you</span>
+            <h2>A little closer to paradise.</h2>
+            <p class="contact-intro">From planning your stay to finding your way here, our reception team is available 24/7.</p>
             
             <div class="contact-info-list">
                 <div class="contact-info-item">
@@ -222,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
                     </div>
                     <div class="contact-info-text">
                         <h4>Phone Number</h4>
-                        <p>+63 968 878 8960<br>(032) 421 7527</p>
+                        <p><a href="tel:+639688788960">+63 968 878 8960</a><br><a href="tel:+63324217527">(032) 421 7527</a></p>
                     </div>
                 </div>
                 
@@ -232,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
                     </div>
                     <div class="contact-info-text">
                         <h4>Email Address</h4>
-                        <p>info@santafebeachclub.com<br>bookings@santafebeachclub.com</p>
+                        <p><a href="mailto:info@santafebeachclub.com">info@santafebeachclub.com</a><br><a href="mailto:bookings@santafebeachclub.com">bookings@santafebeachclub.com</a></p>
                     </div>
                 </div>
 
@@ -250,8 +253,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
 
         <!-- Contact Form -->
         <div class="contact-card">
-            <h2 style="margin-top: 0; color: #0F172A;">Send us a Message</h2>
-            <p style="color: #64748B;">Fill out the form below and we'll get back to you as soon as possible.</p>
+            <span class="contact-eyebrow">Let's plan your stay</span>
+            <h2>Send us a message</h2>
+            <p class="contact-intro">Tell us what you have in mind. We'll help with the details.</p>
 
             <?php if ($message_sent): ?>
                 <div class="alert alert-success">
@@ -287,9 +291,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
     </div>
 
     <!-- Map Section -->
-    <div style="max-width: 1200px; margin: 0 auto 80px; padding: 0 20px;">
-        <div style="border-radius: 16px; overflow: hidden; height: 400px; background: #E2E8F0; position: relative;">
+    <div class="contact-map-section">
+        <div class="contact-map-heading">
+            <div><span class="contact-eyebrow">Find your way to the shore</span><h2>Meet us in Santa Fe</h2></div>
+            <p>Pantalan, Santa Fe · Cebu, Philippines</p>
+        </div>
+        <div class="contact-map-frame">
             <iframe 
+                title="Santa Fe Beach Club location on Google Maps"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1960.9161759603097!2d123.8115!3d11.1578!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a8864d4715bf85%3A0xc3143f65b82df211!2sSanta%20Fe%20Beach%20Club!5e0!3m2!1sen!2sph!4v1700000000000!5m2!1sen!2sph" 
                 width="100%" 
                 height="100%" 
