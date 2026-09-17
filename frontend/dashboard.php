@@ -101,7 +101,8 @@ if (empty($room_types)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reception Cockpit — Santa Fe Beach Club</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=<?php echo filemtime(__DIR__ . '/assets/css/dashboard.css'); ?>">
     <style>
         /* Room Quick Action Modal & Interactive Elements */
         .room-block {

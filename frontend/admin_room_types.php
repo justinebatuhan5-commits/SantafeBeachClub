@@ -556,7 +556,7 @@ $default_prices = [
     </div>
 
 </main>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const dropzones = document.querySelectorAll('.rp-dropzone');

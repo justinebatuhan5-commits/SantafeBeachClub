@@ -238,7 +238,7 @@ if (isset($conn)) {
     align-items: center;
     gap: 16px;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 300px;
 }
 
 .sidebar-toggle-btn {
@@ -277,7 +277,7 @@ if (isset($conn)) {
     letter-spacing: -0.3px;
     line-height: 1.25;
     margin: 0;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -297,6 +297,23 @@ if (isset($conn)) {
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.page-header {
+    flex-wrap: wrap;
+}
+
+.page-header .search-wrapper {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 180px;
+}
+
+.page-header .search-input {
+    width: 100%;
+    min-width: 0;
 }
 
 /* Redesigned Resort Clock */

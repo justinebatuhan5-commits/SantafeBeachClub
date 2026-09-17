@@ -383,6 +383,6 @@ if ($tab === 'security') {
             <?php endif; ?>
         </div>
     </main>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

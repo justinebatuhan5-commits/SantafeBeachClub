@@ -55,6 +55,8 @@
             if (control) control.addEventListener('click', function () { setOpen(!opened); });
         });
         overlay.addEventListener('click', function () { setOpen(false); });
+        // History navigation can restore an open menu and its backdrop.
+        window.addEventListener('pageshow', function () { setOpen(false); });
         document.addEventListener('click', function (event) {
             if (opened && !sidebar.contains(event.target) && !button.contains(event.target) &&
                 !(hamburger && hamburger.contains(event.target))) setOpen(false);

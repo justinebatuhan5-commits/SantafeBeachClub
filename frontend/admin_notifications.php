@@ -645,7 +645,7 @@ unset($_SESSION['notif_flash']);
         </section>
         </div>
     </main>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 
 <!-- ── Custom Accept Confirmation Modal ── -->
 <div id="acceptModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">

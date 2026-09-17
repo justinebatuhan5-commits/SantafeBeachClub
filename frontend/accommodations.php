@@ -234,6 +234,6 @@ if ($rooms_query && $rooms_query->num_rows > 0) {
             </table>
         </div>
     </main>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

@@ -383,9 +383,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!mc.querySelector('.admin-body')) {
             var wrapper = document.createElement('div');
             wrapper.className = 'admin-body';
-            while (mc.firstChild) {
-                wrapper.appendChild(mc.firstChild);
-            }
+            // Keep the sticky header outside the padded content container.
+            Array.from(mc.childNodes).forEach(function(node) {
+                if (node.nodeType === 1 && node.matches('.page-header')) return;
+                wrapper.appendChild(node);
+            });
             mc.appendChild(wrapper);
         }
     }
@@ -394,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script src="assets/js/dark-mode-toggle.js?v=4"></script>
-<script src="assets/js/sidebar-toggle.js?v=7"></script>
+<script src="assets/js/sidebar-toggle.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/sidebar-toggle.js'); ?>"></script>
 <script src="assets/js/security.js?v=4"></script>
 <script>
 // Sidebar search filter: filters nav links in real-time

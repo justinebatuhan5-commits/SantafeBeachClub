@@ -199,6 +199,6 @@ $promos = $conn->query("SELECT * FROM promotions ORDER BY is_active DESC, valid_
         </form>
     </div>
 </div>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

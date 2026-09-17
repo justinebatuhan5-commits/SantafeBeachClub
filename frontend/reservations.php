@@ -13,7 +13,8 @@ $bookings_query = $conn->query("SELECT id, guest_name, guest_email, guest_type, 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reservations Directory — Santa Fe Beach Club</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=<?php echo filemtime(__DIR__ . '/assets/css/dashboard.css'); ?>">
 </head>
 <body>
 

@@ -104,7 +104,8 @@ unset($_SESSION['notif_flash']);
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=<?php echo filemtime(__DIR__ . '/assets/css/dashboard.css'); ?>">
     <style>
         .notif-card-list {
             display: flex;
@@ -271,7 +272,7 @@ unset($_SESSION['notif_flash']);
             </div>
         </div>
     </main>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 
 <!-- ── Custom Accept Confirmation Modal ── -->
 <div id="acceptModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">

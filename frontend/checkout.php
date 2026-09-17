@@ -52,7 +52,8 @@ $bookings_query = $conn->query("SELECT id, guest_name, guest_email, guest_type, 
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=<?php echo filemtime(__DIR__ . '/assets/css/dashboard.css'); ?>">
     <style>
         .reservations-table {
             width: 100%;
@@ -212,6 +213,6 @@ $bookings_query = $conn->query("SELECT id, guest_name, guest_email, guest_type, 
             });
         }
     </script>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

@@ -875,7 +875,7 @@ function checkPasswordStrength() {
     strengthText.style.color = color;
 }
 </script>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>
 

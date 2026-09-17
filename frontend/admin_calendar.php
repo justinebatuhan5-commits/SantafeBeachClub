@@ -1332,6 +1332,6 @@ require_once 'partials/_sidebar.php';
 
 })();
 </script>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

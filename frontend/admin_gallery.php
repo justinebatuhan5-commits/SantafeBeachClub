@@ -349,6 +349,6 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     };
 })();
 </script>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

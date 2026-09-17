@@ -1061,7 +1061,7 @@ $bookings_query = $conn->query("
         </div>
     </div>
 
-<script src="assets/js/sidebar-toggle.js"></script>
+
 <script>
 // --- Walk-in Modal Logic ---
 function openWalkinModal() {

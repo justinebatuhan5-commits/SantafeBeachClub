@@ -284,7 +284,8 @@ if ($bk_res) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <title>Payment Processing — Santa Fe Beach Club</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=6">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=<?php echo filemtime(__DIR__ . '/assets/css/dashboard.css'); ?>">
     <style>
         .table-responsive {
             width: 100%;
@@ -1183,6 +1184,6 @@ if ($bk_res) {
             if (e.target === this) closeRejectModal();
         });
     </script>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

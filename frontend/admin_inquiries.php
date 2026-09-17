@@ -219,6 +219,6 @@ if (userMenuTrigger && userMenu) {
     });
 }
 </script>
-<script src="assets/js/sidebar-toggle.js"></script>
+
 </body>
 </html>

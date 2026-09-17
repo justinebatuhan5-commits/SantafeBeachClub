@@ -3,7 +3,7 @@
    Builds upon modern design tokens with specialized reception UI components.
    ========================================================================== */
 
-@import url('admin.css?v=6');
+/* Load admin.css before this stylesheet using a versioned link in the page head. */
 
 :root {
     --color-sidebar-bg: var(--sidebar-bg);
