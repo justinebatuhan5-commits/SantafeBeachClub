@@ -37,6 +37,19 @@ $state = []; $entries = [];
 try { $state = pc_backup_read(); $entries = backup_entries(backup_directory()); }
 catch (Throwable $e) { $error = $e->getMessage(); }
 function pc_html($value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
+$countdown = [
+    'enabled' => !empty($state['token_hash']),
+    'lastCreated' => (int)($state['last_created'] ?? 0),
+    // Estimate only: Windows owns the trigger and may have a different local schedule.
+    'intervalSeconds' => 6 * 60 * 60,
+    'serverNow' => time(),
+    'available' => $error === '',
+];
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['backup_status'])) {
+    header('Content-Type: application/json');
+    header('Cache-Control: no-store');
+    echo json_encode($countdown); exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,6 +68,12 @@ function pc_html($value): string { return htmlspecialchars((string)$value, ENT_Q
 <div class="backup-stat"><span class="backup-stat-label">Download schedule</span><strong>Every 6 hours</strong><span>While your PC is awake and signed in</span></div>
 <div class="backup-stat"><span class="backup-stat-label">Last PC request</span><strong><?= !empty($state['last_created']) ? pc_html(date('M d, Y · H:i', $state['last_created'])) : 'No requests yet' ?></strong><span>Confirm saved files in your PC download log</span></div>
 </div>
+<section class="backup-countdown" aria-label="Estimated next automatic backup">
+<div><span class="backup-eyebrow">NEXT AUTOMATIC BACKUP · ESTIMATED</span><h2 id="backup-countdown-status">Checking schedule…</h2><p id="backup-countdown-note">Based on the last PC request and the six-hour interval. Windows controls the actual run time.</p></div>
+<div class="backup-clock" role="timer" aria-label="Estimated time remaining" aria-live="off"><div><strong id="backup-hours">--</strong><span>HOURS</span></div><b aria-hidden="true">:</b><div><strong id="backup-minutes">--</strong><span>MINUTES</span></div><b aria-hidden="true">:</b><div><strong id="backup-seconds">--</strong><span>SECONDS</span></div></div>
+</section>
+<script type="application/json" id="backup-countdown-data"><?= json_encode($countdown, JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+<script src="assets/js/backup-countdown.js?v=<?= filemtime(__DIR__ . '/assets/js/backup-countdown.js') ?>" defer></script>
 <section class="backup-card" id="backup-setup"><div class="backup-section-heading"><div><span class="backup-eyebrow">GET CONNECTED</span><h2>Three steps to automatic backups</h2><p>A one-time setup for your Windows computer.</p></div><span class="backup-tag">Windows · SQL</span></div>
 <?php if ($error): ?><p role="alert"><?= pc_html($error) ?></p>
 <details open><summary>Storage diagnostics (administrator only)</summary>

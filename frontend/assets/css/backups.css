@@ -16,6 +16,15 @@
 .backup-stat > span:last-child { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
 .backup-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
 .backup-dot.is-enabled { background: var(--green); }
+.backup-countdown { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 28px; margin-bottom: 26px; background: var(--card-bg); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 16px; }
+.backup-countdown h2 { font-size: 20px; font-weight: 500; margin-bottom: 8px; }
+.backup-countdown p { max-width: 620px; font-size: 12px; line-height: 1.7; color: var(--text-muted); }
+.backup-clock { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.backup-clock > div { min-width: 70px; padding: 12px 10px; text-align: center; background: var(--primary-subtle); border: 1px solid var(--border); border-radius: 12px; }
+.backup-clock strong { display: block; font-family: var(--font-heading); font-size: 30px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.backup-clock span { font-size: 8px; letter-spacing: 1px; color: var(--text-muted); }
+.backup-clock b { color: var(--text-muted); font-size: 22px; }
+@media (max-width: 900px) { .backup-countdown { flex-direction: column; align-items: flex-start; padding: 22px; } .backup-clock { gap: 6px; } .backup-clock > div { min-width: 60px; } }
 .backup-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 28px; margin-bottom: 24px; }
 .backup-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .backup-card h2 { font-size: 23px; font-weight: 500; margin: 0 0 6px; }
