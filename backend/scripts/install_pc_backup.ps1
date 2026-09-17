@@ -28,10 +28,12 @@ $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
 if ($existing -and ($existing.Actions.Arguments -join ' ') -notlike "*$runner*") { throw 'A different task already uses this name.' }
 $powershell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $action = New-ScheduledTaskAction -Execute $powershell -Argument ('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $runner + '" -ConfigPath "' + $configPath + '"')
-$triggers = @((New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Hours 6)), (New-ScheduledTaskTrigger -AtLogOn -User $identity.Name))
+# Check frequently so an interrupted or delayed run does not defer the next
+# backup by another six-hour cycle. The downloader enforces the six-hour interval.
+$triggers = @((New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15)), (New-ScheduledTaskTrigger -AtLogOn -User $identity.Name))
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 20) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 10)
 $principal = New-ScheduledTaskPrincipal -UserId $identity.Name -LogonType Interactive -RunLevel Limited
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description 'Download a verified database backup from Agila every six hours while signed in; catch up at logon.' -Force | Out-Null
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description 'Check every 15 minutes while signed in; download a verified database backup when six hours have elapsed since the last success. Catch up at logon.' -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 Write-Output ('Installed. Backups: ' + $Destination)
 Write-Output ('Check first-download status in: ' + (Join-Path $taskRoot 'download.log'))
