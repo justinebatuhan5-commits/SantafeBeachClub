@@ -891,7 +891,7 @@ document.addEventListener('keydown', function(e) {
         var isMobile = window.innerWidth <= 1024;
         var isOpenMobile = document.querySelector('.admin-sidebar, .sidebar') &&
                            document.querySelector('.admin-sidebar, .sidebar').classList.contains('open');
-        if (isMobile) {
+        if (isMobile || document.documentElement.classList.contains('sbc-sidebar-dropdown')) {
             // On mobile: burger when closed, arrow when open overlay
             arrowIcon.style.display  = isOpenMobile ? '' : 'none';
             burgerIcon.style.display = isOpenMobile ? 'none' : '';

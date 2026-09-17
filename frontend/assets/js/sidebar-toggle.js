@@ -22,7 +22,9 @@
         button.className = 'sidebar-logo-restore';
         button.setAttribute('aria-controls', sidebar.id);
         button.appendChild(logo.cloneNode(true));
-        document.body.appendChild(button);
+        var headerLeft = header && header.querySelector('.page-header-left');
+        if (headerLeft) headerLeft.insertBefore(button, headerLeft.firstChild);
+        else document.body.appendChild(button);
 
         var overlay = document.createElement('div');
         overlay.className = 'sidebar-overlay';
@@ -30,12 +32,12 @@
         var opened = false;
 
         function positionPanel() {
-            var height = header ? header.getBoundingClientRect().height : 82;
-            root.style.setProperty('--sidebar-popup-top', height + 'px');
-            button.style.top = Math.max(8, (height - 42) / 2) + 'px';
+            var bottom = header ? header.getBoundingClientRect().bottom : 82;
+            root.style.setProperty('--sidebar-popup-top', Math.max(0, bottom) + 'px');
         }
 
         function setOpen(value) {
+            positionPanel();
             opened = value;
             sidebar.classList.toggle('open', value);
             sidebar.inert = !value;
@@ -64,16 +66,13 @@
             }
         });
         window.addEventListener('resize', positionPanel);
+        window.addEventListener('scroll', positionPanel, { passive: true });
         if (header && window.ResizeObserver) new ResizeObserver(positionPanel).observe(header);
         setOpen(false);
         positionPanel();
 
         var scrollBody = sidebar.querySelector('.sidebar-scroll-body') || sidebar;
-        var scrollKey = 'sbc_sidebar_scroll_pos';
-        scrollBody.addEventListener('scroll', function () {
-            try { sessionStorage.setItem(scrollKey, scrollBody.scrollTop); } catch (e) {}
-        }, { passive: true });
-        try { scrollBody.scrollTop = parseInt(sessionStorage.getItem(scrollKey), 10) || 0; } catch (e) {}
+        scrollBody.scrollTop = 0;
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();

@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script src="assets/js/dark-mode-toggle.js?v=4"></script>
-<script src="assets/js/sidebar-toggle.js?v=6"></script>
+<script src="assets/js/sidebar-toggle.js?v=7"></script>
 <script src="assets/js/security.js?v=4"></script>
 <script>
 // Sidebar search filter: filters nav links in real-time
