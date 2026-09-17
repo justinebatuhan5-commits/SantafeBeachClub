@@ -293,8 +293,54 @@ if ($bk_res) {
         }
         .reservations-table {
             width: 100%;
-            min-width: 750px;
+            min-width: 1000px;
+            table-layout: fixed;
             border-collapse: collapse;
+        }
+        .payments-page .page-header {
+            flex-wrap: wrap;
+        }
+        .payments-page .page-header-left {
+            flex: 1 1 280px;
+        }
+        .payments-page .page-header-title {
+            white-space: normal;
+        }
+        .payments-page .page-header-actions {
+            flex-wrap: wrap;
+            max-width: 100%;
+        }
+        .payments-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .payments-toolbar .search-wrapper {
+            flex: 1 1 220px;
+            max-width: 360px;
+            min-width: 0;
+        }
+        .payments-toolbar .search-input {
+            width: 100%;
+        }
+        .reservations-table td {
+            overflow-wrap: anywhere;
+        }
+        .reservations-table td:last-child > div,
+        .reservations-table td:last-child form {
+            flex-wrap: wrap;
+            max-width: 100%;
+        }
+        .reservations-table td:last-child select {
+            width: 100%;
+            min-width: 0;
+        }
+        .reservations-table td:last-child button,
+        .reservations-table td:last-child a {
+            max-width: 100%;
+            white-space: normal;
         }
         .reservations-table th, .reservations-table td {
             padding: 15px;
@@ -377,7 +423,7 @@ if ($bk_res) {
         }
     </style>
 </head>
-<body>
+<body class="payments-page">
 
     <?php $active_page = 'payments'; include __DIR__ . '/partials/_sidebar.php'; ?>
 
@@ -387,12 +433,12 @@ if ($bk_res) {
         <?php
         $page_title = 'Payment Processing';
         $page_subtitle = 'Manage bills and transactions';
-        $header_extra_html = '
+        $payments_toolbar_html = '
             <div class="search-wrapper">
                 <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="text" placeholder="Search invoice..." class="search-input" id="paymentSearch">
             </div>
-            <div class="filter-wrapper" style="margin-left: 12px; display: flex; align-items: center;">
+            <div class="filter-wrapper" style="display: flex; align-items: center;">
                 <select id="paymentStatusFilter" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #D1D5DB; outline: none; font-size: 14px; font-family: inherit; color: #374151; background-color: #fff;">
                     <option value="">All Statuses</option>
                     <option value="verified">Verified</option>
@@ -402,6 +448,7 @@ if ($bk_res) {
                 </select>
             </div>
         ';
+        $header_extra_html = '';
         include __DIR__ . '/partials/_page_header.php';
         ?>
 
@@ -438,8 +485,22 @@ if ($bk_res) {
                     <h2>Outstanding &amp; Settled Bills</h2>
                 </div>
 
+                <div class="payments-toolbar">
+                    <?php echo $payments_toolbar_html; ?>
+                </div>
                 <div class="table-responsive">
                 <table class="reservations-table">
+                    <colgroup>
+                        <col style="width:7%">
+                        <col style="width:9%">
+                        <col style="width:12%">
+                        <col style="width:15%">
+                        <col style="width:9%">
+                        <col style="width:7%">
+                        <col style="width:9%">
+                        <col style="width:15%">
+                        <col style="width:17%">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>Invoice #</th>
