@@ -2,29 +2,60 @@
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
+require_once __DIR__ . '/../backend/helpers/inquiry_guard.php';
+require_once __DIR__ . '/../backend/helpers/recaptcha_helper.php';
+header('Cache-Control: no-store');
 
 $message_sent = false;
 $error = '';
+$_SESSION['inquiry_tokens'] = array_filter($_SESSION['inquiry_tokens'] ?? [], static function ($issued) {
+    return time() - $issued <= 7200;
+});
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
     require_csrf_token();
-    $guest_name = trim($_POST['guest_name'] ?? '');
-    $guest_email = trim($_POST['guest_email'] ?? '');
-    $subject = trim($_POST['subject'] ?? '');
-    $message = trim($_POST['message'] ?? '');
-
-    if (empty($guest_name) || empty($guest_email) || empty($subject) || empty($message)) {
-        $error = 'Please fill in all fields.';
-    } else {
-        $stmt = $conn->prepare("INSERT INTO inquiries (guest_name, guest_email, subject, message) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $guest_name, $guest_email, $subject, $message);
-        if ($stmt->execute()) {
-            $message_sent = true;
-        } else {
-            $error = 'An error occurred while sending your message. Please try again.';
+    $error = inquiry_validate($_POST, $_SESSION['inquiry_tokens'], time());
+    if ($error === '') {
+        $guest_name = trim($_POST['guest_name']);
+        $guest_email = trim($_POST['guest_email']);
+        $subject = trim($_POST['subject']);
+        $message = trim($_POST['message']);
+        unset($_SESSION['inquiry_tokens'][$_POST['inquiry_token']]);
+        try {
+            $token = $_POST['g-recaptcha-response'] ?? '';
+            $verification = recaptcha_verify(is_string($token) ? $token : '', 'guest_inquiry', true);
+            if (!$verification['success']) {
+                $error = 'Security verification failed. Please try again shortly or contact us by phone.';
+            } elseif (!inquiry_reserve($conn, $_SERVER['REMOTE_ADDR'] ?? 'unknown', $guest_email, $subject, $message)) {
+                http_response_code(429);
+                $error = 'You have sent too many messages or already sent this message. Please try again later.';
+            }
+        } catch (Throwable $e) {
+            error_log('[Inquiry protection] ' . $e->getMessage());
+            $error = 'Unable to send your message right now. Please try again later.';
         }
-        $stmt->close();
     }
+    if ($error === '') {
+        try {
+            $stmt = $conn->prepare("INSERT INTO inquiries (guest_name, guest_email, subject, message) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $guest_name, $guest_email, $subject, $message);
+            if ($stmt->execute()) {
+                $message_sent = true;
+            } else {
+                $error = 'An error occurred while sending your message. Please try again.';
+            }
+            $stmt->close();
+        } catch (Throwable $e) {
+            error_log('[Inquiry submission] ' . $e->getMessage());
+            $error = 'Unable to send your message right now. Please try again later.';
+        }
+    }
+}
+$inquiry_token = bin2hex(random_bytes(32));
+$_SESSION['inquiry_tokens'][$inquiry_token] = time();
+$_SESSION['inquiry_tokens'] = array_slice($_SESSION['inquiry_tokens'], -10, null, true);
+function inquiry_value(string $field): string {
+    return htmlspecialchars(is_string($_POST[$field] ?? null) ? $_POST[$field] : '', ENT_QUOTES, 'UTF-8');
 }
 ?>
 <!DOCTYPE html>
@@ -265,23 +296,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
                     <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
                 <?php endif; ?>
 
-                <form method="POST" action="contact">
+                <form method="POST" action="contact" id="inquiry-form" data-site-key="<?php echo htmlspecialchars(RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>">
                     <?php echo csrf_field(); ?>
+                    <input type="hidden" name="submit_inquiry" value="1">
+                    <input type="hidden" name="inquiry_token" value="<?php echo $inquiry_token; ?>">
+                    <input type="hidden" name="g-recaptcha-response" id="inquiry-captcha">
+                    <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden">
+                        <label for="website">Leave this field empty</label>
+                        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+                    <p id="inquiry-security-error" role="alert" hidden></p>
+                    <noscript>Please enable JavaScript to complete the security check, or contact us by phone.</noscript>
                     <div class="form-group">
                         <label for="guest_name">Full Name</label>
-                        <input type="text" id="guest_name" name="guest_name" class="form-control" required placeholder="John Doe" data-validate="name" data-label="Full name" value="<?php echo htmlspecialchars($_POST['guest_name'] ?? ''); ?>">
+                        <input type="text" id="guest_name" name="guest_name" maxlength="150" class="form-control" required placeholder="John Doe" data-validate="name" data-label="Full name" value="<?php echo inquiry_value('guest_name'); ?>">
                     </div>
                     <div class="form-group">
                         <label for="guest_email">Email Address</label>
-                        <input type="email" id="guest_email" name="guest_email" class="form-control" required placeholder="john@example.com" data-validate="email" data-label="Email address" value="<?php echo htmlspecialchars($_POST['guest_email'] ?? ''); ?>">
+                        <input type="email" id="guest_email" name="guest_email" maxlength="150" class="form-control" required placeholder="john@example.com" data-validate="email" data-label="Email address" value="<?php echo inquiry_value('guest_email'); ?>">
                     </div>
                     <div class="form-group">
                         <label for="subject">Subject</label>
-                        <input type="text" id="subject" name="subject" class="form-control" required placeholder="e.g. Booking Inquiry" data-label="Subject" value="<?php echo htmlspecialchars($_POST['subject'] ?? ''); ?>">
+                        <input type="text" id="subject" name="subject" maxlength="200" class="form-control" required placeholder="e.g. Booking Inquiry" data-label="Subject" value="<?php echo inquiry_value('subject'); ?>">
                     </div>
                     <div class="form-group">
                         <label for="message">Message</label>
-                        <textarea id="message" name="message" class="form-control" required placeholder="How can we help you?" data-label="Message"><?php echo htmlspecialchars($_POST['message'] ?? ''); ?></textarea>
+                        <textarea id="message" name="message" maxlength="5000" class="form-control" required placeholder="How can we help you?" data-label="Message"><?php echo inquiry_value('message'); ?></textarea>
                     </div>
                     <button type="submit" name="submit_inquiry" class="btn-submit">Send Message</button>
                 </form>
@@ -343,5 +383,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_inquiry'])) {
             <p>&copy; 2024 Santa Fe Beach Club. All rights reserved.</p>
         </div>
     </footer>
+<script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode(RECAPTCHA_SITE_KEY); ?>" defer></script>
+<script src="assets/js/inquiry.js" defer></script>
 </body>
 </html>

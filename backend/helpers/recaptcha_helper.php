@@ -17,9 +17,10 @@ define('RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify'
  * @param  string $action     Expected action name (e.g. 'admin_login', 'staff_login').
  * @return array  ['success' => bool, 'score' => float, 'error' => string]
  */
-function recaptcha_verify(string $token, string $action = ''): array
+function recaptcha_verify(string $token, string $action = '', bool $strict = false): array
 {
     if (empty($token)) {
+        if ($strict) return ['success' => false, 'score' => 0.0, 'error' => 'Please complete the security check.'];
         // If Google CDN was blocked by browser extension/ad-blocker, log and fail open gracefully
         error_log("[reCAPTCHA] No token provided in submission.");
         return ['success' => true, 'score' => 0.9, 'error' => ''];
@@ -39,8 +40,8 @@ function recaptcha_verify(string $token, string $action = ''): array
             CURLOPT_POSTFIELDS     => $payload,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 5,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => $strict,
+            CURLOPT_SSL_VERIFYHOST => $strict ? 2 : 0,
         ]);
         $raw = curl_exec($ch);
         curl_close($ch);
@@ -55,14 +56,15 @@ function recaptcha_verify(string $token, string $action = ''): array
                 'timeout' => 5,
             ],
             'ssl' => [
-                'verify_peer'      => false,
-                'verify_peer_name' => false,
+                'verify_peer'      => $strict,
+                'verify_peer_name' => $strict,
             ],
         ]);
         $raw = @file_get_contents(RECAPTCHA_VERIFY_URL, false, $ctx);
     }
 
     if ($raw === false) {
+        if ($strict) return ['success' => false, 'score' => 0.0, 'error' => 'Security verification is unavailable. Please try again shortly.'];
         // Network failure — fail open gracefully so legitimate local users are not blocked
         error_log("[reCAPTCHA] Failed to reach Google reCAPTCHA servers. Failing open.");
         return ['success' => true, 'score' => 0.9, 'error' => ''];
