@@ -130,11 +130,7 @@ function _sb_badge($count, $type = '') {
 
 <script>
 (function() {
-    try {
-        if (localStorage.getItem('sbc_sidebar_collapsed') === 'true' && window.innerWidth > 1024) {
-            document.documentElement.classList.add('sbc-collapsed');
-        }
-    } catch(e) {}
+    document.documentElement.classList.add('sbc-sidebar-dropdown');
 })();
 </script>
 
@@ -398,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script src="assets/js/dark-mode-toggle.js?v=4"></script>
-<script src="assets/js/sidebar-toggle.js?v=5"></script>
+<script src="assets/js/sidebar-toggle.js?v=6"></script>
 <script src="assets/js/security.js?v=4"></script>
 <script>
 // Sidebar search filter: filters nav links in real-time
