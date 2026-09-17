@@ -65,3 +65,36 @@ html.sbc-sidebar-dropdown #appSidebar .sidebar-logo::before { content: none; }
     #appSidebar .workspace-heading h2 { font-size: 25px; }
 }
 @media (max-height: 650px) { .workspace-property { display: none; } .workspace-rail { gap: 4px; } .workspace-logo { margin-bottom: 4px; } .workspace-rail button { min-height: 60px; } }
+
+/* Persistent navigation: reserve space beside the content, with no backdrop. */
+html.sbc-sidebar-docked { --workspace-docked-width: 360px; }
+html.sbc-sidebar-docked body #appSidebar.workspace-sidebar {
+    position: fixed; top: 12px; bottom: 12px; left: 12px;
+    height: calc(100dvh - 24px);
+    width: var(--workspace-docked-width) !important;
+    opacity: 1; visibility: visible; transform: none !important;
+    box-shadow: var(--shadow-sm);
+}
+html.sbc-sidebar-docked body .admin-main,
+html.sbc-sidebar-docked body .main-content {
+    margin-left: calc(var(--workspace-docked-width) + 24px) !important;
+    width: calc(100% - var(--workspace-docked-width) - 24px) !important;
+    max-width: calc(100% - var(--workspace-docked-width) - 24px) !important;
+    min-width: 0;
+}
+html.sbc-sidebar-docked .sidebar-toggle-btn,
+html.sbc-sidebar-docked .sidebar-logo-restore,
+html.sbc-sidebar-docked .sidebar-overlay { display: none !important; }
+/* On phones, keep the menu visible above the content instead of covering it. */
+@media (max-width: 767px) {
+    html.sbc-sidebar-docked body { display: block; }
+    html.sbc-sidebar-docked body #appSidebar.workspace-sidebar {
+        position: relative; top: auto; bottom: auto; left: auto;
+        margin: 12px; width: calc(100% - 24px) !important;
+        height: min(620px, 80dvh);
+    }
+    html.sbc-sidebar-docked body .admin-main,
+    html.sbc-sidebar-docked body .main-content {
+        margin-left: 0 !important; width: 100% !important; max-width: 100% !important;
+    }
+}

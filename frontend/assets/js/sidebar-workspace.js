@@ -35,13 +35,6 @@
         title.className = 'workspace-heading';
         title.innerHTML = '<span>Santa Fe Beach Club</span><h2></h2>';
         brand.appendChild(title);
-        var close = document.createElement('button');
-        close.type = 'button';
-        close.className = 'workspace-close';
-        close.setAttribute('aria-label', 'Close navigation');
-        close.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 3v18m8-13-4 4 4 4"/></svg>';
-        close.addEventListener('click', function () { document.querySelector('.sidebar-logo-restore').click(); });
-        brand.appendChild(close);
         var footer = panel.querySelector('.sidebar-bottom');
         footer.appendChild(brand.querySelector('.dark-mode-btn'));
         var property = document.createElement('div');

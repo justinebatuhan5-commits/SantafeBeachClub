@@ -130,7 +130,7 @@ function _sb_badge($count, $type = '') {
 
 <script>
 (function() {
-    document.documentElement.classList.add('sbc-sidebar-dropdown');
+    document.documentElement.classList.add('sbc-sidebar-dropdown', 'sbc-sidebar-docked');
 })();
 </script>
 
