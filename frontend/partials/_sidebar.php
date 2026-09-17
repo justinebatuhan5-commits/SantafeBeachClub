@@ -142,13 +142,13 @@ function _sb_badge($count, $type = '') {
 <!-- ═══════════════ ADMIN SIDEBAR ═══════════════ -->
 <aside class="admin-sidebar" id="appSidebar">
     <div class="sidebar-brand">
-        <a href="admin_dashboard" style="text-decoration:none; display:flex; align-items:center; gap:12px; min-width:0;" title="Dashboard">
+        <button type="button" class="sidebar-logo-toggle" aria-label="Hide sidebar" aria-controls="appSidebar" aria-expanded="true" title="Hide sidebar">
             <img src="assets/logo.jpg" alt="Logo" class="brand-circle">
             <div class="brand-text">
                 <h2>Santa Fe</h2>
                 <p>Admin Command</p>
             </div>
-        </a>
+        </button>
         <button class="dark-mode-btn" title="Toggle Theme" aria-label="Toggle Theme" style="margin-left:auto;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
@@ -280,13 +280,13 @@ function _sb_badge($count, $type = '') {
 <!-- ═══════════════ RECEPTION SIDEBAR ═══════════════ -->
 <aside class="sidebar" id="appSidebar">
     <div class="sidebar-logo">
-        <a href="dashboard" style="text-decoration:none; display:flex; align-items:center; gap:12px; min-width:0;" title="Dashboard">
+        <button type="button" class="sidebar-logo-toggle" aria-label="Hide sidebar" aria-controls="appSidebar" aria-expanded="true" title="Hide sidebar">
             <img src="assets/logo.jpg" alt="Logo" class="logo-circle">
             <div class="logo-text-group">
                 <h2>Santa Fe</h2>
                 <p>Reception Desk</p>
             </div>
-        </a>
+        </button>
         <button class="dark-mode-btn" title="Toggle Theme" aria-label="Toggle Theme" style="margin-left:auto;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script src="assets/js/dark-mode-toggle.js?v=4"></script>
-<script src="assets/js/sidebar-toggle.js?v=4"></script>
+<script src="assets/js/sidebar-toggle.js?v=5"></script>
 <script src="assets/js/security.js?v=4"></script>
 <script>
 // Sidebar search filter: filters nav links in real-time

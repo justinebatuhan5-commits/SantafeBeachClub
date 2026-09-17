@@ -30,6 +30,27 @@
 
         // Use the hamburger button already rendered in the page header
         var toggleBtn = document.querySelector('.sidebar-toggle-btn');
+        var logoBtn = sidebar.querySelector('.sidebar-logo-toggle');
+        var restoreBtn;
+        if (logoBtn) {
+            restoreBtn = document.createElement('button');
+            restoreBtn.type = 'button';
+            restoreBtn.className = 'sidebar-logo-restore';
+            restoreBtn.title = 'Show sidebar';
+            restoreBtn.setAttribute('aria-label', 'Show sidebar');
+            restoreBtn.setAttribute('aria-controls', sidebar.id);
+            restoreBtn.setAttribute('aria-expanded', 'false');
+            restoreBtn.appendChild(logoBtn.querySelector('img').cloneNode(true));
+            restoreBtn.hidden = true;
+            document.body.appendChild(restoreBtn);
+        }
+
+        function setLogoHidden(hidden) {
+            document.documentElement.classList.toggle('sbc-sidebar-hidden', hidden);
+            sidebar.inert = hidden;
+            if (restoreBtn) restoreBtn.hidden = !hidden;
+            if (logoBtn) logoBtn.setAttribute('aria-expanded', String(!hidden));
+        }
 
         // Overlay backdrop (mobile/tablet only)
         var overlay = document.createElement('div');
@@ -37,6 +58,7 @@
         document.body.appendChild(overlay);
 
         function openSidebar() {
+            setLogoHidden(false);
             if (isMobile()) {
                 sidebar.classList.add('open');
                 overlay.classList.add('active');
@@ -63,6 +85,10 @@
         }
 
         function toggleSidebar() {
+            if (document.documentElement.classList.contains('sbc-sidebar-hidden')) {
+                openSidebar();
+                return;
+            }
             var isCollapsed = sidebar.classList.contains('collapsed') || document.documentElement.classList.contains('sbc-collapsed');
             var isOpenState = isMobile() ? sidebar.classList.contains('open') : !isCollapsed;
             if (isOpenState) {
@@ -76,6 +102,22 @@
             toggleBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 toggleSidebar();
+            });
+        }
+
+        if (logoBtn) {
+            logoBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                setLogoHidden(true);
+                restoreBtn.focus();
+            });
+            restoreBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                setLogoHidden(false);
+                if (isMobile()) openSidebar();
+                logoBtn.focus();
             });
         }
 
