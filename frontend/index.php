@@ -453,20 +453,19 @@ if ($price_q) {
 
             const fd = new FormData(form);
             try {
-                const res = await fetch("api/submit_review", {
+                const res = await fetch("api_submit_review.php", {
                     method: "POST",
                     body: fd
                 });
                 const data = await res.json();
-                if (data.success) {
+                if (res.ok && data.success === true) {
                     alert("Thank you! Your review has been submitted and will appear after admin approval.");
                     location.reload();
                 } else {
                     alert(data.error || "Failed to submit review. Please try again.");
                 }
             } catch (err) {
-                alert("Review submitted successfully! Refreshing...");
-                location.reload();
+                alert("Unable to confirm your review was submitted. Please try again later.");
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Submit Review";
