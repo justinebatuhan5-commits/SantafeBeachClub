@@ -396,6 +396,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script src="assets/js/dark-mode-toggle.js?v=4"></script>
+<link rel="stylesheet" href="assets/css/sidebar-workspace.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/sidebar-workspace.css'); ?>">
+<script src="assets/js/sidebar-workspace.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/sidebar-workspace.js'); ?>"></script>
 <script src="assets/js/sidebar-toggle.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/sidebar-toggle.js'); ?>"></script>
 <script src="assets/js/security.js?v=4"></script>
 <script>
@@ -408,6 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!sidebar) return;
 
         input.addEventListener('input', function() {
+            if (sidebar.classList.contains('workspace-sidebar')) return;
             var query = this.value.trim().toLowerCase();
             var links = sidebar.querySelectorAll('.sidebar-link, .nav-item');
             var sections = sidebar.querySelectorAll('.sidebar-section-label');
