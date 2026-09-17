@@ -40,7 +40,7 @@ function pc_html($value): string { return htmlspecialchars((string)$value, ENT_Q
 ?>
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PC Database Backups — Santa Fe Beach Club</title><link rel="stylesheet" href="assets/css/admin.css?v=6">
+<title>PC Database Backups — Santa Fe Beach Club</title><link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
 <style>.backup-card{background:var(--card-bg,#fff);border:1px solid var(--border,#ddd);border-radius:14px;padding:24px;margin-bottom:20px}.backup-card p,.backup-card li{line-height:1.8}.backup-actions{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}.backup-card input{padding:10px;max-width:100%;width:420px}.backup-table{width:100%;border-collapse:collapse}.backup-table td,.backup-table th{padding:12px;text-align:left;border-bottom:1px solid var(--border,#ddd)}.backup-scroll{overflow:auto}</style>
 </head><body>
 <?php $active_page = 'backups'; include __DIR__ . '/partials/_sidebar.php'; ?>

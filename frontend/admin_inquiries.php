@@ -44,7 +44,7 @@ $inquiriesResult = $conn->query("SELECT * FROM inquiries ORDER BY created_at DES
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inquiries - Admin Dashboard</title>
-    <link rel="stylesheet" href="assets/css/admin.css?v=6">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
     <style>
         .inquiries-container {
             padding: 24px;
