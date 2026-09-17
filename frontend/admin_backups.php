@@ -41,15 +41,21 @@ function pc_html($value): string { return htmlspecialchars((string)$value, ENT_Q
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PC Database Backups — Santa Fe Beach Club</title><link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
-<style>.backup-card{background:var(--card-bg,#fff);border:1px solid var(--border,#ddd);border-radius:14px;padding:24px;margin-bottom:20px}.backup-card p,.backup-card li{line-height:1.8}.backup-actions{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}.backup-card input{padding:10px;max-width:100%;width:420px}.backup-table{width:100%;border-collapse:collapse}.backup-table td,.backup-table th{padding:12px;text-align:left;border-bottom:1px solid var(--border,#ddd)}.backup-scroll{overflow:auto}</style>
+<link rel="stylesheet" href="assets/css/backups.css?v=<?= filemtime(__DIR__ . '/assets/css/backups.css') ?>">
 </head><body>
 <?php $active_page = 'backups'; include __DIR__ . '/partials/_sidebar.php'; ?>
 <main class="admin-main"><?php $page_title = 'PC Database Backups'; $page_subtitle = 'Download your hosted database to your computer every six hours.'; include __DIR__ . '/partials/_page_header.php'; ?>
-<div class="admin-body">
-<section class="backup-card"><h2>Automatic backups to your PC</h2>
-<p>Your Windows task requests a fresh database backup from this website every six hours and saves a verified SQL file in your Documents folder. Your PC must be on, awake, connected to the internet, and signed in. Missed runs are checked when you sign in again.</p>
-<p><?= !empty($state['token_hash']) ? 'A PC access key is enabled. Complete the Windows installation to start downloads.' : 'No PC access key is enabled yet.' ?></p>
-<?php if (!empty($state['last_created'])): ?><p>Last backup requested by the PC: <?= pc_html(date('M d, Y H:i:s', $state['last_created'])) ?>. Check the PC download log to confirm it was saved.</p><?php endif; ?>
+<div class="admin-body backup-page">
+<section class="backup-hero">
+<div><span class="backup-eyebrow">DATABASE BACKUPS</span><h2>A little peace of mind.<br>A copy on your PC.</h2><p>Keep your booking records close with scheduled SQL downloads to your Windows computer.</p><a class="backup-hero-link" href="#backup-setup">Set up your PC <span aria-hidden="true">&#8599;</span></a></div>
+<div class="backup-illustration" aria-hidden="true"><svg viewBox="0 0 280 180" fill="none"><circle cx="140" cy="90" r="79" stroke="currentColor" stroke-opacity=".15"/><circle cx="140" cy="90" r="58" stroke="currentColor" stroke-opacity=".12"/><rect x="96" y="72" width="133" height="83" rx="10" fill="#f5ece5"/><rect x="104" y="80" width="117" height="65" rx="5" fill="#563c31"/><path d="M153 156v10m-23 0h46" stroke="#f5ece5" stroke-width="6" stroke-linecap="round"/><ellipse cx="77" cy="44" rx="35" ry="13" fill="#e5bd93"/><path d="M42 44v45c0 17 70 17 70 0V44" fill="#d3a475"/><ellipse cx="77" cy="44" rx="35" ry="13" fill="#f3d6b4"/><path d="M42 65c0 17 70 17 70 0m-70 21c0 17 70 17 70 0" stroke="#8b603f" stroke-width="2"/><path d="M143 44h26a13 13 0 0 1 13 13v47m-10-10 10 10 10-10" stroke="#e5bd93" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="m150 115 9 9 18-19" stroke="#f3d6b4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>YOUR DATABASE. SAFELY COPIED.</span></div>
+</section>
+<div class="backup-stats">
+<div class="backup-stat"><span class="backup-stat-label">PC access key</span><strong><i class="backup-dot <?= !empty($state['token_hash']) ? 'is-enabled' : '' ?>"></i><?= !empty($state['token_hash']) ? 'Enabled' : 'Not connected' ?></strong><span><?= !empty($state['token_hash']) ? 'Complete setup on your Windows PC' : 'Start with the connection file below' ?></span></div>
+<div class="backup-stat"><span class="backup-stat-label">Download schedule</span><strong>Every 6 hours</strong><span>While your PC is awake and signed in</span></div>
+<div class="backup-stat"><span class="backup-stat-label">Last PC request</span><strong><?= !empty($state['last_created']) ? pc_html(date('M d, Y · H:i', $state['last_created'])) : 'No requests yet' ?></strong><span>Confirm saved files in your PC download log</span></div>
+</div>
+<section class="backup-card" id="backup-setup"><div class="backup-section-heading"><div><span class="backup-eyebrow">GET CONNECTED</span><h2>Three steps to automatic backups</h2><p>A one-time setup for your Windows computer.</p></div><span class="backup-tag">Windows · SQL</span></div>
 <?php if ($error): ?><p role="alert"><?= pc_html($error) ?></p>
 <details open><summary>Storage diagnostics (administrator only)</summary>
 <p>These settings help identify a missing configuration file, incorrect path or hosting restriction. No passwords or access keys are shown.</p>
@@ -73,17 +79,18 @@ foreach ($diagnostics as $label => $value): ?>
 <?php endforeach; ?>
 </dl></details>
 <?php endif; ?>
-<ol><li>Enter your live Agila website address and download the connection file. Generating a new file replaces the previous access key.</li>
-<li>Download both Windows scripts below into the same folder as the connection file.</li>
-<li>Right-click the installer and choose <strong>Run with PowerShell</strong>. It creates the six-hour task and attempts the first download.</li></ol>
-<form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="pair"><label for="website">Agila website address</label><br><input type="url" id="website" name="website" placeholder="https://your-website.com" pattern="https://.*" required><button class="btn btn-primary" type="submit">Download connection file</button></form>
+<div class="backup-steps"><article class="backup-step"><span class="backup-step-number">01</span><h3>Connect your website</h3><p>Enter your live Agila address to create a private connection file.</p>
+<form method="post" class="backup-connect-form"><?= csrf_field() ?><input type="hidden" name="action" value="pair"><label for="website">Agila website address</label><input type="url" id="website" name="website" placeholder="https://your-website.com" pattern="https://.*" aria-describedby="backup-key-help" required><button class="btn btn-primary" type="submit">Download connection file <span aria-hidden="true">&#8595;</span></button></form><p class="backup-help" id="backup-key-help">A new connection file replaces your previous access key.</p></article>
+<article class="backup-step"><span class="backup-step-number">02</span><h3>Get the Windows files</h3><p>Save both scripts in the same folder as your connection file.</p>
 <div class="backup-actions">
 <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="installer"><button class="btn btn-secondary">Download installer</button></form>
 <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="downloader"><button class="btn btn-secondary">Download downloader</button></form>
-<form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="revoke"><button class="btn btn-secondary">Revoke PC access</button></form>
-</div><p>The connection file is a private access key. After successful installation, remove that downloaded file; Windows stores the key encrypted for your account. SQL backups include database records, not uploaded images or website source files.</p>
-</section><section class="backup-card"><h2>Existing server copies</h2><p>Existing backups are preserved. Server copies are retained for 30 days after a successful new export. PC downloads remain until you remove them.</p>
-<div class="backup-scroll"><table class="backup-table"><thead><tr><th>Created</th><th>Size</th><th>Download</th></tr></thead><tbody>
-<?php foreach ($entries as $entry): ?><tr><td><?= pc_html(date('M d, Y H:i:s', $entry['created_at'])) ?></td><td><?= pc_html(round($entry['bytes'] / 1024, 1)) ?> KB</td><td><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="download"><input type="hidden" name="name" value="<?= pc_html($entry['name']) ?>"><button class="btn btn-secondary">Download SQL</button></form></td></tr><?php endforeach; ?>
-<?php if (!$entries): ?><tr><td colspan="3">No completed backups yet.</td></tr><?php endif; ?>
-</tbody></table></div></section></div></main><script src="assets/js/sidebar-toggle.js"></script></body></html>
+</div><span class="backup-file-note">2 PowerShell files · .ps1</span></article>
+<article class="backup-step"><span class="backup-step-number">03</span><h3>Turn on the schedule</h3><p>Right-click the installer and select <strong>Run with PowerShell</strong>.</p><div class="backup-run-note"><span aria-hidden="true">&gt;_</span><div><strong>Run with PowerShell</strong><small>install_pc_backup.ps1</small></div></div><p>This creates the six-hour task and attempts your first download. Verified SQL files are saved in your Documents folder.</p></article></div>
+<div class="backup-notice"><strong>Keep your PC ready</strong><p>Your computer must be on, awake, online, and signed in. Missed runs are checked when you sign in again.</p></div>
+<div class="backup-security"><div><strong>Your connection file is private</strong><p>After installation, remove the downloaded connection file. Windows stores the key encrypted for your account.</p></div><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="revoke"><button class="btn btn-secondary backup-revoke">Revoke PC access</button></form></div>
+</section><section class="backup-card backup-history"><div class="backup-section-heading"><div><span class="backup-eyebrow">BACKUP LIBRARY</span><h2>Server copies <span class="backup-count"><?= count($entries) ?></span></h2><p>Retained for 30 days after a successful new export. PC copies stay until you remove them.</p></div><span class="backup-tag">SQL database records</span></div>
+<div class="backup-scroll"><table class="backup-table"><thead><tr><th scope="col">Created</th><th scope="col">File size</th><th scope="col">Download</th></tr></thead><tbody>
+<?php foreach ($entries as $entry): ?><tr><td><div class="backup-file"><span class="backup-file-icon" aria-hidden="true">SQL</span><div><strong><?= pc_html(date('M d, Y', $entry['created_at'])) ?></strong><small><?= pc_html(date('H:i:s', $entry['created_at'])) ?></small></div></div></td><td><?= pc_html(round($entry['bytes'] / 1024, 1)) ?> KB</td><td><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="download"><input type="hidden" name="name" value="<?= pc_html($entry['name']) ?>"><button class="btn btn-secondary">Download SQL <span aria-hidden="true">&#8595;</span></button></form></td></tr><?php endforeach; ?>
+<?php if (!$entries): ?><tr><td colspan="3" class="backup-empty"><strong>Your backup library starts here</strong><p>Complete the PC setup above. Completed server copies will appear here after a backup is requested.</p></td></tr><?php endif; ?>
+</tbody></table></div><p class="backup-history-note">SQL backups contain database records. Uploaded images and website source files are not included.</p></section></div></main><script src="assets/js/sidebar-toggle.js"></script></body></html>
