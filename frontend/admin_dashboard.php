@@ -177,7 +177,7 @@ $active_page = 'dashboard';
 include __DIR__ . '/partials/_sidebar.php';
 ?>
 
-<div class="admin-main">
+<div class="admin-main executive-dashboard">
     <?php
     $page_title = 'Executive Dashboard';
     $page_subtitle = "Welcome back, " . htmlspecialchars($admin) . " • Live operations and financial overview";

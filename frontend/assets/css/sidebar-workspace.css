@@ -5,6 +5,7 @@ html.sbc-sidebar-docked body #appSidebar.workspace-sidebar {
     position: fixed; inset: 0 auto 0 0; width: var(--workspace-docked-width) !important;
     height: 100dvh; padding: 0; display: flex; flex-direction: column;
     opacity: 1; visibility: visible; transform: none !important; overflow: visible;
+    transition: none !important;
     background: var(--sidebar-bg); border: 0; border-right: 1px solid var(--sidebar-border);
     border-radius: 0; box-shadow: none;
 }
@@ -13,6 +14,7 @@ html.sbc-sidebar-docked body .main-content {
     margin-left: var(--workspace-docked-width) !important;
     width: calc(100% - var(--workspace-docked-width)) !important;
     max-width: calc(100% - var(--workspace-docked-width)) !important; min-width: 0;
+    transition: none !important;
 }
 html.sbc-sidebar-docked .sidebar-toggle-btn,
 html.sbc-sidebar-docked .sidebar-logo-restore,
@@ -26,10 +28,6 @@ html.sbc-sidebar-docked #appSidebar .sidebar-brand::before,
 html.sbc-sidebar-docked #appSidebar .sidebar-logo::before { content: none; }
 #appSidebar .workspace-logo { width: 38px !important; height: 38px !important; min-width: 38px !important; border-radius: 10px; object-fit: cover; }
 .workspace-brand-name { font: 700 29px var(--font-heading); letter-spacing: -1px; color: var(--primary); white-space: nowrap; }
-.workspace-property { margin: 0 16px 16px; padding: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--sidebar-border); border-radius: 12px; background: var(--sidebar-active); }
-.workspace-initial { display: grid; place-items: center; width: 38px; height: 40px; flex-shrink: 0; border-radius: 9px; background: var(--primary-subtle); color: var(--sidebar-active-t); font-weight: 700; }
-.workspace-property-copy { min-width: 0; color: var(--sidebar-text); font-size: 12px; }
-.workspace-property small { display: block; margin-top: 5px; font-size: 10px; color: var(--text-muted); }
 .workspace-collapse { position: absolute; right: -14px; top: 112px; width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--sidebar-border); border-radius: 50%; background: var(--sidebar-bg); color: var(--sidebar-text); cursor: pointer; z-index: 2; box-shadow: var(--shadow-xs); }
 #appSidebar .sidebar-search-wrap { padding: 0 16px 12px; }
 #appSidebar .sidebar-search-inner { border: 1px solid var(--sidebar-border); border-radius: 8px; background: var(--input-bg); }
@@ -54,7 +52,6 @@ html.sbc-sidebar-docked #appSidebar .sidebar-logo::before { content: none; }
 #appSidebar button:focus-visible, #appSidebar a:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 /* Compact mode retains every destination, accessible labels and native tooltips. */
 .sbc-sidebar-compact #appSidebar .workspace-brand-name,
-.sbc-sidebar-compact #appSidebar .workspace-property-copy,
 .sbc-sidebar-compact #appSidebar .sidebar-search-wrap,
 .sbc-sidebar-compact #appSidebar .workspace-link-label,
 .sbc-sidebar-compact #appSidebar .sidebar-section-label,
@@ -62,7 +59,6 @@ html.sbc-sidebar-docked #appSidebar .sidebar-logo::before { content: none; }
 .sbc-sidebar-compact #appSidebar .dark-mode-btn { display: none; }
 html.sbc-sidebar-compact #appSidebar .sidebar-brand,
 html.sbc-sidebar-compact #appSidebar .sidebar-logo { padding: 28px 23px; }
-.sbc-sidebar-compact .workspace-property { margin-inline: 12px; padding: 10px; justify-content: center; }
 .sbc-sidebar-compact .workspace-collapse svg { transform: rotate(180deg); }
 .sbc-sidebar-compact #appSidebar .sidebar-scroll-body { padding-inline: 12px; }
 .sbc-sidebar-compact #appSidebar .sidebar-nav { margin-bottom: 12px; }
@@ -73,3 +69,41 @@ html.sbc-sidebar-compact #appSidebar .sidebar-logo { padding: 28px 23px; }
 .sbc-sidebar-compact #appSidebar .user-pill { justify-content: center; }
 /* Smaller screens start with a narrow rail; the explicit expand button still works. */
 @media (max-width: 600px) { html.sbc-sidebar-docked:not(.sbc-sidebar-compact) { --workspace-docked-width: min(250px, 75vw); } }
+
+/* Keep the dashboard title and toolbar aligned within the available content width. */
+html.sbc-sidebar-docked body .executive-dashboard > .page-header {
+    padding: 18px 28px !important;
+    gap: 16px;
+}
+.executive-dashboard > .page-header .page-header-left {
+    flex: 1 1 100%;
+}
+.executive-dashboard > .page-header .page-header-actions {
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 12px;
+}
+.executive-dashboard .page-header .admin-search-wrapper {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+.executive-dashboard .page-header .admin-search-input,
+.executive-dashboard .page-header .admin-search-input:focus {
+    width: 100%;
+    min-width: 0;
+}
+.executive-dashboard .page-header .btn-primary {
+    white-space: nowrap;
+}
+.executive-dashboard .page-header .header-user-menu {
+    margin-left: auto;
+}
+@media (max-width: 768px) {
+    html.sbc-sidebar-docked body .executive-dashboard > .page-header {
+        padding: 14px 16px !important;
+        gap: 12px;
+    }
+    .executive-dashboard .page-header .admin-search-wrapper {
+        flex-basis: 100%;
+    }
+}

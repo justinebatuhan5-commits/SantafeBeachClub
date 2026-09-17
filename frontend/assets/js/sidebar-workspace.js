@@ -16,10 +16,6 @@
         name.className = 'workspace-brand-name';
         name.textContent = 'Santa Fe.';
         brand.appendChild(name);
-        var property = document.createElement('div');
-        property.className = 'workspace-property';
-        property.innerHTML = '<span class="workspace-initial" aria-hidden="true">SF</span><div class="workspace-property-copy"><strong>Your property</strong><small>Property management workspace</small></div>';
-        brand.after(property);
         var toggle = document.createElement('button');
         toggle.type = 'button';
         toggle.className = 'workspace-collapse';
@@ -45,16 +41,12 @@
         setCompact(compact);
         var footer = sidebar.querySelector('.sidebar-bottom');
         footer.appendChild(theme);
-        var account = document.createElement('li');
-        account.innerHTML = '<a href="settings" class="sidebar-link nav-item" title="Account Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="m9 3-1 3-3 1-2 5 2 5 3 1 1 3h6l1-3 3-1 2-5-2-5-3-1-1-3z"/></svg>Account Settings</a>';
-        links.push(account.firstChild);
-        if (location.pathname.replace(/\.php$/, '').endsWith('/settings')) account.firstChild.classList.add('active');
         var groups = [
             { name: 'Front desk', routes: ['dashboard', 'reservations', 'checkin', 'checkout', 'javascript:'] },
             { name: 'Property', routes: ['guests', 'accommodations', 'calendar', 'promotions', 'gallery', 'room_types', 'inquiries'] },
             { name: 'Finance', routes: ['payments', 'refunds'] },
             { name: 'Insights & updates', routes: ['reports', 'notifications', 'logs'] },
-            { name: 'Administration', routes: ['backups', 'staff', 'settings'] }
+            { name: 'Administration', routes: ['backups', 'staff'] }
         ];
         body.replaceChildren();
         groups.forEach(function (group) {
@@ -120,6 +112,8 @@
         sidebar.addEventListener('click', saveScroll, true);
         window.addEventListener('pagehide', saveScroll);
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    // The shared partial loads this script after the sidebar markup. Build it now
+    // so the original menu is not displayed while the rest of the page loads.
+    if (!document.getElementById('appSidebar') && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
 })();
