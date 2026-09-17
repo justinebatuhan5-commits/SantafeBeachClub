@@ -31,7 +31,10 @@ function private_storage_root(bool $create = false): string
         $ancestor = dirname($ancestor);
     }
     $resolvedAncestor = realpath($ancestor);
-    if ($resolvedAncestor === false || private_path_within($resolvedAncestor, $documentRoot) || private_path_within($resolvedAncestor, $project)) {
+    if ($resolvedAncestor === false) {
+        throw new RuntimeException('PHP cannot resolve the private storage path. Check folder permissions and the hosting open_basedir restriction.');
+    }
+    if (private_path_within($resolvedAncestor, $documentRoot) || private_path_within($resolvedAncestor, $project)) {
         throw new RuntimeException('Private storage must be outside the web root.');
     }
     if (!is_dir($configured) && $create && !mkdir($configured, 0700, true) && !is_dir($configured)) {

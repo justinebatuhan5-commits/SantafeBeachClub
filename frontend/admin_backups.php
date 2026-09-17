@@ -50,7 +50,29 @@ function pc_html($value): string { return htmlspecialchars((string)$value, ENT_Q
 <p>Your Windows task requests a fresh database backup from this website every six hours and saves a verified SQL file in your Documents folder. Your PC must be on, awake, connected to the internet, and signed in. Missed runs are checked when you sign in again.</p>
 <p><?= !empty($state['token_hash']) ? 'A PC access key is enabled. Complete the Windows installation to start downloads.' : 'No PC access key is enabled yet.' ?></p>
 <?php if (!empty($state['last_created'])): ?><p>Last backup requested by the PC: <?= pc_html(date('M d, Y H:i:s', $state['last_created'])) ?>. Check the PC download log to confirm it was saved.</p><?php endif; ?>
-<?php if ($error): ?><p role="alert"><?= pc_html($error) ?></p><?php endif; ?>
+<?php if ($error): ?><p role="alert"><?= pc_html($error) ?></p>
+<details open><summary>Storage diagnostics (administrator only)</summary>
+<p>These settings help identify a missing configuration file, incorrect path or hosting restriction. No passwords or access keys are shown.</p>
+<dl>
+<?php
+$diagnosticProject = realpath(__DIR__ . '/..');
+$diagnosticEnv = __DIR__ . '/../.env';
+$diagnosticStorage = getenv('PRIVATE_STORAGE_DIR') ?: '';
+$diagnosticDocument = getenv('PRIVATE_STORAGE_DOCUMENT_ROOT') ?: ($_SERVER['DOCUMENT_ROOT'] ?? '');
+$diagnostics = [
+    'Website project folder' => $diagnosticProject ?: 'Cannot resolve',
+    '.env file' => @is_file($diagnosticEnv) ? (@is_readable($diagnosticEnv) ? 'Found and readable' : 'Found but not readable') : 'Not found as a file beside backend and frontend',
+    'Configured private folder' => $diagnosticStorage ?: 'Not loaded; using default',
+    'Configured document root' => $diagnosticDocument ?: 'Not available',
+    'Resolved private folder' => $diagnosticStorage ? (@realpath($diagnosticStorage) ?: 'Cannot resolve: missing folder, permissions or hosting restriction') : 'No configured path',
+    'Private folder writable by PHP' => $diagnosticStorage && @is_writable($diagnosticStorage) ? 'Yes' : 'No / cannot access',
+    'PHP allowed paths (open_basedir)' => ini_get('open_basedir') ?: 'No restriction reported',
+];
+foreach ($diagnostics as $label => $value): ?>
+<dt><strong><?= pc_html($label) ?></strong></dt><dd style="overflow-wrap:anywhere"><?= pc_html($value) ?></dd>
+<?php endforeach; ?>
+</dl></details>
+<?php endif; ?>
 <ol><li>Enter your live Agila website address and download the connection file. Generating a new file replaces the previous access key.</li>
 <li>Download both Windows scripts below into the same folder as the connection file.</li>
 <li>Right-click the installer and choose <strong>Run with PowerShell</strong>. It creates the six-hour task and attempts the first download.</li></ol>
