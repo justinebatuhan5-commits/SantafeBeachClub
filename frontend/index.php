@@ -459,7 +459,7 @@ if ($price_q) {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert("Thank you! Your review has been posted successfully.");
+                    alert("Thank you! Your review has been submitted and will appear after admin approval.");
                     location.reload();
                 } else {
                     alert(data.error || "Failed to submit review. Please try again.");

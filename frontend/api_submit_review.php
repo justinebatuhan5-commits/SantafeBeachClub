@@ -34,11 +34,11 @@ if (strlen($guest_name) > 100 || strlen($review_text) < 5) {
     exit;
 }
 
-$stmt = $conn->prepare("INSERT INTO reviews (booking_id, guest_name, guest_location, rating, review_text, is_approved) VALUES (?, ?, ?, ?, ?, 1)");
+$stmt = $conn->prepare("INSERT INTO reviews (booking_id, guest_name, guest_location, rating, review_text, is_approved) VALUES (?, ?, ?, ?, ?, 0)");
 $stmt->bind_param("issis", $booking_id, $guest_name, $guest_location, $rating, $review_text);
 
 if ($stmt->execute()) {
-    echo json_encode(["success" => true, "message" => "Review submitted successfully!"]);
+    echo json_encode(["success" => true, "message" => "Review submitted for admin approval."]);
 } else {
     echo json_encode(["success" => false, "error" => "Database error: " . $conn->error]);
 }

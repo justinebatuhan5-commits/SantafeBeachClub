@@ -249,6 +249,10 @@ function _sb_badge($count, $type = '') {
                 Activity Logs
             </a></li>
 
+            <li><a href="admin_reviews" class="sidebar-link <?php echo _sb_active('reviews',$_page); ?>" title="Guest Reviews">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>
+                Guest Reviews
+            </a></li>
             <li><a href="admin_inquiries" class="sidebar-link <?php echo _sb_active('inquiries',$_page); ?>" title="Inquiries">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                 Inquiries
