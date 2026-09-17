@@ -26,11 +26,15 @@ function scan_uploaded_file(string $tmpPath, string $fileExt): array
     $header = fread($handle, 8192);
     fclose($handle);
 
-    // ── 1. Null-byte check ───────────────────────────────────────────────────
-    // Null bytes are used in path-injection and polyglot file attacks.
-    // PDFs legitimately contain null bytes, so skip that extension.
-    if ($fileExt !== 'pdf' && strpos($header, "\x00") !== false) {
-        return ['safe' => false, 'reason' => 'Null byte detected in file (possible polyglot attack)'];
+    // Binary image/PDF contents legitimately contain null bytes. Validate the
+    // image format instead; null-byte path checks must not inspect file contents.
+    $imageTypes = ['jpg' => IMAGETYPE_JPEG, 'jpeg' => IMAGETYPE_JPEG,
+        'png' => IMAGETYPE_PNG, 'gif' => IMAGETYPE_GIF, 'webp' => IMAGETYPE_WEBP];
+    if (isset($imageTypes[$fileExt])) {
+        $image = @getimagesize($tmpPath);
+        if ($image === false || $image[2] !== $imageTypes[$fileExt]) {
+            return ['safe' => false, 'reason' => 'Invalid image or image format does not match its extension'];
+        }
     }
 
     // ── 2. PHP / server-side script injection ───────────────────────────────

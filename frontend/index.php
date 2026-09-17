@@ -277,7 +277,7 @@ if ($price_q) {
 
             <?php if (empty($reviews_list)): ?>
                 <div style="text-align:center; padding:48px 20px; background:rgba(255,255,255,0.7); border:1px dashed #D1D5DB; border-radius:16px; margin-top:20px;">
-                    <div style="font-size:36px; margin-bottom:12px;">ðŸŒŸ</div>
+                    <div aria-hidden="true" style="font-size:36px; margin-bottom:12px;">&#127775;</div>
                     <h3 style="font-size:18px; color:#4B5563; margin-bottom:6px;">No Guest Reviews Yet</h3>
                     <p style="font-size:14px; color:#6B7280; max-width:440px; margin:0 auto 20px;">Be the first to share your experience staying at Santa Fe Beach Club!</p>
                     <button type="button" class="btn btn-primary" onclick="openReviewModal()" style="padding:10px 24px; font-size:14px; border-radius:30px; cursor:pointer;">
