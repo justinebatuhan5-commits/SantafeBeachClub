@@ -1,100 +1,75 @@
-/* Reference-inspired workspace navigation using the existing system palette. */
-html.sbc-sidebar-dropdown body #appSidebar.workspace-sidebar {
-    width: min(460px, calc(100vw - 24px)) !important;
-    display: flex; flex-direction: row; padding: 0; overflow: hidden;
-    border-radius: 24px; background: var(--sidebar-bg);
-}
-.workspace-rail {
-    width: 88px; flex: 0 0 88px; display: flex; flex-direction: column;
-    align-items: center; gap: 12px; padding: 22px 8px 16px;
-    background: var(--primary-dark, #4E3020); color: #fff; overflow-y: auto;
-}
-.workspace-logo { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; margin-bottom: 18px; }
-.workspace-rail button {
-    width: 100%; min-height: 74px; flex-shrink: 0; border: 0; border-radius: 16px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 9px; background: transparent; color: inherit; font: inherit; font-size: 10px; cursor: pointer;
-}
-.workspace-rail button svg { width: 23px; height: 23px; }
-.workspace-rail button:hover { background: rgba(255,255,255,.1); }
-.workspace-rail button[aria-pressed="true"] { background: var(--primary-light); color: var(--primary-dark); }
-.workspace-rail .workspace-settings { margin-top: auto; }
-.workspace-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
-html.sbc-sidebar-dropdown #appSidebar .sidebar-brand,
-html.sbc-sidebar-dropdown #appSidebar .sidebar-logo {
-    padding: 28px 22px 18px; border: 0; gap: 8px; display: flex; flex-shrink: 0;
-}
-html.sbc-sidebar-dropdown #appSidebar .sidebar-brand::before,
-html.sbc-sidebar-dropdown #appSidebar .sidebar-logo::before { content: none; }
-.workspace-heading { flex: 1; min-width: 0; }
-.workspace-heading > span { color: var(--text-muted); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
-#appSidebar .workspace-heading h2 { margin: 12px 0 0; color: var(--text-main); font: 30px Georgia, serif; letter-spacing: -.7px; }
-.workspace-close { padding: 5px; border: 0; background: transparent; color: var(--sidebar-text); cursor: pointer; }
-#appSidebar .sidebar-search-wrap { padding: 8px 22px 18px; }
-#appSidebar .sidebar-search-inner { background: var(--sidebar-hover); border: 1px solid var(--sidebar-border); border-radius: 12px; }
-#appSidebar .sidebar-search-input { min-width: 0; width: 100%; padding-top: 14px; padding-bottom: 14px; }
-#appSidebar .sidebar-scroll-body { padding: 0 22px; flex: 1; min-height: 0; overflow-y: auto; }
-#appSidebar .sidebar-section-label { margin: 14px 10px 12px; padding: 0; font-size: 9px; letter-spacing: 2px; color: var(--text-muted); }
-#appSidebar .sidebar-nav { margin: 0; padding: 0; list-style: none; }
-#appSidebar .sidebar-nav li { margin: 0 0 5px; }
-#appSidebar .sidebar-nav li[hidden], #appSidebar .workspace-empty[hidden] { display: none !important; }
-#appSidebar .sidebar-link, #appSidebar .nav-item {
-    position: relative; display: flex; align-items: center; gap: 12px; min-height: 49px;
-    padding: 12px; border-radius: 12px; color: var(--sidebar-text) !important;
-    font-size: 12px; font-weight: 400; text-decoration: none; white-space: normal;
-}
-#appSidebar .sidebar-link svg, #appSidebar .nav-item svg { flex-shrink: 0; width: 20px; height: 20px; }
-#appSidebar .sidebar-link.active, #appSidebar .nav-item.active { background: var(--sidebar-active); color: var(--sidebar-active-t) !important; font-weight: 600; }
-#appSidebar .sidebar-link.active::before, #appSidebar .nav-item.active::before { content: ''; position: absolute; left: 0; top: 15px; bottom: 15px; width: 3px; border-radius: 3px; background: var(--sidebar-active-t); }
-#appSidebar .sidebar-bottom { padding: 16px 22px 20px; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 8px; flex-shrink: 0; }
-.workspace-property { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 12px; border: 1px solid var(--sidebar-border); border-radius: 14px; color: var(--text-main); font-size: 12px; }
-.workspace-property > span { color: var(--primary); font-size: 29px; }
-.workspace-property small { display: block; margin-top: 5px; color: var(--text-muted); font-size: 10px; }
-#appSidebar .user-pill { flex: 1; min-width: 0; margin: 0; padding: 0; background: transparent; border: 0; }
-#appSidebar .user-info-text { overflow: hidden; text-overflow: ellipsis; }
-#appSidebar .user-avatar { width: 38px; height: 38px; flex-shrink: 0; }
-.workspace-empty { padding: 14px 10px; font-size: 12px; color: var(--text-muted); }
-#appSidebar .workspace-quick-label { border-top: 1px solid var(--sidebar-border); margin: 22px 0 12px; padding: 20px 10px 0; }
-#appSidebar .workspace-quick-label[hidden] { display: none; }
-#appSidebar button:focus-visible, #appSidebar a:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-@media (max-width: 480px) {
-    .workspace-rail { width: 70px; flex-basis: 70px; padding-inline: 5px; }
-    html.sbc-sidebar-dropdown #appSidebar .sidebar-brand, html.sbc-sidebar-dropdown #appSidebar .sidebar-logo { padding: 20px 14px 12px; }
-    #appSidebar .sidebar-search-wrap, #appSidebar .sidebar-bottom { padding: 12px 14px; }
-    #appSidebar .sidebar-scroll-body { padding: 0 14px; }
-    #appSidebar .workspace-heading h2 { font-size: 25px; }
-}
-@media (max-height: 650px) { .workspace-property { display: none; } .workspace-rail { gap: 4px; } .workspace-logo { margin-bottom: 4px; } .workspace-rail button { min-height: 60px; } }
-
-/* Persistent navigation: reserve space beside the content, with no backdrop. */
-html.sbc-sidebar-docked { --workspace-docked-width: 360px; }
+/* Single-column navigation, using the application's brown theme tokens. */
+html.sbc-sidebar-docked { --workspace-docked-width: 300px; }
+html.sbc-sidebar-docked.sbc-sidebar-compact { --workspace-docked-width: 86px; }
 html.sbc-sidebar-docked body #appSidebar.workspace-sidebar {
-    position: fixed; top: 12px; bottom: 12px; left: 12px;
-    height: calc(100dvh - 24px);
-    width: var(--workspace-docked-width) !important;
-    opacity: 1; visibility: visible; transform: none !important;
-    box-shadow: var(--shadow-sm);
+    position: fixed; inset: 0 auto 0 0; width: var(--workspace-docked-width) !important;
+    height: 100dvh; padding: 0; display: flex; flex-direction: column;
+    opacity: 1; visibility: visible; transform: none !important; overflow: visible;
+    background: var(--sidebar-bg); border: 0; border-right: 1px solid var(--sidebar-border);
+    border-radius: 0; box-shadow: none;
 }
 html.sbc-sidebar-docked body .admin-main,
 html.sbc-sidebar-docked body .main-content {
-    margin-left: calc(var(--workspace-docked-width) + 24px) !important;
-    width: calc(100% - var(--workspace-docked-width) - 24px) !important;
-    max-width: calc(100% - var(--workspace-docked-width) - 24px) !important;
-    min-width: 0;
+    margin-left: var(--workspace-docked-width) !important;
+    width: calc(100% - var(--workspace-docked-width)) !important;
+    max-width: calc(100% - var(--workspace-docked-width)) !important; min-width: 0;
 }
 html.sbc-sidebar-docked .sidebar-toggle-btn,
 html.sbc-sidebar-docked .sidebar-logo-restore,
 html.sbc-sidebar-docked .sidebar-overlay { display: none !important; }
-/* On phones, keep the menu visible above the content instead of covering it. */
-@media (max-width: 767px) {
-    html.sbc-sidebar-docked body { display: block; }
-    html.sbc-sidebar-docked body #appSidebar.workspace-sidebar {
-        position: relative; top: auto; bottom: auto; left: auto;
-        margin: 12px; width: calc(100% - 24px) !important;
-        height: min(620px, 80dvh);
-    }
-    html.sbc-sidebar-docked body .admin-main,
-    html.sbc-sidebar-docked body .main-content {
-        margin-left: 0 !important; width: 100% !important; max-width: 100% !important;
-    }
+html.sbc-sidebar-docked #appSidebar .sidebar-brand,
+html.sbc-sidebar-docked #appSidebar .sidebar-logo {
+    padding: 28px 25px; min-height: 94px; display: flex; align-items: center;
+    gap: 12px; border: 0; flex-shrink: 0;
 }
+html.sbc-sidebar-docked #appSidebar .sidebar-brand::before,
+html.sbc-sidebar-docked #appSidebar .sidebar-logo::before { content: none; }
+#appSidebar .workspace-logo { width: 38px !important; height: 38px !important; min-width: 38px !important; border-radius: 10px; object-fit: cover; }
+.workspace-brand-name { font: 700 29px var(--font-heading); letter-spacing: -1px; color: var(--primary); white-space: nowrap; }
+.workspace-property { margin: 0 16px 16px; padding: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--sidebar-border); border-radius: 12px; background: var(--sidebar-active); }
+.workspace-initial { display: grid; place-items: center; width: 38px; height: 40px; flex-shrink: 0; border-radius: 9px; background: var(--primary-subtle); color: var(--sidebar-active-t); font-weight: 700; }
+.workspace-property-copy { min-width: 0; color: var(--sidebar-text); font-size: 12px; }
+.workspace-property small { display: block; margin-top: 5px; font-size: 10px; color: var(--text-muted); }
+.workspace-collapse { position: absolute; right: -14px; top: 112px; width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--sidebar-border); border-radius: 50%; background: var(--sidebar-bg); color: var(--sidebar-text); cursor: pointer; z-index: 2; box-shadow: var(--shadow-xs); }
+#appSidebar .sidebar-search-wrap { padding: 0 16px 12px; }
+#appSidebar .sidebar-search-inner { border: 1px solid var(--sidebar-border); border-radius: 8px; background: var(--input-bg); }
+#appSidebar .sidebar-search-input { width: 100%; min-width: 0; padding-block: 11px; font-size: 11px; }
+#appSidebar .sidebar-scroll-body { flex: 1; min-height: 0; padding: 0 16px 12px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--primary-glow) transparent; }
+#appSidebar .sidebar-section-label { margin: 20px 12px 9px; padding: 0; font-size: 8px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+#appSidebar .sidebar-nav { list-style: none; padding: 0; margin: 0; }
+#appSidebar .sidebar-nav li { margin: 0 0 3px; }
+#appSidebar [hidden] { display: none !important; }
+#appSidebar .sidebar-link, #appSidebar .nav-item { position: relative; display: flex; align-items: center; gap: 13px; padding: 13px 14px; min-height: 46px; border-radius: 10px; color: var(--sidebar-text) !important; font-size: 11px; font-weight: 400; text-decoration: none; white-space: normal; }
+#appSidebar .sidebar-link svg, #appSidebar .nav-item svg { width: 19px; height: 19px; flex-shrink: 0; stroke-width: 1.65; }
+#appSidebar .sidebar-link:hover, #appSidebar .nav-item:hover { background: var(--sidebar-hover); }
+#appSidebar .sidebar-link.active, #appSidebar .nav-item.active { background: var(--sidebar-active); color: var(--sidebar-active-t) !important; font-weight: 600; }
+#appSidebar .sidebar-link.active::before, #appSidebar .nav-item.active::before { content: ''; position: absolute; left: 0; top: 13px; bottom: 13px; width: 3px; border-radius: 3px; background: var(--sidebar-active-t); }
+#appSidebar .sidebar-badge { margin-left: auto; font-size: 10px; }
+#appSidebar .sidebar-bottom { margin: 0 16px; padding: 16px 8px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--sidebar-border); flex-shrink: 0; }
+#appSidebar .user-pill { flex: 1; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; }
+#appSidebar .user-info-text { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#appSidebar .user-info-role { font-size: 10px; }
+#appSidebar .user-avatar { width: 36px; height: 36px; min-width: 36px; flex-shrink: 0; }
+.workspace-empty { font-size: 12px; color: var(--text-muted); padding: 12px; }
+#appSidebar button:focus-visible, #appSidebar a:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+/* Compact mode retains every destination, accessible labels and native tooltips. */
+.sbc-sidebar-compact #appSidebar .workspace-brand-name,
+.sbc-sidebar-compact #appSidebar .workspace-property-copy,
+.sbc-sidebar-compact #appSidebar .sidebar-search-wrap,
+.sbc-sidebar-compact #appSidebar .workspace-link-label,
+.sbc-sidebar-compact #appSidebar .sidebar-section-label,
+.sbc-sidebar-compact #appSidebar .user-pill > div:not(.user-avatar),
+.sbc-sidebar-compact #appSidebar .dark-mode-btn { display: none; }
+html.sbc-sidebar-compact #appSidebar .sidebar-brand,
+html.sbc-sidebar-compact #appSidebar .sidebar-logo { padding: 28px 23px; }
+.sbc-sidebar-compact .workspace-property { margin-inline: 12px; padding: 10px; justify-content: center; }
+.sbc-sidebar-compact .workspace-collapse svg { transform: rotate(180deg); }
+.sbc-sidebar-compact #appSidebar .sidebar-scroll-body { padding-inline: 12px; }
+.sbc-sidebar-compact #appSidebar .sidebar-nav { margin-bottom: 12px; }
+.sbc-sidebar-compact #appSidebar .sidebar-link,
+.sbc-sidebar-compact #appSidebar .nav-item { justify-content: center; padding: 13px 0; }
+.sbc-sidebar-compact #appSidebar .sidebar-badge { position: absolute; top: 1px; right: 0; min-width: 14px; padding: 1px 3px; font-size: 8px; }
+.sbc-sidebar-compact #appSidebar .sidebar-bottom { margin-inline: 12px; padding-inline: 0; }
+.sbc-sidebar-compact #appSidebar .user-pill { justify-content: center; }
+/* Smaller screens start with a narrow rail; the explicit expand button still works. */
+@media (max-width: 600px) { html.sbc-sidebar-docked:not(.sbc-sidebar-compact) { --workspace-docked-width: min(280px, 75vw); } }

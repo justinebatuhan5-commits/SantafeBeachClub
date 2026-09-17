@@ -1,112 +1,106 @@
-/* Organize the existing role-authorized links into workspaces. */
+/* A single, role-aware navigation column with a compact icon view. */
 (function () {
     function init() {
         var sidebar = document.getElementById('appSidebar');
         if (!sidebar) return;
+        sidebar.classList.add('workspace-sidebar');
+        var root = document.documentElement;
         var body = sidebar.querySelector('.sidebar-scroll-body');
         var links = Array.from(body.querySelectorAll('.sidebar-link, .nav-item'));
-        var groups = [
-            { name: 'Front desk', icon: 'Reservations', routes: ['reservations', 'checkin', 'checkout', 'javascript:'] },
-            { name: 'Operations', icon: 'Accommodations', routes: ['guests', 'accommodations', 'calendar', 'inquiries', 'promotions', 'gallery', 'room_types'] },
-            { name: 'Finance', icon: 'Payments', routes: ['payments', 'refunds'] },
-            { name: 'Insights', icon: 'Dashboard', routes: ['dashboard', 'reports', 'notifications', 'logs'] },
-            { name: 'Settings', icon: 'Database Backups', routes: ['backups', 'staff'] }
-        ];
-        function groupFor(link) {
-            return groups.find(function (group) {
-                return group.routes.some(function (route) { return link.getAttribute('href').includes(route); });
-            }) || groups[1];
-        }
-        var active = links.find(function (link) { return link.classList.contains('active'); });
-        var selected = active ? groupFor(active) : groups[0];
-        sidebar.classList.add('workspace-sidebar');
-        var rail = document.createElement('nav');
-        rail.className = 'workspace-rail';
-        rail.setAttribute('aria-label', 'Workspaces');
-        var logo = sidebar.querySelector('.sidebar-logo-toggle img').cloneNode(true);
+        var brand = sidebar.querySelector('.sidebar-brand, .sidebar-logo');
+        var logo = brand.querySelector('img').cloneNode(true);
+        var theme = brand.querySelector('.dark-mode-btn');
+        brand.replaceChildren(logo);
         logo.className = 'workspace-logo';
-        rail.appendChild(logo);
-        var panel = document.createElement('div');
-        panel.className = 'workspace-panel';
-        while (sidebar.firstChild) panel.appendChild(sidebar.firstChild);
-        sidebar.append(rail, panel);
-        var brand = panel.querySelector('.sidebar-brand, .sidebar-logo');
-        var title = document.createElement('div');
-        title.className = 'workspace-heading';
-        title.innerHTML = '<span>Santa Fe Beach Club</span><h2></h2>';
-        brand.appendChild(title);
-        var footer = panel.querySelector('.sidebar-bottom');
-        footer.appendChild(brand.querySelector('.dark-mode-btn'));
+        var name = document.createElement('strong');
+        name.className = 'workspace-brand-name';
+        name.textContent = 'Santa Fe.';
+        brand.appendChild(name);
         var property = document.createElement('div');
         property.className = 'workspace-property';
-        property.innerHTML = '<span aria-hidden="true">≈</span><div>Santa Fe Beach Club<small>Property workspace</small></div>';
-        footer.insertBefore(property, footer.firstChild);
+        property.innerHTML = '<span class="workspace-initial" aria-hidden="true">SF</span><div class="workspace-property-copy"><strong>Your property</strong><small>Property management workspace</small></div>';
+        brand.after(property);
+        var toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'workspace-collapse';
+        toggle.setAttribute('aria-controls', 'appSidebar');
+        toggle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7-5 5 5 5"/></svg>';
+        sidebar.appendChild(toggle);
+        var compact = window.matchMedia('(max-width: 600px)').matches;
+        try {
+            var saved = localStorage.getItem('sbc_sidebar_compact');
+            if (saved !== null) compact = saved === 'true';
+        } catch (error) { /* Storage is optional. */ }
+        function setCompact(value) {
+            compact = value;
+            root.classList.toggle('sbc-sidebar-compact', value);
+            toggle.setAttribute('aria-expanded', String(!value));
+            toggle.setAttribute('aria-label', value ? 'Expand sidebar' : 'Collapse sidebar');
+            toggle.title = value ? 'Expand sidebar' : 'Collapse sidebar';
+        }
+        toggle.addEventListener('click', function () {
+            setCompact(!compact);
+            try { localStorage.setItem('sbc_sidebar_compact', String(compact)); } catch (error) { /* Storage is optional. */ }
+        });
+        setCompact(compact);
+        var footer = sidebar.querySelector('.sidebar-bottom');
+        footer.appendChild(theme);
+        var account = document.createElement('li');
+        account.innerHTML = '<a href="settings" class="sidebar-link nav-item" title="Account Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="m9 3-1 3-3 1-2 5 2 5 3 1 1 3h6l1-3 3-1 2-5-2-5-3-1-1-3z"/></svg>Account Settings</a>';
+        links.push(account.firstChild);
+        if (location.pathname.replace(/\.php$/, '').endsWith('/settings')) account.firstChild.classList.add('active');
+        var groups = [
+            { name: 'Front desk', routes: ['dashboard', 'reservations', 'checkin', 'checkout', 'javascript:'] },
+            { name: 'Property', routes: ['guests', 'accommodations', 'calendar', 'promotions', 'gallery', 'room_types', 'inquiries'] },
+            { name: 'Finance', routes: ['payments', 'refunds'] },
+            { name: 'Insights & updates', routes: ['reports', 'notifications', 'logs'] },
+            { name: 'Administration', routes: ['backups', 'staff', 'settings'] }
+        ];
         body.replaceChildren();
-        var label = document.createElement('p');
-        label.className = 'sidebar-section-label';
-        body.appendChild(label);
-        var list = document.createElement('ul');
-        list.className = 'sidebar-nav nav-links';
-        links.forEach(function (link) { list.appendChild(link.closest('li')); });
-        body.appendChild(list);
-        var quickLabel = document.createElement('p');
-        quickLabel.className = 'sidebar-section-label workspace-quick-label';
-        quickLabel.textContent = 'Quick access';
-        var quickList = document.createElement('ul');
-        quickList.className = 'sidebar-nav nav-links';
-        body.append(quickLabel, quickList);
+        groups.forEach(function (group) {
+            var section = document.createElement('section');
+            var heading = document.createElement('p');
+            heading.className = 'sidebar-section-label';
+            heading.textContent = group.name;
+            var list = document.createElement('ul');
+            list.className = 'sidebar-nav nav-links';
+            group.routes.forEach(function (route) {
+                links.filter(function (link) { return link.getAttribute('href').includes(route); }).forEach(function (link) {
+                    list.appendChild(link.closest('li'));
+                });
+            });
+            if (list.children.length) {
+                section.append(heading, list);
+                body.appendChild(section);
+            }
+        });
+        links.forEach(function (link) {
+            var caption = document.createElement('span');
+            caption.className = 'workspace-link-label';
+            Array.from(link.childNodes).filter(function (node) { return node.nodeType === 3; }).forEach(function (node) { caption.appendChild(node); });
+            link.insertBefore(caption, link.querySelector('.sidebar-badge'));
+            link.setAttribute('aria-label', link.title || caption.textContent.trim());
+            if (link.classList.contains('active')) link.setAttribute('aria-current', 'page');
+        });
         var empty = document.createElement('p');
         empty.className = 'workspace-empty';
         empty.textContent = 'No matching pages';
+        empty.hidden = true;
         body.appendChild(empty);
         var search = sidebar.querySelector('input');
         search.placeholder = 'Find a page…';
         search.setAttribute('aria-label', 'Find a page');
-        function render() {
+        search.addEventListener('input', function () {
             var query = search.value.trim().toLowerCase();
-            title.querySelector('h2').textContent = query ? 'Search pages' : selected.name;
-            label.textContent = query ? 'Search results' : 'Your workspace';
             var count = 0;
             links.forEach(function (link) {
-                var quick = !query && selected === groups[0] && /guests|calendar/.test(link.getAttribute('href'));
-                (quick ? quickList : list).appendChild(link.closest('li'));
-                var visible = quick || (query ? link.textContent.toLowerCase().includes(query) : groupFor(link) === selected);
+                var visible = link.textContent.toLowerCase().includes(query);
                 link.closest('li').hidden = !visible;
                 if (visible) count++;
-                if (link.classList.contains('active')) link.setAttribute('aria-current', 'page');
             });
+            body.querySelectorAll('section').forEach(function (section) { section.hidden = !section.querySelector('li:not([hidden])'); });
             empty.hidden = count > 0;
-            quickLabel.hidden = !quickList.children.length;
-            rail.querySelectorAll('button').forEach(function (button) {
-                button.setAttribute('aria-pressed', String(!query && button.textContent === selected.name));
-            });
-        }
-        groups.forEach(function (group) {
-            if (group.name === 'Settings') return;
-            if (!links.some(function (link) { return groupFor(link) === group; })) return;
-            var button = document.createElement('button');
-            button.type = 'button';
-            var sample = links.find(function (link) { return link.title.includes(group.icon); }) || links.find(function (link) { return groupFor(link) === group; });
-            button.appendChild(sample.querySelector('svg').cloneNode(true));
-            var caption = document.createElement('span');
-            caption.textContent = group.name;
-            button.appendChild(caption);
-            button.addEventListener('click', function () { selected = group; search.value = ''; render(); });
-            rail.appendChild(button);
         });
-        var settings = document.createElement('button');
-        settings.type = 'button';
-        settings.className = 'workspace-settings';
-        settings.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="m9 3-1 3-3 1-2 5 2 5 3 1 1 3h6l1-3 3-1 2-5-2-5-3-1-1-3z"/></svg><span>Settings</span>';
-        var account = document.createElement('li');
-        account.innerHTML = '<a href="settings" class="sidebar-link nav-item" title="Account Settings">Account Settings</a>';
-        list.appendChild(account);
-        groups[4].routes.push('settings');
-        links.push(account.firstChild);
-        settings.addEventListener('click', function () { selected = groups[4]; search.value = ''; render(); });
-        rail.appendChild(settings);
-        search.addEventListener('input', render);
-        render();
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
