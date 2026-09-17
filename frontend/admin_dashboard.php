@@ -730,18 +730,18 @@ async function loadDashboardData() {
                 
                 return `
                 <tr>
-                    <td style="color:var(--text-muted); font-weight:600;">#${b.id}</td>
+                    <td style="color:var(--text-muted); font-weight:600;">#${Security.escapeHTML(b.id)}</td>
                     <td>
                         <div class="guest-profile">
-                            <div class="avatar-letter">${initial}</div>
+                            <div class="avatar-letter">${Security.escapeHTML(initial)}</div>
                             <div class="guest-info">
-                                <h4>${b.guest_name}</h4>
+                                <h4>${Security.escapeHTML(b.guest_name)}</h4>
                             </div>
                         </div>
                     </td>
-                    <td style="color:var(--text-muted);">${b.accommodation_name}</td>
-                    <td style="color:var(--text-muted); font-weight:500;">${b.check_in}</td>
-                    <td><span class="badge ${cls}">${b.status}</span></td>
+                    <td style="color:var(--text-muted);">${Security.escapeHTML(b.accommodation_name)}</td>
+                    <td style="color:var(--text-muted); font-weight:500;">${Security.escapeHTML(b.check_in)}</td>
+                    <td><span class="badge ${cls}">${Security.escapeHTML(b.status)}</span></td>
                 </tr>
                 `;
             }).join('');
@@ -841,7 +841,7 @@ async function renderAuditLogs() {
                 tagColor = '#B45309';
             }
             
-            let detailsHtml = log.details ? `<span style="color:var(--text-muted); font-size:12.5px;"> · ${log.details}</span>` : '';
+            let detailsHtml = log.details ? `<span style="color:var(--text-muted); font-size:12.5px;"> · ${Security.escapeHTML(log.details)}</span>` : '';
             
             html += `
             <li class="activity-item" style="display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
@@ -849,11 +849,11 @@ async function renderAuditLogs() {
                 <div style="flex:1; min-width:0;">
                     <div class="activity-text" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:13px;">
                         <span style="display:inline-block; font-size:10.5px; font-weight:700; padding:2px 6px; border-radius:4px; background:${tagBg}; color:${tagColor}; text-transform:uppercase;">${tag}</span>
-                        <strong style="color:var(--primary); font-weight:700;">${log.admin_username}</strong>
-                        <span>${log.action}</span>
+                        <strong style="color:var(--primary); font-weight:700;">${Security.escapeHTML(log.admin_username)}</strong>
+                        <span>${Security.escapeHTML(log.action)}</span>
                         ${detailsHtml}
                     </div>
-                    <div class="activity-meta" style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">${log.created_at}</div>
+                    <div class="activity-meta" style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">${Security.escapeHTML(log.created_at)}</div>
                 </div>
             </li>`;
         });
@@ -922,13 +922,13 @@ function adminSearch(q) {
             let html = '';
             results.forEach(item => {
                 const initials = item.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-                html += `<a class="search-result-item" href="${item.url}">
-                    <div class="search-result-avatar">${initials}</div>
+                html += `<a class="search-result-item" href="${Security.escapeHTML(Security.safeURL(item.url))}">
+                    <div class="search-result-avatar">${Security.escapeHTML(initials)}</div>
                     <div style="min-width:0;">
-                        <div class="search-result-name">${item.name}</div>
-                        <div class="search-result-meta">${item.sub}</div>
+                        <div class="search-result-name">${Security.escapeHTML(item.name)}</div>
+                        <div class="search-result-meta">${Security.escapeHTML(item.sub)}</div>
                     </div>
-                    <span class="badge badge-pending" style="margin-left:auto;">${item.status}</span>
+                    <span class="badge badge-pending" style="margin-left:auto;">${Security.escapeHTML(item.status)}</span>
                 </a>`;
             });
 

@@ -19,6 +19,7 @@ ServerSignature Off
 RewriteRule (^|/)\.(?!well-known/) - [F]
 
 RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 # ── Force HTTPS in production (preserves local development) ───────────────────────
 RewriteCond %{HTTPS} !=on

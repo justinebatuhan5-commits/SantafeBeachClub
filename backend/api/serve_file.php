@@ -3,7 +3,7 @@
  * serve_file.php — Authenticated Private File Server
  *
  * Serves uploaded files (receipts, avatars) that are stored OUTSIDE the web
- * root in the /storage/ directory, which has Require all denied in .htaccess.
+ * root in the configured PRIVATE_STORAGE_DIR directory.
  *
  * Security controls:
  *   - Requires active authenticated session (via auth_check.php)
@@ -15,6 +15,7 @@
  */
 
 require_once __DIR__ . '/../helpers/auth_check.php';
+require_once __DIR__ . '/../helpers/private_storage_helper.php';
 // auth_check.php exits with 401 if the user is not authenticated
 
 $file = trim($_GET['file'] ?? '');
@@ -35,24 +36,15 @@ if (!preg_match('#^(receipts|avatars)/[a-zA-Z0-9_\-]+\.[a-zA-Z]{3,4}$#', $file))
     exit('Forbidden: invalid file path format');
 }
 
-// ── 3. Resolve absolute path and verify it is inside storage/ ───────────────
-$storageBase = realpath(__DIR__ . '/../../storage');
-$filePath    = realpath($storageBase . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file));
-
-if ($storageBase === false || $filePath === false) {
-    http_response_code(404);
+// Resolve only files within the private category directory, including symlink checks.
+try {
+    $filePath = private_storage_file($file);
+} catch (RuntimeException $e) {
+    http_response_code(503);
     header('Content-Type: text/plain');
-    exit('Not Found');
+    exit('Private file storage is unavailable.');
 }
-
-// Prevent path traversal: resolved path MUST start with storageBase
-if (strncmp($filePath, $storageBase, strlen($storageBase)) !== 0) {
-    http_response_code(403);
-    header('Content-Type: text/plain');
-    exit('Forbidden: path traversal detected');
-}
-
-if (!is_file($filePath)) {
+if ($filePath === null) {
     http_response_code(404);
     header('Content-Type: text/plain');
     exit('Not Found');

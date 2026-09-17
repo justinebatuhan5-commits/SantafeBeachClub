@@ -4,6 +4,8 @@
  * Sets industry standard security headers to prevent XSS, Clickjacking, MIME sniffing, and more.
  */
 
+require_once __DIR__ . '/output_helper.php';
+
 if (!headers_sent()) {
     // Prevent Clickjacking attacks
     header('X-Frame-Options: SAMEORIGIN');
@@ -14,22 +16,24 @@ if (!headers_sent()) {
     // Control Referrer information
     header('Referrer-Policy: strict-origin-when-cross-origin');
 
-    // Cross-Site Scripting filter for legacy browsers
-    header('X-XSS-Protection: 1; mode=block');
+    // Disable obsolete browser XSS filters; use output encoding and CSP instead.
+    header('X-XSS-Protection: 0');
 
     // Enforce modern permissions policy
     header("Permissions-Policy: camera=(self), microphone=(self), geolocation=()");
 
-    // Content Security Policy (CSP) — protects against Cross-Site Scripting (XSS) and code injection
+    // Legacy inline scripts/handlers still require unsafe-inline. Output encoding
+    // remains essential until those handlers can migrate to a nonce-based policy.
     $csp = "default-src 'self'; "
-         . "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://cdn.jsdelivr.net; "
+         . "script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://cdn.jsdelivr.net; "
          . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
          . "font-src 'self' https://fonts.gstatic.com data:; "
          . "img-src 'self' data: blob: https: https://api.qrserver.com https://images.unsplash.com; "
          . "frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/ https://www.google.com/maps/; "
          . "connect-src 'self' https://www.google.com/recaptcha/ https://api.qrserver.com; "
          . "object-src 'none'; "
-         . "base-uri 'self';";
+         . "base-uri 'self'; "
+         . "frame-ancestors 'self';";
     header("Content-Security-Policy: " . $csp);
 
     // HTTP Strict Transport Security (HSTS) - enforce HTTPS when connection is secure

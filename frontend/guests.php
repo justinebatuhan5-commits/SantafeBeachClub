@@ -788,7 +788,7 @@ function openGuestProfile(data) {
     };
     const bs = badgeStyles[data.type] || 'background:rgba(16,185,129,0.1);color:#059669;border:1px solid rgba(16,185,129,0.25);';
     document.getElementById('modalTypeBadge').innerHTML =
-        `<span style="${bs}padding:4px 14px;border-radius:99px;font-size:12px;font-weight:700;display:inline-block;">${data.type}</span>`;
+        `<span style="${bs}padding:4px 14px;border-radius:99px;font-size:12px;font-weight:700;display:inline-block;">${Security.escapeHTML(data.type)}</span>`;
 
     const hist = document.getElementById('modalBookingHistory');
     if (!data.bookings || data.bookings.length === 0) {
@@ -803,12 +803,12 @@ function openGuestProfile(data) {
         data.bookings.forEach(b => {
             const amount = b.rate > 0 ? '₱' + (b.rate * b.nights).toLocaleString('en-PH') : '—';
             rows += `<tr>
-                <td><strong>#${b.id}</strong></td>
-                <td>${b.room}</td>
-                <td>${b.check_in}</td>
-                <td>${b.check_out}</td>
-                <td>${b.nights} night${b.nights !== 1 ? 's' : ''}</td>
-                <td><span class="status-pill ${statusClass(b.status)}">${b.status}</span></td>
+                <td><strong>#${Security.escapeHTML(b.id)}</strong></td>
+                <td>${Security.escapeHTML(b.room)}</td>
+                <td>${Security.escapeHTML(b.check_in)}</td>
+                <td>${Security.escapeHTML(b.check_out)}</td>
+                <td>${Security.escapeHTML(b.nights)} night${b.nights !== 1 ? 's' : ''}</td>
+                <td><span class="status-pill ${statusClass(b.status)}">${Security.escapeHTML(b.status)}</span></td>
                 <td><strong>${amount}</strong></td>
             </tr>`;
         });

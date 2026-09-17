@@ -922,10 +922,10 @@ require_once 'partials/_sidebar.php';
         // ── Room rows ───────────────────────────────────────────────
         filtered.forEach((room, rowIdx) => {
             // Room label
-            const statusDot = '<span class="cal-room-status ' + room.status + '"></span>';
+            const statusDot = '<span class="cal-room-status ' + Security.escapeHTML(room.status) + '"></span>';
             html += '<div class="cal-room-label">' +
-                '<div class="cal-room-name">' + statusDot + room.name + '</div>' +
-                '<div class="cal-room-type">' + room.type_label + ' · ₱' + room.price.toLocaleString() + '/night</div>' +
+                '<div class="cal-room-name">' + statusDot + Security.escapeHTML(room.name) + '</div>' +
+                '<div class="cal-room-type">' + Security.escapeHTML(room.type_label) + ' · ₱' + room.price.toLocaleString() + '/night</div>' +
                 '</div>';
 
             // Date cells
@@ -935,7 +935,7 @@ require_once 'partials/_sidebar.php';
                 let cls = 'cal-cell';
                 if (ds === today) cls += ' today';
                 if (isWeekend(d)) cls += ' weekend';
-                html += '<div class="' + cls + '" data-room="' + room.id + '" data-date="' + ds + '" data-col="' + i + '" data-row="' + rowIdx + '"></div>';
+                html += '<div class="' + cls + '" data-room="' + Security.escapeHTML(room.id) + '" data-date="' + ds + '" data-col="' + i + '" data-row="' + rowIdx + '"></div>';
             }
         });
 
@@ -985,7 +985,7 @@ require_once 'partials/_sidebar.php';
         bar.style.width  = widthPx + 'px';
         bar.style.top    = (topPx + ROW_HEIGHT / 2) + 'px';
         bar.dataset.bookingId = booking.id;
-        bar.innerHTML = '<span class="cal-bar-guest">' + booking.guest_name + '</span>';
+        bar.innerHTML = '<span class="cal-bar-guest">' + Security.escapeHTML(booking.guest_name) + '</span>';
         bar.title = booking.guest_name + ' · ' + booking.check_in + ' &rarr; ' + booking.check_out + ' · ' + booking.status;
 
         // ── Click &rarr; show details ────────────────────────────────
@@ -1108,18 +1108,18 @@ require_once 'partials/_sidebar.php';
     // ── Detail Panel ─────────────────────────────────────────────────
     function showDetail(b) {
         const nights = diffDays(new Date(b.check_in + 'T00:00:00'), new Date(b.check_out + 'T00:00:00'));
-        const statusBadge = '<span class="badge badge-' + b.status.toLowerCase().replace(/\s+/g, '') + '" style="' + getStatusStyle(b.status) + '">' + b.status + '</span>';
+        const statusBadge = '<span class="badge badge-' + Security.escapeHTML(b.status.toLowerCase().replace(/\s+/g, '')) + '" style="' + getStatusStyle(b.status) + '">' + Security.escapeHTML(b.status) + '</span>';
 
         detailBody.innerHTML =
-            '<div class="cal-detail-row"><span class="cal-detail-label">Booking #</span><span class="cal-detail-value">' + b.id + '</span></div>' +
-            '<div class="cal-detail-row"><span class="cal-detail-label">Guest</span><span class="cal-detail-value">' + b.guest_name + '</span></div>' +
-            (b.guest_email ? '<div class="cal-detail-row"><span class="cal-detail-label">Email</span><span class="cal-detail-value">' + b.guest_email + '</span></div>' : '') +
-            '<div class="cal-detail-row"><span class="cal-detail-label">Room</span><span class="cal-detail-value">' + b.room_name + '</span></div>' +
+            '<div class="cal-detail-row"><span class="cal-detail-label">Booking #</span><span class="cal-detail-value">' + Security.escapeHTML(b.id) + '</span></div>' +
+            '<div class="cal-detail-row"><span class="cal-detail-label">Guest</span><span class="cal-detail-value">' + Security.escapeHTML(b.guest_name) + '</span></div>' +
+            (b.guest_email ? '<div class="cal-detail-row"><span class="cal-detail-label">Email</span><span class="cal-detail-value">' + Security.escapeHTML(b.guest_email) + '</span></div>' : '') +
+            '<div class="cal-detail-row"><span class="cal-detail-label">Room</span><span class="cal-detail-value">' + Security.escapeHTML(b.room_name) + '</span></div>' +
             '<div class="cal-detail-row"><span class="cal-detail-label">Check-in</span><span class="cal-detail-value">' + fmtDate(b.check_in) + '</span></div>' +
             '<div class="cal-detail-row"><span class="cal-detail-label">Check-out</span><span class="cal-detail-value">' + fmtDate(b.check_out) + '</span></div>' +
             '<div class="cal-detail-row"><span class="cal-detail-label">Nights</span><span class="cal-detail-value">' + nights + '</span></div>' +
-            '<div class="cal-detail-row"><span class="cal-detail-label">Guests</span><span class="cal-detail-value">' + b.guests_count + '</span></div>' +
-            '<div class="cal-detail-row"><span class="cal-detail-label">ETA</span><span class="cal-detail-value">' + b.eta + '</span></div>' +
+            '<div class="cal-detail-row"><span class="cal-detail-label">Guests</span><span class="cal-detail-value">' + Security.escapeHTML(b.guests_count) + '</span></div>' +
+            '<div class="cal-detail-row"><span class="cal-detail-label">ETA</span><span class="cal-detail-value">' + Security.escapeHTML(b.eta) + '</span></div>' +
             '<div class="cal-detail-row"><span class="cal-detail-label">Status</span><span class="cal-detail-value">' + statusBadge + '</span></div>';
 
         detailLink.href = 'admin_reservations?highlight=' + b.id;
@@ -1219,7 +1219,7 @@ require_once 'partials/_sidebar.php';
 
             function showModalError(msg) {
                 subtitle.textContent = '';
-                modalBody.innerHTML = '<div class="avail-empty" style="color:#EF4444;">' + msg + '</div>';
+                modalBody.innerHTML = '<div class="avail-empty" style="color:#EF4444;">' + Security.escapeHTML(msg) + '</div>';
                 openModal();
             }
 
@@ -1268,9 +1268,9 @@ require_once 'partials/_sidebar.php';
                 function sectionHtml(key, list) {
                     if (!list.length) return '';
                     const chips = list.map(r =>
-                        '<span class="avail-chip ' + key + '" title="' + r.type_label + ' · ₱' + r.price.toLocaleString() + '/night">' +
+                        '<span class="avail-chip ' + key + '" title="' + Security.escapeHTML(r.type_label) + ' · ₱' + r.price.toLocaleString() + '/night">' +
                         '<span class="avail-chip-dot" style="background:' + dotColors[key] + ';"></span>' +
-                        r.name + '</span>'
+                        Security.escapeHTML(r.name) + '</span>'
                     ).join('');
                     return '<div class="avail-section ' + key + '">' +
                            '  <div class="avail-section-head">' +

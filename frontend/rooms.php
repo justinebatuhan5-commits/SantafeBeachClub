@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/config/db.php';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -494,7 +495,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     (function() {
         var currentCalYear = <?php echo (int)date('Y', strtotime($filter_checkin)); ?>;
         var currentCalMonth = <?php echo (int)date('n', strtotime($filter_checkin)); ?>;
-        var currentRoomType = '<?php echo addslashes($filter_type); ?>';
+        var currentRoomType = <?php echo xss_json($filter_type); ?>;
 
         var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -1053,20 +1054,20 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
 
                             <?php if (!$is_all_maintenance): ?>
                             <div class="rate-date-strip-wrap" id="date-strip-wrap-<?php echo htmlspecialchars($type_key); ?>">
-                                <button type="button" class="btn-strip-nav btn-strip-prev" onclick="shiftDateStrip('<?php echo htmlspecialchars($type_key); ?>', -3)" aria-label="Previous dates">
+                                <button type="button" class="btn-strip-nav btn-strip-prev" onclick="shiftDateStrip(<?php echo xss_attr_json($type_key); ?>, -3)" aria-label="Previous dates">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                                 </button>
                                 <div class="rate-date-strip" id="date-strip-<?php echo htmlspecialchars($type_key); ?>" data-type="<?php echo htmlspecialchars($type_key); ?>" data-price="<?php echo $price; ?>">
                                     <!-- Populated via JS -->
                                 </div>
-                                <button type="button" class="btn-strip-nav btn-strip-next" onclick="shiftDateStrip('<?php echo htmlspecialchars($type_key); ?>', 3)" aria-label="Next dates">
+                                <button type="button" class="btn-strip-nav btn-strip-next" onclick="shiftDateStrip(<?php echo xss_attr_json($type_key); ?>, 3)" aria-label="Next dates">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                                 </button>
                             </div>
 
                             <div class="rate-soldout-actions">
                                 <button type="button" class="btn-sold-out" disabled><?php echo $unavail_reason; ?></button>
-                                <button type="button" class="btn-check-calendar" onclick="openAvailabilityCalendar('<?php echo htmlspecialchars($type_key); ?>', '<?php echo htmlspecialchars(addslashes($label)); ?>', <?php echo $price; ?>)">
+                                <button type="button" class="btn-check-calendar" onclick="openAvailabilityCalendar(<?php echo xss_attr_json($type_key); ?>, <?php echo xss_attr_json($label); ?>, <?php echo $price; ?>)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                     Check availability calendar
                                 </button>
@@ -1360,7 +1361,7 @@ function renderSummary() {
         var el = document.createElement('div');
         el.className = 'bs-room-line';
         el.innerHTML =
-            '<span class="bs-room-name">' + r.qty + 'x ' + r.label + '</span>' +
+            '<span class="bs-room-name">' + Number(r.qty) + 'x ' + escapeRoomText(r.label) + '</span>' +
             '<span class="bs-room-subtotal">&#8369; ' + roomSubtotal.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>';
         selectedDiv.appendChild(el);
 
@@ -1668,7 +1669,10 @@ function openRoomModal(btn) {
         var thumb = document.createElement('button');
         thumb.type = 'button';
         thumb.className = 'room-modal-thumb' + (index === 0 ? ' room-modal-thumb--active' : '');
-        thumb.innerHTML = '<img src="' + src + '" alt="' + name + ' thumbnail ' + (index + 1) + '">';
+        var image = document.createElement('img');
+        image.src = src;
+        image.alt = name + ' thumbnail ' + (index + 1);
+        thumb.appendChild(image);
         thumb.onclick = function() {
             setRoomModalImage(src, name, index, photos.length, thumb);
         };
@@ -1690,15 +1694,21 @@ function closeRoomModal() {
     document.body.classList.remove('body-modal-open');
 }
 window.hotelData = {
-    checkin: "<?php echo $filter_checkin; ?>",
-    checkout: "<?php echo $filter_checkout; ?>",
+    checkin: <?php echo xss_json($filter_checkin); ?>,
+    checkout: <?php echo xss_json($filter_checkout); ?>,
     nights: <?php echo $nights; ?>,
     guests: <?php echo $filter_guests; ?>,
-    rooms: <?php echo json_encode($all_rooms_list); ?>,
-    bookings: <?php echo json_encode($all_cal_bookings); ?>
+    rooms: <?php echo xss_json($all_rooms_list); ?>,
+    bookings: <?php echo xss_json($all_cal_bookings); ?>
 };
 
 /* State for Date Strips & Modal Calendar */
+function escapeRoomText(value) {
+    var span = document.createElement('span');
+    span.textContent = value == null ? '' : String(value);
+    return span.innerHTML;
+}
+
 var dateStripOffsets = {};
 var currentCalType = '';
 var currentCalLabel = '';
@@ -1804,7 +1814,7 @@ function renderDateStrip(type) {
                    '<span class="ds-price">&#8369; ' + price.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</span>';
 
         if (!avail.available) {
-            html += '<span class="ds-badge-sold">' + avail.reason + '</span>';
+            html += '<span class="ds-badge-sold">' + escapeRoomText(avail.reason) + '</span>';
             if (avail.bookedCheckin && avail.bookedCheckout) {
                 html += '<span class="ds-booked-range">'
                     + formatShortStayDate(avail.bookedCheckin)
@@ -1951,7 +1961,7 @@ function renderCalendarDays() {
                 cell.innerHTML = 
                     '<span class="cal-day-num">' + day + '</span>' +
                     '<span class="cal-day-price" style="color:#A39B94;">&#8369; ' + Math.round(currentCalPrice).toLocaleString('en-PH') + '</span>' +
-                    '<span class="cal-day-tag cal-day-tag--sold">' + avail.reason + '</span>' +
+                    '<span class="cal-day-tag cal-day-tag--sold">' + escapeRoomText(avail.reason) + '</span>' +
                     soldRange;
             }
         }

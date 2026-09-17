@@ -243,7 +243,7 @@ unset($_SESSION['notif_flash']);
                             $badgeClass = 'badge-' . $type;
                         ?>
                         <div class="notif-item type-<?php echo $type; ?> <?php echo ($is_read ? '' : 'unread'); ?>">
-                            <div style="flex: 1; cursor: pointer;" onclick="showNotificationDetailModal({id: <?php echo $id; ?>, title: <?php echo json_encode($n['title']); ?>, message: <?php echo json_encode($n['message']); ?>, type: <?php echo json_encode($type); ?>, booking_id: <?php echo (int)($n['booking_id'] ?? 0); ?>, time: <?php echo json_encode($time); ?>})">
+                            <div style="flex: 1; cursor: pointer;" onclick="showNotificationDetailModal({id: <?php echo $id; ?>, title: <?php echo xss_attr_json($n['title']); ?>, message: <?php echo xss_attr_json($n['message']); ?>, type: <?php echo xss_attr_json($type); ?>, booking_id: <?php echo (int)($n['booking_id'] ?? 0); ?>, time: <?php echo xss_attr_json($time); ?>})">
                                 <span class="notif-badge <?php echo $badgeClass; ?>"><?php echo strtoupper($type); ?></span>
                                 <div class="notif-title"><?php echo $title; ?></div>
                                 <div class="notif-msg"><?php echo $msg; ?></div>

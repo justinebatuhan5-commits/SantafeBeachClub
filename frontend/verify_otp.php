@@ -477,7 +477,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
         }
 
         function showMessage(msg, isSuccess = false) {
-            msgContainer.innerHTML = `<div class="${isSuccess ? 'success-box' : 'error'}">${msg}</div>`;
+            msgContainer.innerHTML = `<div class="${isSuccess ? 'success-box' : 'error'}">${Security.escapeHTML(msg)}</div>`;
         }
 
         // Handle OTP verification submit

@@ -244,7 +244,7 @@ $overdue_guest_names = [];
                                     <form method='POST' action='admin_checkout' id='checkout-form-{$id}' style='display:inline;'>
                                         <input type='hidden' name='action' value='checkout'>
                                         <input type='hidden' name='booking_id' value='{$id}'>
-                                        <button type='button' class='btn-checkout' onclick='confirmCheckout({$id}, \"{$name}\")'>Check-out</button>
+                                        <button type='button' class='btn-checkout' onclick='confirmCheckout({$id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\")'>Check-out</button>
                                     </form>
                                 </td>";
                                 echo "</tr>";

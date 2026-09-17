@@ -228,6 +228,10 @@ function _sb_badge($count, $type = '') {
 
         <p class="sidebar-section-label">Administration</p>
         <ul class="sidebar-nav">
+            <li><a href="admin_backups" class="sidebar-link <?php echo _sb_active('backups',$_page); ?>" title="Database Backups">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 4 18 4 18 0V5M3 12c0 4 18 4 18 0"/></svg>
+                Database Backups
+            </a></li>
             <li><a href="admin_staff" class="sidebar-link <?php echo _sb_active('staff',$_page); ?>" title="Staff Management">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 Staff Management

@@ -590,7 +590,7 @@ if (isset($conn)) {
                             elseif ($time_diff < 86400) { $time_str = floor($time_diff/3600) . 'h ago'; }
                             else { $time_str = date('M j', strtotime($n['created_at'])); }
                         ?>
-                        <div class="notif-item <?php echo $is_unread ? 'unread' : ''; ?>" data-id="<?php echo $n['id']; ?>" onclick="showNotificationDetailModal({id: <?php echo $n['id']; ?>, title: <?php echo json_encode($n['title']); ?>, message: <?php echo json_encode($n['message']); ?>, type: <?php echo json_encode($type); ?>, booking_id: <?php echo (int)($n['booking_id'] ?? 0); ?>, time: <?php echo json_encode($time_str); ?>})">
+                        <div class="notif-item <?php echo $is_unread ? 'unread' : ''; ?>" data-id="<?php echo $n['id']; ?>" onclick="showNotificationDetailModal({id: <?php echo $n['id']; ?>, title: <?php echo xss_attr_json($n['title']); ?>, message: <?php echo xss_attr_json($n['message']); ?>, type: <?php echo xss_attr_json($type); ?>, booking_id: <?php echo (int)($n['booking_id'] ?? 0); ?>, time: <?php echo xss_attr_json($time_str); ?>})">
                             <div class="notif-icon-circle <?php echo $icon_class; ?>">
                                 <?php echo $icon_svg; ?>
                             </div>

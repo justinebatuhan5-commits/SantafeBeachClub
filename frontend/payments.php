@@ -484,7 +484,7 @@ if ($bk_res) {
                                 
                                 if (!empty($receipt_url)) {
                                     $safe_url = htmlspecialchars($receipt_url);
-                                    echo "<td><a href='javascript:void(0)' onclick='openProofImageModal(\"{$safe_url}\")' style='color:#007AFF; font-size:12px; font-weight:600; text-decoration:underline;'>View Receipt</a></td>";
+                                    echo "<td><a href='javascript:void(0)' onclick='openProofImageModal(\"" . xss_attr_string(htmlspecialchars_decode($safe_url, ENT_QUOTES)) . "\")' style='color:#007AFF; font-size:12px; font-weight:600; text-decoration:underline;'>View Receipt</a></td>";
                                 } else {
                                     echo "<td><span style='color:#999; font-size:12px;'>No Receipt</span></td>";
                                 }
@@ -523,7 +523,7 @@ if ($bk_res) {
                                              </select>
                                             <button type='submit' class='btn-pay' style='padding:6px 12px; font-size:12px;'>Verify</button>
                                         </form>
-                                        <button type='button' class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#d32f2f; border-color:#d32f2f;' onclick='openRejectModal({$pay_id}, \"{$name}\", \"INV-100{$pay_id}\")'>Reject</button>
+                                        <button type='button' class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#d32f2f; border-color:#d32f2f;' onclick='openRejectModal({$pay_id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"INV-100{$pay_id}\")'>Reject</button>
                                     </div>";
 
                                 } elseif ($pay_status_display === 'verified' || $pay_status_display === 'paid') {
@@ -535,9 +535,9 @@ if ($bk_res) {
                                     $b_paid = $raw_amount;
                                     $bid = $row['booking_id'];
                                     echo "<div style='display:flex; gap:6px; align-items:center; flex-wrap:wrap;'>";
-                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . addslashes($name) . "\", \"" . addslashes($room) . "\", {$b_total})'>Print Receipt</button>";
+                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($room, ENT_QUOTES)) . "\", {$b_total})'>Print Receipt</button>";
                                     echo "<a href='payments?send_booking_id={$bid}' class='btn-pay' style='padding:6px 12px; font-size:12px; text-decoration:none;'>Send Confirmation</a>";
-                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#6A1B9A; border-color:#6A1B9A;' onclick='openRefundModal({$pay_id}, \"{$name}\", \"PHP {$amount}\")'>Refund</button>";
+                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#6A1B9A; border-color:#6A1B9A;' onclick='openRefundModal({$pay_id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"PHP {$amount}\")'>Refund</button>";
                                     echo "</div>";
                                 } elseif ($pay_status_display === 'refunded') {
                                     echo "<span style='font-size:12px; color:#6A1B9A; font-weight:600;'>💜 Refunded</span>";
@@ -769,7 +769,7 @@ if ($bk_res) {
     </div>
 
     <script>
-        const PAYMENTS_BREAKDOWN = <?php echo json_encode($breakdown_map); ?>;
+        const PAYMENTS_BREAKDOWN = <?php echo xss_json($breakdown_map); ?>;
         // ── Proof Image Modal ──
         function openProofImageModal(url) {
             const img = document.getElementById('proofModalImg');
@@ -806,7 +806,7 @@ if ($bk_res) {
         });
 
         // ── Official Receipt Modal ──
-        const RECEPTIONIST_NAME = <?php echo json_encode($_SESSION['admin_username'] ?? 'Administrator'); ?>;
+        const RECEPTIONIST_NAME = <?php echo xss_json($_SESSION['admin_username'] ?? 'Administrator'); ?>;
         let _receiptData = {};
 
         function openReceiptModal(bid, rcpt, inv, guest, room, totalCost) {
@@ -844,7 +844,7 @@ if ($bk_res) {
             } else {
                 d.payments.forEach((p, i) => {
                     breakdownHtml += `<div style="text-align:left; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between;"><span>${i+1}. ${p.method}</span><strong>${fmt(p.amount)}</strong></div>`;
+                        <div style="display:flex; justify-content:space-between;"><span>${i+1}. ${Security.escapeHTML(p.method)}</span><strong>${fmt(p.amount)}</strong></div>`;
                     if (p.method === 'Front Desk Cash' && p.tendered > p.amount) {
                         breakdownHtml += `<div style="display:flex; justify-content:space-between; color:#666; font-size:11px; padding-left:12px;"><span>Amount Tendered:</span><span>${fmt(p.tendered)}</span></div>`;
                         breakdownHtml += `<div style="display:flex; justify-content:space-between; color:#666; font-size:11px; padding-left:12px;"><span>Change:</span><span>${fmt(p.change)}</span></div>`;
@@ -859,14 +859,14 @@ if ($bk_res) {
                 <div style="font-size:12px; color:#666; margin-bottom:8px;">Official Payment Receipt</div>
                 ${sep}
                 <div style="text-align:left; margin:8px 0;">
-                    <div style="display:flex; justify-content:space-between;"><span>Receipt #:</span><strong>${d.rcpt}</strong></div>
-                    <div style="display:flex; justify-content:space-between;"><span>Invoice #:</span><strong>${d.inv}</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Receipt #:</span><strong>${Security.escapeHTML(d.rcpt)}</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Invoice #:</span><strong>${Security.escapeHTML(d.inv)}</strong></div>
                     <div style="display:flex; justify-content:space-between;"><span>Date & Time:</span><strong>${dateStr}, ${timeStr}</strong></div>
                 </div>
                 ${sep}
                 <div style="text-align:left; margin:8px 0;">
-                    <div style="display:flex; justify-content:space-between;"><span>Guest Name:</span><strong>${d.guest}</strong></div>
-                    <div style="display:flex; justify-content:space-between;"><span>Accommodation:</span><strong>${d.room}</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Guest Name:</span><strong>${Security.escapeHTML(d.guest)}</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Accommodation:</span><strong>${Security.escapeHTML(d.room)}</strong></div>
                 </div>
                 ${sep}
                 <div style="text-align:left; margin:8px 0;">
@@ -884,7 +884,7 @@ if ($bk_res) {
                 </div>
                 ${sep}
                 <div style="text-align:left; margin:8px 0;">
-                    <div style="display:flex; justify-content:space-between;"><span>Staff:</span><strong>${RECEPTIONIST_NAME}</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Staff:</span><strong>${Security.escapeHTML(RECEPTIONIST_NAME)}</strong></div>
                 </div>
                 ${sep}
                 <div style="color:#666; font-size:12px; margin-top:10px;">Thank you for staying with us!<br>Have a safe trip!</div>
@@ -906,7 +906,7 @@ if ($bk_res) {
                 breakdownHtml += `<div class="center" style="font-style:italic; margin-bottom:6px;">No payments recorded</div>`;
             } else {
                 d.payments.forEach((p, i) => {
-                    breakdownHtml += `<div class="row"><span>${i+1}. ${p.method}</span><strong>${fmt(p.amount)}</strong></div>`;
+                    breakdownHtml += `<div class="row"><span>${i+1}. ${Security.escapeHTML(p.method)}</span><strong>${fmt(p.amount)}</strong></div>`;
                     if (p.method === 'Front Desk Cash' && p.tendered > p.amount) {
                         breakdownHtml += `<div class="row" style="color:#666; font-size:11px; padding-left:12px;"><span>Amount Tendered:</span><strong>${fmt(p.tendered)}</strong></div>`;
                         breakdownHtml += `<div class="row" style="color:#666; font-size:11px; padding-left:12px; margin-bottom:4px;"><span>Change:</span><strong>${fmt(p.change)}</strong></div>`;
@@ -919,7 +919,7 @@ if ($bk_res) {
             <head>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-circle-32.png?v=3">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
-    <title>Receipt - ${d.rcpt}</title>
+    <title>Receipt - ${Security.escapeHTML(d.rcpt)}</title>
                 <style>
                     @page { size: 80mm auto; margin: 0; }
                     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -939,11 +939,11 @@ if ($bk_res) {
                     <div class="subtitle">Official Payment Receipt</div>
                 </div>
                 <div class="sep">${sep}</div>
-                <div class="row"><span>Receipt #:</span><strong>${d.rcpt}</strong></div>
+                <div class="row"><span>Receipt #:</span><strong>${Security.escapeHTML(d.rcpt)}</strong></div>
                 <div class="row"><span>Date & Time:</span><strong>${dateStr}, ${timeStr}</strong></div>
                 <div class="sep">${sep}</div>
-                <div class="row"><span>Guest Name:</span><strong>${d.guest}</strong></div>
-                <div class="row"><span>Accommodation:</span><strong>${d.room}</strong></div>
+                <div class="row"><span>Guest Name:</span><strong>${Security.escapeHTML(d.guest)}</strong></div>
+                <div class="row"><span>Accommodation:</span><strong>${Security.escapeHTML(d.room)}</strong></div>
                 <div class="sep">${sep}</div>
                 <div class="row"><span>Total Cost:</span><strong>${fmt(d.totalCost)}</strong></div>
                 ${balance > 0.01 ? `<div class="row" style="color:#d32f2f;"><span>Remaining Balance:</span><strong>${fmt(balance)}</strong></div>` : ''}
@@ -957,7 +957,7 @@ if ($bk_res) {
                 <div class="sep">${sep}</div>
                 <div class="row"><span>Status:</span><strong>${balance > 0.01 ? 'PARTIAL / BALANCE DUE' : 'PAID IN FULL'}</strong></div>
                 <div class="sep">${sep}</div>
-                <div class="row"><span>Staff:</span><strong>${RECEPTIONIST_NAME}</strong></div>
+                <div class="row"><span>Staff:</span><strong>${Security.escapeHTML(RECEPTIONIST_NAME)}</strong></div>
                 <script>window.onload = function() { window.print(); }<\/script>
             </body>
             </html>`);
@@ -968,10 +968,13 @@ if ($bk_res) {
         function openProofImageModal(url) {
             var img = document.getElementById("proofModalImg");
             if (img) {
-                // If the receipt path points to private storage/receipts, route through authenticated serve_file API
-                if (url.startsWith("storage/")) {
-                    var relativePath = url.replace(/^storage\//, "");
-                    img.src = "../backend/api/serve_file.php?file=" + encodeURIComponent(relativePath);
+                // Both historical and current database paths identify private receipts.
+                if (/^(?:storage|uploads)\/receipts\//.test(url)) {
+                    var relativePath = url.replace(/^(?:storage|uploads)\//, "");
+                    var endpoint = new URL(window.location.pathname.includes('/frontend/')
+                        ? '../backend/api/serve_file.php' : 'backend/api/serve_file.php', window.location.href);
+                    endpoint.searchParams.set('file', relativePath);
+                    img.src = endpoint.href;
                 } else {
                     img.src = url;
                 }
@@ -1019,8 +1022,8 @@ if ($bk_res) {
         function openRefundModal(payId, guestName, amount) {
             document.getElementById("refundPaymentId").value = payId;
             document.getElementById("refundModalInfo").innerHTML =
-                "<strong>Guest:</strong> " + guestName + "<br>" +
-                "<strong>Amount:</strong> " + amount + "<br>" +
+                "<strong>Guest:</strong> " + Security.escapeHTML(guestName) + "<br>" +
+                "<strong>Amount:</strong> " + Security.escapeHTML(amount) + "<br>" +
                 "<strong>Invoice:</strong> INV-100" + payId;
             document.getElementById("refundReasonSelect").value = "";
             document.getElementById("customReasonWrap").style.display = "none";
@@ -1072,8 +1075,8 @@ if ($bk_res) {
         function openRejectModal(payId, guestName, invoiceNum) {
             document.getElementById("rejectPaymentId").value = payId;
             document.getElementById("rejectModalInfo").innerHTML =
-                "<strong>Guest:</strong> " + guestName + "<br>" +
-                "<strong>Invoice:</strong> " + invoiceNum;
+                "<strong>Guest:</strong> " + Security.escapeHTML(guestName) + "<br>" +
+                "<strong>Invoice:</strong> " + Security.escapeHTML(invoiceNum);
             document.getElementById("rejectReasonSelect").value = "";
             document.getElementById("rejectCustomReasonWrap").style.display = "none";
             document.getElementById("rejectCustomReasonInput").value = "";

@@ -479,7 +479,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                             <?php else: ?>
                                 <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,<?php echo $roleColor; ?>,<?php echo $roleColor; ?>bb);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.15);"><?php echo strtoupper(substr($s['username'],0,1)); ?></div>
                             <?php endif; ?>
-                            <button type="button" title="Update Photo" onclick="openEditPhoto(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['profile_photo'] ?? ''); ?>', '<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="position:absolute;bottom:-3px;right:-3px;width:19px;height:19px;background:#fff;border:1.5px solid #E2E8F0;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
+                            <button type="button" title="Update Photo" onclick="openEditPhoto(<?php echo $s['id']; ?>, <?php echo xss_attr_json($s['username']); ?>, <?php echo xss_attr_json($s['profile_photo'] ?? ''); ?>, <?php echo xss_attr_json($s['user_type'] ?? $s['role']); ?>)" style="position:absolute;bottom:-3px;right:-3px;width:19px;height:19px;background:#fff;border:1.5px solid #E2E8F0;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
                                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7C533C" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                             </button>
                         </div>
@@ -504,7 +504,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                                 No email
                             </span>
                         <?php endif; ?>
-                        <button type="button" title="Edit OTP Email" onclick="openEditEmail(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars($s['username']); ?>', '<?php echo htmlspecialchars($s['email'] ?? ''); ?>', '<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:4px;color:#CBD5E1;border-radius:5px;display:flex;align-items:center;" onmouseover="this.style.color='#7C533C'" onmouseout="this.style.color='#CBD5E1'">
+                        <button type="button" title="Edit OTP Email" onclick="openEditEmail(<?php echo $s['id']; ?>, <?php echo xss_attr_json($s['username']); ?>, <?php echo xss_attr_json($s['email'] ?? ''); ?>, <?php echo xss_attr_json($s['user_type'] ?? $s['role']); ?>)" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:4px;color:#CBD5E1;border-radius:5px;display:flex;align-items:center;" onmouseover="this.style.color='#7C533C'" onmouseout="this.style.color='#CBD5E1'">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                         </button>
                     </div>
@@ -561,7 +561,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                                 <?php endif; ?>
                             </form>
                         <?php endif; ?>
-                        <button onclick="openReset(<?php echo $s['id']; ?>,'<?php echo htmlspecialchars($s['username']); ?>','<?php echo htmlspecialchars($s['user_type'] ?? $s['role']); ?>')" style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F1F5F9;border:1.5px solid #E2E8F0;color:#475569;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+                        <button onclick="openReset(<?php echo $s['id']; ?>,<?php echo xss_attr_json($s['username']); ?>,<?php echo xss_attr_json($s['user_type'] ?? $s['role']); ?>)" style="display:inline-flex;align-items:center;gap:4px;padding:5px 9px;font-size:10px;font-weight:700;border-radius:7px;background:#F1F5F9;border:1.5px solid #E2E8F0;color:#475569;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-1.5 1.5L14 9l-3-3 2.5-2.5a2.121 2.121 0 0 1 3 0l4.5 4.5z"/><circle cx="7.5" cy="16.5" r="4.5"/><path d="M10.5 13.5L3 21"/></svg>
                             Reset
                         </button>

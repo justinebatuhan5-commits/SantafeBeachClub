@@ -792,9 +792,9 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                 <div class="donut-legend-item">
                     <div class="donut-legend-left">
                         <span class="donut-legend-dot" style="background:${col};"></span>
-                        <span>${status}</span>
+                        <span>${Security.escapeHTML(status)}</span>
                     </div>
-                    <div class="donut-legend-right">${pct}% (${count})</div>
+                    <div class="donut-legend-right">${pct}% (${Security.escapeHTML(count)})</div>
                 </div>
                 `;
             }).join('');
@@ -825,8 +825,8 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                     return `
                     <div class="ranking-bar-row">
                         <div class="ranking-bar-meta">
-                            <span class="ranking-bar-label">${flag} ${c.country}</span>
-                            <span class="ranking-bar-val">${pct}% (${c.bookings})</span>
+                            <span class="ranking-bar-label">${flag} ${Security.escapeHTML(c.country)}</span>
+                            <span class="ranking-bar-val">${pct}% (${Security.escapeHTML(c.bookings)})</span>
                         </div>
                         <div class="ranking-bar-track">
                             <div class="ranking-bar-fill" style="width:${pct}%;"></div>
@@ -844,8 +844,8 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             if (payments.length > 0) {
                 pTbody.innerHTML = payments.map(p => `
                     <tr>
-                        <td style="font-weight:600;">${p.payment_method || 'Front Desk Cash'}</td>
-                        <td style="color:var(--text-muted); font-weight:600;">${p.cnt} payments</td>
+                        <td style="font-weight:600;">${Security.escapeHTML(p.payment_method || 'Front Desk Cash')}</td>
+                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(p.cnt)} payments</td>
                         <td style="text-align:right; font-weight:700; color:var(--text-main);">₱${Number(p.total).toLocaleString()}</td>
                     </tr>
                 `).join('');
@@ -859,9 +859,9 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             if (rooms.length > 0) {
                 rTbody.innerHTML = rooms.map(r => `
                     <tr>
-                        <td style="font-weight:600;">${r.accommodation_name}</td>
-                        <td style="color:var(--text-muted); font-weight:600;">${r.cnt} stays</td>
-                        <td style="text-align:right; font-weight:700; color:var(--primary);">${r.guests} guests</td>
+                        <td style="font-weight:600;">${Security.escapeHTML(r.accommodation_name)}</td>
+                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(r.cnt)} stays</td>
+                        <td style="text-align:right; font-weight:700; color:var(--primary);">${Security.escapeHTML(r.guests)} guests</td>
                     </tr>
                 `).join('');
             } else {
@@ -880,17 +880,17 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                         <td style="font-weight:600; display:flex; align-items:center;">
                             <span class="rank-pill ${rankClass}">${idx + 1}</span>
                             <span style="font-size:16px; margin-right:8px;">${flag}</span>
-                            <span>${c.country}</span>
+                            <span>${Security.escapeHTML(c.country)}</span>
                         </td>
                         <td style="color:var(--text-muted); font-weight:600;">
-                            ${c.bookings} <span style="font-size:11.5px; font-weight:400;">(${c.guests} guest${c.guests !== 1 ? 's' : ''})</span>
+                            ${Security.escapeHTML(c.bookings)} <span style="font-size:11.5px; font-weight:400;">(${Security.escapeHTML(c.guests)} guest${c.guests !== 1 ? 's' : ''})</span>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width:${c.share_pct}%;"></div>
+                                    <div class="progress-bar-fill" style="width:${Math.max(0, Math.min(100, Number(c.share_pct) || 0))}%;"></div>
                                 </div>
-                                <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);">${c.share_pct}%</span>
+                                <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);">${Math.max(0, Math.min(100, Number(c.share_pct) || 0))}%</span>
                             </div>
                         </td>
                         <td style="text-align:right; font-weight:700; color:var(--text-main);">₱${Number(c.revenue).toLocaleString()}</td>

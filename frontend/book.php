@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
+require_once __DIR__ . '/../backend/helpers/private_storage_helper.php';
 require_once __DIR__ . '/../backend/libs/phpqrcode/phpqrcode.php';
 require_once __DIR__ . '/../backend/services/booking_service.php';
 require_once __DIR__ . '/../backend/services/paymongo.php';
@@ -289,11 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 require_once __DIR__ . '/../backend/helpers/file_scanner.php';
                 $file_key = 'bank_receipt';
                 if (isset($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
-                    // Store outside web root — protected by storage/.htaccess (Require all denied)
-                    $upload_dir = __DIR__ . '/../storage/receipts/';
-                    if (!is_dir($upload_dir)) {
-                        @mkdir($upload_dir, 0755, true);
-                    }
+                    // Store privately; database paths remain logical receipt identifiers.
                     $tmpFile  = $_FILES[$file_key]['tmp_name'];
                     $origName = basename($_FILES[$file_key]['name']);
                     $file_ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
@@ -317,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $step  = 3; $skip_insert = true;
                         } else {
                             $new_filename = 'rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
-                            if (move_uploaded_file($tmpFile, $upload_dir . $new_filename)) {
+                            if (store_private_receipt($tmpFile, $new_filename)) {
                                 $receipt_url = 'storage/receipts/' . $new_filename;
                             } else {
                                 $error = 'Failed to upload receipt image. Please try again.';
@@ -336,11 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 require_once __DIR__ . '/../backend/helpers/file_scanner.php';
                 $file_key = 'gcash_receipt';
                 if (isset($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
-                    // Store outside web root — protected by storage/.htaccess (Require all denied)
-                    $upload_dir = __DIR__ . '/../storage/receipts/';
-                    if (!is_dir($upload_dir)) {
-                        @mkdir($upload_dir, 0755, true);
-                    }
+                    // Store privately; database paths remain logical receipt identifiers.
                     $tmpFile  = $_FILES[$file_key]['tmp_name'];
                     $origName = basename($_FILES[$file_key]['name']);
                     $file_ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
@@ -364,7 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $step  = 3; $skip_insert = true;
                         } else {
                             $new_filename = 'gcash_rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
-                            if (move_uploaded_file($tmpFile, $upload_dir . $new_filename)) {
+                            if (store_private_receipt($tmpFile, $new_filename)) {
                                 $receipt_url = 'storage/receipts/' . $new_filename;
                             } else {
                                 $error = 'Failed to upload GCash receipt. Please try again.';
@@ -1609,12 +1602,12 @@ function showFileError(input, errorDiv, message) {
     });
     if (applyEditBtn) applyEditBtn.addEventListener('click', function(){
         var adults   = document.getElementById('editAdults').value;
-        var roomType = document.getElementById('editRoomType') ? document.getElementById('editRoomType').value : '<?php echo htmlspecialchars($room_type); ?>';
+        var roomType = document.getElementById('editRoomType') ? document.getElementById('editRoomType').value : <?php echo xss_json($room_type); ?>;
         var params   = new URLSearchParams(window.location.search);
         params.set('step', '1');
         params.set('guests', adults);
-        params.set('checkin',  '<?php echo htmlspecialchars($checkin); ?>');
-        params.set('checkout', '<?php echo htmlspecialchars($checkout); ?>');
+        params.set('checkin',  <?php echo xss_json($checkin); ?>);
+        params.set('checkout', <?php echo xss_json($checkout); ?>);
         params.set('room_type', roomType);
         window.location.href = 'book?' + params.toString();
     });
@@ -1635,10 +1628,10 @@ function showFileError(input, errorDiv, message) {
 
     var currentYear = <?php echo (int)date('Y', strtotime($checkin)); ?>;
     var currentMonth = <?php echo (int)date('n', strtotime($checkin)); ?>;
-    var activeRoomType = '<?php echo htmlspecialchars($room_type); ?>';
+    var activeRoomType = <?php echo xss_json($room_type); ?>;
 
-    var selectedCheckIn = '<?php echo htmlspecialchars($checkin); ?>';
-    var selectedCheckOut = '<?php echo htmlspecialchars($checkout); ?>';
+    var selectedCheckIn = <?php echo xss_json($checkin); ?>;
+    var selectedCheckOut = <?php echo xss_json($checkout); ?>;
     var pickState = 0; // 0 = ready to pick check-in, 1 = ready to pick check-out
 
     var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];

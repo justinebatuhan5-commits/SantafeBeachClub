@@ -305,7 +305,7 @@ if (empty($room_types)) {
                                               </td>";
                                         echo "<td class='eta-cell' style='font-weight:600; color:var(--text-main);'>{$eta}</td>";
                                         echo "<td style='text-align: right;'>
-                                                <button class='btn-table-action {$btnClass}' onclick='checkInGuest(" . json_encode($row_id) . ", " . json_encode($name_raw) . ", " . json_encode($accommodation_raw) . ")'>
+                                                <button class='btn-table-action {$btnClass}' onclick='checkInGuest(" . xss_attr_json($row_id) . ", " . xss_attr_json($name_raw) . ", " . xss_attr_json($accommodation_raw) . ")'>
                                                     <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5'><polyline points='20 6 9 17 4 12'/></svg>
                                                     Express Check-in
                                                 </button>
@@ -508,10 +508,10 @@ if (empty($room_types)) {
                 badge.style.background = '#EFF6FF';
                 badge.style.color = '#2563EB';
                 body.innerHTML = `
-                    <div style="font-weight:700; color:var(--text-main); margin-bottom:4px;">Guest: ${room.guest_name || 'In-House Guest'}</div>
-                    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:3px;">Tier: <strong>${room.guest_type || 'Standard'}</strong></div>
-                    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:3px;">Check-in: ${room.check_in || 'Active'}</div>
-                    <div style="font-size:12.5px; color:var(--text-muted);">Scheduled Check-out: <strong>${room.check_out || 'Today'}</strong></div>
+                    <div style="font-weight:700; color:var(--text-main); margin-bottom:4px;">Guest: ${Security.escapeHTML(room.guest_name || 'In-House Guest')}</div>
+                    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:3px;">Tier: <strong>${Security.escapeHTML(room.guest_type || 'Standard')}</strong></div>
+                    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:3px;">Check-in: ${Security.escapeHTML(room.check_in || 'Active')}</div>
+                    <div style="font-size:12.5px; color:var(--text-muted);">Scheduled Check-out: <strong>${Security.escapeHTML(room.check_out || 'Today')}</strong></div>
                 `;
                 btnSlot.innerHTML = `
                     <a href="checkout" class="btn-primary" style="height:38px; padding:0 16px; font-size:13px; text-decoration:none; display:inline-flex; align-items:center;">
@@ -522,9 +522,9 @@ if (empty($room_types)) {
                 badge.style.background = '#FFFBEB';
                 badge.style.color = '#D97706';
                 body.innerHTML = `
-                    <div style="font-weight:700; color:#D97706; margin-bottom:4px;">Reserved: ${room.guest_name || 'Upcoming Arrival'}</div>
-                    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:3px;">Expected: ${room.check_in || 'Today'}</div>
-                    <div style="font-size:12.5px; color:var(--text-muted);">Stay until: ${room.check_out || '—'}</div>
+                    <div style="font-weight:700; color:#D97706; margin-bottom:4px;">Reserved: ${Security.escapeHTML(room.guest_name || 'Upcoming Arrival')}</div>
+                    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:3px;">Expected: ${Security.escapeHTML(room.check_in || 'Today')}</div>
+                    <div style="font-size:12.5px; color:var(--text-muted);">Stay until: ${Security.escapeHTML(room.check_out || '—')}</div>
                 `;
                 btnSlot.innerHTML = `
                     <a href="admin_reservations" class="btn-primary" style="height:38px; padding:0 16px; font-size:13px; text-decoration:none; display:inline-flex; align-items:center;">

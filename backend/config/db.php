@@ -50,10 +50,12 @@ if (!$conn || $conn->connect_error) {
 
 // 3. Try Agila Hosting Local MySQL (when deployed on Agila server)
 if (!$conn || $conn->connect_error) {
-    $agila_host = 'localhost';
-    $agila_user = 'justinebo4ek_user';
-    $agila_pass = 'oWDtO(BCPrI6pM&%';
-    $agila_db   = 'justinebo4ek_db';
+    require_once __DIR__ . '/agila_database.php';
+    $agila_config = agila_database_config();
+    $agila_host = $agila_config['host'];
+    $agila_user = $agila_config['user'];
+    $agila_pass = $agila_config['password'];
+    $agila_db = $agila_config['database'];
 
     $agila_conn = @new mysqli($agila_host, $agila_user, $agila_pass, $agila_db);
     if ($agila_conn && !$agila_conn->connect_error) {

@@ -612,7 +612,7 @@ $bookings_query = $conn->query("
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="checkin">
                             <input type="hidden" name="booking_id" value="<?php echo $spec_id; ?>">
-                            <button type="submit" style="width: 100%; padding: 13px 0; background: linear-gradient(135deg, #15803D, #166534); color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(22, 101, 52, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(22, 101, 52, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(22, 101, 52, 0.35)';" onclick="handleCheckinClick(event, <?php echo $spec_id; ?>, '<?php echo addslashes($spec_name); ?>', '<?php echo addslashes($spec_acc); ?>', <?php echo $spec_total; ?>, <?php echo $spec_balance; ?>)">
+                            <button type="submit" style="width: 100%; padding: 13px 0; background: linear-gradient(135deg, #15803D, #166534); color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(22, 101, 52, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(22, 101, 52, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(22, 101, 52, 0.35)';" onclick="handleCheckinClick(event, <?php echo $spec_id; ?>, <?php echo xss_attr_json($spec_name); ?>, <?php echo xss_attr_json($spec_acc); ?>, <?php echo $spec_total; ?>, <?php echo $spec_balance; ?>)">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                 Check In Guest Now
                             </button>
@@ -699,12 +699,12 @@ $bookings_query = $conn->query("
                                         <form method='POST' action='admin_checkin' style='display:inline; margin:0;'>
                                             <input type='hidden' name='action' value='checkin'>
                                             <input type='hidden' name='booking_id' value='{$id}'>
-                                            <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . addslashes($name) . "', '" . addslashes($accommodation) . "', {$total_cost}, {$balance_due})\">
+                                            <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "', '" . xss_attr_string(htmlspecialchars_decode($accommodation, ENT_QUOTES)) . "', {$total_cost}, {$balance_due})\">
                                                 <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>
                                                 Check-in
                                             </button>
                                         </form>
-                                        <button type='button' class='btn-noshow' onclick=\"openNoshowModal({$id}, '" . addslashes($name) . "', '" . addslashes($accommodation) . "', '{$checkin_date_only}')\" title='Mark this booking as No-Show / Cancelled'>
+                                        <button type='button' class='btn-noshow' onclick=\"openNoshowModal({$id}, '" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "', '" . xss_attr_string(htmlspecialchars_decode($accommodation, ENT_QUOTES)) . "', '{$checkin_date_only}')\" title='Mark this booking as No-Show / Cancelled'>
                                             <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'></circle><line x1='15' y1='9' x2='9' y2='15'></line><line x1='9' y1='9' x2='15' y2='15'></line></svg>
                                             No-Show
                                         </button>
@@ -1362,11 +1362,11 @@ window.onload = function() {
         <div class="row"><span>Receipt #:</span><strong><?php echo $rcpt; ?></strong></div>
         <div class="row"><span>Date &amp; Time:</span><strong><?php echo "$dateStr, $timeStr"; ?></strong></div>
         <div class="sep">${sep}</div>
-        <div class="row"><span>Guest Name:</span><strong><?php echo addslashes($guest_name); ?></strong></div>
-        <div class="row"><span>Accommodation:</span><strong><?php echo addslashes($room); ?></strong></div>
+        <div class="row"><span>Guest Name:</span><strong>${Security.escapeHTML(<?php echo xss_json($guest_name); ?>)}</strong></div>
+        <div class="row"><span>Accommodation:</span><strong>${Security.escapeHTML(<?php echo xss_json($room); ?>)}</strong></div>
         <div class="sep">${sep}</div>
-        <div class="row"><span>Payment Type:</span><strong><?php echo addslashes($method); ?></strong></div>
-        <div class="row"><span>Ref/Txn #:</span><strong><?php echo addslashes($txn); ?></strong></div>
+        <div class="row"><span>Payment Type:</span><strong>${Security.escapeHTML(<?php echo xss_json($method); ?>)}</strong></div>
+        <div class="row"><span>Ref/Txn #:</span><strong>${Security.escapeHTML(<?php echo xss_json($txn); ?>)}</strong></div>
         <div class="sep">${sep}</div>
         <div class="row"><span>Amount Due:</span><strong>${fmt(<?php echo $amountDue; ?>)}</strong></div>
         <div class="row"><span>Amount Tendered:</span><strong>${fmt(<?php echo $tendered; ?>)}</strong></div>
@@ -1377,7 +1377,7 @@ window.onload = function() {
             <div class="total-amount">${fmt(<?php echo $amountDue; ?>)}</div>
         </div>
         <div class="sep">${sep}</div>
-        <div class="row"><span>Receptionist:</span><strong><?php echo addslashes($admin_name); ?></strong></div>
+        <div class="row"><span>Receptionist:</span><strong>${Security.escapeHTML(<?php echo xss_json($admin_name); ?>)}</strong></div>
         <div class="sep">${sep}</div>
         <div class="center footer">Thank you for staying with us!<br>Have a safe trip!</div>
         <div class="center footer-note">This is an official receipt.</div>

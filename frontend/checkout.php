@@ -159,7 +159,7 @@ $bookings_query = $conn->query("SELECT id, guest_name, guest_email, guest_type, 
                                         <input type='hidden' name='csrf_token' value='{$csrf}'>
                                         <input type='hidden' name='action' value='checkout'>
                                         <input type='hidden' name='booking_id' value='{$id}'>
-                                        <button type='button' class='btn-checkout' onclick='confirmCheckout({$id}, \"{$name}\")'>Check-out</button>
+                                        <button type='button' class='btn-checkout' onclick='confirmCheckout({$id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\")'>Check-out</button>
                                     </form>
                                 </td>";
                                 echo "</tr>";

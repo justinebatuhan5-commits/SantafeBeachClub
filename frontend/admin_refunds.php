@@ -505,11 +505,11 @@ foreach ($valid_statuses as $s) {
                     <!-- Actions -->
                     <div class="refund-actions">
                         <?php if ($is_admin_user && $filter_status === 'requested'): ?>
-                            <button class="btn-approve" onclick="approveRefund(<?php echo $refund['id']; ?>, '<?php echo htmlspecialchars(addslashes($refund['guest_name'])); ?>', '<?php echo number_format($refund['net_refund'], 2); ?>')">
+                            <button class="btn-approve" onclick="approveRefund(<?php echo $refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, '<?php echo number_format($refund['net_refund'], 2); ?>')">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                 Approve Request
                             </button>
-                            <button class="btn-reject" onclick="openRejectModal(<?php echo $refund['id']; ?>, '<?php echo htmlspecialchars(addslashes($refund['guest_name'])); ?>')">
+                            <button class="btn-reject" onclick="openRejectModal(<?php echo $refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 Reject
                             </button>
@@ -678,19 +678,19 @@ foreach ($valid_statuses as $s) {
                         const fmtAmt = v => v ? '₱' + parseFloat(v).toLocaleString('en-PH', {minimumFractionDigits:2}) : '—';
                         document.getElementById('detailsContent').innerHTML = `
                             <table style="width:100%; border-collapse:collapse; font-size:13px;">
-                                <tr><td style="padding:7px 0; color:var(--text-muted); width:140px;">Request ID</td><td style="font-weight:600;">#${r.id}</td></tr>
-                                <tr><td style="padding:7px 0; color:var(--text-muted);">Booking Ref</td><td style="font-weight:600;">REF-${String(r.booking_id).padStart(3,'0')}</td></tr>
-                                <tr><td style="padding:7px 0; color:var(--text-muted);">Guest</td><td>${r.guest_name} (${r.guest_email})</td></tr>
-                                <tr><td style="padding:7px 0; color:var(--text-muted);">Accommodation</td><td>${r.accommodation_name}</td></tr>
-                                <tr><td style="padding:7px 0; color:var(--text-muted);">Check-in</td><td>${r.check_in}</td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted); width:140px;">Request ID</td><td style="font-weight:600;">#${Security.escapeHTML(r.id)}</td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Booking Ref</td><td style="font-weight:600;">REF-${Security.escapeHTML(String(r.booking_id).padStart(3,'0'))}</td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Guest</td><td>${Security.escapeHTML(r.guest_name)} (${Security.escapeHTML(r.guest_email)})</td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Accommodation</td><td>${Security.escapeHTML(r.accommodation_name)}</td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Check-in</td><td>${Security.escapeHTML(r.check_in)}</td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Refund Amount</td><td style="font-weight:700; color:var(--primary);">${fmtAmt(r.net_refund)}</td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Cancellation Fee</td><td>${fmtAmt(r.refund_fee)}</td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Original Paid</td><td>${fmtAmt(r.original_amount)}</td></tr>
-                                <tr><td style="padding:7px 0; color:var(--text-muted);">Status</td><td><strong style="text-transform:uppercase;">${r.status}</strong></td></tr>
-                                <tr><td style="padding:7px 0; color:var(--text-muted);">Requested</td><td>${r.requested_at}</td></tr>
-                                ${r.approved_by ? `<tr><td style="padding:7px 0; color:var(--text-muted);">Reviewed By</td><td>${r.approved_by} on ${r.approved_at}</td></tr>` : ''}
-                                ${r.rejection_reason ? `<tr><td style="padding:7px 0; color:var(--text-muted);">Reject Reason</td><td style="color:#991b1b;">${r.rejection_reason}</td></tr>` : ''}
-                                <tr><td style="padding:7px 0; color:var(--text-muted);" colspan="2"><strong>Guest Reason:</strong><br><span style="color:var(--text-main); line-height:1.5;">${r.reason || '—'}</span></td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Status</td><td><strong style="text-transform:uppercase;">${Security.escapeHTML(r.status)}</strong></td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Requested</td><td>${Security.escapeHTML(r.requested_at)}</td></tr>
+                                ${r.approved_by ? `<tr><td style="padding:7px 0; color:var(--text-muted);">Reviewed By</td><td>${Security.escapeHTML(r.approved_by)} on ${Security.escapeHTML(r.approved_at)}</td></tr>` : ''}
+                                ${r.rejection_reason ? `<tr><td style="padding:7px 0; color:var(--text-muted);">Reject Reason</td><td style="color:#991b1b;">${Security.escapeHTML(r.rejection_reason)}</td></tr>` : ''}
+                                <tr><td style="padding:7px 0; color:var(--text-muted);" colspan="2"><strong>Guest Reason:</strong><br><span style="color:var(--text-main); line-height:1.5;">${Security.escapeHTML(r.reason || '—')}</span></td></tr>
                             </table>
                         `;
                         document.getElementById('detailsModal').classList.add('show');

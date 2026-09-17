@@ -193,6 +193,16 @@
             return String(str).replace(/[&<>"'`]/g, function (m) { return map[m]; });
         },
 
+        // Only navigable HTTP(S) URLs; encoding alone cannot reject javascript: URLs.
+        safeURL: function (value) {
+            try {
+                const url = new URL(String(value), window.location.href);
+                return ['http:', 'https:'].includes(url.protocol) ? url.href : '#';
+            } catch (e) {
+                return '#';
+            }
+        },
+
         safeText: function (element, text) {
             if (element) {
                 element.textContent = text;
