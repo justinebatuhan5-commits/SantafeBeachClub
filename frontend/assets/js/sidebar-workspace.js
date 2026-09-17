@@ -101,6 +101,24 @@
             body.querySelectorAll('section').forEach(function (section) { section.hidden = !section.querySelector('li:not([hidden])'); });
             empty.hidden = count > 0;
         });
+
+        // Page navigation rebuilds this scroll container; restore it after grouping links.
+        var scrollKey = 'sbc_sidebar_scroll:' + location.pathname.slice(0, location.pathname.lastIndexOf('/') + 1);
+        try {
+            var savedScroll = sessionStorage.getItem(scrollKey);
+            var scrollTop = Number(savedScroll);
+            if (savedScroll !== null && Number.isFinite(scrollTop) && scrollTop >= 0) {
+                body.scrollTop = scrollTop;
+            }
+        } catch (error) { /* Storage is optional. */ }
+        function saveScroll() {
+            // Filtering temporarily shrinks the menu; keep the unfiltered position.
+            if (search.value.trim()) return;
+            try { sessionStorage.setItem(scrollKey, String(body.scrollTop)); } catch (error) { /* Storage is optional. */ }
+        }
+        body.addEventListener('scroll', saveScroll, { passive: true });
+        sidebar.addEventListener('click', saveScroll, true);
+        window.addEventListener('pagehide', saveScroll);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();

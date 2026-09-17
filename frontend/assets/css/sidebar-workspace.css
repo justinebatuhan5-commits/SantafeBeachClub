@@ -1,5 +1,5 @@
 /* Single-column navigation, using the application's brown theme tokens. */
-html.sbc-sidebar-docked { --workspace-docked-width: 300px; }
+html.sbc-sidebar-docked { --workspace-docked-width: 250px; }
 html.sbc-sidebar-docked.sbc-sidebar-compact { --workspace-docked-width: 86px; }
 html.sbc-sidebar-docked body #appSidebar.workspace-sidebar {
     position: fixed; inset: 0 auto 0 0; width: var(--workspace-docked-width) !important;
@@ -19,7 +19,7 @@ html.sbc-sidebar-docked .sidebar-logo-restore,
 html.sbc-sidebar-docked .sidebar-overlay { display: none !important; }
 html.sbc-sidebar-docked #appSidebar .sidebar-brand,
 html.sbc-sidebar-docked #appSidebar .sidebar-logo {
-    padding: 28px 25px; min-height: 94px; display: flex; align-items: center;
+    padding: 28px 18px; min-height: 94px; display: flex; align-items: center;
     gap: 12px; border: 0; flex-shrink: 0;
 }
 html.sbc-sidebar-docked #appSidebar .sidebar-brand::before,
@@ -72,4 +72,4 @@ html.sbc-sidebar-compact #appSidebar .sidebar-logo { padding: 28px 23px; }
 .sbc-sidebar-compact #appSidebar .sidebar-bottom { margin-inline: 12px; padding-inline: 0; }
 .sbc-sidebar-compact #appSidebar .user-pill { justify-content: center; }
 /* Smaller screens start with a narrow rail; the explicit expand button still works. */
-@media (max-width: 600px) { html.sbc-sidebar-docked:not(.sbc-sidebar-compact) { --workspace-docked-width: min(280px, 75vw); } }
+@media (max-width: 600px) { html.sbc-sidebar-docked:not(.sbc-sidebar-compact) { --workspace-docked-width: min(250px, 75vw); } }
