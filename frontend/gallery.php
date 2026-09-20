@@ -130,7 +130,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved. &bull; Developed by <strong>Justine Batuhan</strong></p>
         </div>
     </footer>
 <dialog class="gallery-lightbox" aria-labelledby="lightbox-title">

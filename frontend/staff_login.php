@@ -1041,7 +1041,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <span class="pulse-dot"></span>
                     Terminal Ready &bull; Front Desk Portal
                 </div>
-                <div>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club</div>
+                <div>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club &bull; Developed by <span style="color:#FAF7F2; font-weight:600;">Justine Batuhan</span></div>
             </div>
         </section>
 

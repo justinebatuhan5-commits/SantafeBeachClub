@@ -363,7 +363,7 @@ function inquiry_value(string $field): string {
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 Santa Fe Beach Club. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved. &bull; Developed by <strong>Justine Batuhan</strong></p>
         </div>
     </footer>
 <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode(RECAPTCHA_SITE_KEY); ?>" defer></script>

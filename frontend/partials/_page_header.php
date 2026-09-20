@@ -673,6 +673,9 @@ if (isset($conn)) {
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Log Out
                 </a>
+                <div style="padding:8px 14px 4px; font-size:11px; color:#94A3B8; border-top:1px solid var(--border,#E2E8F0); text-align:center;">
+                    Dev: <strong style="color:var(--text-secondary,#475569);">Justine Batuhan</strong>
+                </div>
             </div>
         </div>
     </div>

@@ -1115,7 +1115,7 @@ $csrf_token = get_csrf_token();
 
 <!-- ── Footer ── -->
 <footer style="background:#1E293B; color:#94A3B8; text-align:center; padding:20px 16px; font-size:12px;">
-    &copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved.
+    &copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved. &bull; Developed by <strong style="color:#CBD5E1;">Justine Batuhan</strong>
 </footer>
 
 <?php if (!$booking): ?>
