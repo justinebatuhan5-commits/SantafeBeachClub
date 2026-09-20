@@ -33,6 +33,29 @@ if (!defined('GMAIL_APP_PASSWORD')) define('GMAIL_APP_PASSWORD', str_replace(' '
 if (!defined('MAIL_FROM_NAME'))     define('MAIL_FROM_NAME',     getenv('MAIL_FROM_NAME')     ?: 'Santa Fe Beach Club');
 
 /**
+ * Creates and configures a PHPMailer instance with Gmail SMTP, UTF-8 charset, and base64 encoding.
+ * Ensures emojis and special characters in subjects and email bodies display properly without mojibake.
+ *
+ * @return PHPMailer
+ */
+function createMailer(): PHPMailer {
+    $mail = new PHPMailer(true);
+    $mail->CharSet     = PHPMailer::CHARSET_UTF8;
+    $mail->Encoding    = PHPMailer::ENCODING_BASE64;
+    $mail->isSMTP();
+    $mail->Host        = 'smtp.gmail.com';
+    $mail->SMTPAuth    = true;
+    $mail->Username    = GMAIL_USER;
+    $mail->Password    = GMAIL_APP_PASSWORD;
+    $mail->SMTPSecure  = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port        = 587;
+    $mail->Timeout     = 8; // 8 seconds max timeout so page doesn't hang forever
+    $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+    $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
+    return $mail;
+}
+
+/**
  * Sends a booking confirmation email to the guest.
  *
  * @param string $to_email    Guest email address
@@ -108,22 +131,9 @@ function sendBookingStatusEmail(
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
     }
 
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8; // 8 seconds max timeout so page doesn't hang forever
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        // Recipients
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         // Generate QR code if URL provided
@@ -252,19 +262,9 @@ function sendBookingCancellationEmail(
     string $check_out,
     ?string $reason = null
 ): array {
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         $checkin_fmt  = date('F j, Y', strtotime($check_in));
@@ -344,20 +344,9 @@ function sendPaymentRejectedEmail(
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
     }
 
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         $checkin_fmt  = date('F j, Y', strtotime($check_in));
@@ -437,20 +426,9 @@ function sendRefundCompletedEmail(
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
     }
 
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         $amount_fmt = number_format($refund_amount, 2);
@@ -531,20 +509,9 @@ function sendRefundRequestConfirmationEmail(
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
     }
 
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         $amount_fmt = number_format($estimated_refund, 2);
@@ -621,20 +588,9 @@ function sendRefundApprovedEmail(
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
     }
 
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         $amount_fmt = number_format($approved_amount, 2);
@@ -693,20 +649,9 @@ function sendRefundRejectedEmail(
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
     }
 
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         $mail->isHTML(true);
@@ -777,20 +722,9 @@ function sendPreArrivalReminderEmail(
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
     }
 
-    $mail = new PHPMailer(true);
+    $mail = createMailer();
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = GMAIL_APP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-
-        $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
         $mail->addAddress($to_email, $guest_name);
 
         // Format dates nicely

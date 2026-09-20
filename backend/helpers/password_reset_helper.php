@@ -215,6 +215,8 @@ function _pwd_mailer_smtp_send(string $toEmail, string $name, string $subject, s
     // Strip spaces: Google shows App Passwords with spaces in their UI but SMTP needs 16 chars without
     $clean_pass = str_replace(' ', '', defined('GMAIL_APP_PASSWORD') ? GMAIL_APP_PASSWORD : getenv('GMAIL_APP_PASSWORD'));
     $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    $mail->CharSet  = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
+    $mail->Encoding = \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64;
     try {
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';

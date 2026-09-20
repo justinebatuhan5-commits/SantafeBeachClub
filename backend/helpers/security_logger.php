@@ -82,6 +82,8 @@ class SecurityLogger {
             require_once $mailerPath;
 
             $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->CharSet  = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
+            $mail->Encoding = \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64;
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;

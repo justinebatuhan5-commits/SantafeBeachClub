@@ -288,6 +288,8 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
     if ($smtpAvailable && defined('GMAIL_APP_PASSWORD')) {
         foreach ($smtpFiles as $f) { require_once $f; }
         $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->CharSet  = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
+        $mail->Encoding = \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64;
         try {
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
