@@ -530,6 +530,7 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
     <link rel="stylesheet" href="assets/css/styles.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="assets/css/book.css?v=<?= time(); ?>">
     <script src="assets/js/security.js?v=<?= time(); ?>" defer></script>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
 
@@ -1289,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (bankReceiptInput && bankReceiptInput.files.length === 0) {
                 e.preventDefault();
-                alert('Please upload a screenshot or image of your bank receipt.');
+                SiteDialog.alert('Please upload a screenshot or image of your bank receipt.');
                 bankReceiptInput.focus();
                 bankReceiptInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
@@ -1298,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var gcashReceiptInput = document.getElementById('gcashReceiptInput');
             if (gcashReceiptInput && gcashReceiptInput.files.length === 0) {
                 e.preventDefault();
-                alert('Please upload a screenshot of your GCash payment receipt.');
+                SiteDialog.alert('Please upload a screenshot of your GCash payment receipt.');
                 gcashReceiptInput.focus();
                 gcashReceiptInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
@@ -1322,12 +1323,12 @@ async function downloadBookingPdf() {
     var button = document.querySelector('.btn-pdf--header');
 
     if (!ticket) {
-        alert('Unable to find the booking ticket.');
+        SiteDialog.alert('Unable to find the booking ticket.');
         return;
     }
 
     if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
-        alert('PDF tools are not ready yet. Please try again in a moment.');
+        SiteDialog.alert('PDF tools are not ready yet. Please try again in a moment.');
         return;
     }
 
@@ -1368,7 +1369,7 @@ async function downloadBookingPdf() {
         pdf.save('booking-confirmation-REF-<?php echo str_pad($booking_id, 3, '0', STR_PAD_LEFT); ?>.pdf');
     } catch (error) {
         console.error(error);
-        alert('Unable to download the PDF. Please try again.');
+        SiteDialog.alert('Unable to download the PDF. Please try again.');
     } finally {
         hiddenState.forEach(function (item) {
             item.el.style.display = item.display;
@@ -1768,7 +1769,7 @@ function showFileError(input, errorDiv, message) {
     if (applyCalBtn) {
         applyCalBtn.addEventListener('click', function(){
             if (!selectedCheckIn || !selectedCheckOut) {
-                alert('Please select both Check-in and Check-out dates.');
+                SiteDialog.alert('Please select both Check-in and Check-out dates.');
                 return;
             }
             var params = new URLSearchParams(window.location.search);

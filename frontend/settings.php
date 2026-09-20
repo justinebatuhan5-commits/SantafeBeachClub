@@ -660,6 +660,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
         }
         .notif-permission-note.visible { display: flex; gap: 10px; align-items: flex-start; }
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
 
@@ -1114,7 +1115,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
             function playTestSound() {
                 try {
                     var AC = window.AudioContext || window.webkitAudioContext;
-                    if (!AC) { alert('Web Audio not supported in this browser.'); return; }
+                    if (!AC) { SiteDialog.alert('Web Audio not supported in this browser.'); return; }
                     var ctx  = new AC();
                     var now  = ctx.currentTime;
                     var osc  = ctx.createOscillator();
@@ -1199,7 +1200,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
 
             testDesktopBtn.addEventListener('click', function() {
                 if (Notification.permission !== 'granted') {
-                    alert('Desktop notifications are not permitted. Enable them first using the toggle above.');
+                    SiteDialog.alert('Desktop notifications are not permitted. Enable them first using the toggle above.');
                     return;
                 }
                 var n = new Notification('🔔 Santa Fe Beach Club', {

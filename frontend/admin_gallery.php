@@ -151,6 +151,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
     <?php $active_page = 'gallery'; include __DIR__ . '/partials/_sidebar.php'; ?>
@@ -318,8 +319,8 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
 
     function addFiles(fileList) {
         Array.from(fileList).forEach(f => {
-            if (!allowedTypes.includes(f.type)) { alert(f.name + ' is not a supported format.'); return; }
-            if (f.size > maxBytes) { alert(f.name + ' exceeds the 2 MB limit.'); return; }
+            if (!allowedTypes.includes(f.type)) { SiteDialog.alert(f.name + ' is not a supported format.'); return; }
+            if (f.size > maxBytes) { SiteDialog.alert(f.name + ' exceeds the 2 MB limit.'); return; }
             selectedFiles.push(f);
         });
         syncInputFiles();

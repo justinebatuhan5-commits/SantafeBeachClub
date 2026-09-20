@@ -147,6 +147,7 @@ if (empty($room_types)) {
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
 
@@ -581,7 +582,7 @@ if (empty($room_types)) {
         function submitReservation(status) {
             const name = document.getElementById('newGuestName').value.trim();
             if (!name) {
-                alert('Please enter guest name.');
+                SiteDialog.alert('Please enter guest name.');
                 return;
             }
             const email = document.getElementById('newGuestEmail').value;
@@ -612,12 +613,12 @@ if (empty($room_types)) {
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert('Error: ' + (data.message || data.error || 'Failed to save reservation.'));
+                    SiteDialog.alert('Error: ' + (data.message || data.error || 'Failed to save reservation.'));
                 }
             })
             .catch(err => {
                 console.error('Error saving reservation:', err);
-                alert('An error occurred while creating the reservation.');
+                SiteDialog.alert('An error occurred while creating the reservation.');
             });
         }
 
@@ -640,12 +641,12 @@ if (empty($room_types)) {
                     if (row) row.remove();
                     window.location.reload();
                 } else {
-                    alert('Check-in failed. Please try again.');
+                    SiteDialog.alert('Check-in failed. Please try again.');
                 }
             })
             .catch(err => {
                 console.error('Check-in error:', err);
-                alert('An error occurred during check-in.');
+                SiteDialog.alert('An error occurred during check-in.');
             });
         }
 

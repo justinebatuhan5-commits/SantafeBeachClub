@@ -57,6 +57,7 @@ if ($price_q) {
             }
         }
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body class="home-page">
 
@@ -459,13 +460,13 @@ if ($price_q) {
                 });
                 const data = await res.json();
                 if (res.ok && data.success === true) {
-                    alert("Thank you! Your review has been submitted and will appear after admin approval.");
+                    SiteDialog.alert("Thank you! Your review has been submitted and will appear after admin approval.");
                     location.reload();
                 } else {
-                    alert(data.error || "Failed to submit review. Please try again.");
+                    SiteDialog.alert(data.error || "Failed to submit review. Please try again.");
                 }
             } catch (err) {
-                alert("Unable to confirm your review was submitted. Please try again later.");
+                SiteDialog.alert("Unable to confirm your review was submitted. Please try again later.");
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Submit Review";

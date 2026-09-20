@@ -374,6 +374,7 @@ $bookings_query = $conn->query("
         .pay-card-inner .label { font-size: 12px; }
 
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
 
@@ -935,7 +936,7 @@ document.getElementById('walkinForm').addEventListener('submit', function(e) {
     const sel = document.getElementById('walkinRoomSelect');
     if (!sel || !sel.value) {
         e.preventDefault();
-        alert('Please select an available room for the walk-in guest.');
+        SiteDialog.alert('Please select an available room for the walk-in guest.');
         return;
     }
     
@@ -1020,7 +1021,7 @@ document.getElementById('balanceForm').addEventListener('submit', function(e) {
     
     if (selected === 'Front Desk Cash' && tendered < balanceDue) {
         e.preventDefault();
-        alert('Amount tendered (₱' + tendered.toFixed(2) + ') cannot be less than the balance due (₱' + balanceDue.toFixed(2) + ').');
+        SiteDialog.alert('Amount tendered (₱' + tendered.toFixed(2) + ') cannot be less than the balance due (₱' + balanceDue.toFixed(2) + ').');
         document.getElementById('amountTendered').focus();
         return;
     }
@@ -1100,7 +1101,8 @@ window.onload = function() {
             .footer { color: #666; font-size: 12px; margin-top: 10px; }
             .footer-note { color: #888; font-size: 11px; margin-top: 8px; }
         </style>
-    </head>
+    <script src="assets/js/site-dialog.js?v=1"></script>
+</head>
     <body>
         <div class="center">
             <div class="brand">SANTA FE BEACH CLUB</div>

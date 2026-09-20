@@ -388,6 +388,7 @@ foreach ($valid_statuses as $s) {
             color: #991b1b;
         }
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
 
@@ -505,7 +506,7 @@ foreach ($valid_statuses as $s) {
                     <!-- Actions -->
                     <div class="refund-actions">
                         <?php if ($is_admin_user && $filter_status === 'requested'): ?>
-                            <button class="btn-approve" onclick="approveRefund(<?php echo $refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, '<?php echo number_format($refund['net_refund'], 2); ?>')">
+                            <button class="btn-approve" onclick="approveRefund(<?php echo $refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, '<?php echo number_format($refund['net_refund'], 2); ?>', this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                 Approve Request
                             </button>
@@ -566,10 +567,8 @@ foreach ($valid_statuses as $s) {
     <script>
         let currentRefundId = null;
 
-        function approveRefund(refundId, guestName, amount) {
-            if (!confirm(`Approve the refund request for ${guestName}?\n\nAmount to be refunded: ₱${amount}\n\nThis will notify the guest and move the request to "Approved".`)) return;
-
-            const btn = event.target.closest('button');
+        async function approveRefund(refundId, guestName, amount, btn) {
+            if (!await SiteDialog.confirm(`Approve the refund request for ${guestName}?\n\nAmount to be refunded: ₱${amount}\n\nThis will notify the guest and move the request to "Approved".`, { title: 'Approve refund?', confirmText: 'Approve refund' })) return;
             const origHTML = btn.innerHTML;
             btn.innerHTML = '<span class="loading-dot"></span> Approving...';
             btn.disabled = true;
@@ -640,8 +639,8 @@ foreach ($valid_statuses as $s) {
                 });
         }
 
-        function processRefund(refundId) {
-            if (!confirm('Process this refund to PayMongo?\n\nThis will initiate the actual payment refund and notify the guest by email.\n\nThis action cannot be undone.')) return;
+        async function processRefund(refundId) {
+            if (!await SiteDialog.confirm('Process this refund to PayMongo?\n\nThis will initiate the actual payment refund and notify the guest by email.\n\nThis action cannot be undone.', { title: 'Process refund?', confirmText: 'Process refund', danger: true })) return;
 
             const btn = document.getElementById(`process-btn-${refundId}`);
             btn.innerHTML = '<span class="loading-dot"></span> Processing...';

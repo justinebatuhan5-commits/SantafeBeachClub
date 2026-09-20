@@ -630,6 +630,7 @@ $csrf_token = get_csrf_token();
     <!-- reCAPTCHA v3 -->
     <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
     <link rel="stylesheet" href="assets/css/my-booking.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/my-booking.css'); ?>">
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body class="booking-page<?php echo !$booking ? ' booking-lookup-page' : ''; ?>">
 
@@ -1246,7 +1247,7 @@ guestResendBtn.addEventListener('click', async () => {
         const data = await response.json();
         if (data.success) {
             startGuestCooldown(60);
-            alert(data.message || 'New code sent to your email.');
+            SiteDialog.alert(data.message || 'New code sent to your email.');
         } else {
             showError(data.error || 'Failed to resend code.');
         }

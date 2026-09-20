@@ -370,6 +370,7 @@ function booking_room_type(array $booking): string {
         }
         .btn-export:hover { background: var(--sidebar-hover); border-color: var(--primary); color: var(--primary); }
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
 
@@ -713,7 +714,7 @@ function applyFilters(searchTerm) {
 // ── Export CSV ────────────────────────────────────────────────────────────────
 document.getElementById('exportCsvBtn').addEventListener('click', function () {
     const visibleRows = ALL_ROWS.filter(r => r.style.display !== 'none');
-    if (!visibleRows.length) { alert('No guests to export.'); return; }
+    if (!visibleRows.length) { SiteDialog.alert('No guests to export.'); return; }
 
     const headers = ['Guest Name', 'Email', 'Tier', 'Total Bookings', 'Last Visit'];
     const lines   = [headers.join(',')];

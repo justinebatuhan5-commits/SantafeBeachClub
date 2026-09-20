@@ -404,6 +404,7 @@ $default_prices = [
             font-style: italic;
         }
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body>
 <?php $active_page = 'room_photos'; include __DIR__ . '/partials/_sidebar.php'; ?>
@@ -625,7 +626,7 @@ function validateFileInput(btn, fieldName) {
                 zone.style.background = '';
             }, 2500);
         }
-        alert('Please select or drop a photo first.');
+        SiteDialog.alert('Please select or drop a photo first.');
         return false;
     }
     return true;

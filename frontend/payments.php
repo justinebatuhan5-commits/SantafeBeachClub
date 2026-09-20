@@ -423,6 +423,7 @@ if ($bk_res) {
             to   { transform: scale(1);    opacity: 1; }
         }
     </style>
+<script src="assets/js/site-dialog.js?v=1"></script>
 </head>
 <body class="payments-page">
 
@@ -994,7 +995,8 @@ if ($bk_res) {
                     .total-label { font-size: 15px; font-weight: 800; letter-spacing: 1px; margin-top: 10px; margin-bottom: 6px;}
                     .total-amount { font-size: 20px; font-weight: 900; letter-spacing: 1px; margin-bottom: 6px; }
                 </style>
-            </head>
+            <script src="assets/js/site-dialog.js?v=1"></script>
+</head>
             <body>
                 <div class="center">
                     <div class="brand">SANTA FE BEACH CLUB</div>
@@ -1107,13 +1109,13 @@ if ($bk_res) {
             let reason = reasonSelect.value;
 
             if (!reason) {
-                alert("Please select a reason for the refund.");
+                SiteDialog.alert("Please select a reason for the refund.");
                 return;
             }
             if (reason === "Other") {
                 reason = customInput.value.trim();
                 if (!reason) {
-                    alert("Please describe the reason for the refund.");
+                    SiteDialog.alert("Please describe the reason for the refund.");
                     return;
                 }
                 // Set the select value to the custom reason so it gets submitted
@@ -1159,13 +1161,13 @@ if ($bk_res) {
             let reason = reasonSelect.value;
 
             if (!reason) {
-                alert("Please select a reason for the rejection.");
+                SiteDialog.alert("Please select a reason for the rejection.");
                 return;
             }
             if (reason === "Other") {
                 reason = customInput.value.trim();
                 if (!reason) {
-                    alert("Please describe the reason for the rejection.");
+                    SiteDialog.alert("Please describe the reason for the rejection.");
                     return;
                 }
                 // Inject as hidden field so the select doesn't conflict

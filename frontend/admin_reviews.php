@@ -43,7 +43,8 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 .review-delete { padding:10px 18px; border:1px solid #b91c1c; border-radius:8px; background:#fff; color:#b91c1c; font:inherit; font-weight:600; cursor:pointer; }
 .review-delete:hover { background:#fef2f2; }
 .review-delete:focus-visible { outline:2px solid #b91c1c; outline-offset:3px; }
-</style></head><body>
+</style><script src="assets/js/site-dialog.js?v=1"></script>
+</head><body>
 <?php include __DIR__ . '/partials/_sidebar.php'; ?>
 <main class="admin-main">
 <?php $page_title = 'Guest Reviews'; $page_subtitle = 'Review guest feedback and control what appears on your website.'; include __DIR__ . '/partials/_page_header.php'; ?>
@@ -65,7 +66,7 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 <input type="hidden" name="review_id" value="<?= (int)$review['id'] ?>">
 <button class="btn-primary" type="submit" name="action" value="<?= $published ? 'hide' : 'approve' ?>"><?= $published ? 'Hide from website' : 'Approve and publish' ?></button>
 </form>
-<form method="post" onsubmit="return confirm('Permanently delete this review? It will be removed from the homepage and admin area. This cannot be undone.');"><?= csrf_field() ?>
+<form method="post" data-site-title="Delete review?" data-site-button="Delete review" data-site-confirm="Permanently delete this review? It will be removed from the homepage and admin area. This cannot be undone."><?= csrf_field() ?>
 <input type="hidden" name="review_id" value="<?= (int)$review['id'] ?>">
 <button class="review-delete" type="submit" name="action" value="delete">Delete review</button>
 </form>
