@@ -950,5 +950,6 @@ if (empty($room_types)) {
 })();
 </script>
 
+<?php include __DIR__ . '/partials/_new_booking_alert.php'; ?>
 </body>
 </html>

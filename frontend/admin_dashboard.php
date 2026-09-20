@@ -1227,6 +1227,7 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
     }
 })();
 </script>
+    <?php include __DIR__ . '/partials/_new_booking_alert.php'; ?>
     <!-- PWA Install Prompt -->
     <?php include __DIR__ . '/assets/pwa-install-prompt.html'; ?>
     <!-- PWA Install Handler Script -->
