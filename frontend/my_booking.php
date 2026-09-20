@@ -328,24 +328,47 @@ $csrf_token = get_csrf_token();
             gap: 12px;
         }
         .portal-welcome {
-            font-size: 22px;
+            font-size: clamp(23px, 4vw, 30px);
             font-weight: 700;
-            color: #1E293B;
+            color: #38291F;
+            margin: 0 0 12px;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
         }
-        .portal-welcome span { color: #7C533C; }
+        .portal-top-bar {
+            padding: 26px;
+            background: linear-gradient(120deg, #FFFDFA, #F4E9DC);
+            border: 1px solid #EAD9C7;
+            border-radius: 18px;
+            box-shadow: 0 8px 28px rgba(25, 19, 14, 0.12);
+        }
+        .portal-identity { min-width: 0; flex: 1 1 260px; }
+        .portal-greeting { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #805B40; margin: 0 0 9px; }
+        .portal-reference { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #6E5A49; }
+        .portal-reference strong { padding: 5px 10px; border: 1px solid #DDC5AC; border-radius: 7px; color: #67452E; background: #FFFDF9; letter-spacing: .6px; }
         .btn-portal-logout {
-            font-size: 12px;
-            color: #94A3B8;
-            border: 1px solid #E5E7EB;
-            background: #fff;
-            padding: 6px 14px;
-            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #67452E;
+            border: 1px solid #CCB197;
+            background: #FFFDF9;
+            padding: 12px 16px;
+            border-radius: 10px;
             cursor: pointer;
             text-decoration: none;
             transition: all 0.2s;
             font-family: 'Outfit', sans-serif;
         }
         .btn-portal-logout:hover { border-color: #7C533C; color: #7C533C; }
+        .btn-portal-logout:focus-visible { outline: 3px solid #9C7353; outline-offset: 3px; }
+        @media (max-width: 540px) {
+            .portal-top-bar { padding: 20px; }
+            .btn-portal-logout { width: 100%; }
+        }
 
         /* ── Cards ── */
         .portal-card {
@@ -781,16 +804,16 @@ $csrf_token = get_csrf_token();
 
     <!-- Top bar -->
     <div class="portal-top-bar">
-        <div>
-            <p style="font-size:13px; color:#94A3B8; margin:0 0 4px;">Welcome back,</p>
+        <div class="portal-identity">
+            <p class="portal-greeting">Your stay, at a glance</p>
             <p class="portal-welcome">
                 <?php echo htmlspecialchars($booking['guest_name']); ?>
-                <span class="ref-chip"><?php echo htmlspecialchars($booking['booking_ref']); ?></span>
             </p>
+            <div class="portal-reference"><span>Booking reference</span><strong><?php echo htmlspecialchars($booking['booking_ref']); ?></strong></div>
         </div>
-        <a href="my_booking?logout=1" class="btn-portal-logout" style="display:inline-flex; align-items:center; gap:6px;">
+        <a href="my_booking?logout=1" class="btn-portal-logout">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            Look Up Different Booking
+            Look up another booking
         </a>
     </div>
 

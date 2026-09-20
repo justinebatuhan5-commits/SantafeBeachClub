@@ -46,7 +46,53 @@ if (!defined('MAIL_FROM_NAME'))     define('MAIL_FROM_NAME',     getenv('MAIL_FR
  * @param string|null $checkin_url      Optional Check-in URL to generate QR code
  * @return array ['success' => bool, 'error' => string|null]
  */
-function sendBookingConfirmationEmail(
+function sendBookingConfirmationEmail(...$args): array {
+    global $conn;
+    $resend = (bool)($args[9] ?? false);
+    $args = array_slice($args, 0, 9);
+    if (!preg_match('/^REF-(\d+)$/i', $args[2] ?? '', $match)) {
+        return ['success' => false, 'error' => 'Invalid booking reference.'];
+    }
+    $bookingId = (int)$match[1];
+    $lockName = 'booking_confirmation_' . $bookingId;
+    $lock = $conn->prepare('SELECT GET_LOCK(?, 10)');
+    $lock->bind_param('s', $lockName);
+    $lock->execute();
+    $locked = (int)$lock->get_result()->fetch_row()[0] === 1;
+    $lock->close();
+    if (!$locked) return ['success' => false, 'error' => 'Confirmation is already being processed. Please try again.'];
+    try {
+        $stmt = $conn->prepare("SELECT confirmation_email_sent_at, EXISTS(SELECT 1 FROM payments WHERE booking_id = bookings.id AND status = 'verified') AS verified FROM bookings WHERE id = ?");
+        $stmt->bind_param('i', $bookingId);
+        $stmt->execute();
+        $booking = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$booking || !$booking['verified']) return ['success' => false, 'error' => 'Verify payment before sending a booking confirmation.'];
+        if (!$resend && !empty($booking['confirmation_email_sent_at'])) return ['success' => true, 'error' => null, 'skipped' => true];
+        $result = sendBookingStatusEmail(...$args);
+        if ($result['success']) {
+            $stmt = $conn->prepare('UPDATE bookings SET confirmation_email_sent_at = NOW() WHERE id = ?');
+            $stmt->bind_param('i', $bookingId);
+            $stmt->execute();
+            $stmt->close();
+        }
+        return $result;
+    } finally {
+        $release = $conn->prepare('SELECT RELEASE_LOCK(?)');
+        $release->bind_param('s', $lockName);
+        $release->execute();
+        $release->close();
+    }
+}
+
+function sendBookingReceivedEmail(...$args): array {
+    $args = array_pad(array_slice($args, 0, 9), 9, null);
+    $args[8] = null; // A received booking does not yet have a confirmed check-in pass.
+    $args[] = true;
+    return sendBookingStatusEmail(...$args);
+}
+
+function sendBookingStatusEmail(
     ?string $to_email,
     string $guest_name,
     string $booking_ref,
@@ -55,7 +101,8 @@ function sendBookingConfirmationEmail(
     string $check_out,
     float $total_amount,
     ?string $cancellation_url = null,
-    ?string $checkin_url = null
+    ?string $checkin_url = null,
+    bool $received = false
 ): array {
     if (empty($to_email)) {
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
@@ -118,20 +165,25 @@ function sendBookingConfirmationEmail(
         }
 
         $mail->isHTML(true);
-        $mail->Subject = "Booking Confirmed – {$booking_ref} – Santa Fe Beach Club";
+        $heading = $received ? 'Booking Received' : 'Booking Confirmed';
+        $intro = $received
+            ? 'We have received your booking request. Your reservation is awaiting payment verification. We will send a separate confirmation once your payment is verified.'
+            : 'Your payment has been verified and your reservation at Santa Fe Beach Club is confirmed. We look forward to welcoming you!';
+        $amount_label = $received ? 'Total Stay Cost' : 'Verified Payments';
+        $mail->Subject = "{$heading} – {$booking_ref} – Santa Fe Beach Club";
         $mail->Body    = "
             <div style='font-family: \"Plus Jakarta Sans\", Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);'>
                 
                 <!-- Header -->
                 <div style='background: linear-gradient(135deg, #FAF6F0 0%, #F5EBE0 100%); padding: 32px; border-bottom: 2px solid #EADBCC; text-align: center;'>
-                    <h2 style='color:#5A3E2B; margin: 0 0 4px; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;'>Booking Confirmed!</h2>
+                    <h2 style='color:#5A3E2B; margin: 0 0 4px; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;'>{$heading}</h2>
                     <p style='color:#84563C; margin: 0; font-size: 14px;'>Santa Fe Beach Club, Bantayan Island</p>
                 </div>
 
                 <!-- Body -->
                 <div style='padding: 32px;'>
                     <p style='color:#1E293B; font-size: 15px; margin: 0 0 20px; line-height: 1.6;'>Hi <strong>" . htmlspecialchars($guest_name) . "</strong>,</p>
-                    <p style='color:#475569; font-size: 14.5px; margin: 0 0 24px; line-height: 1.6;'>Great news — your reservation at Santa Fe Beach Club has been officially confirmed! We are thrilled to welcome you to the island.</p>
+                    <p style='color:#475569; font-size: 14.5px; margin: 0 0 24px; line-height: 1.6;'>{$intro}</p>
                     
                     <!-- Details Card -->
                     <div style='background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 24px;'>
@@ -154,7 +206,7 @@ function sendBookingConfirmationEmail(
                                 <td style='padding: 6px 0; text-align: right; color: #1E293B;'>" . $checkout_fmt . " <span style='color:#94A3B8; font-size:12px;'>(11:00)</span></td>
                             </tr>
                             <tr>
-                                <td style='padding: 10px 0 4px; color: #64748B; border-top: 1px dashed #CBD5E1; margin-top: 6px;'>Total Stay Cost</td>
+                                <td style='padding: 10px 0 4px; color: #64748B; border-top: 1px dashed #CBD5E1; margin-top: 6px;'>{$amount_label}</td>
                                 <td style='padding: 10px 0 4px; text-align: right; font-weight: 800; color: #0F172A; font-size: 16px; border-top: 1px dashed #CBD5E1; margin-top: 6px;'>₱ " . $amount_fmt . "</td>
                             </tr>
                         </table>
@@ -176,8 +228,8 @@ function sendBookingConfirmationEmail(
 
             </div>
         ";
-        $mail->AltBody = "Hi {$guest_name}, your booking {$booking_ref} at Santa Fe Beach Club is confirmed. "
-            . "Room: {$room_name}. Check-in: {$checkin_fmt}. Check-out: {$checkout_fmt}. Total: PHP {$amount_fmt}. "
+        $mail->AltBody = "Hi {$guest_name}, {$heading}: {$booking_ref}. {$intro} "
+            . "Room: {$room_name}. Check-in: {$checkin_fmt}. Check-out: {$checkout_fmt}. {$amount_label}: PHP {$amount_fmt}. "
             . ($invoice_url ? "View official invoice: {$invoice_url}. " : "")
             . ($cancellation_url ? "Cancel here: {$cancellation_url}." : "");
 

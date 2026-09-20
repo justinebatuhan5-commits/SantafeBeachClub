@@ -84,14 +84,7 @@ if ($bookingId > 0) {
 
         // Trigger confirmation email if not already sent
         if ($isVerified && !empty($bookingData['guest_email']) && empty($bookingData['confirmation_email_sent_at'])) {
-            // Immediately mark as sent in DB to prevent duplicates on refresh or concurrent requests
-            $mStmt = $conn->prepare("UPDATE bookings SET confirmation_email_sent_at = NOW() WHERE id = ? AND confirmation_email_sent_at IS NULL");
-            $mStmt->bind_param("i", $bookingId);
-            $mStmt->execute();
-            $affected = $mStmt->affected_rows;
-            $mStmt->close();
-
-            if ($affected > 0) {
+            { // The mailer serializes sends and records successful delivery.
                 $bRef = 'REF-' . str_pad($bookingId, 3, '0', STR_PAD_LEFT);
                 $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . dirname($_SERVER['SCRIPT_NAME']);
                 $cancellationUrl = rtrim($baseUrl, '/') . '/cancel_booking?token=' . urlencode($bookingData['cancellation_token'] ?? '');

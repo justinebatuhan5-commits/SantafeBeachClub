@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $b_amount = (float)($amt_stmt->get_result()->fetch_assoc()['amount'] ?? 0);
                 $amt_stmt->close();
 
-                @sendBookingConfirmationEmail(
+                $confirmation_result = sendBookingConfirmationEmail(
                     $b_data['guest_email'],
                     $b_data['guest_name'],
                     $b_ref,
@@ -80,7 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
         }
         
-        header("Location: payments?success=1&send_booking_id=" . $verified_booking_id);
+        if (isset($confirmation_result) && !$confirmation_result['success']) {
+            header('Location: payments?success=1&email_error=' . urlencode('Payment verified, but confirmation could not be sent. Use Resend Confirmation to retry.'));
+            exit;
+        }
+        header("Location: payments?success=1");
         exit;
     } elseif ($_POST['action'] === 'send_confirmation_email') {
         $booking_id = intval($_POST['booking_id']);
@@ -128,7 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $booking['check_out'],
             $amount,
             $cancellation_url,
-            $checkin_url
+            $checkin_url,
+            true // Staff explicitly selected Resend Confirmation.
         );
         $query_key = $send_result['success'] ? 'email_sent=1' : 'email_error=' . urlencode($send_result['error'] ?? 'Email sending failed');
         header("Location: payments?{$query_key}");
@@ -599,7 +604,7 @@ if ($bk_res) {
                                     $bid = $row['booking_id'];
                                     echo "<div style='display:flex; gap:6px; align-items:center; flex-wrap:wrap;'>";
                                     echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($room, ENT_QUOTES)) . "\", {$b_total})'>Print Receipt</button>";
-                                    echo "<a href='payments?send_booking_id={$bid}' class='btn-pay' style='padding:6px 12px; font-size:12px; text-decoration:none;'>Send Confirmation</a>";
+                                    echo "<a href='payments?send_booking_id={$bid}' class='btn-pay' style='padding:6px 12px; font-size:12px; text-decoration:none;'>Resend Confirmation</a>";
                                     echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#6A1B9A; border-color:#6A1B9A;' onclick='openRefundModal({$pay_id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"PHP {$amount}\")'>Refund</button>";
                                     echo "</div>";
                                 } elseif ($pay_status_display === 'refunded') {
@@ -645,8 +650,8 @@ if ($bk_res) {
                         </svg>
                     </div>
 
-                    <h3 style="margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Send Confirmation Email?</h3>
-                    <p style="margin: 0 0 20px; font-size: 13.5px; color: #64748B; line-height: 1.55;">Payment is verified! Dispatch the booking voucher and check-in QR pass directly to the guest.</p>
+                    <h3 style="margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Resend Confirmation Email?</h3>
+                    <p style="margin: 0 0 20px; font-size: 13.5px; color: #64748B; line-height: 1.55;">Send another copy of the booking confirmation and check-in QR pass to the guest.</p>
 
                     <!-- Guest Email Box -->
                     <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 14px 16px; margin-bottom: 24px; text-align: left; display: flex; align-items: center; gap: 12px;">
@@ -676,7 +681,7 @@ if ($bk_res) {
                                 <input type="hidden" name="booking_id" value="<?php echo $send_booking_id; ?>">
                                 <button type="submit" style="width: 100%; padding: 12px 0; background: linear-gradient(135deg, #15803D, #166534); color: #ffffff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(22, 101, 52, 0.35); display: flex; align-items: center; justify-content: center; gap: 6px; transition: transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(22, 101, 52, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(22, 101, 52, 0.35)';">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                                    Send Email
+                                    Resend Email
                                 </button>
                             </form>
                         <?php endif; ?>

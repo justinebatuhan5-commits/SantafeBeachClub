@@ -128,13 +128,7 @@ if ($eventType === 'checkout_session.payment.paid' || $eventType === 'payment.pa
         $bStmt->close();
 
         if ($bData && !empty($bData['guest_email']) && empty($bData['confirmation_email_sent_at'])) {
-            $mStmt = $conn->prepare("UPDATE bookings SET confirmation_email_sent_at = NOW() WHERE id = ? AND confirmation_email_sent_at IS NULL");
-            $mStmt->bind_param("i", $bookingId);
-            $mStmt->execute();
-            $affected = $mStmt->affected_rows;
-            $mStmt->close();
-
-            if ($affected > 0) {
+            { // The mailer serializes sends and records successful delivery.
                 $bRef = 'REF-' . str_pad($bookingId, 3, '0', STR_PAD_LEFT);
                 $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/SantaBeachClub-BookingSystem/frontend';
                 $cancellationUrl = rtrim($baseUrl, '/') . '/cancel_booking?token=' . urlencode($bData['cancellation_token'] ?? '');

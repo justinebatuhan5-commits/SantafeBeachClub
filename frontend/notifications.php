@@ -30,60 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $notif_id = intval($_POST['notif_id']);
         $booking_id = intval($_POST['booking_id']);
 
-        // Pull booking + payment details needed for the confirmation email
-        $stmt = $conn->prepare("
-            SELECT b.guest_name, b.guest_email, b.accommodation_name, b.check_in, b.check_out, b.cancellation_token, b.checkin_token,
-                   COALESCE(p.amount, 0) AS amount
-            FROM bookings b
-            LEFT JOIN payments p ON p.booking_id = b.id
-            WHERE b.id = ?
-            LIMIT 1
-        ");
-        $stmt->bind_param("i", $booking_id);
+        $stmt = $conn->prepare('UPDATE notifications SET is_read = 1 WHERE id = ?');
+        $stmt->bind_param('i', $notif_id);
         $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result && $result->num_rows > 0) {
-            $b = $result->fetch_assoc();
-            $booking_ref = 'REF-' . str_pad($booking_id, 3, '0', STR_PAD_LEFT);
-            $base_url = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']);
-            $cancellation_token = $b['cancellation_token'];
-            if (empty($cancellation_token)) {
-                $cancellation_token = bin2hex(random_bytes(16));
-                $token_stmt = $conn->prepare("UPDATE bookings SET cancellation_token = ? WHERE id = ?");
-                $token_stmt->bind_param("si", $cancellation_token, $booking_id);
-                $token_stmt->execute();
-                $token_stmt->close();
-            }
-            $cancellation_url = rtrim($base_url, '/') . '/cancel_booking?token=' . $cancellation_token;
-            $checkin_url = rtrim($base_url, '/') . '/checkin?ref=' . urlencode($booking_ref) . '&token=' . urlencode($b['checkin_token'] ?? '');
-
-            $conn->query("UPDATE notifications SET is_read = 1 WHERE id = $notif_id");
-
-            if (empty($b['guest_email'])) {
-                $_SESSION['notif_flash'] = "Notification marked as read, but no email address is on file for {$b['guest_name']} — confirmation email was not sent.";
-            } else {
-                $send_result = sendBookingConfirmationEmail(
-                    $b['guest_email'],
-                    $b['guest_name'],
-                    $booking_ref,
-                    $b['accommodation_name'],
-                    $b['check_in'],
-                    $b['check_out'],
-                    (float)$b['amount'],
-                    $cancellation_url,
-                    $checkin_url
-                );
-
-                // Booking status intentionally stays "Pending" — accepting only
-                // triggers the confirmation email, matching the check-in flow.
-                $_SESSION['notif_flash'] = $send_result['success']
-                    ? "Confirmation email sent to {$b['guest_email']}."
-                    : "Booking accepted, but the email failed to send: " . $send_result['error'];
-            }
-        } else {
-            $_SESSION['notif_flash'] = "Could not find that booking.";
-        }
+        $stmt->close();
+        $_SESSION['notif_flash'] = 'Booking notification acknowledged. Confirmation is sent automatically after payment verification.';
     }
     header("Location: notifications");
     exit;
@@ -280,11 +231,11 @@ unset($_SESSION['notif_flash']);
         <div style="width:54px;height:54px;border-radius:50%;background:#EFF6FF;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
-        <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Send Confirmation Email?</h3>
-        <p style="margin:0 0 26px;font-size:14px;color:#64748b;line-height:1.6;">This will accept the booking and send a confirmation email to the guest. This action cannot be undone.</p>
+        <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Review booking notification?</h3>
+        <p style="margin:0 0 26px;font-size:14px;color:#64748b;line-height:1.6;">Mark this booking notification as reviewed. The guest receives a confirmation automatically after payment verification.</p>
         <div style="display:flex;gap:10px;justify-content:center;">
             <button onclick="closeAcceptModal()" style="flex:1;padding:11px 0;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;font-size:14px;font-weight:600;color:#475569;cursor:pointer;transition:background .15s;">Cancel</button>
-            <button id="acceptConfirmBtn" style="flex:1;padding:11px 0;border:none;border-radius:10px;background:linear-gradient(135deg,#16a34a,#22c55e);font-size:14px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(34,197,94,.35);transition:opacity .15s;">Yes, Send Email</button>
+            <button id="acceptConfirmBtn" style="flex:1;padding:11px 0;border:none;border-radius:10px;background:linear-gradient(135deg,#16a34a,#22c55e);font-size:14px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(34,197,94,.35);transition:opacity .15s;">Mark as reviewed</button>
         </div>
     </div>
 </div>

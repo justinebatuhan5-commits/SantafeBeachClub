@@ -429,6 +429,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     $uStmt->close();
                                 }
                                 unset($_SESSION['applied_promo_code']);
+                                @sendBookingReceivedEmail(
+                                    $guest_email, $guest_name, $booking_ref, $db_acc_name,
+                                    $checkin, $checkout, $total_amount, $cancel_url
+                                );
                                 header('Location: ' . $paymongoRes['checkout_url']);
                                 exit;
                             } else {
@@ -448,7 +452,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (empty($error)) {
                             // Auto-dispatch booking confirmation / payment pending receipt email
                             if (!empty($guest_email)) {
-                                @sendBookingConfirmationEmail(
+                                @sendBookingReceivedEmail(
                                     $guest_email,
                                     $guest_name,
                                     $booking_ref,
