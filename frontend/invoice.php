@@ -34,14 +34,22 @@ $isGuest = isset($_SESSION['verified_guest_booking_id']) && (int)$_SESSION['veri
 $stmt = $conn->prepare("
     SELECT b.*,
            DATEDIFF(b.check_out, b.check_in)  AS nights_calc,
-           p.amount                            AS deposit_paid,
-           p.total_amount                      AS payment_total,
+           (SELECT COALESCE(SUM(paid.amount), 0) FROM payments paid
+            WHERE paid.booking_id = b.id AND paid.status = 'verified') AS deposit_paid,
+           COALESCE(r.price_per_night, rt.price, 0) AS nightly_rate,
            p.status                            AS payment_status,
            p.payment_method                    AS payment_method_detail,
            p.transaction_id,
            p.paid_at
     FROM bookings b
-    LEFT JOIN payments p ON b.id = p.booking_id
+    LEFT JOIN rooms r ON r.id = b.room_id
+    LEFT JOIN room_types rt ON rt.id = b.room_type_id
+        OR (b.room_type_id IS NULL AND rt.name = b.accommodation_name)
+    LEFT JOIN payments p ON p.id = (
+        SELECT latest.id FROM payments latest
+        WHERE latest.booking_id = b.id AND latest.status = 'verified'
+        ORDER BY latest.id DESC LIMIT 1
+    )
     WHERE b.id = ?
     LIMIT 1
 ");
@@ -69,11 +77,8 @@ $booking_ref   = 'REF-' . str_pad($booking['id'], 3, '0', STR_PAD_LEFT);
 $nights        = max(1, (int)($booking['nights_calc'] ?? $booking['nights'] ?? 1));
 $deposit_paid  = (float)($booking['deposit_paid'] ?? 0);
 $discount_amt  = (float)($booking['discount_amount'] ?? 0);
-// Prefer an explicit total_amount stored on the payment row; fall back to 2x deposit
-$total_amount  = (float)($booking['payment_total'] ?? 0);
-if ($total_amount <= 0 && $deposit_paid > 0) {
-    $total_amount = $deposit_paid * 2; // standard 50% deposit model
-}
+// Use the accommodation rate and recorded discount, not a presumed deposit ratio.
+$total_amount = max(0, $nights * (float)$booking['nightly_rate'] - $discount_amt);
 $remaining_balance = max(0, $total_amount - $deposit_paid);
 
 $checkin_fmt = date('D, F j, Y', strtotime($booking['check_in']));
@@ -477,7 +482,7 @@ $autoPrint = isset($_GET['print']) && $_GET['print'] == '1';
                 </div>
                 <?php endif; ?>
                 <div class="tot-row">
-                    <span style="color:#0284C7; font-weight:600;">Deposit Paid (50%):</span>
+                    <span style="color:#0284C7; font-weight:600;">Verified Payments:</span>
                     <span style="color:#0284C7; font-weight:700;">-₱ <?php echo number_format($deposit_paid, 2); ?></span>
                 </div>
                 <div class="tot-row grand">

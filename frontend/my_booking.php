@@ -284,11 +284,30 @@ $csrf_token = get_csrf_token();
             border-radius: 8px;
             background: #fff;
             outline: none;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+            animation: otpEnter 0.4s ease backwards;
         }
+        .otp-box-digit:nth-child(2) { animation-delay: 50ms; }
+        .otp-box-digit:nth-child(3) { animation-delay: 100ms; }
+        .otp-box-digit:nth-child(4) { animation-delay: 150ms; }
+        .otp-box-digit:nth-child(5) { animation-delay: 200ms; }
+        .otp-box-digit:nth-child(6) { animation-delay: 250ms; }
+        .otp-box-digit.is-filled { background: #FAF3EB; border-color: #BA9475; color: #65432F; }
         .otp-box-digit:focus {
             border-color: #7C533C;
-            box-shadow: 0 0 0 3px rgba(124, 83, 60, 0.12);
+            box-shadow: 0 0 0 4px rgba(124, 83, 60, 0.14), 0 5px 15px rgba(124, 83, 60, 0.1);
+        }
+        .otp-box-digit.digit-pop { animation: otpPop 0.25s ease; }
+        @keyframes otpEnter {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes otpPop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: translateY(-3px) scale(1.06); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .otp-box-digit, .otp-box-digit.digit-pop { animation: none; transition: none; }
         }
         @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
 
@@ -939,7 +958,11 @@ $csrf_token = get_csrf_token();
                 <!-- Rebook: pre-fill booking form with same guest details -->
                 <a href="book?rebook=1&email=<?php echo urlencode($booking['guest_email']); ?>&first_name=<?php echo urlencode(strtok($booking['guest_name'], ' ')); ?>&last_name=<?php echo urlencode(strstr($booking['guest_name'], ' ')); ?>&phone=<?php echo urlencode($booking['guest_phone'] ?? ''); ?>&country=<?php echo urlencode($booking['guest_country'] ?? ''); ?>"
                    class="btn-action btn-action-primary">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><po                <!-- Cancel Booking (Active or Locked state) -->
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+                    Book Again
+                </a>
+
+                <!-- Cancel Booking (Active or Locked state) -->
                 <?php if ($can_cancel): ?>
                 <a href="javascript:void(0)"
                    class="btn-action btn-action-danger"
@@ -1129,7 +1152,11 @@ lookupForm.addEventListener('submit', async function(e) {
 
 // Auto tab digits in OTP step
 guestOtpDigits.forEach((input, idx) => {
+    input.setAttribute('aria-label', 'Verification code digit ' + (idx + 1) + ' of 6');
+    input.addEventListener('animationend', () => input.classList.remove('digit-pop'));
     input.addEventListener('input', (e) => {
+        input.value = input.value.replace(/[^0-9]/g, '').slice(-1);
+        if (input.value) animateOtpDigit(input);
         if (e.target.value.length === 1 && idx < guestOtpDigits.length - 1) {
             guestOtpDigits[idx + 1].focus();
         }
@@ -1145,7 +1172,10 @@ guestOtpDigits.forEach((input, idx) => {
         const pasteData = e.clipboardData.getData('text').trim();
         if (/^[0-9]{6}$/.test(pasteData)) {
             pasteData.split('').forEach((c, i) => {
-                if (guestOtpDigits[i]) guestOtpDigits[i].value = c;
+                if (guestOtpDigits[i]) {
+                    guestOtpDigits[i].value = c;
+                    animateOtpDigit(guestOtpDigits[i]);
+                }
             });
             updateGuestFullOtp();
             guestOtpDigits[guestOtpDigits.length - 1].focus();
@@ -1153,9 +1183,18 @@ guestOtpDigits.forEach((input, idx) => {
     });
 });
 
+function animateOtpDigit(input) {
+    input.classList.remove('digit-pop');
+    void input.offsetWidth;
+    input.classList.add('digit-pop');
+}
+
 function updateGuestFullOtp() {
     let combined = '';
-    guestOtpDigits.forEach(d => combined += d.value);
+    guestOtpDigits.forEach(d => {
+        combined += d.value;
+        d.classList.toggle('is-filled', d.value.length === 1);
+    });
     guestFullOtp.value = combined;
 }
 
