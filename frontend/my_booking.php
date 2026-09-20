@@ -672,30 +672,58 @@ $csrf_token = get_csrf_token();
     <!-- reCAPTCHA v3 -->
     <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
     <link rel="stylesheet" href="assets/css/my-booking.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/my-booking.css'); ?>">
+<style>
+/* Guest account: calm coastal surfaces, independent of the lookup screen. */
+.booking-account-page .portal-wrapper {
+    background: radial-gradient(ellipse at 0 0, #dceae4 0, transparent 48%),
+                radial-gradient(ellipse at 100% 80%, #eee0ce 0, transparent 48%), #f6f3ed;
+}
+.booking-account-page .booking-slideshow { display: none; }
+.booking-account-page .portal-section { max-width: 1040px; padding: 40px 24px 64px; }
+.booking-account-page .portal-top-bar {
+    position: relative; overflow: hidden; padding: 32px; margin-bottom: 24px;
+    background: linear-gradient(120deg, #173d3a, #2b5951);
+    border: 1px solid #38665e; border-radius: 24px;
+    box-shadow: 0 12px 32px #173d3a18;
+}
+.booking-account-page .portal-top-bar::after {
+    content: ''; position: absolute; width: 260px; height: 260px; right: -110px; top: -160px;
+    border: 35px solid #ffffff07; border-radius: 50%; pointer-events: none;
+}
+.booking-account-page .portal-greeting { color: #c9ddd0; letter-spacing: 2.4px; }
+.booking-account-page .portal-welcome { color: #fffaf0; font-size: clamp(25px, 4vw, 34px); }
+.booking-account-page .portal-reference { color: #d0e0d8; }
+.booking-account-page .portal-reference strong { color: #fff5df; background: #ffffff0d; border-color: #ffffff38; }
+.booking-account-page .btn-portal-logout { background: #fffaf0; color: #21483f; border-color: #fffaf0; padding: 13px 18px; }
+.booking-account-page .btn-portal-logout:hover { background: #e4eee6; border-color: #e4eee6; }
+.booking-account-page .portal-card { border: 1px solid #e1e5dd; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px #243e3010; }
+.booking-account-page .portal-card-header { padding: 19px 24px; background: #fcfdf9; border-bottom-color: #edf0e8; flex-wrap: wrap; }
+.booking-account-page .portal-card-header h2 { color: #21463e; font-size: 16px; }
+.booking-account-page .portal-card-icon { display: grid; place-items: center; width: 34px; height: 34px; background: #edf3eb; border-radius: 10px; }
+.booking-account-page .info-grid { gap: 12px; }
+.booking-account-page .info-item { min-width: 0; padding: 14px; background: #f6f8f3; border: 1px solid #edf0e8; border-radius: 12px; }
+.booking-account-page .info-item label { color: #65786d; letter-spacing: .8px; margin-bottom: 8px; font-size: 10px; }
+.booking-account-page .info-item span { color: #233d33; overflow-wrap: anywhere; }
+.booking-account-page .payment-row { gap: 20px; padding-top: 13px; padding-bottom: 13px; border-bottom-color: #edf0e8; }
+.booking-account-page .payment-row label { color: #65756c; }
+.booking-account-page .payment-row strong { text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.booking-account-page .portal-actions { gap: 10px; }
+.booking-account-page .btn-action { min-height: 44px; border-radius: 10px; justify-content: center; }
+.booking-account-page .btn-action-primary { background: #28574b; }
+.booking-account-page .btn-action-primary:hover { background: #173d3a; }
+.booking-account-page .btn-action:focus-visible { outline: 3px solid #7f9f87; outline-offset: 3px; }
+@media (max-width: 540px) {
+    .booking-account-page .portal-section { padding: 20px 14px 40px; }
+    .booking-account-page .portal-top-bar { padding: 24px 20px; border-radius: 20px; }
+    .booking-account-page .portal-card-body { padding: 20px 24px; }
+    .booking-account-page .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .booking-account-page .info-item { padding: 11px; }
+    .booking-account-page .portal-actions .btn-action { flex: 1 1 180px; }
+}
+</style>
 <script src="assets/js/site-dialog.js?v=1"></script>
 </head>
-<body class="booking-page<?php echo !$booking ? ' booking-lookup-page' : ''; ?>">
-
-<!-- Header Navigation -->
-<header class="main-header site-navbar">
-    <div class="brand-logo">
-        <a href="index" class="logo-link">
-            <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
-        </a>
-    </div>
-    <nav class="nav-menu">
-        <ul>
-            <li><a href="index">Home</a></li>
-            <li><a href="rooms">Rooms</a></li>
-            <li><a href="gallery">Gallery</a></li>
-            <li><a href="contact">Contact</a></li>
-            <li class="active"><a href="my_booking">My Booking</a></li>
-        </ul>
-    </nav>
-    <div class="header-action">
-        <a href="rooms" class="btn-book-header">Book Now</a>
-    </div>
-</header>
+<body class="booking-page<?php echo !$booking ? ' booking-lookup-page' : ' booking-account-page'; ?>">
 
 <div class="portal-wrapper">
     <div class="booking-slideshow" aria-hidden="true">
