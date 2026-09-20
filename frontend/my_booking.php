@@ -741,10 +741,10 @@ $csrf_token = get_csrf_token();
         <div class="booking-slide"></div>
     </div>
 
-    <!-- ── Navbar ── -->
+<?php if (!$booking): ?>
+    <!-- ── Navbar (Lookup view only) ── -->
     <?php $active_nav = 'my_booking'; require __DIR__ . '/partials/_navbar.php'; ?>
 
-<?php if (!$booking): ?>
 <!-- ═══════════════════════════════════════════
      LOOKUP FORM — Guest not authenticated yet
 ════════════════════════════════════════════ -->
