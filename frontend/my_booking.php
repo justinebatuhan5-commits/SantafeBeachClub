@@ -720,6 +720,14 @@ $csrf_token = get_csrf_token();
     .booking-account-page .info-item { padding: 11px; }
     .booking-account-page .portal-actions .btn-action { flex: 1 1 180px; }
 }
+/* Account page: navbar sits in normal document flow (not absolute/fixed).
+   Lookup page: navbar is positioned absolute over the hero image. */
+.booking-account-page .site-navbar {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+}
 </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
 </head>
@@ -732,6 +740,27 @@ $csrf_token = get_csrf_token();
         <div class="booking-slide"></div>
         <div class="booking-slide"></div>
     </div>
+
+    <!-- ── Navbar ── -->
+    <header class="main-header site-navbar">
+        <div class="brand-logo">
+            <a href="index" class="logo-link">
+                <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
+            </a>
+        </div>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="index">Home</a></li>
+                <li><a href="rooms">Rooms</a></li>
+                <li><a href="gallery">Gallery</a></li>
+                <li><a href="contact">Contact</a></li>
+                <li class="active"><a href="my_booking">My Booking</a></li>
+            </ul>
+        </nav>
+        <div class="header-action">
+            <a href="rooms" class="btn-book-header">Book Now</a>
+        </div>
+    </header>
 
 <?php if (!$booking): ?>
 <!-- ═══════════════════════════════════════════
