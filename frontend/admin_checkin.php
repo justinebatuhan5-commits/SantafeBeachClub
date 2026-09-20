@@ -1352,8 +1352,7 @@ window.onload = function() {
             .footer { color: #666; font-size: 12px; margin-top: 10px; }
             .footer-note { color: #888; font-size: 11px; margin-top: 8px; }
         </style>
-    <script src="assets/js/site-dialog.js?v=1"></script>
-</head>
+    </head>
     <body>
         <div class="center">
             <div class="brand">SANTA FE BEACH CLUB</div>

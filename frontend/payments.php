@@ -995,8 +995,7 @@ if ($bk_res) {
                     .total-label { font-size: 15px; font-weight: 800; letter-spacing: 1px; margin-top: 10px; margin-bottom: 6px;}
                     .total-amount { font-size: 20px; font-weight: 900; letter-spacing: 1px; margin-bottom: 6px; }
                 </style>
-            <script src="assets/js/site-dialog.js?v=1"></script>
-</head>
+            </head>
             <body>
                 <div class="center">
                     <div class="brand">SANTA FE BEACH CLUB</div>
