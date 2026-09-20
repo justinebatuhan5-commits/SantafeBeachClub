@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
 $active_page = 'reviews';
+$tab = ($_GET['tab'] ?? '') === 'published' ? 'published' : 'unpublished';
 function review_html($value): string { return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
@@ -20,9 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->execute();
     $stmt->close();
-    header('Location: admin_reviews', true, 303); exit;
+    header('Location: admin_reviews?tab=' . $tab, true, 303); exit;
 }
-$reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_text, is_approved, created_at FROM reviews ORDER BY is_approved ASC, id DESC');
+$review_filter = $tab === 'published' ? 'is_approved = 1' : '(is_approved IS NULL OR is_approved <> 1)';
+$reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_text, is_approved, created_at FROM reviews WHERE ' . $review_filter . ' ORDER BY id DESC');
 ?>
 <!DOCTYPE html>
 <html lang="en"><head>
@@ -39,6 +41,10 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 .review-status { color:var(--text-muted); font-size:13px; }
 .review-card h2 { overflow-wrap:anywhere; font-size:17px; }
 .review-note { color:var(--text-muted); margin-bottom:20px; }
+.review-tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:12px; }
+.review-tab { padding:8px 16px; border-radius:8px; font-weight:600; font-size:14px; text-decoration:none; display:flex; align-items:center; gap:8px; background:#F1F5F9; color:#475569; }
+.review-tab[aria-current="page"] { background:#7C533C; color:#fff; }
+.review-tab:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
 .review-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
 .review-delete { padding:10px 18px; border:1px solid #b91c1c; border-radius:8px; background:#fff; color:#b91c1c; font:inherit; font-weight:600; cursor:pointer; }
 .review-delete:hover { background:#fef2f2; }
@@ -49,10 +55,18 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 <main class="admin-main">
 <?php $page_title = 'Guest Reviews'; $page_subtitle = 'Review guest feedback and control what appears on your website.'; include __DIR__ . '/partials/_page_header.php'; ?>
 <div class="admin-body">
-<p class="review-note">New reviews wait for approval. Hidden / awaiting approval reviews are not shown on the website. Approve to publish, hide a published review, or delete a review permanently.</p>
+<nav class="review-tabs" aria-label="Guest review status">
+<a class="review-tab" href="admin_reviews?tab=unpublished" <?= $tab === 'unpublished' ? 'aria-current="page"' : '' ?>>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+Unpublished Reviews</a>
+<a class="review-tab" href="admin_reviews?tab=published" <?= $tab === 'published' ? 'aria-current="page"' : '' ?>>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7 12 3 3 7-7"/></svg>
+Published Reviews</a>
+</nav>
+<p class="review-note"><?= $tab === 'published' ? 'These reviews are approved for display on the homepage. Hide a review to move it to Unpublished Reviews, or delete it permanently.' : 'These reviews are hidden or awaiting approval. Approve a review to move it to Published Reviews and make it available on the homepage, or delete it permanently.' ?></p>
 <div class="review-list">
 <?php if ($reviews->num_rows === 0): ?>
-<div class="review-card">No guest reviews yet. Submitted reviews will appear here.</div>
+<div class="review-card"><?= $tab === 'published' ? 'No published reviews yet. Approve a review from Unpublished Reviews to show it here.' : 'No unpublished reviews. New submissions and hidden reviews will appear here.' ?></div>
 <?php endif; ?>
 <?php while ($review = $reviews->fetch_assoc()): $published = (int)$review['is_approved'] === 1; $rating = max(1, min(5, (int)$review['rating'])); ?>
 <article class="review-card">
@@ -62,11 +76,11 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 <div class="review-stars" aria-label="<?= $rating ?> out of 5 stars"><?= str_repeat('&#9733;', $rating) . str_repeat('&#9734;', 5 - $rating) ?></div>
 <p class="review-content"><?= review_html($review['review_text']) ?></p>
 <div class="review-actions">
-<form method="post"><?= csrf_field() ?>
+<form method="post" action="admin_reviews?tab=<?= review_html($tab) ?>"><?= csrf_field() ?>
 <input type="hidden" name="review_id" value="<?= (int)$review['id'] ?>">
 <button class="btn-primary" type="submit" name="action" value="<?= $published ? 'hide' : 'approve' ?>"><?= $published ? 'Hide from website' : 'Approve and publish' ?></button>
 </form>
-<form method="post" data-site-title="Delete review?" data-site-button="Delete review" data-site-confirm="Permanently delete this review? It will be removed from the homepage and admin area. This cannot be undone."><?= csrf_field() ?>
+<form method="post" action="admin_reviews?tab=<?= review_html($tab) ?>" data-site-title="Delete review?" data-site-button="Delete review" data-site-confirm="Permanently delete this review? It will be removed from the homepage and admin area. This cannot be undone."><?= csrf_field() ?>
 <input type="hidden" name="review_id" value="<?= (int)$review['id'] ?>">
 <button class="review-delete" type="submit" name="action" value="delete">Delete review</button>
 </form>
