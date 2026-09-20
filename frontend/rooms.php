@@ -341,25 +341,8 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
 <body class="rooms-page">
 
     <!-- â”€â”€ Header â”€â”€ -->
-    <header class="main-header site-navbar">
-        <div class="brand-logo">
-            <a href="index" class="logo-link">
-                <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
-            </a>
-        </div>
-        <nav class="nav-menu">
-            <ul>
-                <li><a href="index">Home</a></li>
-                <li class="active"><a href="rooms">Rooms</a></li>
-                <li><a href="gallery">Gallery</a></li>
-                <li><a href="contact">Contact</a></li>
-                <li><a href="my_booking">My Booking</a></li>
-            </ul>
-        </nav>
-        <div class="header-action">
-    <a href="rooms" class="btn-book-header">Book Now</a>
-</div>
-    </header>
+    <!-- ── Header ── -->
+    <?php $active_nav = 'rooms'; require __DIR__ . '/partials/_navbar.php'; ?>
 
     <section class="rooms-hero">
         <div class="rooms-hero-inner">

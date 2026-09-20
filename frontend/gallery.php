@@ -82,26 +82,8 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     </style>
 </head>
 <body class="gallery-page">
-    <!-- Header Navigation -->
-    <header class="main-header site-navbar">
-        <div class="brand-logo">
-            <a href="index" class="logo-link">
-                <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
-            </a>
-        </div>
-        <nav class="nav-menu">
-            <ul>
-                <li><a href="index" style="color: var(--text-main);">Home</a></li>
-                <li><a href="rooms" style="color: var(--text-main);">Rooms</a></li>
-                <li class="active"><a href="gallery" style="color: var(--text-main);">Gallery</a></li>
-                <li><a href="contact" style="color: var(--text-main);">Contact</a></li>
-                <li><a href="my_booking" style="color: var(--text-main);">My Booking</a></li>
-            </ul>
-        </nav>
-        <div class="header-action">
-            <a href="rooms" class="btn-book-header">Book Now</a>
-        </div>
-    </header>
+    <!-- ── Header ── -->
+    <?php $active_nav = 'gallery'; require __DIR__ . '/partials/_navbar.php'; ?>
 
     <div class="page-header">
         <h1>Our Gallery</h1>

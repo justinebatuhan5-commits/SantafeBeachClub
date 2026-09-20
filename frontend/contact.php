@@ -215,25 +215,8 @@ function inquiry_value(string $field): string {
 </head>
 <body class="contact-page">
 
-    <header class="main-header site-navbar">
-        <div class="brand-logo">
-            <a href="index" class="logo-link">
-                <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
-            </a>
-        </div>
-        <nav class="nav-menu">
-            <ul>
-                <li><a href="index">Home</a></li>
-                <li><a href="rooms">Rooms</a></li>
-                <li><a href="gallery">Gallery</a></li>
-                <li class="active"><a href="contact">Contact</a></li>
-                <li><a href="my_booking">My Booking</a></li>
-            </ul>
-        </nav>
-        <div class="header-action">
-            <a href="rooms" class="btn-book-header">Book Now</a>
-        </div>
-    </header>
+    <!-- ── Header ── -->
+    <?php $active_nav = 'contact'; require __DIR__ . '/partials/_navbar.php'; ?>
 
     <div class="contact-hero">
         <span class="contact-eyebrow">Santa Fe Beach Club · Contact</span>

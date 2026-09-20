@@ -742,25 +742,7 @@ $csrf_token = get_csrf_token();
     </div>
 
     <!-- ── Navbar ── -->
-    <header class="main-header site-navbar">
-        <div class="brand-logo">
-            <a href="index" class="logo-link">
-                <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
-            </a>
-        </div>
-        <nav class="nav-menu">
-            <ul>
-                <li><a href="index">Home</a></li>
-                <li><a href="rooms">Rooms</a></li>
-                <li><a href="gallery">Gallery</a></li>
-                <li><a href="contact">Contact</a></li>
-                <li class="active"><a href="my_booking">My Booking</a></li>
-            </ul>
-        </nav>
-        <div class="header-action">
-            <a href="rooms" class="btn-book-header">Book Now</a>
-        </div>
-    </header>
+    <?php $active_nav = 'my_booking'; require __DIR__ . '/partials/_navbar.php'; ?>
 
 <?php if (!$booking): ?>
 <!-- ═══════════════════════════════════════════
