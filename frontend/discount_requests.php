@@ -44,26 +44,40 @@ $d = $id ? pm_query($conn,'SELECT d.*,b.guest_name,b.guest_email,b.accommodation
 $settings=[]; $sr=$conn->query("SELECT setting_key,setting_value FROM settings WHERE setting_key IN ('gcash_number','gcash_name','discount_bank_name','discount_bank_account','discount_bank_holder')");
 while($s=$sr->fetch_assoc()) $settings[$s['setting_key']]=$s['setting_value'];
 ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Discount Requests · Santa Fe Beach Club</title><link rel="stylesheet" href="assets/css/discounts.css?v=<?= filemtime(__DIR__.'/assets/css/discounts.css') ?>"></head><body class="discount-page"><main class="discount-shell">
-<div class="discount-nav-bar">
-    <div class="discount-breadcrumb">
-        <a href="<?= ($_SESSION['admin_role']??'')==='admin'?'admin_dashboard':'dashboard' ?>">← Dashboard</a>
-        <?php if($id): ?>
-        <span style="color:var(--border);">/</span>
-        <a href="discount_requests.php">All Discount Requests</a>
-        <?php endif; ?>
-    </div>
-    <?php if($id): ?>
-    <div>
-        <a href="discount_requests.php" class="discount-button secondary" style="padding: 7px 14px; font-size: 13px;">View All Requests</a>
-    </div>
-    <?php endif; ?>
-</div>
+<?php
+$active_page = 'discount_requests';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-circle-32.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Requests — Santa Fe Beach Club</title>
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="assets/css/discounts.css?v=<?php echo filemtime(__DIR__ . '/assets/css/discounts.css'); ?>">
+</head>
+<body>
 
-<div class="discount-header">
-    <h1>Discount Requests</h1>
-    <p>Verify guest eligibility, review submitted IDs and receipts, and confirm bookings.</p>
-</div>
+<?php include __DIR__ . '/partials/_sidebar.php'; ?>
+
+<main class="admin-main">
+    <?php
+    $page_title    = 'Discount Requests';
+    $page_subtitle = $id ? ('Reviewing Request REF-' . str_pad((string)$id, 3, '0', STR_PAD_LEFT)) : 'Verify guest eligibility, review submitted IDs and receipts, and confirm bookings';
+    include __DIR__ . '/partials/_page_header.php';
+    ?>
+
+    <div class="admin-body">
+        <div class="discount-shell" style="max-width: 100%; margin: 0; padding: 0;">
+            <?php if($id): ?>
+            <div class="discount-nav-bar" style="margin-bottom: 20px;">
+                <div class="discount-breadcrumb">
+                    <a href="discount_requests.php">← Back to All Discount Requests</a>
+                </div>
+            </div>
+            <?php endif; ?>
 
 <?php if($message): ?><div class="discount-note" role="status"><span>ℹ️</span> <div><?= dh($message) ?></div></div><?php endif ?>
 <?php if($error): ?><div class="discount-note discount-error" role="alert"><span>⚠️</span> <div><?= dh($error) ?></div></div><?php endif ?>
@@ -324,7 +338,10 @@ while($s=$sr->fetch_assoc()) $settings[$s['setting_key']]=$s['setting_value'];
     </form>
 </section>
 <?php endif ?>
-<?php endif ?></main>
+<?php endif ?>
+        </div><!-- /.discount-shell -->
+    </div><!-- /.admin-body -->
+</main>
 <div id="imageModal" class="image-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="image-modal-content">
         <div class="image-modal-header">
