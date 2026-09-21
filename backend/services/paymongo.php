@@ -38,7 +38,7 @@ class PayMongoService
         if (defined('PAYMONGO_WEBHOOK_SECRET')) {
             return PAYMONGO_WEBHOOK_SECRET;
         }
-        return 'whsk_dtWu2aG5aQ2t3htE6hnkE1Jd';
+        return '';
     }
 
     /**
@@ -131,7 +131,7 @@ class PayMongoService
             'Authorization: Basic ' . base64_encode($secretKey . ':')
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -182,7 +182,7 @@ class PayMongoService
             'Authorization: Basic ' . base64_encode($secretKey . ':')
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

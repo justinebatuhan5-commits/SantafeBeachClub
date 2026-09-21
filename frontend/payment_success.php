@@ -9,67 +9,31 @@ require_once __DIR__ . '/../backend/services/mailer.php';
 require_once __DIR__ . '/../backend/services/paymongo.php';
 
 $bookingId = isset($_GET['booking_id']) ? (int)$_GET['booking_id'] : 0;
-$sessionId = isset($_GET['session_id']) ? trim($_GET['session_id']) : '';
+$sessionId = is_string($_GET['session_id'] ?? null) ? trim($_GET['session_id']) : '';
 
 $isVerified = false;
 $bookingData = null;
 $paymentMethodUsed = 'PayMongo Online';
 
-if ($bookingId > 0) {
-    // 1. If we have a sessionId, query PayMongo directly to verify payment status
-    if (!empty($sessionId)) {
+require_once __DIR__ . '/../backend/services/paymongo_confirmation.php';
+header('Cache-Control: no-store');
+if ($bookingId > 0 && preg_match('/^cs_[A-Za-z0-9]+$/D', $sessionId)) {
+    try {
+        pm_checkout_schema($conn);
+        $stored = pm_query($conn, 'SELECT session_id FROM paymongo_checkouts WHERE session_id = ? AND booking_id = ?',
+            [$sessionId, $bookingId])->get_result()->fetch_assoc();
+        if (!$stored) throw new RuntimeException('Unknown checkout.');
         $sessionInfo = PayMongoService::retrieveCheckoutSession($sessionId);
-        if (!empty($sessionInfo['success']) && !empty($sessionInfo['is_paid'])) {
-            $isVerified = true;
-            $paymentMethodUsed = $sessionInfo['payment_method_used'] ?? 'PayMongo Online';
-            $paidTxnId = $sessionInfo['paid_payment_id'] ?? $sessionId;
-
-            // Update Payments table
-            $stmt = $conn->prepare("UPDATE payments SET status = 'verified', payment_method = ?, transaction_id = ? WHERE booking_id = ?");
-            $stmt->bind_param("ssi", $paymentMethodUsed, $paidTxnId, $bookingId);
-            $stmt->execute();
-            $stmt->close();
-
-            // Update Bookings table
-            $stmt = $conn->prepare("UPDATE bookings SET status = 'Confirmed' WHERE id = ?");
-            $stmt->bind_param("i", $bookingId);
-            $stmt->execute();
-            $stmt->close();
-
-            // Record action history if not already recorded
-            $histCheck = $conn->prepare("SELECT id FROM payment_action_history WHERE payment_id = (SELECT id FROM payments WHERE booking_id = ? LIMIT 1) AND action = 'verified'");
-            $histCheck->bind_param("i", $bookingId);
-            $histCheck->execute();
-            if ($histCheck->get_result()->num_rows === 0) {
-                $payIdStmt = $conn->prepare("SELECT id FROM payments WHERE booking_id = ? LIMIT 1");
-                $payIdStmt->bind_param("i", $bookingId);
-                $payIdStmt->execute();
-                $payRow = $payIdStmt->get_result()->fetch_assoc();
-                $payIdStmt->close();
-
-                if ($payRow) {
-                    $pid = (int)$payRow['id'];
-                    $details = 'Auto-confirmed via PayMongo Checkout (' . $paymentMethodUsed . '). Ref: ' . $paidTxnId;
-                    $hStmt = $conn->prepare("INSERT INTO payment_action_history (payment_id, action, performed_by, details) VALUES (?, 'verified', 'PayMongo System', ?)");
-                    $hStmt->bind_param("is", $pid, $details);
-                    $hStmt->execute();
-                    $hStmt->close();
-                }
-
-                // Add notification to admin dashboard
-                $bRef = 'REF-' . str_pad($bookingId, 3, '0', STR_PAD_LEFT);
-                $nTitle = 'Online Payment Verified';
-                $nMsg = 'Payment of ₱' . number_format($sessionInfo['session']['attributes']['line_items'][0]['amount'] / 100 ?? 0, 2) . ' for ' . $bRef . ' was auto-verified via PayMongo (' . $paymentMethodUsed . ').';
-                $nType = 'success';
-                $nStmt = $conn->prepare("INSERT INTO notifications (title, message, type, booking_id) VALUES (?, ?, ?, ?)");
-                $nStmt->bind_param("sssi", $nTitle, $nMsg, $nType, $bookingId);
-                $nStmt->execute();
-                $nStmt->close();
-            }
-            $histCheck->close();
-        }
+        if (empty($sessionInfo['success'])) throw new RuntimeException('Provider verification unavailable.');
+        $confirmation = pm_confirm_checkout($conn, $bookingId, $sessionId, $sessionInfo['data']);
+        $isVerified = true;
+        $paymentMethodUsed = $confirmation['method'];
+    } catch (Throwable $e) {
+        error_log('[PayMongo Return] Checkout verification failed for booking ' . $bookingId);
     }
+}
 
+if ($isVerified) {
     // 2. Fetch booking details for display
     $stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ? LIMIT 1");
     $stmt->bind_param("i", $bookingId);
@@ -78,10 +42,6 @@ if ($bookingId > 0) {
     $stmt->close();
 
     if ($bookingData) {
-        if ($bookingData['status'] === 'Confirmed') {
-            $isVerified = true;
-        }
-
         // Trigger confirmation email if not already sent
         if ($isVerified && !empty($bookingData['guest_email']) && empty($bookingData['confirmation_email_sent_at'])) {
             { // The mailer serializes sends and records successful delivery.
@@ -124,7 +84,7 @@ $checkInDate = !empty($bookingData['check_in']) ? date('M j, Y', strtotime($book
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Successful — Santa Fe Beach Club</title>
+    <title>Payment Status — Santa Fe Beach Club</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -259,6 +219,7 @@ $checkInDate = !empty($bookingData['check_in']) ? date('M j, Y', strtotime($book
 <body>
 
 <div class="success-card">
+    <?php if ($isVerified): ?>
     <div class="check-icon-circle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
@@ -267,7 +228,7 @@ $checkInDate = !empty($bookingData['check_in']) ? date('M j, Y', strtotime($book
 
     <h1 class="success-title">Payment Successful!</h1>
     <p class="success-desc">
-        Thank you! Your payment has been received and automatically verified. A confirmation email with your check-in QR code pass has been sent.
+        Thank you! Your payment has been received and automatically verified. Your booking confirmation will be sent by email.
     </p>
 
     <div class="details-box">
@@ -293,6 +254,10 @@ $checkInDate = !empty($bookingData['check_in']) ? date('M j, Y', strtotime($book
         </div>
     </div>
 
+    <?php else: ?>
+    <h1 class="success-title">Payment not verified yet</h1>
+    <p class="success-desc">We could not verify this payment for your booking. Check My Booking or contact the front desk before making another payment.</p>
+    <?php endif; ?>
     <div class="btn-group">
         <a href="my_booking" class="btn-primary">View My Booking</a>
         <a href="index" class="btn-secondary">Return to Home</a>

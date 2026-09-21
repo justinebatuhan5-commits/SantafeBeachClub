@@ -6,6 +6,7 @@ require_once __DIR__ . '/../backend/helpers/private_storage_helper.php';
 require_once __DIR__ . '/../backend/libs/phpqrcode/phpqrcode.php';
 require_once __DIR__ . '/../backend/services/booking_service.php';
 require_once __DIR__ . '/../backend/services/paymongo.php';
+require_once __DIR__ . '/../backend/services/paymongo_confirmation.php';
 
 // Initialize session if not started
 if (session_status() === PHP_SESSION_NONE) {
@@ -392,6 +393,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt_pay = $conn->prepare("INSERT INTO payments (booking_id, guest_name, guest_email, amount, payment_method, transaction_id, status, receipt_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                         $stmt_pay->bind_param("issdssss", $booking_id, $guest_name, $guest_email, $deposit_amount, $payment_method, $payment_ref, $pay_status, $receipt_url);
                         $stmt_pay->execute();
+                        $checkoutPaymentId = (int)$stmt_pay->insert_id;
 
                         // QR Code for check-in
                         $base_url   = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']);
@@ -420,14 +422,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             );
 
                             if (!empty($paymongoRes['success']) && !empty($paymongoRes['checkout_url'])) {
-                                // Update transaction_id with PayMongo session id
                                 $sessId = $paymongoRes['session_id'] ?? '';
-                                if (!empty($sessId)) {
-                                    $uStmt = $conn->prepare("UPDATE payments SET transaction_id = ? WHERE booking_id = ?");
-                                    $uStmt->bind_param("si", $sessId, $booking_id);
-                                    $uStmt->execute();
-                                    $uStmt->close();
-                                }
+                                pm_store_checkout($conn, $sessId, $checkoutPaymentId, (int)$booking_id, (float)$deposit_amount);
+                                pm_query($conn, "UPDATE payments SET transaction_id = ? WHERE id = ? AND status = 'pending'", [$sessId, $checkoutPaymentId]);
                                 unset($_SESSION['applied_promo_code']);
                                 @sendBookingReceivedEmail(
                                     $guest_email, $guest_name, $booking_ref, $db_acc_name,
