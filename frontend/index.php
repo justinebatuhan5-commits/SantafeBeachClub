@@ -182,7 +182,7 @@ if ($price_q) {
             <div class="stays-header">
                 <p class="section-kicker stays-kicker">Signature Stays</p>
                 <h2 class="stays-heading">Choose Your Escape</h2>
-                <p class="stays-subtitle">From cozy standard rooms to private beach villas â€” every stay is crafted for comfort and unforgettable memories.</p>
+                <p class="stays-subtitle">From cozy standard rooms to private beach villas, every stay is crafted for comfort and unforgettable memories.</p>
             </div>
             <div class="stays-grid">
                 <div class="stay-card">
@@ -191,7 +191,7 @@ if ($price_q) {
                     </div>
                     <div class="stay-card-body">
                         <h3>Standard Room</h3>
-                        <p>A cozy retreat with all essentials, air conditioning, and garden views â€” perfect for couples or solo travelers.</p>
+                        <p>A cozy retreat with all essentials, air conditioning, and garden views, perfect for couples or solo travelers.</p>
                         <div class="stay-card-footer">
                             <div class="stay-price">
                                 <?php if (!empty($db_prices['standard_room'])): ?>
@@ -351,7 +351,7 @@ if ($price_q) {
                     <a href="https://www.facebook.com/SantaFeBeachClub" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Facebook">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                     </a>
-                    <a href="#" class="footer-social-link" aria-label="Instagram">
+                    <a href="https://www.instagram.com/santafebeachclub/" class="footer-social-link" aria-label="Instagram">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                     </a>
                 </div>

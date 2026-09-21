@@ -318,10 +318,17 @@ function inquiry_value(string $field): string {
             <div><span class="contact-eyebrow">Find your way to the shore</span><h2>Meet us in Santa Fe</h2></div>
             <p>Pantalan, Santa Fe · Cebu, Philippines</p>
         </div>
+        <div class="contact-map-controls">
+            <div role="group" aria-label="Map view">
+                <button type="button" data-map-type="m" aria-pressed="false" aria-controls="resort-map">Map</button>
+                <button type="button" data-map-type="k" aria-pressed="true" aria-controls="resort-map">Satellite</button>
+            </div>
+            <a href="https://www.google.com/maps/dir/?api=1&amp;destination=11.1671086%2C123.8054383" target="_blank" rel="noopener noreferrer">Get Directions ↗</a>
+        </div>
         <div class="contact-map-frame">
             <iframe 
-                title="Santa Fe Beach Club location on Google Maps"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1960.9161759603097!2d123.8115!3d11.1578!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a8864d4715bf85%3A0xc3143f65b82df211!2sSanta%20Fe%20Beach%20Club!5e0!3m2!1sen!2sph!4v1700000000000!5m2!1sen!2sph" 
+                id="resort-map" title="Santa Fe Beach Club satellite map"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1960.9161759603097!2d123.8054383!3d11.1671086!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a87d5228e5fbdd%3A0x4038cf5331855e76!2sSanta%20Fe%20Beach%20Club!5e1!3m2!1sen!2sph!4v1700000000000!5m2!1sen!2sph"
                 width="100%" 
                 height="100%" 
                 style="border:0;" 
@@ -331,6 +338,28 @@ function inquiry_value(string $field): string {
             </iframe>
         </div>
     </div>
+
+    <style>
+        .contact-map-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+        .contact-map-controls [role="group"] { display:flex; gap:8px; }
+        .contact-map-controls button, .contact-map-controls a { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 18px; border:1px solid #7c533c; border-radius:10px; background:#fffaf4; color:#5c3d2b; font:inherit; font-weight:600; cursor:pointer; text-decoration:none; }
+        .contact-map-controls button[aria-pressed="true"] { background:#7c533c; color:#fff; }
+        .contact-map-controls :focus-visible { outline:3px solid #0b6e8f; outline-offset:3px; }
+    </style>
+    <script>
+        (() => {
+            const frame = document.getElementById('resort-map');
+            const buttons = document.querySelectorAll('[data-map-type]');
+            buttons.forEach(button => button.addEventListener('click', () => {
+                if (button.getAttribute('aria-pressed') === 'true') return;
+                const url = new URL(frame.src);
+                url.searchParams.set('pb', url.searchParams.get('pb').replace(/!5e[01]!/, button.dataset.mapType === 'k' ? '!5e1!' : '!5e0!'));
+                frame.src = url.toString();
+                frame.title = 'Santa Fe Beach Club ' + (button.dataset.mapType === 'k' ? 'satellite' : 'road') + ' map';
+                buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+            }));
+        })();
+    </script>
 
     <!-- Footer Section -->
     <footer class="main-footer">
@@ -342,7 +371,7 @@ function inquiry_value(string $field): string {
                     <a href="https://www.facebook.com/SantaFeBeachClub" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Facebook">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                     </a>
-                    <a href="#" class="footer-social-link" aria-label="Instagram">
+                    <a href="https://www.instagram.com/santafebeachclub/" class="footer-social-link" aria-label="Instagram">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                     </a>
                 </div>
