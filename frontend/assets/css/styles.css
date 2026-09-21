@@ -618,6 +618,8 @@ body.home-page {
 
 .home-page .hero-stat {
     min-width: 170px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     padding: 14px 18px;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.1);
@@ -1703,7 +1705,7 @@ body.home-page {
     }
 
     /* Floating Search Card Clean Mobile Placement (No Overlap) */
-    .search-card-container {
+    .home-page .search-card-container {
         position: relative;
         bottom: auto;
         left: auto;
@@ -1712,6 +1714,24 @@ body.home-page {
         max-width: 400px;
         margin: 0 auto;
         z-index: 4;
+    }
+
+    .home-page .search-card { width: 100%; min-width: 0; }
+    .home-page .search-field,
+    .home-page .search-field .input-with-icon { min-width: 0; }
+    /* Let the control draw its own border; the wrapper only positions the icon. */
+    .home-page .search-field .input-with-icon {
+        padding: 0;
+        height: auto;
+        border: 0;
+        background: transparent;
+    }
+    .home-page .search-field input,
+    .home-page .search-field select {
+        min-width: 0;
+        max-width: 100%;
+        height: 48px;
+        font-size: 16px;
     }
 
     .search-card {
@@ -2120,4 +2140,43 @@ body.home-page {
 @media (max-width: 480px) {
     .site-navbar { width: calc(100% - 20px); padding: 8px 10px; }
     .site-navbar .btn-book-header { padding: 10px 14px; }
+}
+
+/* Guest navigation: predictable rows and finger-sized links on phones. */
+.main-header a:focus-visible {
+    outline: 3px solid #0B6E8F;
+    outline-offset: 3px;
+}
+@media (max-width: 600px) {
+    .home-page .header-navigation,
+    .site-navbar .nav-menu ul {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px;
+        width: 100%;
+    }
+    .site-navbar .nav-menu ul li { min-width: 0; }
+    .home-page .header-navigation a,
+    .site-navbar .nav-menu ul li a,
+    .site-navbar .nav-menu ul li a[style] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 8px 4px;
+        border-radius: 8px;
+        font-size: 14px;
+        line-height: 1.25;
+        white-space: normal;
+        text-align: center;
+    }
+    .home-page .header-navigation a[aria-current="page"],
+    .site-navbar .nav-menu ul li.active a {
+        background: #f0e8dd;
+        font-weight: 700;
+    }
+    .main-header .btn-book-header { min-height: 44px; display: inline-flex; align-items: center; }
+    .home-page .hero-section { padding-top: 240px; }
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+    select, textarea { font-size: 16px; min-height: 44px; max-width: 100%; }
 }

@@ -1009,7 +1009,9 @@ body {
     }
     .bk-form-grid { grid-template-columns: 1fr; }
     .bk-progress { max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
-    .bk-step-label { display: none; }
+    .bk-step { flex: 1; min-width: 0; flex-direction: column; text-align: center; gap: 8px; }
+    .bk-step-label { display: block; white-space: normal; font-size: 11px; letter-spacing: 0; line-height: 1.4; }
+    .bk-line { flex: 0 0 16px; margin: 15px 4px 0; align-self: flex-start; }
     .bk-layout { margin-top: 20px; }
 }
 
@@ -1041,6 +1043,8 @@ body {
 }
 
 @media (max-width: 480px) {
+    .bk-layout { padding: 0 12px; }
+    .bk-progress { margin-bottom: 24px; align-items: flex-start; }
     .bk-card { padding: 18px 14px; border-radius: 14px; }
     .bk-actions { flex-direction: column; gap: 10px; }
     .btn-bk-back { justify-content: center; width: 100%; }
@@ -1048,4 +1052,3 @@ body {
     .booking-card { padding: 18px 14px; }
     .bk-room-summary-meta { font-size: 13px; }
 }
-

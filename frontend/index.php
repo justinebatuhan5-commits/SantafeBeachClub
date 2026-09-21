@@ -3,6 +3,13 @@ require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 
+$review_summary = $conn->query("SELECT COUNT(*) AS total, AVG(rating) AS average_rating FROM reviews WHERE is_approved = 1")->fetch_assoc();
+$hero_highlights = [];
+$highlight_rows = $conn->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('hero_stay_title', 'hero_stay_description', 'hero_support_title', 'hero_support_description')");
+while ($highlight_row = $highlight_rows->fetch_assoc()) {
+    $hero_highlights[$highlight_row['setting_key']] = $highlight_row['setting_value'];
+}
+
 // Fetch custom room type primary photos from room_types
 $db_photos = [];
 $photo_q = @$conn->query("SELECT name, image_url FROM room_types");
@@ -94,17 +101,19 @@ if ($price_q) {
             <p class="hero-subtitle"><?php echo __t('hero_sub'); ?></p>
             <div class="hero-stats" aria-label="Highlights">
                 <div class="hero-stat">
-                    <span class="hero-stat-value">4.8/5</span>
+                    <span class="hero-stat-value"><?php echo (int)$review_summary['total'] > 0 ? number_format((float)$review_summary['average_rating'], 1) . '/5' : 'No reviews yet'; ?></span>
                     <span class="hero-stat-label"><?php echo __t('guest_reviews'); ?></span>
                 </div>
+                <?php foreach (['stay', 'support'] as $highlight_type):
+                    $highlight_title = trim($hero_highlights['hero_' . $highlight_type . '_title'] ?? '');
+                    $highlight_description = trim($hero_highlights['hero_' . $highlight_type . '_description'] ?? '');
+                    if ($highlight_title === '' || $highlight_description === '') continue;
+                ?>
                 <div class="hero-stat">
-                    <span class="hero-stat-value">Oceanfront</span>
-                    <span class="hero-stat-label">Premium stay</span>
+                    <span class="hero-stat-value"><?php echo htmlspecialchars($highlight_title, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="hero-stat-label"><?php echo htmlspecialchars($highlight_description, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
-                <div class="hero-stat">
-                    <span class="hero-stat-value">24/7</span>
-                    <span class="hero-stat-label">Concierge support</span>
-                </div>
+                <?php endforeach; ?>
             </div>
             <div class="hero-buttons">
                 <a href="rooms" class="btn-hero-primary"><?php echo __t('book_now'); ?></a>

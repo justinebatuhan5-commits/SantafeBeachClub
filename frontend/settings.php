@@ -262,6 +262,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $success = 'Profile photo removed.';
     }
 
+    // Homepage copy is editable only by administrators.
+    if ($action === 'save_highlights') {
+        RBAC::requireRole('admin');
+        $highlight_values = [];
+        foreach (['hero_stay_title', 'hero_stay_description', 'hero_support_title', 'hero_support_description'] as $key) {
+            $value = $_POST[$key] ?? '';
+            if (!is_string($value) || !preg_match('/\A.{0,60}\z/us', trim($value))) {
+                $error = 'Each highlight field must be text with no more than 60 characters.';
+                break;
+            }
+            $highlight_values[$key] = trim($value);
+        }
+        if ($error === '') {
+            $conn->begin_transaction();
+            try {
+                $stmt = $conn->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+                foreach ($highlight_values as $key => $value) {
+                    $stmt->bind_param('ss', $key, $value);
+                    $stmt->execute();
+                }
+                $stmt->close();
+                $conn->commit();
+                $success = 'Homepage highlights saved successfully.';
+            } catch (Throwable $e) {
+                $conn->rollback();
+                $error = 'Unable to save homepage highlights. Please try again.';
+            }
+        }
+    }
+
     // --- Save property settings ---
     if ($action === 'save_property') {
         $fields = ['property_name', 'property_address', 'property_phone', 'property_email', 'checkin_time', 'checkout_time', 'property_timezone', 'currency', 'gcash_number', 'gcash_name'];
@@ -875,6 +905,28 @@ $active_tab = $_GET['tab'] ?? 'profile';
             <!-- ═══════════════════════════════════════════ -->
             <?php if ($_is_admin): ?>
             <div class="tab-panel <?php echo $active_tab === 'property' ? 'active' : ''; ?>" id="tab-property">
+
+                <div class="settings-card">
+                    <h3>Homepage Highlights</h3>
+                    <p class="card-desc">The guest rating is calculated automatically from all approved reviews. With no approved reviews, the homepage shows “No reviews yet.” Edit the other two highlights below. Leave either field blank to hide that highlight. Enter 24/7 only if support is available around the clock.</p>
+                    <form method="POST" class="settings-form">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="save_highlights">
+                        <?php foreach (['stay' => 'Stay', 'support' => 'Support'] as $kind => $label): ?>
+                        <div class="form-row">
+                            <?php foreach (['title' => 'Headline', 'description' => 'Description'] as $part => $field_label):
+                                $field_key = 'hero_' . $kind . '_' . $part;
+                            ?>
+                            <div>
+                                <label for="<?= $field_key ?>"><?= $label . ' ' . $field_label ?></label>
+                                <input id="<?= $field_key ?>" name="<?= $field_key ?>" type="text" maxlength="60" value="<?= htmlspecialchars($settings[$field_key] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endforeach; ?>
+                        <div class="form-actions"><button type="submit" class="btn-save">Save Homepage Highlights</button></div>
+                    </form>
+                </div>
 
                 <div class="settings-card">
                     <h3>Property Information</h3>
