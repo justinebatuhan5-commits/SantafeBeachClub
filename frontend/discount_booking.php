@@ -151,10 +151,21 @@ $estimate = in_array($d['state'],['Awaiting ID verification','More information n
 <?php elseif (in_array($d['state'],['Awaiting Deposit','Confirmed'],true) && discount_due($conn,$d)>0): ?>
 <p>Amount due now: <strong>₱ <?= number_format(discount_due($conn,$d)/100,2) ?></strong></p>
 <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="pay"><input type="hidden" name="method" value="PayMongo Online"><button>Pay <?= $d['state']==='Confirmed'?'Balance':'Deposit' ?> with PayMongo</button></form>
-<?php if ($gcash || $bank): ?><details><summary>GCash / bank transfer</summary>
-<?php if ($gcash): ?><p>GCash: <?= dh($settings['gcash_number']) ?><br>Account name: <?= dh($settings['gcash_name']) ?></p><?php endif ?>
-<?php if ($bank): ?><p><?= dh($settings['discount_bank_name']) ?>: <?= dh($settings['discount_bank_account']) ?><br>Account name: <?= dh($settings['discount_bank_holder']) ?></p><?php endif ?>
-<form method="post" enctype="multipart/form-data"><?= csrf_field() ?><input type="hidden" name="action" value="pay"><label>Payment method<select name="method"><?php if($gcash): ?><option>GCash QR</option><?php endif ?><?php if($bank): ?><option>Bank Deposit</option><?php endif ?></select></label><label>Transaction reference<input name="reference" required maxlength="100"></label><label>Receipt (JPG/PNG, up to 2 MB)<input name="receipt" type="file" accept="image/jpeg,image/png" required></label><p>Staff will check the actual incoming transaction. Uploading a receipt does not confirm payment.</p><button>Submit receipt</button></form></details><?php endif ?>
+<?php if ($gcash || $bank): ?><details open><summary>GCash / bank transfer</summary>
+<?php if ($gcash): ?>
+<div style="margin:16px 0; text-align:center; background:#f4f9f6; border:1px solid var(--line); border-radius:12px; padding:16px;">
+    <p style="margin:0 0 10px; font-weight:600; color:var(--ink);">Scan to Pay with GCash</p>
+    <div style="display:inline-block; background:#fff; padding:10px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border:1px solid #e0e7e3;">
+        <img src="assets/gcash_qr.png?v=<?= file_exists(__DIR__.'/assets/gcash_qr.png') ? filemtime(__DIR__.'/assets/gcash_qr.png') : time(); ?>" alt="GCash QR Code" style="width:180px; height:180px; display:block; object-fit:contain;" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=180x180&amp;data=GCash%3A<?= urlencode($settings['gcash_number']) ?>%20Santa+Fe+Beach+Club'">
+    </div>
+    <div style="margin-top:10px; font-size:15px; color:var(--ink);">
+        <div><strong>GCash:</strong> <?= dh($settings['gcash_number']) ?></div>
+        <div><strong>Account Name:</strong> <?= dh($settings['gcash_name']) ?></div>
+    </div>
+</div>
+<?php endif ?>
+<?php if ($bank): ?><p style="margin:12px 0;"><strong><?= dh($settings['discount_bank_name']) ?>:</strong> <?= dh($settings['discount_bank_account']) ?><br><strong>Account Name:</strong> <?= dh($settings['discount_bank_holder']) ?></p><?php endif ?>
+<form method="post" enctype="multipart/form-data"><?= csrf_field() ?><input type="hidden" name="action" value="pay"><label>Payment method<select name="method"><?php if($gcash): ?><option>GCash QR</option><?php endif ?><?php if($bank): ?><option>Bank Deposit</option><?php endif ?></select></label><label>Receipt / Screenshot (JPG/PNG, up to 2 MB)<input name="receipt" type="file" accept="image/jpeg,image/png" required></label><p class="discount-muted" style="font-size:13px;">Staff will verify the actual incoming transaction in the resort GCash account before confirming your reservation.</p><button>Submit receipt</button></form></details><?php endif ?>
 <?php elseif ($d['state']==='Discount declined'): ?><p>You may accept the regular price of ₱ <?= number_format($d['original_centavos']/100,2) ?> or cancel this unpaid request.</p><form method="post"><?= csrf_field() ?><button name="action" value="regular">Accept regular price</button><button name="action" value="cancel" class="secondary">Cancel request</button></form>
 <?php elseif ($d['state']==='More information needed'): ?><form method="post" enctype="multipart/form-data"><?= csrf_field() ?><input type="hidden" name="action" value="resubmit"><label>Replacement ID (JPG/PNG, up to 2 MB)<input type="file" name="discount_id" accept="image/jpeg,image/png" required></label><button>Resubmit for verification</button></form>
 <?php elseif ($d['state']==='Confirmed'): ?><p>Your booking is confirmed. <?= $paid >= $d['total_centavos'] ? 'Your booking is fully paid.' : '' ?> Keep your booking reference for arrival.</p>

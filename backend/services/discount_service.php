@@ -183,7 +183,12 @@ function discount_start_payment(mysqli $db, int $id, string $method, string $ref
     if (!in_array($method, ['PayMongo Online','GCash QR','Bank Deposit'], true)) throw new RuntimeException('Select a supported payment method.');
     $receipt = null;
     if ($method !== 'PayMongo Online') {
-        if (trim($reference) === '' || strlen($reference) > 100) throw new RuntimeException('Enter a valid transaction reference.');
+        $reference = trim($reference);
+        if ($reference === '') {
+            $reference = 'MANUAL-' . strtoupper(bin2hex(random_bytes(4)));
+        } elseif (strlen($reference) > 100) {
+            throw new RuntimeException('Reference must be under 100 characters.');
+        }
         $receipt = discount_upload($file ?? [], 'receipts');
     }
     // Schema DDL must precede the transaction.
