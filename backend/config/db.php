@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/env_loader.php';
+load_env(__DIR__ . '/../../.env');
 require_once __DIR__ . '/../helpers/error_handler.php';
 require_once __DIR__ . '/../helpers/business_time_helper.php';
 require_once __DIR__ . '/../helpers/password_helper.php';
@@ -36,7 +38,7 @@ if ($env_host) {
 }
 
 // 2. Try Local XAMPP Database (Port 3307 or 3306)
-if (!$conn || $conn->connect_error) {
+if (!$env_host && (!$conn || $conn->connect_error)) {
     if ($is_local_env) {
         $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3307);
         if (!$conn || $conn->connect_error) {
@@ -49,7 +51,7 @@ if (!$conn || $conn->connect_error) {
 }
 
 // 3. Try Agila Hosting Local MySQL (when deployed on Agila server)
-if (!$conn || $conn->connect_error) {
+if (!$env_host && !$is_local_env && (!$conn || $conn->connect_error)) {
     require_once __DIR__ . '/agila_database.php';
     $agila_config = agila_database_config();
     $agila_host = $agila_config['host'];

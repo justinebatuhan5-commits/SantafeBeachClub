@@ -4,6 +4,9 @@
  * PayMongo API Integration Service for Santa Fe Beach Club
  */
 
+require_once __DIR__ . '/../config/env_loader.php';
+load_env(__DIR__ . '/../../.env');
+
 class PayMongoService
 {
     const BASE_URL = 'https://api.paymongo.com/v1';
@@ -16,7 +19,7 @@ class PayMongoService
         if (defined('PAYMONGO_SECRET_KEY')) {
             return PAYMONGO_SECRET_KEY;
         }
-        return base64_decode('c2tfbGl2ZV9BOUxrZzR0WTZLcXNNMU4za0RhaFhWdHI=');
+        return '';
     }
 
     public static function getPublicKey(): string
@@ -27,7 +30,7 @@ class PayMongoService
         if (defined('PAYMONGO_PUBLIC_KEY')) {
             return PAYMONGO_PUBLIC_KEY;
         }
-        return base64_decode('cGtfbGl2ZV94RDF5Nmt5MUY1V0NRTW1acTFZanNHQkc=');
+        return '';
     }
 
     public static function getWebhookSecretKey(): string
@@ -68,7 +71,7 @@ class PayMongoService
         if (empty($secretKey) || $secretKey === 'sk_test_PLACEHOLDER') {
             return [
                 'success' => false,
-                'error'   => 'PayMongo API Secret Key is not configured yet. Please configure PAYMONGO_SECRET_KEY in backend/services/paymongo.php.'
+                'error'   => 'PayMongo API Secret Key is not configured yet. Please configure PAYMONGO_SECRET_KEY in the environment.'
             ];
         }
 
@@ -132,6 +135,7 @@ class PayMongoService
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -183,6 +187,7 @@ class PayMongoService
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
