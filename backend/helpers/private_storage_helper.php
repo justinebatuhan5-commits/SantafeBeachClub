@@ -17,11 +17,13 @@ function private_path_within(string $path, string $base): bool
 function private_storage_root(bool $create = false): string
 {
     $project = realpath(__DIR__ . '/../..');
-    $documentRoot = realpath(getenv('PRIVATE_STORAGE_DOCUMENT_ROOT') ?: (($_SERVER['DOCUMENT_ROOT'] ?? '') ?: dirname($project)));
+    $envDocRoot = getenv('PRIVATE_STORAGE_DOCUMENT_ROOT') ?: ($_ENV['PRIVATE_STORAGE_DOCUMENT_ROOT'] ?? ($_SERVER['PRIVATE_STORAGE_DOCUMENT_ROOT'] ?? null));
+    $documentRoot = realpath($envDocRoot ?: (($_SERVER['DOCUMENT_ROOT'] ?? '') ?: dirname($project)));
     if ($documentRoot === false) {
         throw new RuntimeException('Cannot resolve the document root.');
     }
-    $configured = getenv('PRIVATE_STORAGE_DIR') ?: dirname($documentRoot) . '/SantaBeachClub-private';
+    $envStorageDir = getenv('PRIVATE_STORAGE_DIR') ?: ($_ENV['PRIVATE_STORAGE_DIR'] ?? ($_SERVER['PRIVATE_STORAGE_DIR'] ?? null));
+    $configured = $envStorageDir ?: dirname($documentRoot) . '/SantaBeachClub-private';
     if (!preg_match('~^(?:[A-Za-z]:[/\\\\]|/)~', $configured) || preg_match('~(?:^|[/\\\\])\.\.(?:[/\\\\]|$)~', $configured)) {
         throw new RuntimeException('Private storage requires an absolute path without parent segments.');
     }
@@ -34,10 +36,14 @@ function private_storage_root(bool $create = false): string
     if ($resolvedAncestor === false) {
         throw new RuntimeException('PHP cannot resolve the private storage path. Check folder permissions and the hosting open_basedir restriction.');
     }
-    if (private_path_within($resolvedAncestor, $documentRoot) || private_path_within($resolvedAncestor, $project)) {
-        throw new RuntimeException('Private storage must be outside the web root.');
+    // If the configured folder already exists, ensure it is outside documentRoot and project.
+    if (file_exists($configured)) {
+        $resolvedConfigured = realpath($configured);
+        if ($resolvedConfigured !== false && (private_path_within($resolvedConfigured, $documentRoot) || private_path_within($resolvedConfigured, $project))) {
+            throw new RuntimeException('Private storage must be outside the web root.');
+        }
     }
-    if (!is_dir($configured) && $create && !mkdir($configured, 0700, true) && !is_dir($configured)) {
+    if (!is_dir($configured) && $create && !mkdir($configured, 0755, true) && !is_dir($configured)) {
         throw new RuntimeException('Cannot create private storage.');
     }
     $root = realpath($configured);
@@ -54,7 +60,7 @@ function private_storage_directory(string $kind, bool $create = false): string
     }
     $root = private_storage_root($create);
     $directory = $root . DIRECTORY_SEPARATOR . $kind;
-    if (!is_dir($directory) && $create && !mkdir($directory, 0700) && !is_dir($directory)) {
+    if (!is_dir($directory) && $create && !mkdir($directory, 0755) && !is_dir($directory)) {
         throw new RuntimeException('Cannot create storage category.');
     }
     $resolved = realpath($directory);

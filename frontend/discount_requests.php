@@ -362,11 +362,27 @@ const modalTitle = document.getElementById('imageModalTitle');
 const modalImg = document.getElementById('imageModalSrc');
 const closeBtn = document.getElementById('closeImageModal');
 
+modalImg.onerror = function() {
+    this.style.display = 'none';
+    let err = document.getElementById('imageModalError');
+    if (!err) {
+        err = document.createElement('div');
+        err.id = 'imageModalError';
+        err.style.cssText = 'padding: 40px 20px; text-align: center; color: #64748B;';
+        this.parentNode.appendChild(err);
+    }
+    err.innerHTML = '<div style="font-size:36px; margin-bottom:12px;">📄</div><strong style="color:#0F172A; font-size:16px;">Document Unavailable</strong><p style="margin-top:6px; font-size:13px;">The document file was not found on the server storage, or permission was denied.</p><a href="' + this.src + '" target="_blank" style="display:inline-block; margin-top:12px; font-size:13px; color:#2563EB; font-weight:600; text-decoration:none;">Open direct URL &rarr;</a>';
+    err.style.display = 'block';
+};
+
 document.querySelectorAll('.js-preview-doc').forEach(btn => {
     btn.addEventListener('click', () => {
         const url = btn.getAttribute('data-url');
         const title = btn.getAttribute('data-title') || 'Document Preview';
         modalTitle.textContent = title;
+        modalImg.style.display = 'block';
+        const err = document.getElementById('imageModalError');
+        if (err) err.style.display = 'none';
         modalImg.src = url;
         modal.classList.add('active');
         modal.setAttribute('aria-hidden', 'false');
@@ -377,6 +393,9 @@ function closeModal() {
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
     modalImg.src = '';
+    modalImg.style.display = 'block';
+    const err = document.getElementById('imageModalError');
+    if (err) err.style.display = 'none';
 }
 
 closeBtn?.addEventListener('click', closeModal);

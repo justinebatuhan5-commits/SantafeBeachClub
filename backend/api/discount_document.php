@@ -13,8 +13,17 @@ if ($pid) {
     $r=pm_query($conn,'SELECT id_file FROM booking_discounts WHERE booking_id=?',[$id])->get_result()->fetch_assoc();
     $key='discount_ids/'.($r['id_file']??'');
 }
-$path=private_storage_file($key);
-if (!$path) { http_response_code(404); exit('Document unavailable.'); }
+try {
+    $path = private_storage_file($key);
+} catch (Throwable $e) {
+    error_log("discount_document error for key [{$key}]: " . $e->getMessage());
+    $path = null;
+}
+if (!$path) { 
+    error_log("discount_document: File not found or inaccessible for key [{$key}].");
+    http_response_code(404); 
+    exit('Document unavailable.'); 
+}
 discount_audit($conn,$id,$_SESSION['admin_username']??'Staff',$pid?'Receipt viewed':'ID viewed');
 header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff');
 header('Content-Security-Policy: sandbox'); header('Referrer-Policy: no-referrer');

@@ -68,7 +68,7 @@ function discount_upload(array $file, string $kind): string {
     $name = bin2hex(random_bytes(24)) . '.' . $ext;
     $path = private_storage_directory($kind, true) . '/' . $name;
     if (!move_uploaded_file($file['tmp_name'], $path)) throw new RuntimeException('Could not store the upload privately.');
-    chmod($path, 0600);
+    chmod($path, 0644);
     return $name;
 }
 
