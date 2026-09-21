@@ -45,3 +45,6 @@ storage/avatars/*
 Thumbs.db
 .vscode/
 .idea/
+
+# Generated synthetic discount UI previews
+tests/discount-preview-*.html

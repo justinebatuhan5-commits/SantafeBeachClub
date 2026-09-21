@@ -24,6 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // ── Read input ──────────────────────────────────────────────────────────────
 $input = json_decode(file_get_contents('php://input'), true);
 $booking_id    = (int)($input['booking_id']    ?? 0);
+if (pm_query($conn, 'SELECT booking_id FROM booking_discounts WHERE booking_id=?', [$booking_id])->get_result()->fetch_assoc()) {
+    http_response_code(409);
+    echo json_encode(['error' => 'Discount bookings have an approved price snapshot. Contact the guest and arrange a new request before changing dates.']);
+    exit;
+}
 $new_check_in  = $input['new_check_in']        ?? '';
 $new_check_out = $input['new_check_out']        ?? '';
 

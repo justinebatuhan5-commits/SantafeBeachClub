@@ -24,6 +24,16 @@ if (isset($_GET['logout'])) {
 
 $guest_data = get_guest_booking();
 $booking    = $guest_data['booking'] ?? null;
+// Use the live discounted totals and payment workflow instead of inferring total
+// from a single payment (which may now be a balance or an unverified receipt).
+if ($booking && !empty($booking['id'])) {
+    $discountPortal = pm_query($conn, 'SELECT token FROM booking_discounts WHERE booking_id=?', [(int)$booking['id']])->get_result()->fetch_assoc();
+    if ($discountPortal) {
+        $_SESSION['discount_tokens'][(int)$booking['id']] = $discountPortal['token'];
+        header('Location: discount_booking.php?booking=' . (int)$booking['id']);
+        exit;
+    }
+}
 $payment    = $guest_data['payment'] ?? null;
 
 // If a verified session exists, compute extra display values

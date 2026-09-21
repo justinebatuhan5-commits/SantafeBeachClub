@@ -202,7 +202,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: book?step=3');
                 exit;
             }
+        } elseif ($_POST['action'] === 'request_discount' || ($_POST['action'] === 'confirm_booking' && in_array($_POST['discount_category'] ?? '', ['senior', 'pwd'], true))) {
+            try {
+                if (empty($_POST['discount_consent'])) throw new RuntimeException('Please consent to ID verification and accept the booking policies.');
+                if (empty($_SESSION['discount_request_nonce']) || !hash_equals($_SESSION['discount_request_nonce'], (string)($_POST['discount_request_nonce'] ?? ''))) throw new RuntimeException('This form was already submitted or has expired. Please refresh.');
+                require_once __DIR__ . '/../backend/helpers/rate_limiter.php';
+                RateLimiter::enforce($conn, 'discount_request', 5, 3600);
+                $request = discount_create($conn, [
+                    'category' => $_POST['discount_category'] ?? '',
+                    'eligible_guest' => trim($_POST['eligible_guest'] ?? ''),
+                    'name' => trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? '')),
+                    'email' => $_SESSION['guest_email'] ?? '', 'phone' => $_SESSION['guest_phone'] ?? '',
+                    'eta' => $_SESSION['guest_eta'] ?? '14:00', 'room_type' => $room_type,
+                    'checkin' => $checkin, 'checkout' => $checkout, 'guests' => $guests,
+                    // Subtotal is calculated server-side before promo codes. Discounts never stack.
+                    'original' => (int)round($pricing['subtotal'] * 100),
+                ], $_FILES['discount_id'] ?? []);
+                $_SESSION['discount_tokens'][(int)$request['booking_id']] = $request['token'];
+                unset($_SESSION['discount_request_nonce']);
+                unset($_SESSION['applied_promo_code']);
+                $emailSent = discount_email($conn, (int)$request['booking_id']);
+                $_SESSION['discount_notice'] = $emailSent ? 'Request submitted. Check your email for your private booking link.' : 'Request submitted. Email could not be sent; please save this private booking link.';
+                header('Location: discount_booking.php?token=' . urlencode($request['token']));
+                exit;
+            } catch (Throwable $e) {
+                $error = $e instanceof mysqli_sql_exception ? 'Could not save your request. Please try again.' : $e->getMessage();
+                $step = 3;
+            }
         } elseif ($_POST['action'] === 'confirm_booking') {
+            $bookingTransactionOpen = false;
             // Check required fields again just in case
             $guest_name = ($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? '');
             $guest_email = $_SESSION['guest_email'] ?? '';
@@ -233,6 +261,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($error)) {
                 // Find a room that is not under maintenance and has no overlapping active booking.
+                $conn->begin_transaction();
+                $bookingTransactionOpen = true;
+                pm_query($conn, "SELECT id FROM rooms WHERE type=? AND status<>'maintenance' ORDER BY id FOR UPDATE", [$room_type])->get_result()->fetch_all();
                 $room_id = null;
                 $db_acc_name = $accommodation_name;
                 $room_stmt = $conn->prepare(
@@ -394,6 +425,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt_pay->bind_param("issdssss", $booking_id, $guest_name, $guest_email, $deposit_amount, $payment_method, $payment_ref, $pay_status, $receipt_url);
                         $stmt_pay->execute();
                         $checkoutPaymentId = (int)$stmt_pay->insert_id;
+                        $conn->commit();
+                        $bookingTransactionOpen = false;
 
                         // QR Code for check-in
                         $base_url   = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']);
@@ -509,6 +542,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Error saving your booking: ' . $e->getMessage();
                 }
             }
+            if ($bookingTransactionOpen) $conn->rollback();
         }
     }
 }
@@ -517,6 +551,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $checkin_fmt = date('D, d M Y', strtotime($checkin));
 $checkout_fmt = date('D, d M Y', strtotime($checkout));
 $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? ''));
+if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discount_request_nonce'] = bin2hex(random_bytes(24));
 
 ?>
 <!DOCTYPE html>
@@ -910,6 +945,32 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
 
 
                     <?php elseif ($step === 3): ?>
+                    <div class="bk-card bk-discount-card">
+                        <h2 class="bk-card-title">Senior Citizen / PWD discount</h2>
+                        <input type="hidden" name="discount_request_nonce" value="<?php echo htmlspecialchars($_SESSION['discount_request_nonce'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                        <label for="discountCategory">Booking type</label>
+                        <select name="discount_category" id="discountCategory" class="bk-input">
+                            <option value="regular">Regular booking</option>
+                            <option value="senior">Senior Citizen — request 20% discount</option>
+                            <option value="pwd">PWD — request 20% discount</option>
+                        </select>
+                        <div id="discountFields" hidden>
+                            <p>20% applies to the entire room booking after staff verifies eligibility. Promo codes cannot be combined. Estimated total: <strong>₱ <?php echo number_format(round($pricing['subtotal'] * .8, 2), 2); ?></strong>. No payment is collected now.</p>
+                            <p>Your room is held for up to <?php echo max(1, min(72, (int)(getenv('DISCOUNT_HOLD_HOURS') ?: 24))); ?> hours, or until arrival time if earlier. Staff approval and a verified 50% deposit are required to confirm your booking.</p>
+                            <label for="eligibleGuest">Full name of eligible staying guest</label>
+                            <input class="bk-input" id="eligibleGuest" name="eligible_guest" maxlength="150" disabled>
+                            <label for="discountId">Valid Senior Citizen / PWD ID (JPG or PNG, maximum 2 MB)</label>
+                            <details class="bk-id-guide" id="discountIdGuide">
+                                <summary>View sample <span id="sampleIdCategory">Senior Citizen</span> ID</summary>
+                                <img id="sampleIdImage" class="bk-id-sample-image" src="assets/images/senior-id-sample.png" alt="Senior Citizen ID illustration with fictional name, photo placeholder and ID number. SAMPLE — NOT VALID." width="1536" height="1024" decoding="async">
+                                <p>Actual ID designs may vary by issuing city or municipality. This illustration only shows what should be readable.</p>
+                            </details>
+                            <p id="discountIdHelp" class="bk-id-help">Upload a clear photo of your own valid ID. Keep your name, photo, and ID number readable, and include all four corners without glare. Do not upload this sample.</p>
+                            <input id="discountId" type="file" name="discount_id" accept="image/jpeg,image/png" aria-describedby="discountIdHelp" disabled>
+                            <label><input type="checkbox" name="discount_consent" value="1" id="discountConsent" disabled> I agree to the booking policies and authorize staff to review this ID for discount verification. ID images are privately stored and deleted after the configured retention period (<?php echo max(1, min(365, (int)(getenv('DISCOUNT_ID_RETENTION_DAYS') ?: 30))); ?> days after review, or submission if unreviewed).</label>
+                        </div>
+                    </div>
+                    <fieldset id="regularPaymentFields" style="border:0;padding:0;margin:0;min-width:0;">
                     <!-- STEP 3: PAYMENT -->
                     <div class="bk-card">
                         <div class="bk-card-header-flex">
@@ -1048,9 +1109,10 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                         </div>
                     </div>
 
+                    </fieldset>
                     <!-- REMOVED PAYMENT CURRENCY BLOCK SINCE NO CARDS ARE CHARGED ONLINE -->
 
-                    <div class="bk-card">
+                    <div class="bk-card" id="regularPaymentSchedule">
                         <h2 class="bk-card-title">Payment schedule</h2>
                         <div class="bk-schedule-row">
                             <span>Deposit due now</span>
@@ -1171,17 +1233,18 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                         <?php if ($has_breakfast): ?><br><span style="color:var(--green); font-size:12px; font-weight:600;">✓ Breakfast included</span><?php endif; ?>
                     </div>
 
-                    <div class="bk-sb-total-row">
+                    <div class="bk-sb-total-row" id="regularSummaryTotal">
                         <span>Total Stay Cost</span>
                         <span>₱ <?php echo number_format($total_amount, 2); ?></span>
                     </div>
 
-                    <div class="bk-sb-room-row" style="margin-top:10px; font-weight:700; color:#0284C7;">
+                    <div class="bk-sb-room-row" id="regularSummaryDeposit" style="margin-top:10px; font-weight:700; color:#0284C7;">
                         <span>50% Deposit Due:</span>
                         <span>₱ <?php echo number_format($deposit_amount, 2); ?></span>
                     </div>
 
                     <div class="bk-sb-tax-note">Price includes all taxes and applicable fees</div>
+                    <div id="discountSummary" hidden><p><strong>Estimated total after 20% discount: ₱ <?php echo number_format(round($pricing['subtotal'] * .8, 2), 2); ?></strong></p><p>No payment due while awaiting ID verification. Any promo code shown above will not apply.</p></div>
                 </div>
             </aside>
             
@@ -1240,6 +1303,38 @@ function bkSelectPayment(method) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    var category = document.getElementById('discountCategory');
+    if (category) {
+        var updateDiscount = function() {
+            var requested = category.value !== 'regular';
+            var sampleCategory = category.value === 'pwd' ? 'PWD' : 'Senior Citizen';
+            document.getElementById('sampleIdCategory').textContent = sampleCategory;
+            var sampleImage = document.getElementById('sampleIdImage');
+            sampleImage.src = category.value === 'pwd' ? 'assets/images/pwd-id-sample.png' : 'assets/images/senior-id-sample.png';
+            sampleImage.alt = sampleCategory + ' ID illustration with fictional name, photo placeholder and ID number. SAMPLE — NOT VALID.';
+            document.getElementById('discountIdGuide').open = requested;
+            document.getElementById('discountFields').hidden = !requested;
+            var payments = document.getElementById('regularPaymentFields');
+            payments.disabled = requested;
+            payments.hidden = requested;
+            document.getElementById('regularPaymentSchedule').hidden = requested;
+            document.getElementById('regularSummaryTotal').hidden = requested;
+            document.getElementById('regularSummaryDeposit').hidden = requested;
+            document.getElementById('regularSummaryTotal').style.display = requested ? 'none' : '';
+            document.getElementById('regularSummaryDeposit').style.display = requested ? 'none' : '';
+            document.getElementById('discountSummary').hidden = !requested;
+            ['eligibleGuest', 'discountId', 'discountConsent'].forEach(function(id) {
+                var input = document.getElementById(id);
+                input.disabled = !requested;
+                input.required = requested;
+            });
+            var form = category.closest('form');
+            form.querySelector('input[name="action"]').value = requested ? 'request_discount' : 'confirm_booking';
+            form.querySelector('button[type="submit"]').textContent = requested ? 'Submit booking & discount request' : 'Confirm and book';
+        };
+        category.addEventListener('change', updateDiscount);
+        updateDiscount();
+    }
     var radios = document.querySelectorAll('input[name="payment_method"]');
     radios.forEach(function(radio) {
         radio.addEventListener('change', function() {
@@ -1277,6 +1372,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!bookingForm || !actionField) return;
 
     bookingForm.addEventListener('submit', function (e) {
+        if (document.getElementById('discountCategory') && document.getElementById('discountCategory').value !== 'regular') return;
         var selectedMethod = bookingForm.querySelector('input[name="payment_method"]:checked');
         if (!selectedMethod) return;
 

@@ -53,7 +53,7 @@ function sf_send_prearrival_checkin_reminders(mysqli $conn, int $days_ahead = 2)
             b.status,
             DATEDIFF(b.check_out, b.check_in) AS nights,
             COALESCE(r.price_per_night, rt.price, 0) AS price_per_night,
-            (DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
+            COALESCE((SELECT d.total_centavos / 100 FROM booking_discounts d WHERE d.booking_id=b.id), DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
             (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.booking_id = b.id AND p.status = 'verified') AS amount_paid
         FROM bookings b
         LEFT JOIN rooms r ON b.room_id = r.id

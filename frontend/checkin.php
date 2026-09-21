@@ -6,6 +6,12 @@ require_once __DIR__ . '/../backend/config/db.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'checkin') {
     require_csrf_token();
     $booking_id = intval($_POST['booking_id']);
+    $discountCheckin = pm_query($conn, 'SELECT * FROM booking_discounts WHERE booking_id=?', [$booking_id])->get_result()->fetch_assoc();
+    if ($discountCheckin && ($discountCheckin['state'] !== 'Confirmed' || discount_due($conn, $discountCheckin) > 0)) {
+        header('Location: discount_requests.php?booking=' . $booking_id);
+        exit;
+    }
+    if ($discountCheckin) $_POST['collect_payment'] = '0';
     $print_params = '';
     
     // Check if there is a payment to record
@@ -198,7 +204,7 @@ if (!empty($ref) && !empty($token)) {
             b.*,
             DATEDIFF(b.check_out, b.check_in) AS nights,
             COALESCE(r.price_per_night, rt.price, 0) AS price_per_night,
-            (DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
+            COALESCE((SELECT d.total_centavos / 100 FROM booking_discounts d WHERE d.booking_id=b.id), DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
             (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.booking_id = b.id AND p.status = 'verified') AS amount_paid
         FROM bookings b
         LEFT JOIN rooms r ON b.room_id = r.id
@@ -238,7 +244,7 @@ $bookings_query = $conn->query("
         b.id, b.guest_name, b.guest_email, b.guest_type, b.accommodation_name, b.check_in, b.check_out, b.status,
         DATEDIFF(b.check_out, b.check_in) AS nights,
         COALESCE(r.price_per_night, rt.price, 0) AS price_per_night,
-        (DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
+        COALESCE((SELECT d.total_centavos / 100 FROM booking_discounts d WHERE d.booking_id=b.id), DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
         (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.booking_id = b.id AND p.status = 'verified') AS amount_paid
     FROM bookings b
     LEFT JOIN rooms r ON b.room_id = r.id

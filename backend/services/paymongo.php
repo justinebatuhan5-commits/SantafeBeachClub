@@ -65,7 +65,8 @@ class PayMongoService
         string $guestEmail,
         string $guestPhone,
         string $successUrl,
-        string $cancelUrl
+        string $cancelUrl,
+        string $lineItemName = '50% Booking Deposit — Santa Fe Beach Club'
     ): array {
         $secretKey = self::getSecretKey();
         if (empty($secretKey) || $secretKey === 'sk_test_PLACEHOLDER') {
@@ -110,7 +111,7 @@ class PayMongoService
                         [
                             'currency'    => 'PHP',
                             'amount'      => $amountCentavos,
-                            'name'        => '50% Booking Deposit — Santa Fe Beach Club',
+                            'name'        => $lineItemName,
                             'quantity'    => 1,
                             'description' => $description
                         ]

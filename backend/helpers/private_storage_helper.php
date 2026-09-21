@@ -49,7 +49,7 @@ function private_storage_root(bool $create = false): string
 
 function private_storage_directory(string $kind, bool $create = false): string
 {
-    if (!in_array($kind, ['receipts', 'avatars'], true)) {
+    if (!in_array($kind, ['receipts', 'avatars', 'discount_ids'], true)) {
         throw new RuntimeException('Invalid storage category.');
     }
     $root = private_storage_root($create);
@@ -66,7 +66,7 @@ function private_storage_directory(string $kind, bool $create = false): string
 
 function private_storage_file(string $key): ?string
 {
-    if (!preg_match('~\A(receipts|avatars)/([a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|gif|pdf))\z~', $key, $parts)) {
+    if (!preg_match('~\A(receipts|avatars|discount_ids)/([a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|gif|pdf))\z~', $key, $parts)) {
         return null;
     }
     $directory = private_storage_directory($parts[1]);

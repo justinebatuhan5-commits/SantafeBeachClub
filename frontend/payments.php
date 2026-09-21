@@ -15,6 +15,14 @@ function recordPaymentAction(mysqli $conn, int $paymentId, string $action, strin
 // Handle payment processing action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     require_csrf_token();
+    // Discount payments must pass the approval, amount, hold and audit checks.
+    if (isset($_POST['payment_id']) && in_array($_POST['action'] ?? '', ['process_payment','verify_payment','reject_payment'], true)) {
+        $discountPayment = pm_query($conn, 'SELECT booking_id FROM discount_payments WHERE payment_id=?', [(int)$_POST['payment_id']])->get_result()->fetch_assoc();
+        if ($discountPayment) {
+            header('Location: discount_requests.php?booking=' . (int)$discountPayment['booking_id']);
+            exit;
+        }
+    }
 
     if ($_POST['action'] === 'process_payment' || $_POST['action'] === 'verify_payment') {
         $pay_id = intval($_POST['payment_id']);

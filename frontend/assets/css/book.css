@@ -1052,3 +1052,26 @@ body {
     .booking-card { padding: 18px 14px; }
     .bk-room-summary-meta { font-size: 13px; }
 }
+/* Discount requests share the booking form's spacing and mobile layout. */
+.bk-discount-card > label,
+#discountFields > label { display: block; margin: 16px 0 7px; font-weight: 600; }
+.bk-discount-card select,
+#discountFields input:not([type="checkbox"]) { display: block; width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #cbd5d1; border-radius: 9px; background: #fff; font: inherit; }
+#discountFields p { margin: 14px 0; line-height: 1.65; }
+#discountFields label:last-child { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; font-weight: 400; line-height: 1.65; }
+#discountConsent { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 3px; }
+.bk-id-guide { margin: 10px 0; padding: 12px 14px; border: 1px solid #d8e3df; border-radius: 10px; background: #f7faf8; }
+.bk-id-guide summary { cursor: pointer; color: #0b6e8f; font-weight: 600; }
+.bk-id-sample-image { display: block; width: 100%; max-width: 640px; height: auto; margin: 16px auto 0; border-radius: 10px; }
+.bk-id-sample { max-width: 440px; margin: 16px auto 0; overflow: hidden; border: 2px dashed #899e95; border-radius: 12px; background: #fff; color: #273f35; }
+.bk-id-sample-banner { padding: 8px 12px; background: #fff0d5; color: #754800; text-align: center; font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+.bk-id-sample > strong { display: block; padding: 14px 16px 0; font-size: 18px; }
+.bk-id-sample-subtitle { display: block; padding: 0 16px; font-size: 12px; color: #63766c; }
+.bk-id-sample-body { display: grid; grid-template-columns: 86px minmax(0,1fr); align-items: center; gap: 14px; padding: 16px; }
+.bk-id-photo { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 108px; background: #edf2ef; border: 1px dashed #9aaca1; border-radius: 6px; font-size: 10px; text-align: center; }
+.bk-id-photo span { font-size: 34px; line-height: 1.5; }
+.bk-id-sample dl { margin: 0; overflow-wrap: anywhere; }
+.bk-id-sample dt { margin-top: 7px; font-size: 11px; color: #61746a; }
+.bk-id-sample dd { margin: 0; font-size: 12px; font-weight: 600; }
+.bk-id-sample-footer { padding: 8px 12px; border-top: 1px dashed #cbd8d0; font-size: 10px; text-align: center; }
+#discountFields .bk-id-help, #discountFields .bk-id-guide p { font-size: 13px; color: #53665e; }

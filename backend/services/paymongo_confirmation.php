@@ -94,6 +94,14 @@ function pm_confirm_checkout(mysqli $db, int $bookingId, string $sessionId, arra
             || !in_array(strtolower($booking['status']), ['pending', 'pending payment', 'confirmed'], true)) {
             throw new RuntimeException('Payment or booking is no longer pending.');
         }
+        $discountBooking = null;
+        if (function_exists('discount_locked') && pm_query($db, 'SELECT booking_id FROM booking_discounts WHERE booking_id=?', [$bookingId])->get_result()->fetch_assoc()) {
+            $discountBooking = discount_locked($db, $bookingId);
+            if (!in_array($discountBooking['state'], ['Awaiting Deposit', 'Confirmed'], true)
+                || (int)$checkout['amount_centavos'] !== discount_due($db, $discountBooking)) {
+                throw new RuntimeException('Discount approval or outstanding payment amount does not match.');
+            }
+        }
         // Covers historical transactions; the unique index below arbitrates concurrent claims.
         if (pm_query($db, 'SELECT id FROM payments WHERE transaction_id = ? AND id <> ? LIMIT 1',
             [$txn, $paymentId])->get_result()->fetch_assoc()) {
@@ -104,6 +112,10 @@ function pm_confirm_checkout(mysqli $db, int $bookingId, string $sessionId, arra
         pm_query($db, "UPDATE payments SET status = 'verified', payment_method = ?, transaction_id = ? WHERE id = ?",
             [$method, $txn, $paymentId]);
         pm_query($db, "UPDATE bookings SET status = 'Confirmed' WHERE id = ?", [$bookingId]);
+        if ($discountBooking) {
+            pm_query($db, "UPDATE booking_discounts SET state='Confirmed' WHERE booking_id=?", [$bookingId]);
+            discount_audit($db, $bookingId, 'PayMongo', 'Payment verified', $txn);
+        }
         pm_query($db, "INSERT INTO payment_action_history (payment_id, action, performed_by, details)
             VALUES (?, 'verified', 'PayMongo System', ?)", [$paymentId, 'Verified checkout ' . $sessionId . '. Ref: ' . $txn]);
         pm_query($db, "INSERT INTO notifications (title, message, type, booking_id)

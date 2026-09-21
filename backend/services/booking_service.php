@@ -96,6 +96,10 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
         if (!$roomType) {
             throw new RuntimeException('Room type not found.');
         }
+        // Use the same physical-room lock as guest and discount requests.
+        $roomLocks = $pdo->prepare("SELECT id FROM rooms WHERE type=(SELECT name FROM room_types WHERE id=?) AND status<>'maintenance' ORDER BY id FOR UPDATE");
+        $roomLocks->execute([$roomTypeId]);
+        $roomLocks->fetchAll();
 
         $overlapStmt = $pdo->prepare(
             "SELECT COUNT(*) AS overlap_count

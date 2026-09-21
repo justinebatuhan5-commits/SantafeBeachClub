@@ -61,14 +61,22 @@ if ($eventType === 'checkout_session.payment.paid') {
     $bookingId = (int)($sessionData['attributes']['metadata']['booking_id'] ?? 0);
     $sessionId = $sessionData['id'] ?? '';
     try {
-        pm_confirm_checkout($conn, $bookingId, $sessionId, $sessionData);
+        $confirmation = pm_confirm_checkout($conn, $bookingId, $sessionId, $sessionData);
     } catch (Throwable $e) {
         error_log('[PayMongo Webhook] Checkout confirmation rejected for booking ' . $bookingId);
+        if (pm_query($conn, 'SELECT booking_id FROM booking_discounts WHERE booking_id=?', [$bookingId])->get_result()->fetch_assoc()) {
+            // A late payment must never silently reclaim a room after its hold expired.
+            if (!pm_query($conn, "SELECT id FROM notifications WHERE booking_id=? AND title='Discount payment needs attention' LIMIT 1", [$bookingId])->get_result()->fetch_assoc()) {
+                pm_query($conn, "INSERT INTO notifications (title,message,type,booking_id) VALUES ('Discount payment needs attention',?,'warning',?)", ['A provider payment could not confirm REF-' . $bookingId . '. Review the provider transaction and room availability; arrange a refund or new booking as appropriate.', $bookingId]);
+            }
+        }
         http_response_code(409);
         echo json_encode(['error' => 'Checkout could not be confirmed']);
         exit;
     }
-    if ($bookingId > 0) {
+    $discountBooking = pm_query($conn, 'SELECT booking_id FROM booking_discounts WHERE booking_id=?', [$bookingId])->get_result()->fetch_assoc();
+    if ($discountBooking && $confirmation['new']) discount_email($conn, $bookingId);
+    if ($bookingId > 0 && !$discountBooking) {
         // 4. Dispatch booking confirmation email with QR code (only if not already sent)
         $bStmt = $conn->prepare("SELECT guest_name, guest_email, accommodation_name, check_in, check_out, cancellation_token, checkin_token, confirmation_email_sent_at FROM bookings WHERE id = ? LIMIT 1");
         $bStmt->bind_param("i", $bookingId);

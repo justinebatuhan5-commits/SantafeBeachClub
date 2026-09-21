@@ -582,6 +582,10 @@ try {
     exit;
 }
 
+require_once __DIR__ . '/../services/discount_service.php';
+discount_schema($conn);
+discount_maintenance($conn);
+
 // Helper: write an entry to activity_logs
 function log_activity($conn, $username, $action, $details = '') {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
