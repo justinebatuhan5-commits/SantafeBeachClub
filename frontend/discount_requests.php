@@ -50,7 +50,7 @@ while($s=$sr->fetch_assoc()) $settings[$s['setting_key']]=$s['setting_value'];
 <?php if($d): ?>
 <section class="discount-card"><span class="discount-status"><?= dh($d['state']) ?></span><h2>REF-<?= dh(str_pad((string)$id,3,'0',STR_PAD_LEFT)) ?> · <?= dh($d['guest_name']) ?></h2><p><?= dh($d['guest_email']) ?><br><?= dh($d['accommodation_name']) ?> · <?= dh($d['check_in']) ?> to <?= dh($d['check_out']) ?><br>Eligible guest: <strong><?= dh($d['eligible_guest']) ?></strong> · <?= dh(strtoupper($d['category'])) ?><br>Hold ends: <?= dh($d['hold_until']) ?> (Philippine time)</p>
 <p>Original: ₱ <?= number_format($d['original_centavos']/100,2) ?> · Discount: ₱ <?= number_format(($d['original_centavos']-$d['total_centavos'])/100,2) ?> · Total: ₱ <?= number_format($d['total_centavos']/100,2) ?> · Deposit: ₱ <?= number_format($d['deposit_centavos']/100,2) ?></p>
-<?php if($d['id_file']): ?><a class="discount-button" href="../backend/api/discount_document.php?booking=<?= $id ?>" target="_blank" rel="noopener noreferrer">Review private ID</a><?php else: ?><p>ID removed under the retention policy. Request a new upload if review is still needed.</p><?php endif ?>
+<?php if($d['id_file']): ?><button type="button" class="discount-button js-preview-doc" data-url="../backend/api/discount_document.php?booking=<?= $id ?>" data-title="Private ID · <?= dh($d['guest_name']) ?> (<?= dh(strtoupper($d['category'])) ?>)">Review private ID</button><?php else: ?><p>ID removed under the retention policy. Request a new upload if review is still needed.</p><?php endif ?>
 <?php if(in_array($d['state'],['Awaiting ID verification','More information needed'],true)): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="booking_id" value="<?= $id ?>"><label>Guest message / decision reason<textarea name="note" maxlength="2000" rows="3"></textarea></label><button name="action" value="approve">Approve 20% & send payment options</button><button name="action" value="information" class="secondary">Request information</button><button name="action" value="decline" class="secondary">Decline discount</button></form><?php endif ?>
 <?php if($d['note']): ?><p>Latest message: <?= nl2br(dh($d['note'])) ?></p><?php endif ?>
 <label>Private guest booking/payment link<input type="password" id="privateLink" readonly value="<?= dh(discount_link($d)) ?>"></label><button type="button" id="copyLink" class="secondary">Copy payment link</button><span id="copyResult" role="status"></span>
@@ -58,7 +58,7 @@ while($s=$sr->fetch_assoc()) $settings[$s['setting_key']]=$s['setting_value'];
 <section class="discount-card"><h2>Payments</h2>
 <?php $ps=pm_query($conn,'SELECT p.*,x.purpose,x.checkout_url FROM discount_payments x JOIN payments p ON p.id=x.payment_id WHERE x.booking_id=? ORDER BY p.id DESC',[$id])->get_result(); while($p=$ps->fetch_assoc()): ?>
 <details open><summary><?= dh(ucfirst($p['purpose'])) ?> · ₱ <?= number_format($p['amount'],2) ?> · <?= dh($p['status']) ?></summary><p><?= dh($p['payment_method']) ?> · Reference: <?= dh($p['transaction_id']) ?></p>
-<?php if($p['receipt_url']): ?><a href="../backend/api/discount_document.php?booking=<?= $id ?>&payment=<?= (int)$p['id'] ?>" target="_blank" rel="noopener noreferrer">View private receipt</a><?php endif ?>
+<?php if($p['receipt_url']): ?><button type="button" class="discount-button secondary js-preview-doc" data-url="../backend/api/discount_document.php?booking=<?= $id ?>&payment=<?= (int)$p['id'] ?>" data-title="Payment Receipt · <?= dh(ucfirst($p['purpose'])) ?> · ₱ <?= number_format($p['amount'],2) ?>">View private receipt</button><?php endif ?>
 <?php if($p['status']==='pending' && in_array($p['payment_method'],['GCash QR','Bank Deposit'],true)): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="booking_id" value="<?= $id ?>"><input type="hidden" name="payment_id" value="<?= (int)$p['id'] ?>"><label><input type="checkbox" name="verified_transaction" value="1"> I checked the actual incoming transaction, amount, and reference in the receiving account.</label><label>Verification note / rejection reason<textarea name="note" maxlength="2000"></textarea></label><button name="action" value="verify">Confirm payment</button><button name="action" value="reject" class="secondary">Reject receipt</button></form><?php endif ?></details><?php endwhile ?>
 <?php if(in_array($d['state'],['Expired','Cancelled'],true)): ?><p>This hold has ended. Investigate any received payment and arrange a refund or a new booking; do not confirm an expired room hold.</p><?php endif ?></section>
 <section class="discount-card"><h2>Audit history</h2><?php $history=pm_query($conn,'SELECT * FROM discount_history WHERE booking_id=? ORDER BY id DESC',[$id])->get_result(); while($h=$history->fetch_assoc()): ?><p><strong><?= dh($h['action']) ?></strong> · <?= dh($h['actor']) ?> · <?= dh($h['created_at']) ?><br><?= dh($h['details']) ?></p><?php endwhile ?></section>
@@ -67,4 +67,49 @@ while($s=$sr->fetch_assoc()) $settings[$s['setting_key']]=$s['setting_value'];
 <?php $rows=$conn->query('SELECT d.*,b.guest_name FROM booking_discounts d JOIN bookings b ON b.id=d.booking_id ORDER BY d.created_at DESC LIMIT 200'); while($r=$rows->fetch_assoc()): ?><tr><td>REF-<?= (int)$r['booking_id'] ?></td><td><?= dh($r['guest_name']) ?><br><small><?= dh(strtoupper($r['category'])) ?></small></td><td><?= dh($r['state']) ?></td><td><?= dh($r['hold_until']) ?></td><td><a href="?booking=<?= (int)$r['booking_id'] ?>">Review</a></td></tr><?php endwhile ?>
 <?php if(!$rows->num_rows): ?><tr><td colspan="5">No discount requests yet.</td></tr><?php endif ?></tbody></table></section>
 <?php if(($_SESSION['admin_role']??'')==='admin'): ?><section class="discount-card"><h2>Manual payment instructions</h2><p>Only configure accounts authorized to receive hotel payments. A method stays hidden until all its fields are supplied.</p><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="settings"><?php foreach(['gcash_number'=>'GCash number','gcash_name'=>'GCash account name','discount_bank_name'=>'Bank name','discount_bank_account'=>'Bank account number','discount_bank_holder'=>'Bank account holder'] as $key=>$label): ?><label><?= dh($label) ?><input name="<?= dh($key) ?>" value="<?= dh($settings[$key]??'') ?>" maxlength="150"></label><?php endforeach ?><button>Save payment instructions</button></form></section><?php endif ?>
-<?php endif ?></main><script>document.getElementById('copyLink')?.addEventListener('click',async()=>{const field=document.getElementById('privateLink');try{await navigator.clipboard.writeText(field.value);document.getElementById('copyResult').textContent='Link copied.';}catch(e){field.select();document.getElementById('copyResult').textContent='Select and copy the link above.';}});</script></body></html>
+<?php endif ?></main>
+<div id="imageModal" class="image-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="image-modal-content">
+        <div class="image-modal-header">
+            <h3 id="imageModalTitle">Document Preview</h3>
+            <button type="button" class="image-modal-close" id="closeImageModal" aria-label="Close">&times;</button>
+        </div>
+        <div class="image-modal-body">
+            <img id="imageModalSrc" src="" alt="Document Preview">
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('copyLink')?.addEventListener('click',async()=>{const field=document.getElementById('privateLink');try{await navigator.clipboard.writeText(field.value);document.getElementById('copyResult').textContent='Link copied.';}catch(e){field.select();document.getElementById('copyResult').textContent='Select and copy the link above.';}});
+
+// In-page modal preview for private ID and receipts
+const modal = document.getElementById('imageModal');
+const modalTitle = document.getElementById('imageModalTitle');
+const modalImg = document.getElementById('imageModalSrc');
+const closeBtn = document.getElementById('closeImageModal');
+
+document.querySelectorAll('.js-preview-doc').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const url = btn.getAttribute('data-url');
+        const title = btn.getAttribute('data-title') || 'Document Preview';
+        modalTitle.textContent = title;
+        modalImg.src = url;
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+    });
+});
+
+function closeModal() {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    modalImg.src = '';
+}
+
+closeBtn?.addEventListener('click', closeModal);
+modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+});
+</script></body></html>
