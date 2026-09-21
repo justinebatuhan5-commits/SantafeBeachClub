@@ -148,7 +148,17 @@ $estimate = in_array($d['state'],['Awaiting ID verification','More information n
 </form>
 <?php endif ?>
 <?php endif ?>
-<?php elseif (in_array($d['state'],['Awaiting Deposit','Confirmed'],true) && discount_due($conn,$d)>0): ?>
+<?php elseif ($d['state']==='Confirmed'): ?>
+<div style="background:#eef7f2; border:1px solid #c3e2d1; border-radius:12px; padding:20px; text-align:center;">
+    <div style="font-size:32px; margin-bottom:8px;">🎉</div>
+    <h3 style="margin:0 0 8px 0; color:#165e48;">Reservation Confirmed</h3>
+    <p style="margin:0 0 12px 0; color:var(--ink); font-size:15px;">Your 50% deposit has been verified and your room is reserved.</p>
+    <div style="background:#fff; border:1px solid #dce6df; border-radius:8px; padding:12px; margin-top:10px; font-size:14px; text-align:left;">
+        <div><strong>Remaining Balance:</strong> ₱ <?= number_format(max(0, $d['total_centavos'] - $paid) / 100, 2) ?></div>
+        <div style="color:var(--muted); margin-top:4px;">Please settle this remaining balance at the <strong>front desk during check-in</strong>.</div>
+    </div>
+</div>
+<?php elseif (in_array($d['state'],['Awaiting Deposit'],true) && discount_due($conn,$d)>0): ?>
 <p>Amount due now: <strong>₱ <?= number_format(discount_due($conn,$d)/100,2) ?></strong></p>
 <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="pay"><input type="hidden" name="method" value="PayMongo Online"><button>Pay <?= $d['state']==='Confirmed'?'Balance':'Deposit' ?> with PayMongo</button></form>
 <?php if ($gcash || $bank): ?><details open><summary>GCash / bank transfer</summary>
@@ -168,7 +178,6 @@ $estimate = in_array($d['state'],['Awaiting ID verification','More information n
 <form method="post" enctype="multipart/form-data"><?= csrf_field() ?><input type="hidden" name="action" value="pay"><label>Payment method<select name="method"><?php if($gcash): ?><option>GCash QR</option><?php endif ?><?php if($bank): ?><option>Bank Deposit</option><?php endif ?></select></label><label>Receipt / Screenshot (JPG/PNG, up to 2 MB)<input name="receipt" type="file" accept="image/jpeg,image/png" required></label><p class="discount-muted" style="font-size:13px;">Staff will verify the actual incoming transaction in the resort GCash account before confirming your reservation.</p><button>Submit receipt</button></form></details><?php endif ?>
 <?php elseif ($d['state']==='Discount declined'): ?><p>You may accept the regular price of ₱ <?= number_format($d['original_centavos']/100,2) ?> or cancel this unpaid request.</p><form method="post"><?= csrf_field() ?><button name="action" value="regular">Accept regular price</button><button name="action" value="cancel" class="secondary">Cancel request</button></form>
 <?php elseif ($d['state']==='More information needed'): ?><form method="post" enctype="multipart/form-data"><?= csrf_field() ?><input type="hidden" name="action" value="resubmit"><label>Replacement ID (JPG/PNG, up to 2 MB)<input type="file" name="discount_id" accept="image/jpeg,image/png" required></label><button>Resubmit for verification</button></form>
-<?php elseif ($d['state']==='Confirmed'): ?><p>Your booking is confirmed. <?= $paid >= $d['total_centavos'] ? 'Your booking is fully paid.' : '' ?> Keep your booking reference for arrival.</p>
 <?php else: ?><p><?= in_array($d['state'],['Expired','Cancelled'],true) ? 'This room hold has ended. Contact reception if you already sent a payment. Submit a new booking request to check availability.' : 'Staff will verify your ID. No payment is required while you wait.' ?></p><?php endif ?>
 <?php if (!$pending && in_array($d['state'],['Awaiting ID verification','More information needed','Awaiting Deposit'],true)): ?><form method="post"><?= csrf_field() ?><button name="action" value="cancel" class="secondary">Cancel unpaid request</button></form><?php endif ?>
 </section></div><p><a href="mailto:santafebeachclub@gmail.com">Contact reception</a> · Refresh this page to see the latest status.</p></main></body></html>

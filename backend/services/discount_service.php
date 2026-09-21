@@ -81,9 +81,41 @@ function discount_link(array $request): string {
 }
 
 function discount_email(mysqli $db, int $id): bool {
-    $d = pm_query($db, 'SELECT d.*, b.guest_email,b.guest_name FROM booking_discounts d JOIN bookings b ON b.id=d.booking_id WHERE d.booking_id=?', [$id])->get_result()->fetch_assoc();
+    $d = pm_query($db, 'SELECT d.*, b.guest_email,b.guest_name,b.accommodation_name,b.check_in,b.check_out,b.cancellation_token,b.checkin_token FROM booking_discounts d JOIN bookings b ON b.id=d.booking_id WHERE d.booking_id=?', [$id])->get_result()->fetch_assoc();
     if (!$d) return false;
     require_once __DIR__ . '/mailer.php';
+
+    // If confirmed, send the official Booking Confirmation email with check-in pass (no link to discount payment page)
+    if ($d['state'] === 'Confirmed') {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $script_dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        $base_url = rtrim($protocol . $host . $script_dir, '/');
+        $frontend_url = (strpos($base_url, '/frontend') !== false) ? $base_url : $base_url . '/frontend';
+
+        $cancellation_url = $d['cancellation_token'] ? $frontend_url . "/cancel_booking.php?token=" . $d['cancellation_token'] : null;
+        $checkin_url = $d['checkin_token'] ? $frontend_url . "/checkin_pass.php?token=" . $d['checkin_token'] : null;
+
+        $total_price = (float)($d['total_centavos'] / 100);
+        $result = sendBookingConfirmationEmail(
+            $d['guest_email'],
+            $d['guest_name'],
+            'REF-' . $id,
+            $d['accommodation_name'] ?? 'Room',
+            $d['check_in'],
+            $d['check_out'],
+            $total_price,
+            $cancellation_url,
+            $checkin_url
+        );
+        if (!empty($result['success'])) {
+            discount_audit($db, $id, 'System', 'Booking confirmation email sent');
+            return true;
+        }
+        discount_audit($db, $id, 'System', 'Booking confirmation email failed', $result['error'] ?? '');
+        return false;
+    }
+
     try {
         $mail = createMailer();
         $mail->SMTPOptions = ['ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false]];
@@ -92,7 +124,7 @@ function discount_email(mysqli $db, int $id): bool {
         $mail->isHTML(false);
         $paid = (int)pm_query($db, "SELECT COALESCE(ROUND(SUM(amount)*100),0) FROM payments WHERE booking_id=? AND status='verified'", [$id])->get_result()->fetch_row()[0];
         $prices = 'Total: PHP ' . number_format($d['total_centavos']/100,2) . '. Deposit: PHP ' . number_format($d['deposit_centavos']/100,2) . '. Verified payments: PHP ' . number_format($paid/100,2) . '. Remaining total: PHP ' . number_format(max(0,$d['total_centavos']-$paid)/100,2) . '. Balance deadline: ' . date('d M Y',strtotime($d['check_in'].' -1 day')) . '.';
-        $holdText = $d['state'] === 'Confirmed' ? 'Your reservation is confirmed.' : "Room hold deadline: {$d['hold_until']} (Philippine time). Approval alone does not confirm your reservation; a verified 50% deposit is required.";
+        $holdText = "Room hold deadline: {$d['hold_until']} (Philippine time). Approval alone does not confirm your reservation; a verified 50% deposit is required.";
         $mail->Body = "Your booking status: {$d['state']}\n{$d['note']}\n{$prices}\n{$holdText}\nView your price, verification status, and payment options securely:\n" . discount_link($d) . "\nDo not share this private link. Prices are estimates until approval or acceptance of the regular price.";
         $mail->send();
         discount_audit($db, $id, 'System', 'Email sent');
