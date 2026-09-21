@@ -202,7 +202,7 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 Customers & Guests
             </a></li>
-            <li><a href="discount_requests.php" class="sidebar-link">Discount Requests</a></li>
+            <li><a href="discount_requests.php" class="sidebar-link <?php echo _sb_active('discount_requests',$_page); ?>" title="Discount Requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5 16c0-3 6-3 6 0M14 10h4M14 14h4"/></svg>Discount Requests</a></li>
             <li><a href="payments" class="sidebar-link <?php echo _sb_active('payments',$_page); ?>" title="Payments">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 Payments
@@ -341,7 +341,7 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 Guest Directory
             </a></li>
-            <li><a href="discount_requests.php" class="nav-item">Discount Requests</a></li>
+            <li><a href="discount_requests.php" class="nav-item <?php echo _sb_active('discount_requests',$_page); ?>" title="Discount Requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M5 16c0-3 6-3 6 0M14 10h4M14 14h4"/></svg>Discount Requests</a></li>
             <li><a href="payments" class="nav-item <?php echo _sb_active('payments',$_page); ?>" title="Payments & Billing">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="10" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                 Payments & Billing

@@ -44,7 +44,7 @@
         var groups = [
             { name: 'Front desk', routes: ['dashboard', 'reservations', 'checkin', 'checkout', 'javascript:'] },
             { name: 'Property', routes: ['guests', 'accommodations', 'calendar', 'promotions', 'gallery', 'room_types', 'inquiries'] },
-            { name: 'Finance', routes: ['payments', 'refunds'] },
+            { name: 'Finance', routes: ['discount_requests', 'payments', 'refunds'] },
             { name: 'Insights & updates', routes: ['reports', 'reviews', 'notifications', 'logs'] },
             { name: 'Administration', routes: ['backups', 'staff'] }
         ];
