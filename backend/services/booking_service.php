@@ -64,14 +64,19 @@ function getAvailableRooms(PDO $pdo, int $roomTypeId, string $checkIn, string $c
     return max(0, $available);
 }
 
-function createBooking(PDO $pdo, array $data): array
+// $staffStatus must only be supplied by an authenticated, CSRF-protected staff endpoint.
+// Public request data never controls the initial booking status.
+function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): array
 {
     $roomTypeId = (int) ($data['room_type_id'] ?? 0);
     $checkIn = $data['check_in'] ?? '';
     $checkOut = $data['check_out'] ?? '';
     $guestName = trim((string) ($data['guest_name'] ?? ''));
     $guestEmail = trim((string) ($data['guest_email'] ?? ''));
-    $status = strtolower((string) ($data['status'] ?? 'pending'));
+    if (!in_array($staffStatus, ['Pending', 'Checked In'], true)) {
+        throw new InvalidArgumentException('Invalid initial booking status.');
+    }
+    $status = strtolower($staffStatus);
 
     if ($roomTypeId <= 0 || $checkIn === '' || $checkOut === '' || $guestName === '') {
         throw new InvalidArgumentException('Missing required booking data.');

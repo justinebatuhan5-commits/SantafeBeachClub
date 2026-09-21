@@ -603,8 +603,9 @@ if (empty($room_types)) {
             formData.append('guests_count', guests);
             formData.append('eta', eta);
             formData.append('status', status);
+            formData.append('csrf_token', <?php echo json_encode(get_csrf_token()); ?>);
             
-            fetch('../backend/api/create_booking.php', {
+            fetch('../backend/api/staff_create_booking.php', {
                 method: 'POST',
                 body: formData
             })

@@ -28,7 +28,6 @@ try {
         'guest_type' => $_POST['guest_type'] ?? null,
         'guests_count' => $_POST['guests_count'] ?? 1,
         'eta' => $_POST['eta'] ?? '14:00',
-        'status' => $_POST['status'] ?? 'pending',
     ]);
 
     echo json_encode($result);
