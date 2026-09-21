@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../helpers/auth_check.php';
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../helpers/private_storage_helper.php';
+require_once __DIR__ . '/../services/discount_service.php';
 if (!in_array($_SESSION['admin_role'] ?? '', ['admin','receptionist'], true)) { http_response_code(403); exit; }
 $id = (int)($_GET['booking'] ?? 0);
 $pid = (int)($_GET['payment'] ?? 0);

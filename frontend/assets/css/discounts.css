@@ -1,2 +1,698 @@
-:root{--ink:#173b35;--muted:#64756e;--line:#dce6df;--paper:#f5f7f3;--green:#165e48}body.discount-page{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 system-ui,sans-serif}.discount-shell{max-width:1000px;margin:40px auto;padding:0 24px 60px}.discount-shell h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:12px 0}.discount-shell h2{font-size:21px;margin-top:0}.discount-shell a{color:var(--green);overflow-wrap:anywhere}.discount-card{background:white;border:1px solid var(--line);border-radius:16px;padding:26px;margin:20px 0;box-shadow:0 5px 20px #173b3505}.discount-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.discount-shell label{display:block;margin:12px 0 5px;font-weight:600}.discount-shell input:not([type=checkbox]),.discount-shell select,.discount-shell textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #a8b9af;border-radius:8px;background:#fff;font:inherit}.discount-shell input[type=checkbox]{width:18px;height:18px}.discount-shell button,.discount-button{display:inline-block;background:var(--green);color:white!important;border:0;border-radius:8px;padding:12px 18px;font:600 15px system-ui;text-decoration:none;cursor:pointer;margin:8px 6px 0 0}.discount-shell button.secondary{background:#e6eee9;color:var(--ink)!important}.discount-status{display:inline-block;background:#e5f0e9;padding:5px 12px;border-radius:30px;font-weight:650}.discount-note{padding:16px;border-radius:10px;background:#e8f0fb;color:#233f6d;margin:16px 0}.discount-error{background:#fff0ed;color:#8a2b1b}.discount-money{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid var(--line)}.discount-shell small,.discount-muted{color:var(--muted)}.discount-shell table{width:100%;border-collapse:collapse}.discount-shell th,.discount-shell td{text-align:left;padding:12px 8px;border-bottom:1px solid var(--line)}.discount-table{overflow-x:auto}.discount-shell details{margin:16px 0}.discount-shell summary{cursor:pointer;font-weight:650}.discount-shell [hidden]{display:none!important}@media(max-width:650px){.discount-grid{grid-template-columns:1fr}.discount-card{padding:18px}.discount-shell{padding:0 16px 40px;margin-top:24px}}
-.image-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.8);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}.image-modal-overlay.active{display:flex}.image-modal-content{background:#fff;border-radius:14px;max-width:850px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)}.image-modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}.image-modal-header h3{margin:0;font-size:18px;color:var(--ink)}.image-modal-close{background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px}.image-modal-close:hover{background:#f0f4f2;color:var(--ink)}.image-modal-body{padding:20px;overflow:auto;text-align:center;background:#0b1311}.image-modal-body img{max-width:100%;max-height:75vh;object-fit:contain;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand & Accent Palette matching Santa Fe Beach Club Luxury Theme */
+  --primary:          #84563C;
+  --primary-hover:    #6B442E;
+  --primary-dark:     #4E3020;
+  --primary-light:    #F5ECE5;
+  --primary-subtle:   rgba(132, 86, 60, 0.08);
+  --primary-glow:     rgba(132, 86, 60, 0.25);
+  --primary-grad:     linear-gradient(135deg, #84563C 0%, #A37152 100%);
+  --accent-gold:      #D4AF37;
+
+  /* Status Colors */
+  --green:            #10B981;
+  --green-bg:         #ECFDF5;
+  --green-border:     #A7F3D0;
+  --green-text:       #065F46;
+
+  --red:              #EF4444;
+  --red-bg:           #FEF2F2;
+  --red-border:       #FECACA;
+  --red-text:         #991B1B;
+
+  --blue:             #3B82F6;
+  --blue-bg:          #EFF6FF;
+  --blue-border:      #BFDBFE;
+  --blue-text:        #1E40AF;
+
+  --amber:            #F59E0B;
+  --amber-bg:         #FFFBEB;
+  --amber-border:     #FDE68A;
+  --amber-text:       #92400E;
+
+  /* Surfaces & Neutral Tones */
+  --bg-body:          #F8FAFC;
+  --bg-surface:       #FFFFFF;
+  --border:           #E2E8F0;
+  --border-subtle:    #F1F5F9;
+
+  --text-main:        #0F172A;
+  --text-muted:       #64748B;
+  --text-subtle:      #94A3B8;
+
+  /* Shadows */
+  --shadow-xs:        0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-sm:        0 2px 6px 0 rgba(0, 0, 0, 0.04), 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  --shadow-md:        0 6px 18px -2px rgba(15, 23, 42, 0.06), 0 3px 8px -2px rgba(15, 23, 42, 0.03);
+  --shadow-lg:        0 16px 36px -4px rgba(15, 23, 42, 0.08), 0 6px 14px -4px rgba(15, 23, 42, 0.03);
+}
+
+body.discount-page {
+  margin: 0;
+  background: var(--bg-body);
+  color: var(--text-main);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.discount-shell {
+  max-width: 1080px;
+  margin: 36px auto 60px;
+  padding: 0 24px;
+}
+
+/* ── Top Navigation & Breadcrumbs ── */
+.discount-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.discount-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.discount-breadcrumb a {
+  color: var(--primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.discount-breadcrumb a:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+/* ── Header Title & Subtitle ── */
+.discount-header {
+  margin-bottom: 28px;
+}
+
+.discount-header h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.discount-header p {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin: 0;
+}
+
+/* ── Alert / Notification Notes ── */
+.discount-note {
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: var(--blue-bg);
+  color: var(--blue-text);
+  border: 1px solid var(--blue-border);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.discount-error {
+  background: var(--red-bg);
+  color: var(--red-text);
+  border-color: var(--red-border);
+}
+
+/* ── Cards ── */
+.discount-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.discount-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.discount-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.discount-card-title h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* ── Status Badges ── */
+.discount-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.status-confirmed, .status-verified, .status-approved {
+  background: var(--green-bg);
+  color: var(--green-text);
+  border: 1px solid var(--green-border);
+}
+
+.status-awaiting, .status-pending, .status-more {
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  border: 1px solid var(--amber-border);
+}
+
+.status-cancelled, .status-declined, .status-expired, .status-rejected {
+  background: var(--red-bg);
+  color: var(--red-text);
+  border: 1px solid var(--red-border);
+}
+
+/* ── Guest & Booking Overview Grid ── */
+.booking-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.booking-hero-title h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 6px;
+}
+
+.booking-hero-title p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14.5px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.detail-tile {
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+
+.detail-tile .tile-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.detail-tile .tile-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* ── Pricing Summary Grid ── */
+.pricing-breakdown-card {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  gap: 16px;
+}
+
+.price-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-item .p-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.price-item .p-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.price-item.total .p-value {
+  color: var(--primary);
+  font-size: 19px;
+}
+
+.price-item.discount .p-value {
+  color: var(--green);
+}
+
+/* ── Action Buttons & Links ── */
+.actions-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.discount-button, button.discount-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--primary-grad);
+  color: #FFFFFF !important;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(132, 86, 60, 0.2);
+  transition: all 0.2s ease;
+}
+
+.discount-button:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 4px 10px rgba(132, 86, 60, 0.35);
+  transform: translateY(-1px);
+}
+
+.discount-button.secondary, button.secondary {
+  background: #FFFFFF;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+
+.discount-button.secondary:hover, button.secondary:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: var(--text-main) !important;
+  transform: translateY(-1px);
+}
+
+.discount-button.success, button.success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.discount-button.success:hover {
+  background: #059669;
+}
+
+.discount-button.danger, button.danger {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.discount-button.danger:hover {
+  background: #DC2626;
+}
+
+/* ── Secret / Private Link Copy Field ── */
+.secret-link-box {
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+}
+
+.secret-link-box label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.secret-link-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.secret-link-input-group input {
+  flex: 1;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: monospace;
+  font-size: 13.5px;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.secret-link-input-group input:focus {
+  border-color: var(--primary);
+}
+
+/* ── Forms, Inputs, Textareas ── */
+.discount-shell label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.discount-shell input:not([type=checkbox]):not([type=radio]),
+.discount-shell select,
+.discount-shell textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #FFFFFF;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-main);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.discount-shell input:focus,
+.discount-shell select:focus,
+.discount-shell textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-subtle);
+}
+
+.discount-shell input[type=checkbox] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ── Accordion / Details for Payments ── */
+.payment-accordion-item {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.2s;
+}
+
+.payment-accordion-item[open] {
+  border-color: #CBD5E1;
+}
+
+.payment-accordion-item summary {
+  cursor: pointer;
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FAFBFD;
+  list-style: none;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.payment-accordion-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.payment-accordion-item summary:hover {
+  background: #F1F5F9;
+}
+
+.payment-accordion-body {
+  padding: 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Tables ── */
+.discount-table {
+  overflow-x: auto;
+  padding: 0;
+  border-radius: 14px;
+}
+
+.discount-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.discount-table th {
+  background: #F8FAFC;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.discount-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+.discount-table tr:last-child td {
+  border-bottom: none;
+}
+
+.discount-table tr:hover td {
+  background: #F8FAFC;
+}
+
+.discount-table a.action-link {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.discount-table a.action-link:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+/* ── Audit History Timeline ── */
+.audit-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.audit-entry {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  position: relative;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.audit-entry:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.audit-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--primary-subtle);
+}
+
+.audit-meta {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.audit-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.audit-details {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ── Lightbox Image Modal ── */
+.image-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.image-modal-overlay.active {
+  display: flex;
+}
+
+.image-modal-content {
+  background: #FFFFFF;
+  border-radius: 16px;
+  max-width: 850px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  animation: modalScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleUp {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.image-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.image-modal-header h3 {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.image-modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.image-modal-close:hover {
+  background: #F1F5F9;
+  color: var(--text-main);
+}
+
+.image-modal-body {
+  padding: 24px;
+  overflow: auto;
+  text-align: center;
+  background: #0F172A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-modal-body img {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* ── Responsive adjustments ── */
+@media (max-width: 768px) {
+  .pricing-breakdown-card {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .discount-card {
+    padding: 20px;
+  }
+}
