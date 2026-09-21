@@ -1058,7 +1058,7 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                         </div>
                         <div class="bk-schedule-row bk-schedule-row--due">
                             <div>
-                                Due on <?php echo date('d M Y', strtotime($checkin)); ?><br>
+                                Due on <?php echo date('d M Y', strtotime($checkin . ' -1 day')); ?><br>
                                 <small style="color:#888;">Amount</small><br>
                                 <small style="color:#888;">Payment convenience fee</small>
                             </div>
@@ -1074,6 +1074,10 @@ $full_name = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['gues
                         <h2 class="bk-card-title">Booking Policies</h2>
                         <p class="bk-policy-intro">Our booking includes items with different booking policies.</p>
                         <div class="bk-policy-box">
+                            <strong><?php echo htmlspecialchars($accommodation_name, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <p>Cancellation: If cancelled, modified or in case of no-show, the first night will be charged.</p>
+                            <p>Payment: 50% of the booking item amount deposit will be charged. Balance due 1 day before arrival.</p>
+                            <p>Other policies: - Guests availing of a Senior Citizen or PWD discount must provide a valid ID for verification. Please message the hotel’s official Facebook page <a href="https://www.facebook.com/SantaFeBeachClub" target="_blank" rel="noopener noreferrer">https://www.facebook.com/SantaFeBeachClub</a> or email <a href="mailto:santafebeachclub@gmail.com">santafebeachclub@gmail.com</a> to submit your ID. Once approved, the hotel will send a payment link with the discounted amount. Only one discount may be applied per booking.</p>
                             - 1,000+ 150/pax for excess of 10pax<br>
                             - 1,000 50 to 10 pax<br>
                             - 500 1 to 5 pax<br><br>
