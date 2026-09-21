@@ -67,6 +67,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = 'Payment verified. Your booking is confirmed.';
                 } else $message = 'Payment is not confirmed yet. Please check again shortly.';
             } else $message = 'Your latest booking status is displayed below.';
+        } elseif ($action === 'switch_manual') {
+            $conn->begin_transaction();
+            try {
+                $pendingPaymongo = pm_query($conn, "SELECT p.id FROM discount_payments x JOIN payments p ON p.id=x.payment_id WHERE x.booking_id=? AND p.status='pending' AND x.checkout_url IS NOT NULL FOR UPDATE", [$id])->get_result()->fetch_assoc();
+                if ($pendingPaymongo) {
+                    $pid = (int)$pendingPaymongo['id'];
+                    pm_query($conn, "UPDATE payments SET status='cancelled' WHERE id=?", [$pid]);
+                    pm_query($conn, "UPDATE discount_payments SET checkout_url=NULL, reference_key=NULL WHERE payment_id=?", [$pid]);
+                    discount_audit($conn, $id, 'Guest', 'Switched payment method', 'Switched from PayMongo to manual transfer');
+                }
+                $conn->commit();
+                $message = 'You can now submit your payment via GCash or Bank Transfer.';
+            } catch (Throwable $e) {
+                $conn->rollback();
+                throw $e;
+            }
         } elseif (in_array($action, ['regular','cancel','resubmit'], true)) {
             $newFile = null;
             if ($action === 'resubmit') $newFile = discount_upload($_FILES['discount_id'] ?? [], 'discount_ids');
@@ -119,7 +135,19 @@ $estimate = in_array($d['state'],['Awaiting ID verification','More information n
 <section class="discount-card"><h2>Next step</h2>
 <?php if ($pending && !in_array($d['state'],['Expired','Cancelled'],true)): ?>
 <p><?= $pending['checkout_url'] ? 'Your secure checkout is ready.' : 'Your receipt is awaiting staff verification. Please do not pay again.' ?></p>
-<?php if ($pending['checkout_url']): ?><a class="discount-button" href="<?= dh($pending['checkout_url']) ?>">Continue payment</a><form method="post"><?= csrf_field() ?><button name="action" value="refresh_payment" class="secondary">Check payment status</button></form><?php endif ?>
+<?php if ($pending['checkout_url']): ?>
+<div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px;">
+    <a class="discount-button" href="<?= dh($pending['checkout_url']) ?>">Continue payment</a>
+    <form method="post" style="display:inline;"><?= csrf_field() ?><button name="action" value="refresh_payment" class="secondary">Check payment status</button></form>
+</div>
+<?php if ($gcash || $bank): ?>
+<form method="post" style="margin-top:16px; border-top:1px solid var(--line); padding-top:14px;">
+    <?= csrf_field() ?>
+    <p class="discount-muted" style="margin:0 0 8px 0; font-size:14px;">Prefer to pay directly using GCash or Bank account instead of online checkout?</p>
+    <button name="action" value="switch_manual" class="secondary" style="font-size:14px; padding:8px 14px;">Prefer to pay manually via GCash / Bank? Upload receipt instead</button>
+</form>
+<?php endif ?>
+<?php endif ?>
 <?php elseif (in_array($d['state'],['Awaiting Deposit','Confirmed'],true) && discount_due($conn,$d)>0): ?>
 <p>Amount due now: <strong>₱ <?= number_format(discount_due($conn,$d)/100,2) ?></strong></p>
 <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="pay"><input type="hidden" name="method" value="PayMongo Online"><button>Pay <?= $d['state']==='Confirmed'?'Balance':'Deposit' ?> with PayMongo</button></form>
