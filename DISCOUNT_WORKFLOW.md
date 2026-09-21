@@ -23,6 +23,7 @@ The configured hotel policy is 20% off the entire booking subtotal, including th
 - Admins configure real GCash/bank payment instructions at the bottom of **Discount Requests**. The new guest page hides incomplete methods; it does not use the old checkout's placeholder bank details.
 - Schedule `php /absolute/project/path/backend/scripts/discount_maintenance.php` every five minutes in Agila Cron. Expiry and retention also run on application requests, but cron ensures cleanup when the site is idle. Unpaid expired holds are cancelled and no longer block inventory.
 - The public/guest pages use unguessable private links. Treat copied links as confidential; they permit viewing and paying for that booking. Guests never receive access to the stored ID image.
+- Upload the root `discount_booking.php` compatibility entry as well as the frontend page. New private links target the actual frontend path and exchange their URL fragment for a session using a CSRF-protected POST. The address bar then shows only the booking number; copied links remain confidential. Previously shared query-token links may already exist in browser history or server logs.
 
 ## Payment exceptions
 

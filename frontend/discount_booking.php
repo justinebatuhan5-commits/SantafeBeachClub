@@ -6,14 +6,36 @@ header('Cache-Control: no-store');
 header('Referrer-Policy: no-referrer');
 header('X-Robots-Tag: noindex, nofollow');
 function dh($v): string { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
-if (isset($_GET['token'])) {
-    $token = (string)$_GET['token'];
+if (isset($_GET['token']) || ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'access')) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') require_csrf_token();
+    $token = (string)($_POST['access_token'] ?? $_GET['token'] ?? '');
     $row = preg_match('/^[a-f0-9]{64}$/D', $token) ? pm_query($conn, 'SELECT booking_id FROM booking_discounts WHERE token=?', [$token])->get_result()->fetch_assoc() : null;
     if (!$row) { http_response_code(404); exit('This private booking link is invalid.'); }
     $_SESSION['discount_tokens'][(int)$row['booking_id']] = $token;
     header('Location: discount_booking.php?booking=' . (int)$row['booking_id']); exit;
 }
 $id = (int)($_GET['booking'] ?? 0);
+if (!$id && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Remove the fragment immediately, then exchange it in a CSRF-protected POST.
+    ?>
+    <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Open your booking</title></head><body>
+    <p id="accessMessage">Opening your private booking…</p>
+    <form id="accessForm" method="post" hidden><?= csrf_field() ?><input type="hidden" name="action" value="access"><input type="hidden" name="access_token" id="accessToken"></form>
+    <noscript>Enable JavaScript to open your private booking link, or contact reception.</noscript>
+    <script>
+    (function () {
+        var token = new URLSearchParams(location.hash.slice(1)).get('access');
+        history.replaceState(null, '', location.pathname);
+        if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+            document.getElementById('accessMessage').textContent = 'Open the private booking link from your email, or contact reception.';
+            return;
+        }
+        document.getElementById('accessToken').value = token;
+        document.getElementById('accessForm').submit();
+    })();
+    </script></body></html>
+    <?php exit;
+}
 $token = $_SESSION['discount_tokens'][$id] ?? '';
 $d = pm_query($conn, 'SELECT d.*, b.guest_name,b.guest_email,b.accommodation_name,b.status FROM booking_discounts d JOIN bookings b ON b.id=d.booking_id WHERE d.booking_id=? AND d.token=?', [$id,$token])->get_result()->fetch_assoc();
 if (!$d) { http_response_code(403); exit('Open the private link sent to your booking email to access this page.'); }

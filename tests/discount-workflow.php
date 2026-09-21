@@ -19,6 +19,14 @@ expect_discount(discount_amounts(1000000,false)['total']===1000000,'Regular pric
 rejects_discount(fn()=>discount_amounts(0),'Zero amount accepted');
 rejects_discount(fn()=>discount_upload([], 'discount_ids'),'Missing ID accepted');
 echo "Discount calculation and missing-upload checks passed.\n";
+$savedBase=getenv('PUBLIC_APP_URL');
+foreach (['https://example.com','https://example.com/frontend','https://example.com/project/frontend/'] as $base) {
+    putenv('PUBLIC_APP_URL='.$base);
+    $link=discount_link(['token'=>str_repeat('a',64)]);
+    expect_discount(str_contains($link,'/frontend/discount_booking.php#access='),'Private link does not use the real frontend route');
+    expect_discount(!str_contains($link,'?token=') && !str_contains($link,'/frontend/frontend/'),'Private link exposes a query token or duplicates frontend');
+}
+putenv($savedBase===false?'PUBLIC_APP_URL':'PUBLIC_APP_URL='.$savedBase);
 if (!in_array('--database',$argv,true)) exit;
 date_default_timezone_set('Asia/Manila');
 mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);

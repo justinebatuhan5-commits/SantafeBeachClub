@@ -223,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($_SESSION['applied_promo_code']);
                 $emailSent = discount_email($conn, (int)$request['booking_id']);
                 $_SESSION['discount_notice'] = $emailSent ? 'Request submitted. Check your email for your private booking link.' : 'Request submitted. Email could not be sent; please save this private booking link.';
-                header('Location: discount_booking.php?token=' . urlencode($request['token']));
+                header('Location: discount_booking.php?booking=' . (int)$request['booking_id']);
                 exit;
             } catch (Throwable $e) {
                 $error = $e instanceof mysqli_sql_exception ? 'Could not save your request. Please try again.' : $e->getMessage();

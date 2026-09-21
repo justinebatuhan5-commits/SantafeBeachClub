@@ -74,7 +74,10 @@ function discount_upload(array $file, string $kind): string {
 
 function discount_link(array $request): string {
     $base = rtrim(getenv('PUBLIC_APP_URL') ?: 'https://santafbeachclub.com', '/');
-    return $base . '/discount_booking.php?token=' . urlencode($request['token']);
+    // Use the real frontend file: PHP URLs are not routed consistently by hosts.
+    if (!str_ends_with($base, '/frontend')) $base .= '/frontend';
+    // Fragments are exchanged for a session and are not sent in HTTP URLs.
+    return $base . '/discount_booking.php#access=' . rawurlencode($request['token']);
 }
 
 function discount_email(mysqli $db, int $id): bool {
