@@ -83,6 +83,29 @@ $type_labels = [
     'standard_king'    => 'Standard Family Room',
 ];
 
+// Extra-person limits are database-managed. Keep the same safe defaults until
+// the migration has been run on a deployment database.
+$extra_person_limits = [
+    'beachview_duplex' => ['adults' => 1, 'children' => 1],
+    'seaview_duplex'   => ['adults' => 1, 'children' => 1],
+    'beach_villa'      => ['adults' => 3, 'children' => 2],
+    'standard_room'    => ['adults' => 3, 'children' => 0],
+    'standard_king'    => ['adults' => 1, 'children' => 0],
+];
+try {
+    $limitResult = $conn->query('SELECT room_type, max_extra_adults, max_extra_children FROM room_extra_person_limits');
+    if ($limitResult) {
+        while ($limit = $limitResult->fetch_assoc()) {
+            $extra_person_limits[$limit['room_type']] = [
+                'adults' => (int)$limit['max_extra_adults'],
+                'children' => (int)$limit['max_extra_children'],
+            ];
+        }
+    }
+} catch (mysqli_sql_exception $e) {
+    // The application remains usable until the deployment migration creates it.
+}
+
 $type_gradients = [
     'beachview_duplex' => 'linear-gradient(135deg, #1a6b8a 0%, #0d9488 50%, #065f46 100%)',
     'seaview_duplex'   => 'linear-gradient(135deg, #1e3a5f 0%, #1a6b8a 50%, #0891b2 100%)',
@@ -1257,13 +1280,7 @@ function syncRoomTabsOffset() {
 /* â”€â”€ Booking summary state â”€â”€ */
 var selectedRooms = {};
 var extraPersonsByType = {};
-var extraPersonLimits = {
-    beachview_duplex: { adults: 1, children: 1 },
-    seaview_duplex:   { adults: 1, children: 1 },
-    beach_villa:      { adults: 3, children: 2 },
-    standard_room:    { adults: 3, children: 0 },
-    standard_king:    { adults: 1, children: 0 }
-};
+var extraPersonLimits = <?php echo json_encode($extra_person_limits, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
 function roomSelectChanged(sel) {
     // Update the book URL with the specific room ID selected
