@@ -350,6 +350,40 @@ foreach ($valid_statuses as $s) {
             border-color: var(--primary);
         }
 
+        .modal-field input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-family: inherit;
+            font-size: 14px;
+            background: var(--input-bg, #fff);
+            color: var(--text-main);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modal-field input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(137, 86, 58, 0.12);
+        }
+        .modal-help {
+            margin: -4px 0 18px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: var(--bg-alt, #f8fafc);
+            color: var(--text-muted);
+            font-size: 12.5px;
+            line-height: 1.55;
+        }
+        .modal-error {
+            display: none;
+            margin-top: 7px;
+            color: #b91c1c;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .modal-error.show { display: block; }
+
         .modal-footer {
             display: flex;
             gap: 10px;
@@ -516,7 +550,7 @@ foreach ($valid_statuses as $s) {
                                 Reject
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
-                            <button class="btn-process" type="button" onclick="processPayMongoRefund(<?php echo $refund['id']; ?>, this)">
+                            <button class="btn-process" type="button" onclick="processPayMongoRefund(<?php echo $refund['id']; ?>)">
                                 Record PayMongo Refund
                             </button>
                             <a class="btn-process" href="https://dashboard.paymongo.com/login" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
@@ -561,6 +595,25 @@ foreach ($valid_statuses as $s) {
             <div class="modal-footer">
                 <button class="btn-secondary-sm" onclick="closeModal('rejectModal')">Cancel</button>
                 <button class="btn-reject" id="rejectBtn" onclick="submitReject()">Reject Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record PayMongo Refund Modal -->
+    <div id="paymongoRefundModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="paymongoRefundTitle">
+        <div class="modal-box">
+            <div class="modal-title" id="paymongoRefundTitle">Record PayMongo Refund</div>
+            <div class="modal-help">
+                Create the refund in PayMongo Dashboard first. Then paste the PayMongo refund ID below. The system will verify the payment, amount, currency, and status directly with PayMongo.
+            </div>
+            <div class="modal-field">
+                <label for="paymongoRefundId">PayMongo Refund ID</label>
+                <input id="paymongoRefundId" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="ref_..." maxlength="100">
+                <div id="paymongoRefundError" class="modal-error">Enter a valid refund ID beginning with ref_.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-sm" type="button" onclick="closePayMongoRefundModal()">Cancel</button>
+                <button class="btn-process" type="button" id="verifyPayMongoRefundBtn" onclick="submitPayMongoRefund()">Verify Refund</button>
             </div>
         </div>
     </div>
@@ -676,14 +729,33 @@ foreach ($valid_statuses as $s) {
             }
         }
 
-        async function processPayMongoRefund(refundId, btn) {
-            const providerRefundId = window.prompt('After creating the refund in PayMongo Dashboard, paste its refund ID here (starts with ref_):');
-            if (providerRefundId === null) return;
-            if (!/^ref_[A-Za-z0-9]+$/.test(providerRefundId.trim())) {
-                showToast('Enter a valid PayMongo refund ID beginning with ref_.', 'error');
+        function processPayMongoRefund(refundId) {
+            currentRefundId = refundId;
+            const input = document.getElementById('paymongoRefundId');
+            input.value = '';
+            document.getElementById('paymongoRefundError').classList.remove('show');
+            document.getElementById('paymongoRefundModal').classList.add('show');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function closePayMongoRefundModal() {
+            document.getElementById('paymongoRefundModal').classList.remove('show');
+            document.getElementById('paymongoRefundError').classList.remove('show');
+            currentRefundId = null;
+        }
+
+        async function submitPayMongoRefund() {
+            const input = document.getElementById('paymongoRefundId');
+            const providerRefundId = input.value.trim();
+            const error = document.getElementById('paymongoRefundError');
+            if (!/^ref_[A-Za-z0-9]+$/.test(providerRefundId)) {
+                error.classList.add('show');
+                input.focus();
                 return;
             }
-            await runRefundAction('process_paymongo', refundId, btn, 'Verifying...', 'PayMongo refund verified.', { paymongo_refund_id: providerRefundId.trim() });
+            error.classList.remove('show');
+            const btn = document.getElementById('verifyPayMongoRefundBtn');
+            await runRefundAction('process_paymongo', currentRefundId, btn, 'Verifying...', 'PayMongo refund verified.', { paymongo_refund_id: providerRefundId });
         }
 
         async function syncPayMongoRefund(refundId, btn) {
