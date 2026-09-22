@@ -413,6 +413,23 @@ foreach ($valid_statuses as $s) {
         .empty-refunds-icon { font-size: 44px; margin-bottom: 12px; }
         .empty-refunds h3 { font-size: 17px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
         .empty-refunds p { font-size: 13px; }
+        .reception-refund-tools {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 20px;
+            padding: 16px 18px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card-bg);
+        }
+        .reception-refund-tools strong { display: block; color: var(--text-main); margin-bottom: 3px; }
+        .reception-refund-tools span { color: var(--text-muted); font-size: 12.5px; }
+        @media (max-width: 640px) {
+            .reception-refund-tools { align-items: stretch; flex-direction: column; }
+            .reception-refund-tools .btn-process { justify-content: center; }
+        }
 
         .rejection-note {
             background: #fee2e2;
@@ -437,6 +454,16 @@ foreach ($valid_statuses as $s) {
         ?>
 
         <div class="admin-body">
+
+            <?php if (!$is_admin_user): ?>
+            <div class="reception-refund-tools">
+                <div>
+                    <strong>Receptionist refund assistance</strong>
+                    <span>You may view refund progress and submit a request for a guest. An administrator must review and process it.</span>
+                </div>
+                <button class="btn-process" type="button" onclick="openReceptionRefundModal()">Submit Guest Request</button>
+            </div>
+            <?php endif; ?>
 
             <!-- Status Tabs -->
             <div class="filter-tabs">
@@ -465,7 +492,6 @@ foreach ($valid_statuses as $s) {
             <!-- Refund Cards -->
             <?php if (empty($refunds)): ?>
                 <div class="empty-refunds">
-                    <div class="empty-refunds-icon">📭</div>
                     <h3>No Refund Requests</h3>
                     <p>There are no refund requests with status: <strong><?php echo htmlspecialchars($filter_status); ?></strong></p>
                 </div>
@@ -599,6 +625,32 @@ foreach ($valid_statuses as $s) {
         </div>
     </div>
 
+    <?php if (!$is_admin_user): ?>
+    <!-- Receptionist Submit Refund Modal -->
+    <div id="receptionRefundModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="receptionRefundTitle">
+        <div class="modal-box">
+            <div class="modal-title" id="receptionRefundTitle">Submit Guest Refund Request</div>
+            <div class="modal-help">
+                Confirm the guest's booking reference and reason. The payment and refundable amount are selected and calculated by the server. This does not approve or send money.
+            </div>
+            <div class="modal-field">
+                <label for="receptionBookingRef">Booking reference</label>
+                <input id="receptionBookingRef" type="text" autocomplete="off" spellcheck="false" placeholder="REF-025" maxlength="20">
+                <div id="receptionBookingError" class="modal-error">Enter a valid booking reference such as REF-025.</div>
+            </div>
+            <div class="modal-field">
+                <label for="receptionRefundReason">Guest's reason</label>
+                <textarea id="receptionRefundReason" placeholder="Enter the guest's reason for requesting a refund..." maxlength="1000"></textarea>
+                <div id="receptionReasonError" class="modal-error">Enter the guest's reason for the request.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-sm" type="button" onclick="closeReceptionRefundModal()">Cancel</button>
+                <button class="btn-process" type="button" id="submitReceptionRefundBtn" onclick="submitReceptionRefund()">Submit Request</button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Record PayMongo Refund Modal -->
     <div id="paymongoRefundModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="paymongoRefundTitle">
         <div class="modal-box">
@@ -632,6 +684,52 @@ foreach ($valid_statuses as $s) {
     <script>
         let currentRefundId = null;
         const refundCsrfToken = <?php echo json_encode($csrf_token, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+        function openReceptionRefundModal() {
+            const modal = document.getElementById('receptionRefundModal');
+            if (!modal) return;
+            document.getElementById('receptionBookingRef').value = '';
+            document.getElementById('receptionRefundReason').value = '';
+            document.getElementById('receptionBookingError').classList.remove('show');
+            document.getElementById('receptionReasonError').classList.remove('show');
+            modal.classList.add('show');
+            setTimeout(() => document.getElementById('receptionBookingRef').focus(), 50);
+        }
+
+        function closeReceptionRefundModal() {
+            const modal = document.getElementById('receptionRefundModal');
+            if (modal) modal.classList.remove('show');
+        }
+
+        async function submitReceptionRefund() {
+            const referenceInput = document.getElementById('receptionBookingRef');
+            const reasonInput = document.getElementById('receptionRefundReason');
+            const match = referenceInput.value.trim().match(/^(?:REF-)?0*([1-9][0-9]*)$/i);
+            const reason = reasonInput.value.trim();
+            document.getElementById('receptionBookingError').classList.toggle('show', !match);
+            document.getElementById('receptionReasonError').classList.toggle('show', reason === '');
+            if (!match || reason === '') return;
+
+            const btn = document.getElementById('submitReceptionRefundBtn');
+            const original = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+            const fd = new FormData();
+            fd.append('booking_id', match[1]);
+            fd.append('reason', reason);
+            fd.append('csrf_token', refundCsrfToken);
+            try {
+                const response = await fetch('../backend/api/refund_request_api.php?action=submit_request', { method: 'POST', body: fd });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'Could not submit the refund request.');
+                showToast('Refund request submitted for administrator review.', 'success');
+                setTimeout(() => { window.location.href = 'admin_refunds?status=requested'; }, 1000);
+            } catch (error) {
+                btn.disabled = false;
+                btn.textContent = original;
+                showToast(error.message || 'Network error. Please try again.', 'error');
+            }
+        }
 
         async function approveRefund(refundId, guestName, amount, btn) {
             if (!await SiteDialog.confirm(`Approve the refund request for ${guestName}?\n\nAmount to be refunded: ₱${amount}\n\nThis will notify the guest and move the request to "Approved".`, { title: 'Approve refund?', confirmText: 'Approve refund' })) return;

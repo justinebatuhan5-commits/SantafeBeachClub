@@ -24,7 +24,14 @@ $response = ['success' => false, 'message' => '', 'data' => null];
 
 function refund_admin_authenticated(): bool
 {
-    return isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+    return isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
+        && ($_SESSION['admin_role'] ?? '') === 'admin';
+}
+
+function refund_staff_authenticated(): bool
+{
+    return isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
+        && in_array(($_SESSION['admin_role'] ?? ''), ['admin', 'receptionist'], true);
 }
 
 function refund_request_token(): string
@@ -57,18 +64,19 @@ try {
         // Admins may select a booking by ID. Guests must present the random
         // cancellation token and the booking ID is then derived from it.
         $is_admin = refund_admin_authenticated();
-        $booking_id = $is_admin ? intval($_POST['booking_id'] ?? 0) : 0;
+        $is_staff = refund_staff_authenticated();
+        $booking_id = $is_staff ? intval($_POST['booking_id'] ?? 0) : 0;
         $booking_token = refund_request_token();
         $reason = trim($_POST['reason'] ?? '');
 
         if ($reason === '') {
             throw new Exception('A refund reason is required.');
         }
-        if (!$is_admin && $booking_token === '') {
+        if (!$is_staff && $booking_token === '') {
             http_response_code(401);
             throw new Exception('A valid booking refund token is required.');
         }
-        if ($is_admin && !$booking_id) {
+        if ($is_staff && !$booking_id) {
             throw new Exception('Booking ID is required.');
         }
 
@@ -78,10 +86,10 @@ try {
             SELECT b.id, b.guest_name, b.guest_email, b.check_in, b.check_out,
                    b.status
             FROM bookings b
-            WHERE " . ($is_admin ? 'b.id = ?' : 'b.cancellation_token = ?') . "
+            WHERE " . ($is_staff ? 'b.id = ?' : 'b.cancellation_token = ?') . "
             LIMIT 1
         ");
-        if ($is_admin) {
+        if ($is_staff) {
             $bstmt->bind_param('i', $booking_id);
         } else {
             $bstmt->bind_param('s', $booking_token);
@@ -94,9 +102,9 @@ try {
             throw new Exception('Booking not found.');
         }
         $booking_id = (int)$booking['id'];
-        $request_type = $is_admin ? 'admin' : 'guest';
-        $requested_by = $is_admin
-            ? (string)($_SESSION['admin_username'] ?? 'Administrator')
+        $request_type = $is_staff ? ($is_admin ? 'admin' : 'receptionist') : 'guest';
+        $requested_by = $is_staff
+            ? (string)($_SESSION['admin_username'] ?? $_SESSION['receptionist_username'] ?? 'Staff')
             : (string)$booking['guest_name'];
 
         // Never accept payment_id or amount from the client. Select a verified
@@ -229,13 +237,13 @@ try {
     } elseif ($action === 'get_request') {
         // Get refund request details
         $request_id = intval($_GET['request_id'] ?? 0);
-        $is_admin = refund_admin_authenticated();
+        $is_staff = refund_staff_authenticated();
         $booking_token = refund_request_token();
 
         if (!$request_id) {
             throw new Exception('Request ID is required.');
         }
-        if (!$is_admin && $booking_token === '') {
+        if (!$is_staff && $booking_token === '') {
             http_response_code(401);
             throw new Exception('Authentication or a valid booking refund token is required.');
         }
@@ -247,10 +255,10 @@ try {
             JOIN bookings b ON r.booking_id = b.id
             LEFT JOIN payments p ON r.payment_id = p.id
             WHERE r.id = ?
-              " . ($is_admin ? '' : 'AND b.cancellation_token = ?') . "
+              " . ($is_staff ? '' : 'AND b.cancellation_token = ?') . "
             LIMIT 1
         ");
-        if ($is_admin) {
+        if ($is_staff) {
             $stmt->bind_param('i', $request_id);
         } else {
             $stmt->bind_param('is', $request_id, $booking_token);

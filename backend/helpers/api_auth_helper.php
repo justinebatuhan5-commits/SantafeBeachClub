@@ -74,16 +74,16 @@ function require_admin_access(): void {
         session_start();
     }
 
-    $isAdmin = (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true)
-            || isset($_SESSION['admin_username'])
-            || isset($_SESSION['receptionist_username']);
+    $isAdmin = isset($_SESSION['admin_logged_in'])
+        && $_SESSION['admin_logged_in'] === true
+        && ($_SESSION['admin_role'] ?? '') === 'admin';
 
     if (!$isAdmin) {
-        http_response_code(401);
+        http_response_code(isset($_SESSION['admin_logged_in']) ? 403 : 401);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode([
             'success' => false,
-            'message' => 'Unauthorized: Admin authentication required.'
+            'message' => 'Administrator access is required for this refund action.'
         ]);
         exit;
     }

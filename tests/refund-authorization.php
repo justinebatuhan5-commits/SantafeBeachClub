@@ -8,6 +8,7 @@ if ($source === false) {
 
 $required = [
     "refund_admin_authenticated()",
+    "refund_staff_authenticated()",
     "refund_request_token()",
     "b.cancellation_token = ?",
     "WHERE booking_id = ? AND status = 'verified'",
@@ -28,4 +29,16 @@ if (!str_contains($source, '"iisssddd"')) {
     throw new RuntimeException('Refund insert parameter types do not cover all eight bound values.');
 }
 
-echo "Refund submission requires admin authentication or a booking token; payment ownership is resolved server-side.\n";
+$auth = file_get_contents(__DIR__ . '/../backend/helpers/api_auth_helper.php');
+if ($auth === false || !str_contains($auth, "(\$_SESSION['admin_role'] ?? '') === 'admin'")) {
+    throw new RuntimeException('Administrative refund actions are not restricted to the administrator role.');
+}
+
+$ui = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php');
+foreach (['Receptionist refund assistance', 'Submit Guest Request', "action=submit_request"] as $fragment) {
+    if ($ui === false || !str_contains($ui, $fragment)) {
+        throw new RuntimeException('Missing receptionist refund assistance control: ' . $fragment);
+    }
+}
+
+echo "Refund submission supports authenticated staff or a booking token; financial actions remain admin-only.\n";
