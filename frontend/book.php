@@ -1738,10 +1738,10 @@ function _editExtraLabel(int $n, int $inc, int $rate): string {
     });
     if (applyEditBtn) applyEditBtn.addEventListener('click', function(){
         var adults   = parseInt(document.getElementById('editAdults').value, 10) || 1;
+        var roomType = document.getElementById('editRoomType') ? document.getElementById('editRoomType').value : <?php echo xss_json($room_type); ?>;
         var includedCap = (['beach_villa','standard_king'].indexOf(roomType) !== -1) ? 4 : 2;
         var baseGuests  = Math.min(adults, includedCap);
         var extraAdults = Math.max(0, adults - includedCap);
-        var roomType = document.getElementById('editRoomType') ? document.getElementById('editRoomType').value : <?php echo xss_json($room_type); ?>;
         var params   = new URLSearchParams(window.location.search);
         params.set('step', '1');
         params.set('guests', baseGuests);

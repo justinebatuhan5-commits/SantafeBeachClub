@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/config/db.php';
 
@@ -89,7 +89,7 @@ $extra_person_limits = [
     'beachview_duplex' => ['adults' => 1, 'children' => 1],
     'seaview_duplex'   => ['adults' => 1, 'children' => 1],
     'beach_villa'      => ['adults' => 3, 'children' => 2],
-    'standard_room'    => ['adults' => 3, 'children' => 0],
+    'standard_room'    => ['adults' => 2, 'children' => 0],
     'standard_king'    => ['adults' => 1, 'children' => 0],
 ];
 try {
