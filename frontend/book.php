@@ -44,10 +44,21 @@ if (!in_array($room_type, $allowed_room_types, true)) {
     $room_type = 'standard_room';
 }
 
+// Capture extra adults/children selected on rooms.php and persist across steps.
+// extra_adults comes as a URL param on first load; afterwards it lives in session.
+if (isset($_REQUEST['extra_adults'])) {
+    $_SESSION['book_extra_adults']   = max(0, (int)$_REQUEST['extra_adults']);
+    $_SESSION['book_extra_children'] = isset($_REQUEST['extra_children']) ? max(0, (int)$_REQUEST['extra_children']) : 0;
+}
+$extra_adults   = isset($_SESSION['book_extra_adults'])   ? (int)$_SESSION['book_extra_adults']   : 0;
+$extra_children = isset($_SESSION['book_extra_children']) ? (int)$_SESSION['book_extra_children'] : 0;
+// Total occupancy = base guests from search + extra persons chosen on rooms page.
+$guests_total = $guests + $extra_adults + $extra_children;
+
 // Store in session to persist across steps
-$_SESSION['book_checkin'] = $checkin;
-$_SESSION['book_checkout'] = $checkout;
-$_SESSION['book_guests'] = $guests;
+$_SESSION['book_checkin']   = $checkin;
+$_SESSION['book_checkout']  = $checkout;
+$_SESSION['book_guests']    = $guests;
 $_SESSION['book_room_type'] = $room_type;
 
 $error = '';
@@ -119,8 +130,9 @@ if (isset($_POST['apply_promo'])) {
 }
 $applied_promo = $_SESSION['applied_promo_code'] ?? ($_REQUEST['promo_code'] ?? null);
 
-// Fetch Dynamic Stay Pricing factoring in weekend surcharges, seasonal pricing rules, extra adult fees, and coupon discounts
-$pricing = calculateStayPricing($conn, $room_type, $checkin, $checkout, $applied_promo, $guests);
+// Fetch Dynamic Stay Pricing factoring in weekend surcharges, seasonal pricing rules, extra adult fees, and coupon discounts.
+// Pass guests_total so extra adults selected on rooms.php are correctly priced.
+$pricing = calculateStayPricing($conn, $room_type, $checkin, $checkout, $applied_promo, $guests_total);
 $room_price = $pricing['base_price_per_night'];
 $nights = $pricing['nights'];
 $subtotal_amount = $pricing['subtotal'];
@@ -214,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'name' => trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? '')),
                     'email' => $_SESSION['guest_email'] ?? '', 'phone' => $_SESSION['guest_phone'] ?? '',
                     'eta' => $_SESSION['guest_eta'] ?? '14:00', 'room_type' => $room_type,
-                    'checkin' => $checkin, 'checkout' => $checkout, 'guests' => $guests,
+                    'checkin' => $checkin, 'checkout' => $checkout, 'guests' => $guests_total,
                     // Subtotal is calculated server-side before promo codes. Discounts never stack.
                     'original' => (int)round($pricing['subtotal'] * 100),
                 ], $_FILES['discount_id'] ?? []);
@@ -414,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $sql = "INSERT INTO bookings (guest_name, guest_email, guest_type, check_in, check_out, guests_count, room_id, accommodation_name, eta, status, checkin_token, cancellation_token, payment_method, guest_phone, guest_country, guest_special_requests, promo_code, discount_amount)
                             VALUES (?, ?, ?, ?, ?, ?, " . $room_value . ", ?, ?, 'Pending Payment', ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("sssssisssssssssd", $guest_name, $guest_email, $guest_type, $checkin, $checkout, $guests, $db_acc_name, $eta, $checkin_token, $cancel_token, $payment_method, $guest_phone, $guest_country, $guest_special_requests, $applied_promo_code, $discount_amount);
+                    $stmt->bind_param("sssssisssssssssd", $guest_name, $guest_email, $guest_type, $checkin, $checkout, $guests_total, $db_acc_name, $eta, $checkin_token, $cancel_token, $payment_method, $guest_phone, $guest_country, $guest_special_requests, $applied_promo_code, $discount_amount);
 
                     if ($stmt->execute()) {
                         $booking_id  = $stmt->insert_id;
@@ -498,7 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             // Dashboard notification
                             $notif_title   = 'New Guest Reservation';
                             $notif_type    = 'info';
-                            $notif_message = htmlspecialchars($guest_name) . ' booked ' . htmlspecialchars($db_acc_name) . ' (' . $booking_ref . '). ETA: ' . htmlspecialchars($eta);
+                            $notif_message = htmlspecialchars($guest_name) . ' booked ' . htmlspecialchars($db_acc_name) . ' (' . $booking_ref . '). ETA: ' . htmlspecialchars($eta) . ' (' . $guests_total . ' guests)';
                             if ($payment_method === 'GCash QR') {
                                 $notif_title   = 'GCash Payment Pending Verification';
                                 $notif_message = htmlspecialchars($guest_name) . ' paid via GCash for ' . htmlspecialchars($db_acc_name) . ' (' . $booking_ref . '). Please verify the receipt.';
@@ -526,7 +538,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'payment_method'    => $payment_method,
                                 'checkin_token'     => $checkin_token,
                                 'cancel_token'      => $cancel_token,
-                                'guests'            => $guests,
+                                'guests'            => $guests_total,
                                 'eta'               => $eta,
                             ];
 
