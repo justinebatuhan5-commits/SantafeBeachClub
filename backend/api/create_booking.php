@@ -1,40 +1,16 @@
 <?php
-
-require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../helpers/cors_helper.php';
-require_once __DIR__ . '/../helpers/rate_limiter.php';
-require_once __DIR__ . '/../services/booking_service.php';
-
-handle_cors();
-RateLimiter::enforce($conn, 'create_booking', 15, 60);
+/**
+ * Retired public booking endpoint.
+ *
+ * Public booking requests must use frontend/book.php, which validates the
+ * complete payment/receipt flow. Staff-created reservations use
+ * staff_create_booking.php, which requires an authenticated staff session and
+ * a CSRF token. This endpoint intentionally never creates a booking.
+ */
 
 header('Content-Type: application/json; charset=utf-8');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
-    exit;
-}
-
-try {
-    $pdo = getPdoConnection();
-
-    $result = createBooking($pdo, [
-        'room_type_id' => $_POST['room_type_id'] ?? null,
-        'check_in' => $_POST['check_in'] ?? null,
-        'check_out' => $_POST['check_out'] ?? null,
-        'guest_name' => $_POST['guest_name'] ?? null,
-        'guest_email' => $_POST['guest_email'] ?? null,
-        'guest_type' => $_POST['guest_type'] ?? null,
-        'guests_count' => $_POST['guests_count'] ?? 1,
-        'eta' => $_POST['eta'] ?? '14:00',
-    ]);
-
-    echo json_encode($result);
-} catch (Throwable $e) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage(),
-    ]);
-}
+http_response_code(410);
+echo json_encode([
+    'success' => false,
+    'error' => 'This public booking endpoint has been retired. Use the secure booking flow.'
+]);
