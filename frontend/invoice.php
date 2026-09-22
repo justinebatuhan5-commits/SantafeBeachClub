@@ -254,6 +254,10 @@ $autoPrint = isset($_GET['print']) && $_GET['print'] == '1';
         .info-row:last-child { margin-bottom: 0; }
         .info-label { color: #64748B; }
         .info-value { font-weight: 600; color: #0F172A; }
+        .stay-facts { display: inline-flex; align-items: center; flex-wrap: wrap; }
+        .stay-facts > span { padding: 0 8px; white-space: nowrap; }
+        .stay-facts > span:first-child { padding-left: 0; }
+        .stay-facts > span + span { border-left: 1px solid #0EA5E9; }
 
         /* Itemized Table */
         .invoice-table {
@@ -439,7 +443,11 @@ $autoPrint = isset($_GET['print']) && $_GET['print'] == '1';
                     </div>
                     <div class="info-row">
                         <span class="info-label">Duration & Guests:</span>
-                        <span class="info-value"><?php echo $nights; ?> night<?php echo $nights>1?'s':''; ?>, <?php echo (int)$booking['guests_count']; ?> Adult<?php echo (int)$booking['guests_count']>1?'s':''; ?></span>
+                        <span class="info-value stay-facts" aria-label="Stay details">
+                            <span><?php echo $nights; ?> night<?php echo $nights > 1 ? 's' : ''; ?></span>
+                            <span>1 room</span>
+                            <span><?php echo (int)$booking['guests_count']; ?> adult<?php echo (int)$booking['guests_count'] > 1 ? 's' : ''; ?></span>
+                        </span>
                     </div>
                 </div>
             </div>

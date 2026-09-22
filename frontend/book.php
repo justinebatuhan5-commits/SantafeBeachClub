@@ -736,7 +736,11 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                                 </button>
                                 <div class="bk-room-price">₱ <?php echo number_format($total_amount, 2); ?></div>
                                 <div class="bk-room-subtext">
-                                    1 room, <?php echo $nights; ?> night<?php echo $nights>1?'s':''; ?>, <?php echo $guests; ?> adult<?php echo $guests>1?'s':''; ?>
+                                    <span class="stay-facts" aria-label="Stay details">
+                                        <span><?php echo $nights; ?> night<?php echo $nights > 1 ? 's' : ''; ?></span>
+                                        <span>1 room</span>
+                                        <span><?php echo $guests; ?> adult<?php echo $guests > 1 ? 's' : ''; ?></span>
+                                    </span>
                                     <?php if (($pricing['extra_person_total'] ?? 0) > 0): ?>
                                         <span style="color:#0284C7; font-weight:600;">(includes <?php echo $pricing['extra_adults']; ?> extra adult<?php echo $pricing['extra_adults']>1?'s':''; ?>)</span>
                                     <?php endif; ?>
@@ -1191,7 +1195,11 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     </div>
 
                     <div class="bk-sb-meta">
-                        <?php echo $nights; ?> night<?php echo $nights>1?'s':''; ?>&ensp;·&ensp;1 room&ensp;·&ensp;<?php echo $guests; ?> adult<?php echo $guests>1?'s':''; ?>
+                        <span class="stay-facts" aria-label="Stay details">
+                            <span><?php echo $nights; ?> night<?php echo $nights > 1 ? 's' : ''; ?></span>
+                            <span>1 room</span>
+                            <span><?php echo $guests; ?> adult<?php echo $guests > 1 ? 's' : ''; ?></span>
+                        </span>
                     </div>
 
                     <div class="bk-sb-room-row">

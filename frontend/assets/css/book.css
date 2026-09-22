@@ -295,6 +295,20 @@ body {
     line-height: 1.5;
 }
 
+/* Compact stay details: 1 night | 1 room | 2 adults */
+.stay-facts {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+}
+.stay-facts > span {
+    padding: 0 8px;
+    white-space: nowrap;
+}
+.stay-facts > span:first-child { padding-left: 0; }
+.stay-facts > span + span { border-left: 1px solid #0EA5E9; }
+
 /* ── Actions (Back / Next) ────────────────────────────────────── */
 .bk-actions {
     display: flex;
@@ -759,6 +773,7 @@ body {
     border-bottom: 1px solid var(--border);
     margin-bottom: 16px;
 }
+.bk-sb-meta .stay-facts > span + span { border-left-color: #0EA5E9; }
 
 .bk-sb-room-row {
     display: flex;
