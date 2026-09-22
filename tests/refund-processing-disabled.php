@@ -16,8 +16,8 @@ foreach (["http_response_code(501)", "'success'", "UPDATE refund_requests", "UPD
         throw new RuntimeException('Unsafe or missing disabled-refund behavior: ' . $fragment);
     }
 }
-if (!str_contains($ui, 'PayMongo Processing Unavailable') || !str_contains($ui, 'disabled title=')) {
-    throw new RuntimeException('Admin UI still exposes active refund processing.');
+if (str_contains($ui, 'PayMongo Processing Unavailable') || str_contains($ui, 'processRefund(')) {
+    throw new RuntimeException('Admin UI still exposes the unavailable refund-processing control.');
 }
 
 echo "PayMongo refund processing is disabled without changing financial records.\n";

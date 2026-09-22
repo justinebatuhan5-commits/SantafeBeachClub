@@ -516,10 +516,6 @@ foreach ($valid_statuses as $s) {
                                 Reject
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
-                            <button class="btn-process" type="button" disabled title="PayMongo refund API integration is not available yet" style="opacity:.55; cursor:not-allowed;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                PayMongo Processing Unavailable
-                            </button>
                             <a class="btn-process" href="https://dashboard.paymongo.com/login" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
                                 Open PayMongo Dashboard
