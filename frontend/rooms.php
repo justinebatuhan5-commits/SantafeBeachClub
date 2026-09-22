@@ -682,7 +682,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                                     <div><dt>Capacity</dt><dd>Up to <?php echo (int)$capacity; ?> guests</dd></div>
                                     <div><dt>Sleeping arrangements</dt><dd><?php echo htmlspecialchars($bed); ?></dd></div>
                                     <div><dt>Breakfast</dt><dd><?php echo !empty($breakfast_included_types[$type_key]) ? 'Included' : 'Not included'; ?></dd></div>
-                                    <div><dt>Extra person / night</dt><dd>&#8369;<?php echo number_format($extra_person_rates[$type_key] ?? 0); ?></dd></div>
+                                    <div><dt>Extra person</dt><dd>&#8369;<?php echo number_format($extra_person_rates[$type_key] ?? 0); ?></dd></div>
                                 </dl>
                                 <div class="rate-bed">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><line x1="12" y1="10" x2="12" y2="20"/></svg>
@@ -868,7 +868,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                                     <div><dt>Capacity</dt><dd>Up to <?php echo (int)$capacity; ?> guests</dd></div>
                                     <div><dt>Sleeping arrangements</dt><dd><?php echo htmlspecialchars($bed); ?></dd></div>
                                     <div><dt>Breakfast</dt><dd><?php echo !empty($breakfast_included_types[$type_key]) ? 'Included' : 'Not included'; ?></dd></div>
-                                    <div><dt>Extra person / night</dt><dd>&#8369;<?php echo number_format($extra_person_rates[$type_key] ?? 0); ?></dd></div>
+                                    <div><dt>Extra person</dt><dd>&#8369;<?php echo number_format($extra_person_rates[$type_key] ?? 0); ?></dd></div>
                                 </dl>
                                 <div class="rate-bed">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><line x1="12" y1="10" x2="12" y2="20"/></svg>
@@ -1019,7 +1019,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                                     <div><dt>Capacity</dt><dd>Up to <?php echo (int)$capacity; ?> guests</dd></div>
                                     <div><dt>Sleeping arrangements</dt><dd><?php echo htmlspecialchars($bed); ?></dd></div>
                                     <div><dt>Breakfast</dt><dd><?php echo !empty($breakfast_included_types[$type_key]) ? 'Included' : 'Not included'; ?></dd></div>
-                                    <div><dt>Extra person / night</dt><dd>&#8369;<?php echo number_format($extra_person_rates[$type_key] ?? 0); ?></dd></div>
+                                    <div><dt>Extra person</dt><dd>&#8369;<?php echo number_format($extra_person_rates[$type_key] ?? 0); ?></dd></div>
                                 </dl>
                                 <div class="rate-bed">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><line x1="12" y1="10" x2="12" y2="20"/></svg>

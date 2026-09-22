@@ -1201,7 +1201,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
 
                     <?php if (($pricing['extra_person_total'] ?? 0) > 0): ?>
                     <div class="bk-sb-room-row" style="color:#0284C7; font-size:12.5px;">
-                        <span>Extra Adult Fee (<?php echo $pricing['extra_adults']; ?> × ₱<?php echo number_format($pricing['extra_rate_per_adult'], 0); ?> × <?php echo $nights; ?>n)</span>
+                        <span>Extra Adult Fee (<?php echo $pricing['extra_adults']; ?> × ₱<?php echo number_format($pricing['extra_rate_per_adult'], 0); ?>)</span>
                         <span>+₱ <?php echo number_format($pricing['extra_person_total'], 2); ?></span>
                     </div>
                     <?php endif; ?>
@@ -1601,10 +1601,10 @@ function showFileError(input, errorDiv, message) {
                     <div style="font-size:13px; font-weight:600; color:#6B7280; flex-shrink:0; width:40px;">Main</div>
                     <select id="editAdults" style="flex:1; padding:10px 14px; border:1.5px solid #E5E7EB; border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; color:#1A1A2E; background:#fff; outline:none; cursor:pointer; appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position:calc(100% - 12px) center;">
                         <option value="1" <?php echo ($guests == 1) ? 'selected' : ''; ?>>1 adult (Standard)</option>
-                        <option value="2" <?php echo ($guests == 2) ? 'selected' : ''; ?>>2 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'], 0); ?>/night)</option>
-                        <option value="3" <?php echo ($guests == 3) ? 'selected' : ''; ?>>3 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 2, 0); ?>/night)</option>
-                        <option value="4" <?php echo ($guests == 4) ? 'selected' : ''; ?>>4 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 3, 0); ?>/night)</option>
-                        <option value="5" <?php echo ($guests >= 5) ? 'selected' : ''; ?>>5 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 4, 0); ?>/night)</option>
+                        <option value="2" <?php echo ($guests == 2) ? 'selected' : ''; ?>>2 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'], 0); ?>)</option>
+                        <option value="3" <?php echo ($guests == 3) ? 'selected' : ''; ?>>3 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 2, 0); ?>)</option>
+                        <option value="4" <?php echo ($guests == 4) ? 'selected' : ''; ?>>4 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 3, 0); ?>)</option>
+                        <option value="5" <?php echo ($guests >= 5) ? 'selected' : ''; ?>>5 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 4, 0); ?>)</option>
                     </select>
                     <select id="editChildren" style="flex:1; padding:10px 14px; border:1.5px solid #E5E7EB; border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; color:#1A1A2E; background:#fff; outline:none; cursor:pointer; appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position:calc(100% - 12px) center;">
                         <option value="0" selected>0 children</option>

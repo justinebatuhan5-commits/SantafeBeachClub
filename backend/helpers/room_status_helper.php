@@ -172,7 +172,8 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
         $currentDate->modify('+1 day');
     }
 
-    // 3.5 Extra Person / Extra Adult calculation (Base rate covers 1 adult, additional adults incur fee)
+    // 3.5 Extra Person / Extra Adult calculation. This is a one-time charge
+    // per additional adult, not a nightly charge.
     $extraRates = [
         'beachview_duplex' => 1000.00,
         'seaview_duplex'   => 1000.00,
@@ -183,7 +184,7 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
     $baseCapacity = 1; // 1 adult included in standard base rate; every additional adult adds fee
     $extraAdults = max(0, $guests - $baseCapacity);
     $extraRatePerAdult = $extraRates[$roomType] ?? 700.00;
-    $extraPersonTotal = $extraAdults * $extraRatePerAdult * $nights;
+    $extraPersonTotal = $extraAdults * $extraRatePerAdult;
     $subtotal += $extraPersonTotal;
 
     // 4. Promo Code Validation & Discount Application
