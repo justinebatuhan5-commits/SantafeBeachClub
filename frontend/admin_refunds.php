@@ -12,7 +12,7 @@ $csrf_token = get_csrf_token();
 
 // Get filter status
 $filter_status = trim($_GET['status'] ?? 'requested');
-$valid_statuses = ['requested', 'approved', 'processing', 'completed', 'rejected'];
+$valid_statuses = ['requested', 'approved', 'completed', 'rejected'];
 if (!in_array($filter_status, $valid_statuses)) {
     $filter_status = 'requested';
 }
@@ -410,7 +410,6 @@ foreach ($valid_statuses as $s) {
                 $tab_labels = [
                     'requested'  => ['Pending', 'Awaiting approval'],
                     'approved'   => ['Approved', 'Awaiting refund processing'],
-                    'processing' => ['Processing', 'PayMongo initiated'],
                     'completed'  => ['Completed', 'Refund sent'],
                     'rejected'   => ['Rejected', 'Denied'],
                 ];
