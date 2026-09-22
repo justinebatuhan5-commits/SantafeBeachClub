@@ -18,6 +18,16 @@ $conn->query("CREATE TABLE IF NOT EXISTS promotions (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
+// Keep existing installations compatible when migrations cannot be run.
+$promoSchema = $conn->query('SELECT DATABASE()')->fetch_row()[0] ?? '';
+$usageLimitColumn = $conn->prepare("SELECT 1 FROM information_schema.columns WHERE table_schema=? AND table_name='promotions' AND column_name='usage_limit'");
+$usageLimitColumn->bind_param('s', $promoSchema);
+$usageLimitColumn->execute();
+if (!$usageLimitColumn->get_result()->fetch_row()) {
+    $conn->query('ALTER TABLE promotions ADD COLUMN usage_limit INT UNSIGNED NULL DEFAULT NULL');
+}
+$usageLimitColumn->close();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
     $action = $_POST['action'] ?? '';
@@ -28,13 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $desc        = trim($_POST['description'] ?? '');
         $dtype       = in_array($_POST['discount_type'] ?? '', ['percent','fixed']) ? $_POST['discount_type'] : 'percent';
         $dval        = (float)($_POST['discount_value'] ?? 0);
+        $usageLimit  = ($_POST['usage_limit'] ?? '') === '' ? null : max(1, (int)$_POST['usage_limit']);
         $from        = $_POST['valid_from'] ?? date('Y-m-d');
         $until       = $_POST['valid_until'] ?? date('Y-m-d');
 
         if (!$title) { $_SESSION['promo_error'] = 'Title is required.'; }
         else {
-            $stmt2 = $conn->prepare("INSERT INTO promotions (title, code, description, discount_type, discount_value, valid_from, valid_until) VALUES (?,?,?,?,?,?,?)");
-            $stmt2->bind_param("ssssdss", $title, $code, $desc, $dtype, $dval, $from, $until);
+            $stmt2 = $conn->prepare("INSERT INTO promotions (title, code, description, discount_type, discount_value, usage_limit, valid_from, valid_until) VALUES (?,?,?,?,?,?,?,?)");
+            $stmt2->bind_param("ssssdiss", $title, $code, $desc, $dtype, $dval, $usageLimit, $from, $until);
             $stmt2->execute(); $stmt2->close();
             log_activity($conn, $admin, 'Promotion Added', "Added: $title" . ($code ? " [Code: $code]" : ""));
             $_SESSION['promo_success'] = "Promotion \"$title\" created.";
@@ -45,6 +56,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pid = (int)$_POST['promo_id'];
         $conn->query("UPDATE promotions SET is_active = 1 - is_active WHERE id = $pid");
         $_SESSION['promo_success'] = 'Promotion status updated.';
+    }
+
+    if ($action === 'update_limit') {
+        $pid = (int)($_POST['promo_id'] ?? 0);
+        $usageLimit = ($_POST['usage_limit'] ?? '') === '' ? null : max(1, (int)$_POST['usage_limit']);
+        $limitStmt = $conn->prepare('UPDATE promotions SET usage_limit=? WHERE id=?');
+        $limitStmt->bind_param('ii', $usageLimit, $pid);
+        $limitStmt->execute();
+        $limitStmt->close();
+        $_SESSION['promo_success'] = 'Promotion usage limit updated.';
     }
 
     if ($action === 'delete_promo') {
@@ -70,7 +91,12 @@ if (isset($_SESSION['promo_error'])) {
     unset($_SESSION['promo_error']);
 }
 
-$promos = $conn->query("SELECT * FROM promotions ORDER BY is_active DESC, valid_until DESC");
+$promos = $conn->query("SELECT p.*,
+    (SELECT COUNT(*) FROM bookings b
+     WHERE UPPER(COALESCE(b.promo_code, '')) = UPPER(COALESCE(NULLIF(p.code, ''), p.title))
+       AND LOWER(COALESCE(b.status, '')) NOT IN ('cancelled', 'canceled')) AS usage_count
+    FROM promotions p
+    ORDER BY p.is_active DESC, p.valid_until DESC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -132,7 +158,7 @@ $promos = $conn->query("SELECT * FROM promotions ORDER BY is_active DESC, valid_
             <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;"><?php echo htmlspecialchars($p['description']); ?></p>
             <?php endif; ?>
 
-            <div style="display:flex;gap:16px;margin-bottom:16px;">
+            <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
                 <div>
                     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:3px;">Discount</div>
                     <div style="font-size:18px;font-weight:700;color:var(--primary);">
@@ -145,7 +171,30 @@ $promos = $conn->query("SELECT * FROM promotions ORDER BY is_active DESC, valid_
                         <?php echo date('M j', strtotime($p['valid_from'])); ?> – <?php echo date('M j, Y', strtotime($p['valid_until'])); ?>
                     </div>
                 </div>
+                <div>
+                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:3px;">Code Usage</div>
+                    <div style="font-size:13px;color:var(--text-main);font-weight:700;">
+                        <?php echo number_format((int)$p['usage_count']); ?> used
+                        <?php if ($p['usage_limit'] !== null): ?> / <?php echo number_format((int)$p['usage_limit']); ?> limit<?php else: ?> / Unlimited<?php endif; ?>
+                    </div>
+                    <?php if ($p['usage_limit'] !== null):
+                        $remainingUses = max(0, (int)$p['usage_limit'] - (int)$p['usage_count']); ?>
+                        <div style="font-size:11px;color:<?php echo $remainingUses > 0 ? '#15803D' : '#B91C1C'; ?>;font-weight:700;margin-top:2px;">
+                            <?php echo $remainingUses > 0 ? number_format($remainingUses) . ' remaining' : 'Limit reached'; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
+
+            <form method="POST" style="display:flex;align-items:end;gap:8px;margin:0 0 14px;padding:10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="update_limit">
+                <input type="hidden" name="promo_id" value="<?php echo (int)$p['id']; ?>">
+                <label style="flex:1;font-size:11px;font-weight:700;color:var(--text-muted);">USAGE LIMIT
+                    <input type="number" name="usage_limit" min="1" step="1" value="<?php echo $p['usage_limit'] === null ? '' : (int)$p['usage_limit']; ?>" placeholder="Unlimited" style="width:100%;margin-top:4px;">
+                </label>
+                <button type="submit" class="btn-secondary" style="padding:8px 12px;">Save Limit</button>
+            </form>
 
             <div style="display:flex;gap:8px;">
                 <form method="POST" style="flex:1;">
@@ -190,6 +239,10 @@ $promos = $conn->query("SELECT * FROM promotions ORDER BY is_active DESC, valid_
                     </select>
                 </div>
                 <div class="admin-form-group"><label>Discount Value</label><input type="number" name="discount_value" min="0" step="0.01" placeholder="e.g. 20"></div>
+            </div>
+            <div class="admin-form-group">
+                <label>Maximum Number of Uses</label>
+                <input type="number" name="usage_limit" min="1" step="1" placeholder="Leave blank for unlimited">
             </div>
             <div class="admin-form-row">
                 <div class="admin-form-group"><label>Valid From</label><input type="date" name="valid_from" value="<?php echo date('Y-m-d'); ?>"></div>

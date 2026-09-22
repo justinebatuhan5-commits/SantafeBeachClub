@@ -223,6 +223,19 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
             $promoRes = $promoStmt->get_result();
             if ($promoRes && $promoRes->num_rows > 0) {
                 $promoDetails = $promoRes->fetch_assoc();
+                $usageStmt = $conn->prepare("SELECT COUNT(*) FROM bookings WHERE UPPER(COALESCE(promo_code, '')) = ? AND LOWER(COALESCE(status, '')) NOT IN ('cancelled', 'canceled')");
+                $usageStmt->bind_param('s', $codeClean);
+                $usageStmt->execute();
+                $promoDetails['usage_count'] = (int)$usageStmt->get_result()->fetch_row()[0];
+                $usageStmt->close();
+
+                if ($promoDetails['usage_limit'] !== null && $promoDetails['usage_count'] >= (int)$promoDetails['usage_limit']) {
+                    $promoError = 'This promo code has reached its usage limit.';
+                    $promoDetails = null;
+                }
+            }
+
+            if ($promoDetails) {
                 $dtype = $promoDetails['discount_type'];
                 $dval = (float)$promoDetails['discount_value'];
 
@@ -231,7 +244,7 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
                 } else {
                     $discountAmount = min($subtotal, $dval);
                 }
-            } else {
+            } elseif ($promoError === null) {
                 $promoError = 'Invalid or expired promo code.';
             }
             $promoStmt->close();
