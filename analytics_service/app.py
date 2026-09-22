@@ -5,40 +5,48 @@ Replicates all endpoints from analytics_api.php
 Run with: python app.py
 """
 
-from flask import Flask, jsonify
+import os
+import hmac
+from pathlib import Path
+
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
+from dotenv import load_dotenv
+from functools import wraps
 from datetime import date, timedelta, datetime
 import calendar
 
 app = Flask(__name__)
-CORS(app)  # Allow PHP proxy to call this service
+CORS(app, origins=[])  # This is a server-to-server service, not a public browser API.
+load_dotenv(Path(__file__).resolve().parents[1] / '.env')
+
+API_KEY = os.environ.get('ANALYTICS_API_KEY', '')
+
+def require_api_key(endpoint):
+    @wraps(endpoint)
+    def wrapped(*args, **kwargs):
+        provided_key = request.headers.get('X-API-Key', '')
+        if not API_KEY or not hmac.compare_digest(provided_key, API_KEY):
+            return jsonify({'error': 'Unauthorized.'}), 401
+        return endpoint(*args, **kwargs)
+    return wrapped
 
 # ── Database Configuration ─────────────────────────────────────────────────────
 DB_CONFIG = {
-    'host': 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
-    'port': 4000,
-    'user': '3QXoXQuJo9As2Sx.root',
-    'password': 'ZCu3jpuVMLl4B2Vf',
-    'database': 'test',
+    'host': os.environ.get('DB_HOST', ''),
+    'port': int(os.environ.get('DB_PORT', '3306')),
+    'user': os.environ.get('DB_USER', ''),
+    'password': os.environ.get('DB_PASS', ''),
+    'database': os.environ.get('DB_NAME', ''),
     'use_pure': True,
     'autocommit': True,
 }
 
-LOCAL_DB_CONFIG = {
-    'host': '127.0.0.1',
-    'port': 3307,
-    'user': 'root',
-    'password': '',
-    'database': 'santafe_beach_club',
-    'autocommit': True,
-}
-
 def get_db():
-    try:
-        return mysql.connector.connect(**DB_CONFIG)
-    except Exception:
-        return mysql.connector.connect(**LOCAL_DB_CONFIG)
+    if not all(DB_CONFIG[key] for key in ('host', 'user', 'password', 'database')):
+        raise RuntimeError('Database environment variables are not configured.')
+    return mysql.connector.connect(**DB_CONFIG)
 
 def fetchone(cursor, query, params=()):
     cursor.execute(query, params)
@@ -59,6 +67,7 @@ def get_reserved_count(cursor):
 
 # ── 1. Executive Stats & KPIs ─────────────────────────────────────────────────
 @app.route('/api/executive-stats')
+@require_api_key
 def executive_stats():
     conn = get_db()
     cursor = conn.cursor()
@@ -93,6 +102,7 @@ def executive_stats():
 
 # ── 2. Weekly Revenue Trajectory ─────────────────────────────────────────────
 @app.route('/api/weekly-revenue-trajectory')
+@require_api_key
 def weekly_revenue_trajectory():
     conn = get_db()
     cursor = conn.cursor()
@@ -110,6 +120,7 @@ def weekly_revenue_trajectory():
 
 # ── 3. Status Breakdown ───────────────────────────────────────────────────────
 @app.route('/api/status-breakdown')
+@require_api_key
 def status_breakdown():
     conn = get_db()
     cursor = conn.cursor()
@@ -124,6 +135,7 @@ def status_breakdown():
 
 # ── 4. Room Type Occupancy ────────────────────────────────────────────────────
 @app.route('/api/room-type-occupancy')
+@require_api_key
 def room_type_occupancy():
     conn = get_db()
     cursor = conn.cursor()
@@ -143,6 +155,7 @@ def room_type_occupancy():
 
 # ── 5. Recent Bookings ────────────────────────────────────────────────────────
 @app.route('/api/recent-bookings')
+@require_api_key
 def recent_bookings():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -157,6 +170,7 @@ def recent_bookings():
 
 # ── 6. Recent Logs Feed ───────────────────────────────────────────────────────
 @app.route('/api/recent-logs')
+@require_api_key
 def recent_logs():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -171,6 +185,7 @@ def recent_logs():
 
 # ── 7. Daily Summary Widget ───────────────────────────────────────────────────
 @app.route('/api/daily-summary')
+@require_api_key
 def daily_summary():
     conn = get_db()
     cursor = conn.cursor()
@@ -194,6 +209,7 @@ def daily_summary():
 
 # ── 8. Monthly Revenue (Reports Page) ─────────────────────────────────────────
 @app.route('/api/monthly-revenue')
+@require_api_key
 def monthly_revenue():
     conn = get_db()
     cursor = conn.cursor()
@@ -214,6 +230,7 @@ def monthly_revenue():
 
 # ── 9. Dashboard Stats (Reports Page KPIs) ───────────────────────────────────
 @app.route('/api/dashboard-stats')
+@require_api_key
 def dashboard_stats():
     conn = get_db()
     cursor = conn.cursor()
@@ -244,6 +261,7 @@ def dashboard_stats():
 
 # ── 10. Payment Methods (Reports Page) ───────────────────────────────────────
 @app.route('/api/payment-methods')
+@require_api_key
 def payment_methods():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -260,6 +278,7 @@ def payment_methods():
 
 # ── 11. Top Accommodations (Reports Page) ────────────────────────────────────
 @app.route('/api/top-accommodations')
+@require_api_key
 def top_accommodations():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -274,6 +293,7 @@ def top_accommodations():
 
 # ── 12. Country Demographics (Guest Origins) ────────────────────────────────
 @app.route('/api/country-demographics')
+@require_api_key
 def country_demographics():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)

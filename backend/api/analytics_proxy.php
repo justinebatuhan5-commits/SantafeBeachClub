@@ -34,8 +34,13 @@ if (function_exists('curl_init')) {
         }
         // If local Flask is not running, $python_url stays null → skip to PHP fallback instantly.
     } else {
-        // On production / non-local: call Render service.
-        $python_url = "https://santafe-beachclub-analytics.onrender.com/api/" . urlencode($action);
+        // A remote analytics service is optional. Its URL and credential must be
+        // supplied by the deployment environment, never committed to source.
+        $analyticsBaseUrl = rtrim((string)(getenv('ANALYTICS_SERVICE_URL') ?: ''), '/');
+        $analyticsApiKey = (string)(getenv('ANALYTICS_API_KEY') ?: '');
+        if ($analyticsBaseUrl !== '' && $analyticsApiKey !== '') {
+            $python_url = $analyticsBaseUrl . '/api/' . urlencode($action);
+        }
     }
 
     if ($python_url !== null) {
@@ -46,9 +51,10 @@ if (function_exists('curl_init')) {
             CURLOPT_CONNECTTIMEOUT => 4,
             CURLOPT_HTTPHEADER     => [
                 'Accept: application/json',
-                'X-API-Key: santafe-super-secret-key-2026'
+                'X-API-Key: ' . (string)(getenv('ANALYTICS_API_KEY') ?: '')
             ],
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_FAILONERROR    => false,
         ]);
         $python_response = curl_exec($ch);

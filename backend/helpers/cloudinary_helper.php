@@ -13,13 +13,13 @@ if (!defined('_ENV_LOADED')) {
 }
 
 if (!defined('CLOUDINARY_CLOUD_NAME')) {
-    define('CLOUDINARY_CLOUD_NAME', getenv('CLOUDINARY_CLOUD_NAME') ?: 'pyvbsoq9');
+    define('CLOUDINARY_CLOUD_NAME', getenv('CLOUDINARY_CLOUD_NAME') ?: '');
 }
 if (!defined('CLOUDINARY_API_KEY')) {
-    define('CLOUDINARY_API_KEY', getenv('CLOUDINARY_API_KEY') ?: '868384347948186');
+    define('CLOUDINARY_API_KEY', getenv('CLOUDINARY_API_KEY') ?: '');
 }
 if (!defined('CLOUDINARY_API_SECRET')) {
-    define('CLOUDINARY_API_SECRET', getenv('CLOUDINARY_API_SECRET') ?: 'YtDo7N6MMenfNOFCWy5a7RTlMHI');
+    define('CLOUDINARY_API_SECRET', getenv('CLOUDINARY_API_SECRET') ?: '');
 }
 
 /**

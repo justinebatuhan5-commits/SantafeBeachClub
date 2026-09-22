@@ -1,45 +1,42 @@
+import os
+import hmac
+from pathlib import Path
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
+from dotenv import load_dotenv
 from functools import wraps
 import datetime
 from dateutil.relativedelta import relativedelta
 
 app = Flask(__name__)
-# Allow CORS for all domains since it'll be called from InfinityFree
-CORS(app) 
+# This service is called by the PHP backend, not directly by browsers.
+CORS(app, origins=[])
+load_dotenv(Path(__file__).resolve().parents[2] / '.env')
 
-# Security: Only requests with this API key will be allowed
-API_KEY = "santafe-super-secret-key-2026"
+# Required server-side configuration. Do not add fallback credentials here.
+API_KEY = os.environ.get('ANALYTICS_API_KEY', '')
 
 DB_CONFIG = {
-    'host': 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
-    'port': 4000,
-    'user': '3QXoXQuJo9As2Sx.root',
-    'password': 'ZCu3jpuVMLl4B2Vf',
-    'database': 'test',
+    'host': os.environ.get('DB_HOST', ''),
+    'port': int(os.environ.get('DB_PORT', '3306')),
+    'user': os.environ.get('DB_USER', ''),
+    'password': os.environ.get('DB_PASS', ''),
+    'database': os.environ.get('DB_NAME', ''),
     'use_pure': True
 }
 
-LOCAL_DB_CONFIG = {
-    'host': '127.0.0.1',
-    'user': 'root',
-    'password': '',
-    'database': 'santafe_beach_club',
-    'port': 3307
-}
-
 def get_db_connection():
-    try:
-        return mysql.connector.connect(**DB_CONFIG)
-    except Exception:
-        return mysql.connector.connect(**LOCAL_DB_CONFIG)
+    if not all(DB_CONFIG[key] for key in ('host', 'user', 'password', 'database')):
+        raise RuntimeError('Database environment variables are not configured.')
+    return mysql.connector.connect(**DB_CONFIG)
 
 def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         provided_key = request.headers.get('X-API-Key')
-        if provided_key != API_KEY:
+        if not API_KEY or not hmac.compare_digest(provided_key or '', API_KEY):
             return jsonify({"error": "Unauthorized. Invalid or missing API key."}), 401
         return f(*args, **kwargs)
     return decorated_function
