@@ -255,6 +255,9 @@ $payments_query = $conn->query("
         b.accommodation_name,
         b.check_in,
         b.check_out,
+        b.guests_count,
+        b.extra_adults,
+        b.extra_children,
         DATEDIFF(b.check_out, b.check_in) as nights,
         r.price_per_night
     FROM payments p
@@ -624,7 +627,10 @@ if ($bk_res) {
                                     $b_paid = $raw_amount;
                                     $bid = $row['booking_id'];
                                     echo "<div style='display:flex; gap:6px; align-items:center; flex-wrap:wrap;'>";
-                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($room, ENT_QUOTES)) . "\", {$b_total})'>Print Receipt</button>";
+                                    $guest_count = max(0, (int)($row['guests_count'] ?? 0));
+                                    $extra_adults = max(0, (int)($row['extra_adults'] ?? 0));
+                                    $extra_children = max(0, (int)($row['extra_children'] ?? 0));
+                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($room, ENT_QUOTES)) . "\", {$b_total}, {$guest_count}, {$extra_adults}, {$extra_children})'>Print Receipt</button>";
                                     echo "<a href='payments?send_booking_id={$bid}' class='btn-pay' style='padding:6px 12px; font-size:12px; text-decoration:none;'>Resend Confirmation</a>";
                                     echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#6A1B9A; border-color:#6A1B9A;' onclick='openRefundModal({$pay_id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"PHP {$amount}\")'>Refund</button>";
                                     echo "</div>";
@@ -898,10 +904,12 @@ if ($bk_res) {
         const RECEPTIONIST_NAME = <?php echo xss_json($_SESSION['admin_username'] ?? 'Administrator'); ?>;
         let _receiptData = {};
 
-        function openReceiptModal(bid, rcpt, inv, guest, room, totalCost) {
+        function openReceiptModal(bid, rcpt, inv, guest, room, totalCost, guestCount, extraAdults, extraChildren) {
             const payments = PAYMENTS_BREAKDOWN[bid] || [];
             const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-            _receiptData = { bid, rcpt, inv, guest, room, totalCost: parseFloat(totalCost) || 0, payments, totalPaid };
+            _receiptData = { bid, rcpt, inv, guest, room, totalCost: parseFloat(totalCost) || 0,
+                guestCount: parseInt(guestCount, 10) || 0, extraAdults: parseInt(extraAdults, 10) || 0,
+                extraChildren: parseInt(extraChildren, 10) || 0, payments, totalPaid };
             renderReceipt();
             const ov = document.getElementById('receiptOverlay');
             ov.classList.add('active');
@@ -926,6 +934,10 @@ if ($bk_res) {
             const sep = '<div style="color:#000; letter-spacing:2px;">--------------------------------------</div>';
             const fmt = (v) => '₱ ' + Number(v).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const balance = Math.max(0, d.totalCost - d.totalPaid);
+            const includedGuests = Math.max(0, d.guestCount - d.extraAdults - d.extraChildren);
+            const guestBreakdown = `<div style="display:flex; justify-content:space-between;"><span>Included Guests:</span><strong>${includedGuests}</strong></div>` +
+                (d.extraAdults > 0 ? `<div style="display:flex; justify-content:space-between;"><span>Extra Adult${d.extraAdults === 1 ? '' : 's'}:</span><strong>${d.extraAdults}</strong></div>` : '') +
+                (d.extraChildren > 0 ? `<div style="display:flex; justify-content:space-between;"><span>Child${d.extraChildren === 1 ? '' : 'ren'}:</span><strong>${d.extraChildren}</strong></div>` : '');
 
             let breakdownHtml = `<div style="margin:12px 0 4px; font-size:13px; font-weight:800; letter-spacing:1px; text-align:center;">PAYMENT BREAKDOWN</div>`;
             if (d.payments.length === 0) {
@@ -956,6 +968,7 @@ if ($bk_res) {
                 <div style="text-align:left; margin:8px 0;">
                     <div style="display:flex; justify-content:space-between;"><span>Guest Name:</span><strong>${Security.escapeHTML(d.guest)}</strong></div>
                     <div style="display:flex; justify-content:space-between;"><span>Accommodation:</span><strong>${Security.escapeHTML(d.room)}</strong></div>
+                    ${guestBreakdown}
                 </div>
                 ${sep}
                 <div style="text-align:left; margin:8px 0;">
@@ -988,6 +1001,10 @@ if ($bk_res) {
             const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             const fmt = (v) => '₱ ' + Number(v).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const balance = Math.max(0, d.totalCost - d.totalPaid);
+            const includedGuests = Math.max(0, d.guestCount - d.extraAdults - d.extraChildren);
+            const guestBreakdown = `<div class="row"><span>Included Guests:</span><strong>${includedGuests}</strong></div>` +
+                (d.extraAdults > 0 ? `<div class="row"><span>Extra Adult${d.extraAdults === 1 ? '' : 's'}:</span><strong>${d.extraAdults}</strong></div>` : '') +
+                (d.extraChildren > 0 ? `<div class="row"><span>Child${d.extraChildren === 1 ? '' : 'ren'}:</span><strong>${d.extraChildren}</strong></div>` : '');
             const sep = '--------------------------------------';
 
             let breakdownHtml = `<div class="center total-label">PAYMENT BREAKDOWN</div>`;
@@ -1033,6 +1050,7 @@ if ($bk_res) {
                 <div class="sep">${sep}</div>
                 <div class="row"><span>Guest Name:</span><strong>${Security.escapeHTML(d.guest)}</strong></div>
                 <div class="row"><span>Accommodation:</span><strong>${Security.escapeHTML(d.room)}</strong></div>
+                ${guestBreakdown}
                 <div class="sep">${sep}</div>
                 <div class="row"><span>Total Cost:</span><strong>${fmt(d.totalCost)}</strong></div>
                 ${balance > 0.01 ? `<div class="row" style="color:#d32f2f;"><span>Remaining Balance:</span><strong>${fmt(balance)}</strong></div>` : ''}

@@ -428,10 +428,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $eta                   = $_SESSION['guest_eta'] ?? '14:00';
 
                     $room_value = $room_id === null ? "NULL" : (string)$room_id;
-                    $sql = "INSERT INTO bookings (guest_name, guest_email, guest_type, check_in, check_out, guests_count, room_id, accommodation_name, eta, status, checkin_token, cancellation_token, payment_method, guest_phone, guest_country, guest_special_requests, promo_code, discount_amount)
-                            VALUES (?, ?, ?, ?, ?, ?, " . $room_value . ", ?, ?, 'Pending Payment', ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $sql = "INSERT INTO bookings (guest_name, guest_email, guest_type, check_in, check_out, guests_count, extra_adults, extra_children, room_id, accommodation_name, eta, status, checkin_token, cancellation_token, payment_method, guest_phone, guest_country, guest_special_requests, promo_code, discount_amount)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, " . $room_value . ", ?, ?, 'Pending Payment', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("sssssisssssssssd", $guest_name, $guest_email, $guest_type, $checkin, $checkout, $guests_total, $db_acc_name, $eta, $checkin_token, $cancel_token, $payment_method, $guest_phone, $guest_country, $guest_special_requests, $applied_promo_code, $discount_amount);
+                    $stmt->bind_param("sssssiiisssssssssd", $guest_name, $guest_email, $guest_type, $checkin, $checkout, $guests_total, $extra_adults, $extra_children, $db_acc_name, $eta, $checkin_token, $cancel_token, $payment_method, $guest_phone, $guest_country, $guest_special_requests, $applied_promo_code, $discount_amount);
 
                     if ($stmt->execute()) {
                         $booking_id  = $stmt->insert_id;

@@ -77,6 +77,9 @@ $booking_ref   = 'REF-' . str_pad($booking['id'], 3, '0', STR_PAD_LEFT);
 $nights        = max(1, (int)($booking['nights_calc'] ?? $booking['nights'] ?? 1));
 $deposit_paid  = (float)($booking['deposit_paid'] ?? 0);
 $discount_amt  = (float)($booking['discount_amount'] ?? 0);
+$extra_adults = max(0, (int)($booking['extra_adults'] ?? 0));
+$extra_children = max(0, (int)($booking['extra_children'] ?? 0));
+$included_guests = max(0, (int)$booking['guests_count'] - $extra_adults - $extra_children);
 // Use the accommodation rate and recorded discount, not a presumed deposit ratio.
 $total_amount = max(0, $nights * (float)$booking['nightly_rate'] - $discount_amt);
 $remaining_balance = max(0, $total_amount - $deposit_paid);
@@ -446,7 +449,7 @@ $autoPrint = isset($_GET['print']) && $_GET['print'] == '1';
                         <span class="info-value stay-facts" aria-label="Stay details">
                             <span><?php echo $nights; ?> night<?php echo $nights > 1 ? 's' : ''; ?></span>
                             <span>1 room</span>
-                            <span><?php echo (int)$booking['guests_count']; ?> adult<?php echo (int)$booking['guests_count'] > 1 ? 's' : ''; ?></span>
+                            <span><?php echo (int)$booking['guests_count']; ?> guest<?php echo (int)$booking['guests_count'] > 1 ? 's' : ''; ?></span>
                         </span>
                     </div>
                 </div>
@@ -470,6 +473,25 @@ $autoPrint = isset($_GET['print']) && $_GET['print'] == '1';
                         <td style="text-align:center;"><?php echo $nights; ?> night<?php echo $nights>1?'s':''; ?></td>
                         <td>₱ <?php echo number_format($total_amount, 2); ?></td>
                     </tr>
+                    <tr>
+                        <td><strong>Included guests</strong><br><small style="color:#64748B;">Included in the room rate</small></td>
+                        <td style="text-align:center;"><?php echo $included_guests; ?> person<?php echo $included_guests === 1 ? '' : 's'; ?></td>
+                        <td>Included</td>
+                    </tr>
+                    <?php if ($extra_adults > 0): ?>
+                    <tr>
+                        <td><strong>Extra adult<?php echo $extra_adults === 1 ? '' : 's'; ?></strong></td>
+                        <td style="text-align:center;"><?php echo $extra_adults; ?></td>
+                        <td>Added</td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if ($extra_children > 0): ?>
+                    <tr>
+                        <td><strong>Child<?php echo $extra_children === 1 ? '' : 'ren'; ?></strong></td>
+                        <td style="text-align:center;"><?php echo $extra_children; ?></td>
+                        <td>Added</td>
+                    </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
 
