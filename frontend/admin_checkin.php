@@ -579,6 +579,7 @@ $bookings_query = $conn->query("
                 $spec_total = floatval($specific_booking['total_cost']);
                 $spec_paid = floatval($specific_booking['amount_paid']);
                 $spec_balance = max(0, $spec_total - $spec_paid);
+                $spec_checkin = date('Y-m-d', strtotime($specific_booking['check_in']));
                 $spec_discount_category = in_array($specific_booking['discount_category'] ?? '', ['senior', 'pwd'], true)
                     ? $specific_booking['discount_category']
                     : '';
@@ -637,7 +638,7 @@ $bookings_query = $conn->query("
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="checkin">
                             <input type="hidden" name="booking_id" value="<?php echo $spec_id; ?>">
-                            <button type="submit" style="width: 100%; padding: 13px 0; background: linear-gradient(135deg, #15803D, #166534); color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(22, 101, 52, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(22, 101, 52, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(22, 101, 52, 0.35)';" onclick="handleCheckinClick(event, <?php echo $spec_id; ?>, <?php echo xss_attr_json($spec_name); ?>, <?php echo xss_attr_json($spec_acc); ?>, <?php echo $spec_total; ?>, <?php echo $spec_balance; ?>, <?php echo xss_attr_json($spec_discount_category); ?>)">
+                            <button type="submit" style="width: 100%; padding: 13px 0; background: linear-gradient(135deg, #15803D, #166534); color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(22, 101, 52, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(22, 101, 52, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(22, 101, 52, 0.35)';" onclick="handleCheckinClick(event, <?php echo $spec_id; ?>, <?php echo xss_attr_json($spec_name); ?>, <?php echo xss_attr_json($spec_acc); ?>, <?php echo $spec_total; ?>, <?php echo $spec_balance; ?>, <?php echo xss_attr_json($spec_discount_category); ?>, <?php echo xss_attr_json($spec_checkin); ?>)">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                 Check In Guest Now
                             </button>
@@ -738,7 +739,7 @@ $bookings_query = $conn->query("
                                         <form method='POST' action='admin_checkin' style='display:inline; margin:0;'>
                                             <input type='hidden' name='action' value='checkin'>
                                             <input type='hidden' name='booking_id' value='{$id}'>
-                                            <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "', '" . xss_attr_string(htmlspecialchars_decode($accommodation, ENT_QUOTES)) . "', {$total_cost}, {$balance_due}, '" . xss_attr_string($discount_category) . "')\">
+                                            <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "', '" . xss_attr_string(htmlspecialchars_decode($accommodation, ENT_QUOTES)) . "', {$total_cost}, {$balance_due}, '" . xss_attr_string($discount_category) . "', '{$checkin_date_only}')\">
                                                 <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>
                                                 Check-in
                                             </button>
@@ -1013,6 +1014,11 @@ $bookings_query = $conn->query("
                     <span style="color:#666;">Discount:</span>
                     <strong id="modalDiscountBadge" style="background:#F3E8FF; color:#7E22CE; padding:4px 9px; border-radius:999px; font-size:11px;"></strong>
                 </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
+                    <span style="color:#666;">Scheduled Check-in:</span>
+                    <strong id="modalScheduledCheckin">—</strong>
+                </div>
+                <div id="modalDateWarning" style="display:none;margin:0 0 12px;padding:9px 11px;border-radius:8px;font-size:12px;font-weight:700;"></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; border-bottom: 1px dashed #E5E7EB; padding-bottom: 12px;">
                     <span style="color: #666;">Total Cost:</span>
                     <strong id="modalTotalCost">&#8369;0.00</strong>
@@ -1229,10 +1235,18 @@ document.getElementById('walkinModalOverlay').addEventListener('click', function
 });
 
 // --- Existing Balance Checkin Modal Logic ---
-function handleCheckinClick(event, bookingId, guestName, accName, totalCost, balanceDue, discountCategory = '') {
+async function handleCheckinClick(event, bookingId, guestName, accName, totalCost, balanceDue, discountCategory = '', scheduledCheckin = '') {
+    event.preventDefault();
+    const checkinForm = event.currentTarget.closest('form');
+    const today = <?php echo xss_json(date('Y-m-d')); ?>;
+    const scheduledLabel = scheduledCheckin
+        ? new Date(scheduledCheckin + 'T00:00:00').toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+        : 'Not specified';
+    const isEarly = scheduledCheckin && scheduledCheckin > today;
+    const isOverdue = scheduledCheckin && scheduledCheckin < today;
+    const timingLabel = isEarly ? 'EARLY CHECK-IN' : (isOverdue ? 'OVERDUE ARRIVAL' : 'SCHEDULED TODAY');
+
     if (balanceDue > 0.01) {
-        event.preventDefault();
-        
         // Hide the scanned guest overlay if it's open
         const scannedOverlay = document.querySelector('.specific-checkin-overlay');
         if (scannedOverlay) scannedOverlay.style.display = 'none';
@@ -1249,6 +1263,15 @@ function handleCheckinClick(event, bookingId, guestName, accName, totalCost, bal
             discountRow.style.display = 'none';
             discountBadge.textContent = '';
         }
+        document.getElementById('modalScheduledCheckin').textContent = scheduledLabel;
+        const dateWarning = document.getElementById('modalDateWarning');
+        dateWarning.textContent = isEarly
+            ? '⚠ Early check-in: confirm that the room is ready before continuing.'
+            : (isOverdue ? '⚠ This guest is arriving after the scheduled check-in date.' : '✓ Guest is checking in on the scheduled date.');
+        dateWarning.style.display = 'block';
+        dateWarning.style.background = isEarly || isOverdue ? '#FFF7ED' : '#F0FDF4';
+        dateWarning.style.color = isEarly || isOverdue ? '#9A3412' : '#166534';
+        dateWarning.style.border = '1px solid ' + (isEarly || isOverdue ? '#FDBA74' : '#86EFAC');
         document.getElementById('modalTotalCost').textContent = '₱' + totalCost.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('modalBalanceDue').textContent = '₱' + balanceDue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('modalBalanceAmountInput').value = balanceDue;
@@ -1256,7 +1279,14 @@ function handleCheckinClick(event, bookingId, guestName, accName, totalCost, bal
         radios[0].checked = true;
         updatePaySelectors();
         document.getElementById('balanceModalOverlay').classList.add('active');
+        return;
     }
+
+    const accepted = await SiteDialog.confirm(
+        `${timingLabel}\n\nGuest: ${guestName}\nRoom: ${accName}\nScheduled check-in: ${scheduledLabel}\n\nContinuing will mark the guest as Checked In and the assigned room as occupied.`,
+        { title: 'Confirm guest check-in', confirmText: 'Yes, check in guest', danger: isEarly }
+    );
+    if (accepted && checkinForm) checkinForm.submit();
 }
 
 function closeBalanceModal() {
