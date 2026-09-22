@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/config/db.php';
 
@@ -1440,8 +1440,9 @@ function proceedToBook() {
             totalChildren += (parseInt(v.children, 10) || 0);
         });
     });
-    if (totalAdults   > 0) targetUrl += '&extra_adults='   + encodeURIComponent(totalAdults);
-    if (totalChildren > 0) targetUrl += '&extra_children=' + encodeURIComponent(totalChildren);
+    // Always include extra_adults/children (even 0) so stale session values are cleared.
+    targetUrl += '&extra_adults='   + encodeURIComponent(totalAdults);
+    targetUrl += '&extra_children=' + encodeURIComponent(totalChildren);
     window.location.href = targetUrl;
 }
 
