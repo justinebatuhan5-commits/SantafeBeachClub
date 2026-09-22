@@ -1829,8 +1829,18 @@ function _editExtraLabel(int $n, int $inc, int $rate): string {
         titleEl.textContent = monthNames[month - 1] + ' ' + year;
         grid.innerHTML = '<div style="grid-column:span 7; text-align:center; padding:25px; color:#9CA3AF; font-size:13px;">Checking room availability...</div>';
 
-        fetch('api/availability?action=get_month_matrix&year=' + year + '&month=' + month + '&room_type=' + encodeURIComponent(activeRoomType))
-            .then(function(res){ return res.json(); })
+        var applicationPath = <?php
+            $bookingScriptDirectory = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+            $bookingApplicationPath = rtrim(preg_replace('~/frontend$~', '', $bookingScriptDirectory), '/');
+            echo json_encode($bookingApplicationPath, JSON_UNESCAPED_SLASHES);
+        ?>;
+        var availabilityUrl = applicationPath + '/backend/api/availability.php?action=get_month_matrix&year=' + year + '&month=' + month + '&room_type=' + encodeURIComponent(activeRoomType);
+
+        fetch(availabilityUrl, { credentials: 'same-origin' })
+            .then(function(res){
+                if (!res.ok) throw new Error('Availability API returned HTTP ' + res.status);
+                return res.json();
+            })
             .then(function(data){
                 if (!data || !data.success) {
                     grid.innerHTML = '<div style="grid-column:span 7; text-align:center; color:#EF4444; font-size:13px;">Unable to load matrix.</div>';
