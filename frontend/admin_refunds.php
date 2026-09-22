@@ -12,7 +12,7 @@ $csrf_token = get_csrf_token();
 
 // Get filter status
 $filter_status = trim($_GET['status'] ?? 'requested');
-$valid_statuses = ['requested', 'approved', 'completed', 'rejected'];
+$valid_statuses = ['requested', 'approved', 'processing', 'completed', 'rejected'];
 if (!in_array($filter_status, $valid_statuses)) {
     $filter_status = 'requested';
 }
@@ -410,6 +410,7 @@ foreach ($valid_statuses as $s) {
                 $tab_labels = [
                     'requested'  => ['Pending', 'Awaiting approval'],
                     'approved'   => ['Approved', 'Awaiting refund processing'],
+                    'processing' => ['Processing', 'PayMongo verification pending'],
                     'completed'  => ['Completed', 'Refund sent'],
                     'rejected'   => ['Rejected', 'Denied'],
                 ];
@@ -515,6 +516,9 @@ foreach ($valid_statuses as $s) {
                                 Reject
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
+                            <button class="btn-process" type="button" onclick="processPayMongoRefund(<?php echo $refund['id']; ?>, this)">
+                                Record PayMongo Refund
+                            </button>
                             <a class="btn-process" href="https://dashboard.paymongo.com/login" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
                                 Open PayMongo Dashboard
@@ -522,6 +526,10 @@ foreach ($valid_statuses as $s) {
                             <button class="btn-reject" type="button" onclick="cancelRefundApproval(<?php echo $refund['id']; ?>, this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 Cancel Refund Approval
+                            </button>
+                        <?php elseif ($is_admin_user && $filter_status === 'processing'): ?>
+                            <button class="btn-process" type="button" onclick="syncPayMongoRefund(<?php echo $refund['id']; ?>, this)">
+                                Verify PayMongo Status
                             </button>
                         <?php endif; ?>
                         <button class="btn-secondary-sm" onclick="viewDetails(<?php echo $refund['id']; ?>)">
@@ -661,6 +669,41 @@ foreach ($valid_statuses as $s) {
                 if (!data.success) throw new Error(data.message || 'Could not cancel approval.');
                 showToast('Refund approval cancelled. No money was refunded.', 'success');
                 setTimeout(() => location.reload(), 1000);
+            } catch (error) {
+                btn.disabled = false;
+                btn.innerHTML = original;
+                showToast(error.message || 'Network error. Please try again.', 'error');
+            }
+        }
+
+        async function processPayMongoRefund(refundId, btn) {
+            const providerRefundId = window.prompt('After creating the refund in PayMongo Dashboard, paste its refund ID here (starts with ref_):');
+            if (providerRefundId === null) return;
+            if (!/^ref_[A-Za-z0-9]+$/.test(providerRefundId.trim())) {
+                showToast('Enter a valid PayMongo refund ID beginning with ref_.', 'error');
+                return;
+            }
+            await runRefundAction('process_paymongo', refundId, btn, 'Verifying...', 'PayMongo refund verified.', { paymongo_refund_id: providerRefundId.trim() });
+        }
+
+        async function syncPayMongoRefund(refundId, btn) {
+            await runRefundAction('sync_paymongo', refundId, btn, 'Verifying...', 'PayMongo refund status verified.');
+        }
+
+        async function runRefundAction(action, refundId, btn, busyText, fallbackMessage, extraFields = {}) {
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = busyText;
+            const fd = new FormData();
+            fd.append('request_id', refundId);
+            fd.append('csrf_token', refundCsrfToken);
+            Object.entries(extraFields).forEach(([key, value]) => fd.append(key, value));
+            try {
+                const response = await fetch('../backend/api/refund_request_api.php?action=' + encodeURIComponent(action), { method: 'POST', body: fd });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'Refund action failed.');
+                showToast(data.message || fallbackMessage, 'success');
+                setTimeout(() => location.reload(), 1200);
             } catch (error) {
                 btn.disabled = false;
                 btn.innerHTML = original;

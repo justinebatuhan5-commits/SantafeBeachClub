@@ -11,6 +11,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../helpers/api_auth_helper.php';
 require_once __DIR__ . '/../helpers/csrf_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
+require_once __DIR__ . '/../services/paymongo.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -47,7 +48,7 @@ function require_refund_state_change_request(): void
     }
 }
 
-if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo'], true)) {
+if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo'], true)) {
     require_refund_state_change_request();
 }
 
@@ -512,12 +513,118 @@ try {
         $response['message'] = 'Refund approval cancelled. The booking and payment were not changed.';
 
     } elseif ($action === 'process_paymongo') {
-        // Deliberately disabled until a real PayMongo refund request and its
-        // provider response can be verified. This branch must not mutate any
-        // refund, payment, or booking record.
         require_admin_access();
-        http_response_code(501);
-        $response['message'] = 'PayMongo refund processing is not available yet. No records or payment statuses were changed.';
+        $request_id = intval($_POST['request_id'] ?? 0);
+        $submittedRefundId = trim((string)($_POST['paymongo_refund_id'] ?? ''));
+        if (!$request_id || !preg_match('/^ref_[A-Za-z0-9]+$/D', $submittedRefundId)) {
+            throw new Exception('A valid PayMongo refund ID is required.');
+        }
+
+        $stmt = $conn->prepare("SELECT r.id, r.booking_id, r.payment_id, r.net_refund,
+                                      p.transaction_id, p.amount, p.status AS payment_status
+                               FROM refund_requests r
+                               JOIN payments p ON p.id = r.payment_id AND p.booking_id = r.booking_id
+                               WHERE r.id = ? AND r.status = 'approved' LIMIT 1");
+        $stmt->bind_param('i', $request_id);
+        $stmt->execute();
+        $refund = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$refund || $refund['payment_status'] !== 'verified') throw new Exception('Approved refund or verified payment was not found.');
+        $paymentId = (string)$refund['transaction_id'];
+        $amountCentavos = (int)round((float)$refund['net_refund'] * 100);
+        if (!preg_match('/^pay_[A-Za-z0-9]+$/D', $paymentId) || $amountCentavos < 100
+            || $amountCentavos > (int)round((float)$refund['amount'] * 100)) {
+            throw new Exception('The stored PayMongo payment or refund amount is invalid.');
+        }
+
+        // The administrator creates the refund in PayMongo Dashboard. The ID
+        // is only accepted after PayMongo returns matching provider data.
+        $provider = PayMongoService::retrieveRefund($submittedRefundId);
+        if (!$provider['success']) throw new Exception($provider['error']);
+        $resource = $provider['data'];
+        $attributes = $resource['attributes'] ?? [];
+        $providerRefundId = (string)($resource['id'] ?? '');
+        $providerStatus = strtolower((string)($attributes['status'] ?? ''));
+        if ($providerRefundId !== $submittedRefundId
+            || ($attributes['payment_id'] ?? '') !== $paymentId
+            || (int)($attributes['amount'] ?? 0) !== $amountCentavos
+            || ($attributes['currency'] ?? '') !== 'PHP'
+            || !in_array($providerStatus, ['pending', 'processing', 'succeeded'], true)) {
+            throw new Exception('PayMongo returned refund details that do not match this booking.');
+        }
+
+        $localStatus = $providerStatus === 'succeeded' ? 'completed' : 'processing';
+        $conn->begin_transaction();
+        try {
+            $completedSql = $localStatus === 'completed' ? 'NOW()' : 'NULL';
+            $upd = $conn->prepare("UPDATE refund_requests SET status=?, paymongo_refund_id=?, paymongo_status=?, completed_at={$completedSql} WHERE id=? AND status='approved'");
+            $upd->bind_param('sssi', $localStatus, $providerRefundId, $providerStatus, $request_id);
+            $upd->execute();
+            if ($upd->affected_rows !== 1) throw new Exception('Refund status changed before it could be saved.');
+            $upd->close();
+            $book = $conn->prepare('UPDATE bookings SET refund_status=? WHERE id=?');
+            $book->bind_param('si', $localStatus, $refund['booking_id']);
+            $book->execute();
+            $book->close();
+            if ($localStatus === 'completed') {
+                $pay = $conn->prepare("UPDATE payments SET status='refunded' WHERE id=? AND booking_id=? AND status='verified'");
+                $pay->bind_param('ii', $refund['payment_id'], $refund['booking_id']);
+                $pay->execute();
+                if ($pay->affected_rows !== 1) throw new Exception('Payment could not be marked refunded.');
+                $pay->close();
+            }
+            $conn->commit();
+        } catch (Throwable $e) {
+            $conn->rollback();
+            throw $e;
+        }
+        $response['success'] = true;
+        $response['message'] = $localStatus === 'completed' ? 'PayMongo verified the refund as succeeded.' : 'PayMongo accepted the refund and is processing it.';
+        $response['data'] = ['refund_id' => $providerRefundId, 'status' => $localStatus];
+
+    } elseif ($action === 'sync_paymongo') {
+        require_admin_access();
+        $request_id = intval($_POST['request_id'] ?? 0);
+        $stmt = $conn->prepare("SELECT r.*, p.transaction_id FROM refund_requests r JOIN payments p ON p.id=r.payment_id AND p.booking_id=r.booking_id WHERE r.id=? AND r.status='processing' LIMIT 1");
+        $stmt->bind_param('i', $request_id);
+        $stmt->execute();
+        $refund = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$refund || empty($refund['paymongo_refund_id'])) throw new Exception('Processing refund was not found.');
+        $provider = PayMongoService::retrieveRefund((string)$refund['paymongo_refund_id']);
+        if (!$provider['success']) throw new Exception($provider['error']);
+        $resource = $provider['data'];
+        $attributes = $resource['attributes'] ?? [];
+        $providerStatus = strtolower((string)($attributes['status'] ?? ''));
+        if (($resource['id'] ?? '') !== $refund['paymongo_refund_id']
+            || ($attributes['payment_id'] ?? '') !== $refund['transaction_id']
+            || (int)($attributes['amount'] ?? 0) !== (int)round((float)$refund['net_refund'] * 100)
+            || !in_array($providerStatus, ['pending', 'processing', 'succeeded', 'failed'], true)) {
+            throw new Exception('PayMongo refund verification did not match this request.');
+        }
+        if ($providerStatus === 'succeeded') {
+            $conn->begin_transaction();
+            try {
+                $upd = $conn->prepare("UPDATE refund_requests SET status='completed', paymongo_status='succeeded', completed_at=NOW() WHERE id=? AND status='processing'");
+                $upd->bind_param('i', $request_id); $upd->execute();
+                if ($upd->affected_rows !== 1) throw new Exception('Refund status changed before completion.');
+                $book = $conn->prepare("UPDATE bookings SET refund_status='completed' WHERE id=?");
+                $book->bind_param('i', $refund['booking_id']); $book->execute();
+                $pay = $conn->prepare("UPDATE payments SET status='refunded' WHERE id=? AND booking_id=? AND status='verified'");
+                $pay->bind_param('ii', $refund['payment_id'], $refund['booking_id']); $pay->execute();
+                if ($pay->affected_rows !== 1) throw new Exception('Payment could not be marked refunded.');
+                $conn->commit();
+            } catch (Throwable $e) { $conn->rollback(); throw $e; }
+            $response['success'] = true;
+            $response['message'] = 'PayMongo verified the refund as succeeded.';
+            $response['data'] = ['status' => 'completed'];
+        } else {
+            $upd = $conn->prepare('UPDATE refund_requests SET paymongo_status=? WHERE id=?');
+            $upd->bind_param('si', $providerStatus, $request_id); $upd->execute(); $upd->close();
+            $response['success'] = true;
+            $response['message'] = $providerStatus === 'failed' ? 'PayMongo reports that this refund failed.' : 'The refund is still being processed by PayMongo.';
+            $response['data'] = ['status' => 'processing', 'provider_status' => $providerStatus];
+        }
 
     } elseif ($action === 'list_pending') {
         // Get all pending refund requests (admin only)

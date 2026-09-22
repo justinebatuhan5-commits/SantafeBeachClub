@@ -10,14 +10,11 @@ $end = strpos($api, "elseif (\$action === 'list_pending')", $start ?: 0);
 if ($start === false || $end === false) throw new RuntimeException('Refund processing branch not found.');
 $branch = substr($api, $start, $end - $start);
 
-foreach (["http_response_code(501)", "'success'", "UPDATE refund_requests", "UPDATE payments", "UPDATE bookings", 'sendRefundCompletedEmail'] as $fragment) {
-    $shouldExist = $fragment === 'http_response_code(501)';
-    if (str_contains($branch, $fragment) !== $shouldExist) {
-        throw new RuntimeException('Unsafe or missing disabled-refund behavior: ' . $fragment);
-    }
+foreach (['PayMongoService::retrieveRefund', '$submittedRefundId', "'succeeded'", "UPDATE refund_requests", "UPDATE payments", "UPDATE bookings"] as $fragment) {
+    if (!str_contains($branch, $fragment)) throw new RuntimeException('Missing verified refund behavior: ' . $fragment);
 }
-if (str_contains($ui, 'PayMongo Processing Unavailable') || str_contains($ui, 'processRefund(')) {
-    throw new RuntimeException('Admin UI still exposes the unavailable refund-processing control.');
+foreach (['Record PayMongo Refund', 'Verify PayMongo Status', "fd.append('csrf_token', refundCsrfToken)"] as $fragment) {
+    if (!str_contains($ui, $fragment)) throw new RuntimeException('Missing protected refund UI: ' . $fragment);
 }
 
-echo "PayMongo refund processing is disabled without changing financial records.\n";
+echo "PayMongo refunds require provider IDs, exact payment/amount matching, and succeeded verification.\n";

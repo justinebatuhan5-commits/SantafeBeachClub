@@ -239,4 +239,50 @@ class PayMongoService
         $errMsg = $result['errors'][0]['detail'] ?? ('Failed to retrieve session (HTTP ' . $httpCode . ')');
         return ['success' => false, 'error' => $errMsg];
     }
+
+    /** Retrieve a refund so pending refunds can only complete after provider verification. */
+    public static function retrieveRefund(string $refundId): array
+    {
+        if (!preg_match('/^ref_[A-Za-z0-9]+$/D', $refundId)) {
+            return ['success' => false, 'error' => 'Invalid PayMongo refund ID.'];
+        }
+        return self::refundRequest('GET', '/refunds/' . rawurlencode($refundId));
+    }
+
+    private static function refundRequest(string $method, string $path, ?array $payload = null): array
+    {
+        $secretKey = self::getSecretKey();
+        if (!preg_match('/^sk_(test|live)_/', $secretKey)) {
+            return ['success' => false, 'error' => 'PayMongo API key is not configured.'];
+        }
+
+        $ch = curl_init(self::BASE_URL . $path);
+        $headers = [
+            'Accept: application/json',
+            'Authorization: Basic ' . base64_encode($secretKey . ':'),
+        ];
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        if ($payload !== null) {
+            $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            $headers[] = 'Content-Type: application/json';
+        }
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        $body = curl_exec($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError !== '') return ['success' => false, 'error' => 'Could not contact PayMongo.'];
+        $decoded = json_decode((string)$body, true);
+        if ($httpCode >= 200 && $httpCode < 300 && isset($decoded['data'])) {
+            return ['success' => true, 'data' => $decoded['data']];
+        }
+        $message = $decoded['errors'][0]['detail'] ?? $decoded['errors'][0]['code'] ?? 'PayMongo rejected the refund request.';
+        return ['success' => false, 'error' => (string)$message];
+    }
 }
