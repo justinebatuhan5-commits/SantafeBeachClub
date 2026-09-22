@@ -5,7 +5,8 @@
  *
  * The frontend calls this PHP file for all analytics requests.
  * It forwards the request to the Python Flask service running on port 5000 with the required API Key,
- * returns the Python response as JSON, and falls back to native PHP logic if Python is offline.
+ * returns the Python response as JSON, and falls back to native PHP logic unless
+ * ANALYTICS_REQUIRE_PYTHON is enabled for connector verification.
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -17,6 +18,8 @@ require_api_auth($conn, 'admin');
 RateLimiter::enforce($conn, 'analytics_proxy', 120, 60);
 
 $action = $_GET['action'] ?? '';
+$requirePython = filter_var(getenv('ANALYTICS_REQUIRE_PYTHON') ?: false, FILTER_VALIDATE_BOOLEAN);
+$pythonFailure = 'The Python analytics service is not configured or unavailable.';
 
 // ── Try Python service (local Flask or remote Render) ────────────────────────
 if (function_exists('curl_init')) {
@@ -40,6 +43,8 @@ if (function_exists('curl_init')) {
         $analyticsApiKey = (string)(getenv('ANALYTICS_API_KEY') ?: '');
         if ($analyticsBaseUrl !== '' && $analyticsApiKey !== '') {
             $python_url = $analyticsBaseUrl . '/api/' . urlencode($action);
+        } elseif ($requirePython) {
+            $pythonFailure = 'Python analytics is required but its service URL or API key is missing.';
         }
     }
 
@@ -66,7 +71,16 @@ if (function_exists('curl_init')) {
             echo $python_response;
             exit;
         }
+        $pythonFailure = 'Python analytics did not return a successful response (HTTP ' . (int)$http_code . ').';
     }
+}
+
+// During connector verification, never serve PHP results in place of Python.
+if ($requirePython) {
+    error_log('[analytics_proxy] ' . $pythonFailure);
+    http_response_code(503);
+    echo json_encode(['success' => false, 'error' => $pythonFailure]);
+    exit;
 }
 
 // ── Fallback: Native PHP analytics (if Python service is not running) ─────────
