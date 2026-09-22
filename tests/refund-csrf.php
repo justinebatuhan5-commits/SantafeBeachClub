@@ -9,14 +9,14 @@ foreach ([
     "require_once __DIR__ . '/../helpers/csrf_helper.php'",
     "(\$_SERVER['REQUEST_METHOD'] ?? '') !== 'POST'",
     'verify_csrf_token()',
-    "['submit_request', 'approve', 'reject', 'process_paymongo']",
+    "['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo']",
 ] as $fragment) {
     if (!str_contains($api, $fragment)) {
         throw new RuntimeException('Missing refund request safeguard: ' . $fragment);
     }
 }
-if (substr_count($ui, "fd.append('csrf_token', refundCsrfToken)") !== 2) {
-    throw new RuntimeException('Admin approval and rejection do not both send a CSRF token.');
+if (substr_count($ui, "fd.append('csrf_token', refundCsrfToken)") !== 3) {
+    throw new RuntimeException('Admin approval, rejection, and approval cancellation do not all send a CSRF token.');
 }
 
 echo "Every state-changing refund API action requires POST and CSRF validation.\n";

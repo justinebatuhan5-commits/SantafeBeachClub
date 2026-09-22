@@ -520,6 +520,10 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                                 PayMongo Processing Unavailable
                             </button>
+                            <button class="btn-reject" type="button" onclick="cancelRefundApproval(<?php echo $refund['id']; ?>, this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                Cancel Refund Approval
+                            </button>
                         <?php endif; ?>
                         <button class="btn-secondary-sm" onclick="viewDetails(<?php echo $refund['id']; ?>)">
                             View Details
@@ -641,6 +645,28 @@ foreach ($valid_statuses as $s) {
                     btn.disabled = false;
                     showToast('Network error. Please try again.', 'error');
                 });
+        }
+
+        async function cancelRefundApproval(refundId, btn) {
+            if (!await SiteDialog.confirm('Cancel this refund approval? No payment or booking record will be changed. The request will move to Rejected.', { title: 'Cancel refund approval?', confirmText: 'Cancel approval', danger: true })) return;
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = 'Cancelling...';
+            const fd = new FormData();
+            fd.append('request_id', refundId);
+            fd.append('reason', 'Refund approval cancelled by management before payment processing.');
+            fd.append('csrf_token', refundCsrfToken);
+            try {
+                const response = await fetch('../backend/api/refund_request_api.php?action=cancel_approval', { method: 'POST', body: fd });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'Could not cancel approval.');
+                showToast('Refund approval cancelled. No money was refunded.', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } catch (error) {
+                btn.disabled = false;
+                btn.innerHTML = original;
+                showToast(error.message || 'Network error. Please try again.', 'error');
+            }
         }
 
         function viewDetails(refundId) {

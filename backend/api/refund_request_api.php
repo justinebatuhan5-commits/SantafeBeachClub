@@ -47,7 +47,7 @@ function require_refund_state_change_request(): void
     }
 }
 
-if (in_array($action, ['submit_request', 'approve', 'reject', 'process_paymongo'], true)) {
+if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo'], true)) {
     require_refund_state_change_request();
 }
 
@@ -440,6 +440,76 @@ try {
 
         $response['success'] = true;
         $response['message'] = 'Refund request rejected.';
+
+    } elseif ($action === 'cancel_approval') {
+        // Revoke an approval before any external refund has been processed.
+        require_admin_access();
+        $request_id = intval($_POST['request_id'] ?? 0);
+        $reason = trim((string)($_POST['reason'] ?? 'Refund approval cancelled by management.'));
+        $actor = (string)($_SESSION['admin_username'] ?? 'system');
+        if (!$request_id || $reason === '') throw new Exception('Request ID and reason are required.');
+
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("
+                SELECT r.booking_id, b.guest_name, b.guest_email, b.accommodation_name
+                FROM refund_requests r
+                JOIN bookings b ON b.id = r.booking_id
+                WHERE r.id = ? AND r.status = 'approved'
+                FOR UPDATE
+            ");
+            $stmt->bind_param('i', $request_id);
+            $stmt->execute();
+            $refund = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if (!$refund) throw new RuntimeException('Only an approved, unprocessed refund can be cancelled.');
+
+            $update = $conn->prepare("
+                UPDATE refund_requests
+                SET status='rejected', rejection_reason=?, approved_by=?, approved_at=NOW()
+                WHERE id=? AND status='approved'
+            ");
+            $update->bind_param('ssi', $reason, $actor, $request_id);
+            $update->execute();
+            if ($update->affected_rows !== 1) throw new RuntimeException('Refund approval was not cancelled.');
+            $update->close();
+
+            $bookingUpdate = $conn->prepare("UPDATE bookings SET refund_status='rejected' WHERE id=?");
+            $bookingUpdate->bind_param('i', $refund['booking_id']);
+            $bookingUpdate->execute();
+            $bookingUpdate->close();
+
+            $actionName = 'Refund Approval Cancelled';
+            $details = 'Refund request #' . $request_id . ' was cancelled before payment processing. Reason: ' . $reason;
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $log = $conn->prepare("INSERT INTO activity_logs (admin_username,action,details,ip_address) VALUES (?,?,?,?)");
+            $log->bind_param('ssss', $actor, $actionName, $details, $ip);
+            $log->execute();
+            $log->close();
+
+            $title = 'Refund Approval Cancelled';
+            $message = "The approved refund request for {$refund['accommodation_name']} was cancelled. Reason: {$reason}";
+            $type = 'warning';
+            $notification = $conn->prepare("INSERT INTO notifications (title,message,type,booking_id) VALUES (?,?,?,?)");
+            $notification->bind_param('sssi', $title, $message, $type, $refund['booking_id']);
+            $notification->execute();
+            $notification->close();
+            $conn->commit();
+        } catch (Throwable $e) {
+            $conn->rollback();
+            throw $e;
+        }
+
+        if (!empty($refund['guest_email'])) {
+            @sendRefundRejectedEmail(
+                $refund['guest_email'],
+                $refund['guest_name'],
+                'REF-' . str_pad($refund['booking_id'], 3, '0', STR_PAD_LEFT),
+                $reason
+            );
+        }
+        $response['success'] = true;
+        $response['message'] = 'Refund approval cancelled. The booking and payment were not changed.';
 
     } elseif ($action === 'process_paymongo') {
         // Deliberately disabled until a real PayMongo refund request and its
