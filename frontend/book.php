@@ -430,7 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $room_value = $room_id === null ? "NULL" : (string)$room_id;
                     $sql = "INSERT INTO bookings (guest_name, guest_email, guest_type, check_in, check_out, guests_count, extra_adults, extra_children, room_id, accommodation_name, eta, status, checkin_token, cancellation_token, payment_method, guest_phone, guest_country, guest_special_requests, promo_code, discount_amount)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, " . $room_value . ", ?, ?, 'Pending Payment', ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, " . $room_value . ", ?, ?, 'Pending Payment', ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
                     $stmt->bind_param("sssssiiisssssssssd", $guest_name, $guest_email, $guest_type, $checkin, $checkout, $guests_total, $extra_adults, $extra_children, $db_acc_name, $eta, $checkin_token, $cancel_token, $payment_method, $guest_phone, $guest_country, $guest_special_requests, $applied_promo_code, $discount_amount);
 
