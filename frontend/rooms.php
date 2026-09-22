@@ -138,7 +138,7 @@ $type_long_descriptions = [
     'beachview_duplex' => "Front-row. Serene. Intimate. Sensual.\nCozy Modern Tropical bedroom is the other half of the duplex structure facing the beach. Perfect people watching spot by your terrace or enjoy the property's entire beach view inside your room.\nYou can even transform to a blackout window cave-like dwelling with the drop-down projector screen.",
     'seaview_duplex'   => "Front-row. Inspiring. Captivating. Sensual.\nDesigned to make you never want to leave your room. A reading nook and desk crafted to connect you to nature while your cozy bedroom feels like a warm embrace even introverts would love.\nA secret back door offers direct access to the allure of the sea calling just beyond.",
     'beach_villa'      => "Beachfront. Natural light-filled. Calm.\nAn intimate 59sqm tropical modern coastal accommodation featuring atmospheric high ceilings to maximize a biophilic natural light-filled layout.\n*26 sqm bedroom 2x Queen beds\n*12 sqm glass-walled shower room with dual skylit vanity lavatories\n*4 sqm pocket garden for air-drying\n*10 sqm Covered beachfront lounge\n\nMaximum of 2 kids for free, 10 years and below.",
-    'standard_room'    => "Standard Room\nMaximum of 2 kids for free, 10 years and below.\nMaximum occupancy of 2 adults.",
+    'standard_room'    => "Standard Room\nMaximum of 2 kids for free, 10 years and below.\nMaximum occupancy of 5 guests.",
     'standard_king'    => "Standard Family Room\nMaximum of 2 kids for free, 10 years and below.",
 ];
 
@@ -1257,6 +1257,13 @@ function syncRoomTabsOffset() {
 /* â”€â”€ Booking summary state â”€â”€ */
 var selectedRooms = {};
 var extraPersonsByType = {};
+var extraPersonLimits = {
+    beachview_duplex: { adults: 1, children: 1 },
+    seaview_duplex:   { adults: 1, children: 1 },
+    beach_villa:      { adults: 3, children: 2 },
+    standard_room:    { adults: 3, children: 0 },
+    standard_king:    { adults: 1, children: 0 }
+};
 
 function roomSelectChanged(sel) {
     // Update the book URL with the specific room ID selected
@@ -1440,11 +1447,16 @@ function getSelectedRoomQty(type) {
 function renderExtraPersonsPanel(type) {
     var qty = getSelectedRoomQty(type);
     var rowsWrap = document.getElementById('extra-rows-' + type);
+    var limits = extraPersonLimits[type] || { adults: 0, children: 0 };
     var values = extraPersonsByType[type] || [];
     values = values.slice(0, qty);
     while (values.length < qty) {
         values.push({ adults: 0, children: 0 });
     }
+    values.forEach(function(item) {
+        item.adults = Math.min(limits.adults, Math.max(0, parseInt(item.adults, 10) || 0));
+        item.children = Math.min(limits.children, Math.max(0, parseInt(item.children, 10) || 0));
+    });
     extraPersonsByType[type] = values;
 
     rowsWrap.innerHTML = '';
@@ -1461,7 +1473,7 @@ function renderExtraPersonsPanel(type) {
         adultWrap.className = 'rate-extra-select-wrap';
         var adultSelect = document.createElement('select');
         adultSelect.className = 'rate-extra-select';
-        [0, 1, 2, 3, 4].forEach(function(count) {
+        Array.from({ length: limits.adults + 1 }, function(_, count) { return count; }).forEach(function(count) {
             var opt = document.createElement('option');
             opt.value = count;
             opt.textContent = count + ' adult' + (count !== 1 ? 's' : '');
@@ -1482,7 +1494,7 @@ function renderExtraPersonsPanel(type) {
         childWrap.className = 'rate-extra-select-wrap';
         var childSelect = document.createElement('select');
         childSelect.className = 'rate-extra-select';
-        [0, 1, 2].forEach(function(count) {
+        Array.from({ length: limits.children + 1 }, function(_, count) { return count; }).forEach(function(count) {
             var opt = document.createElement('option');
             opt.value = count;
             opt.textContent = count + ' child' + (count === 1 ? '' : 'ren');
@@ -1500,7 +1512,7 @@ function renderExtraPersonsPanel(type) {
 
         row.appendChild(label);
         row.appendChild(adultWrap);
-        row.appendChild(childWrap);
+        if (limits.children > 0) row.appendChild(childWrap);
         rowsWrap.appendChild(row);
     });
 

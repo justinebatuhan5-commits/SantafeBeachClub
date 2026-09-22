@@ -57,9 +57,9 @@ return static function (mysqli $db): void {
         ['101','Beachview Duplex 101','beachview_duplex',6900.00,2], ['102','Seaview Duplex 102','seaview_duplex',7900.00,2],
         ['103','Beach Villa 103','beach_villa',7900.00,4], ['104','Beach Villa 104','beach_villa',7900.00,4],
         ['105','Beach Villa 105','beach_villa',7900.00,4], ['106','Standard Family Room 106','standard_king',4300.00,4],
-        ['203','Standard Family Room 203','standard_king',4300.00,4], ['107','Standard Room 107','standard_room',2900.00,2],
-        ['108','Standard Room 108','standard_room',2900.00,2], ['109','Standard Room 109','standard_room',2900.00,2],
-        ['110','Standard Room 110','standard_room',2900.00,2],
+        ['203','Standard Family Room 203','standard_king',4300.00,4], ['107','Standard Room 107','standard_room',2900.00,5],
+        ['108','Standard Room 108','standard_room',2900.00,5], ['109','Standard Room 109','standard_room',2900.00,5],
+        ['110','Standard Room 110','standard_room',2900.00,5],
     ];
     $room = $db->prepare("INSERT IGNORE INTO rooms (room_number,name,type,price_per_night,capacity,status) VALUES (?,?,?,?,?,'ready')");
     foreach ($rooms as [$number,$name,$type,$price,$capacity]) { $room->bind_param('sssdi',$number,$name,$type,$price,$capacity); $room->execute(); }

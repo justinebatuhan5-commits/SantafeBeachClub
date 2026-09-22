@@ -187,7 +187,7 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
         'seaview_duplex'   => 2,
         'beach_villa'      => 4,
         'standard_king'    => 4,
-        'standard_room'    => 2,
+        'standard_room'    => 5,
     ];
     $baseCapacity = $includedCapacity[$roomType] ?? 2;
     $extraAdults = max(0, $guests - $baseCapacity);
