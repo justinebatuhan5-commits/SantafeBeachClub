@@ -532,7 +532,7 @@ $bookings_query = $conn->query("
         .pay-card-inner .icon { font-size: 20px; }
         .pay-card-inner .label { font-size: 12px; }
     </style>
-<script src="assets/js/site-dialog.js?v=1"></script>
+<script src="assets/js/site-dialog.js?v=2"></script>
 </head>
 <body>
 
@@ -1256,7 +1256,8 @@ async function handleCheckinClick(event, bookingId, guestName, accName, totalCos
         {
             title: isEarly ? 'Early check-in warning' : 'Confirm guest check-in',
             confirmText: hasBalance ? 'Continue to payment' : 'Yes, check in guest',
-            danger: isEarly
+            danger: isEarly,
+            icon: isEarly ? '⚠' : (isOverdue ? '!' : '✓')
         }
     );
     if (!accepted) return;

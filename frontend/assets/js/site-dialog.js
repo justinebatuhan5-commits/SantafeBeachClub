@@ -31,7 +31,7 @@
             dialog.innerHTML = '<div class="site-dialog-brand">Santa Fe Beach Club</div><div class="site-dialog-icon" aria-hidden="true"></div><h2 id="site-dialog-title"></h2><p id="site-dialog-message"></p><div class="site-dialog-actions"><button type="button" class="site-dialog-cancel">Cancel</button><button type="button" class="site-dialog-ok"></button></div>';
             dialog.querySelector('h2').textContent = options.title || (options.confirm ? 'Please confirm' : 'Notice');
             dialog.querySelector('p').textContent = String(message);
-            dialog.querySelector('.site-dialog-icon').textContent = options.confirm ? '!' : 'i';
+            dialog.querySelector('.site-dialog-icon').textContent = options.icon || (options.confirm ? '!' : 'i');
             const cancel = dialog.querySelector('.site-dialog-cancel');
             const ok = dialog.querySelector('.site-dialog-ok');
             cancel.hidden = !options.confirm;
