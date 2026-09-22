@@ -294,7 +294,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- Save property settings ---
     if ($action === 'save_property') {
-        $fields = ['property_name', 'property_address', 'property_phone', 'property_email', 'checkin_time', 'checkout_time', 'property_timezone', 'currency', 'gcash_number', 'gcash_name'];
+        RBAC::requireRole('admin');
+        $fields = ['property_name', 'property_address', 'property_phone', 'property_email', 'checkin_time', 'checkout_time', 'property_timezone', 'currency'];
         $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
         foreach ($fields as $key) {
             $val = $key === 'property_timezone'
@@ -306,6 +307,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
         date_default_timezone_set(sf_normalize_timezone_identifier($_POST['property_timezone'] ?? null));
         $success = 'Property settings saved successfully.';
+    }
+
+    if ($action === 'save_payment_instructions') {
+        RBAC::requireRole('admin');
+        $paymentFields = ['gcash_number', 'gcash_name', 'discount_bank_name', 'discount_bank_account', 'discount_bank_holder'];
+        $paymentValues = [];
+        foreach ($paymentFields as $key) {
+            $value = trim((string)($_POST[$key] ?? ''));
+            if (strlen($value) > 150) {
+                $error = 'Payment details must be no longer than 150 characters.';
+                break;
+            }
+            $paymentValues[$key] = $value;
+        }
+        if ($error === '') {
+            $stmt = $conn->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            foreach ($paymentValues as $key => $value) {
+                $stmt->bind_param('ss', $key, $value);
+                $stmt->execute();
+            }
+            $stmt->close();
+            SecurityLogger::log($conn, 'PAYMENT_INSTRUCTIONS_UPDATED', 'Updated manual payment instructions', SecurityLogger::LEVEL_INFO, $current_admin);
+            $success = 'Payment instructions saved successfully.';
+        }
     }
 }
 
@@ -967,24 +992,6 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         <hr class="section-divider">
 
                         <p class="subsection-title">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                            GCash Payment Details (Guest Checkout)
-                        </p>
-
-                        <div class="form-row">
-                            <div>
-                                <label>GCash Mobile Number</label>
-                                <input type="text" name="gcash_number" value="<?php echo htmlspecialchars($settings['gcash_number'] ?? '0950 522 3146'); ?>" placeholder="0950 522 3146">
-                            </div>
-                            <div>
-                                <label>GCash Account Name</label>
-                                <input type="text" name="gcash_name" value="<?php echo htmlspecialchars($settings['gcash_name'] ?? 'Justine B'); ?>" placeholder="e.g. Justine B">
-                            </div>
-                        </div>
-
-                        <hr class="section-divider">
-
-                        <p class="subsection-title">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                             Default Times, Timezone &amp; Currency
                         </p>
@@ -1032,6 +1039,42 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         <div class="form-actions">
                             <button type="submit" class="btn-save">Save Property Settings</button>
                         </div>
+                    </form>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Manual Payment Instructions</h3>
+                    <p class="card-desc">Only configure accounts authorized to receive hotel payments. A method stays hidden until all required fields are supplied.</p>
+                    <form method="POST" class="settings-form">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="save_payment_instructions">
+                        <div class="form-row">
+                            <div>
+                                <label for="gcash_number">GCash Number</label>
+                                <input id="gcash_number" name="gcash_number" type="text" maxlength="150" value="<?= htmlspecialchars($settings['gcash_number'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter GCash number">
+                            </div>
+                            <div>
+                                <label for="gcash_name">GCash Account Name</label>
+                                <input id="gcash_name" name="gcash_name" type="text" maxlength="150" value="<?= htmlspecialchars($settings['gcash_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter GCash account name">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label for="discount_bank_name">Bank Name</label>
+                                <input id="discount_bank_name" name="discount_bank_name" type="text" maxlength="150" value="<?= htmlspecialchars($settings['discount_bank_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter bank name">
+                            </div>
+                            <div>
+                                <label for="discount_bank_account">Bank Account Number</label>
+                                <input id="discount_bank_account" name="discount_bank_account" type="text" maxlength="150" value="<?= htmlspecialchars($settings['discount_bank_account'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter bank account number">
+                            </div>
+                        </div>
+                        <div class="form-row single">
+                            <div>
+                                <label for="discount_bank_holder">Bank Account Holder</label>
+                                <input id="discount_bank_holder" name="discount_bank_holder" type="text" maxlength="150" value="<?= htmlspecialchars($settings['discount_bank_holder'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter bank account holder">
+                            </div>
+                        </div>
+                        <div class="form-actions"><button type="submit" class="btn-save">Save Payment Instructions</button></div>
                     </form>
                 </div>
 

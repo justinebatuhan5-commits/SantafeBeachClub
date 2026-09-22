@@ -12,16 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
     try {
         $action = $_POST['action'] ?? '';
-        if ($action === 'settings') {
-            if (($_SESSION['admin_role'] ?? '') !== 'admin') throw new RuntimeException('Only administrators can change payment details.');
-            foreach (['gcash_number','gcash_name','discount_bank_name','discount_bank_account','discount_bank_holder'] as $key) {
-                $value = trim($_POST[$key] ?? '');
-                if (strlen($value)>150) throw new RuntimeException('Payment details must be shorter than 150 characters.');
-                pm_query($conn,'INSERT INTO settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)',[$key,$value]);
-            }
-            log_activity($conn,$actor,'Updated manual payment details','Discount payment options');
-            $message = 'Payment instructions saved.';
-        } elseif (in_array($action,['approve','decline','information'],true)) {
+        if (in_array($action,['approve','decline','information'],true)) {
             discount_review($conn,$id,$action,trim($_POST['note'] ?? ''),$actor);
             $sent = discount_email($conn,$id);
             $message = $sent ? 'Decision saved and guest emailed with their private booking/payment link.' : 'Decision saved, but email failed. Copy the private link below or retry email.';
@@ -41,8 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch(Throwable $e) { $error=$e instanceof mysqli_sql_exception ? 'The update could not be saved. Please refresh and retry.' : $e->getMessage(); }
 }
 $d = $id ? pm_query($conn,'SELECT d.*,b.guest_name,b.guest_email,b.accommodation_name,b.status FROM booking_discounts d JOIN bookings b ON b.id=d.booking_id WHERE d.booking_id=?',[$id])->get_result()->fetch_assoc() : null;
-$settings=[]; $sr=$conn->query("SELECT setting_key,setting_value FROM settings WHERE setting_key IN ('gcash_number','gcash_name','discount_bank_name','discount_bank_account','discount_bank_holder')");
-while($s=$sr->fetch_assoc()) $settings[$s['setting_key']]=$s['setting_value'];
 ?>
 <?php
 $active_page = 'discount_requests';
@@ -251,28 +240,42 @@ $active_page = 'discount_requests';
 </section>
 
 <section class="discount-card">
-    <div class="discount-card-title">
-        <h2>Audit History</h2>
-    </div>
-    <div class="audit-timeline">
-    <?php 
-    $history=pm_query($conn,'SELECT * FROM discount_history WHERE booking_id=? ORDER BY id DESC',[$id])->get_result(); 
-    if(!$history->num_rows):
+    <?php
+    $historyResult=pm_query($conn,'SELECT * FROM discount_history WHERE booking_id=? ORDER BY id DESC',[$id])->get_result();
+    $historyRows=$historyResult->fetch_all(MYSQLI_ASSOC);
+    $historyCount=count($historyRows);
     ?>
+    <div class="discount-card-title audit-heading">
+        <div>
+            <h2>Audit History</h2>
+            <p>Latest booking activity</p>
+        </div>
+        <span class="audit-count"><?= $historyCount ?> <?= $historyCount === 1 ? 'event' : 'events' ?></span>
+    </div>
+    <div class="audit-timeline" id="auditTimeline">
+    <?php if(!$historyCount): ?>
         <p style="color:var(--text-muted); margin:0;">No audit entries recorded yet.</p>
-    <?php else: while($h=$history->fetch_assoc()): ?>
-        <div class="audit-entry">
-            <div class="audit-dot"></div>
-            <div>
+    <?php else: foreach($historyRows as $index=>$h): ?>
+        <div class="audit-entry<?= $index >= 5 ? ' audit-entry-extra' : '' ?>"<?= $index >= 5 ? ' hidden' : '' ?>>
+            <div class="audit-dot" aria-hidden="true"></div>
+            <div class="audit-content">
                 <div class="audit-title"><?= dh($h['action']) ?></div>
-                <div class="audit-meta"><?= dh($h['actor']) ?> &bull; <?= dh($h['created_at']) ?></div>
                 <?php if($h['details']): ?>
                     <div class="audit-details"><?= dh($h['details']) ?></div>
                 <?php endif; ?>
             </div>
+            <div class="audit-meta">
+                <span><?= dh($h['actor']) ?></span>
+                <time datetime="<?= dh($h['created_at']) ?>"><?= dh(date('M j, Y · g:i A', strtotime($h['created_at']))) ?></time>
+            </div>
         </div>
-    <?php endwhile; endif; ?>
+    <?php endforeach; endif; ?>
     </div>
+    <?php if($historyCount > 5): ?>
+        <button type="button" class="audit-toggle" id="auditToggle" aria-expanded="false" aria-controls="auditTimeline">
+            Show <?= $historyCount - 5 ?> more events <span aria-hidden="true">&#8595;</span>
+        </button>
+    <?php endif; ?>
 </section>
 
 <?php else: ?>
@@ -315,29 +318,6 @@ $active_page = 'discount_requests';
     </table>
 </section>
 
-<?php if(($_SESSION['admin_role']??'')==='admin'): ?>
-<section class="discount-card">
-    <div class="discount-card-title">
-        <h2>Manual Payment Instructions</h2>
-    </div>
-    <p style="color:var(--text-muted); font-size:14px; margin-top:0;">Only configure accounts authorized to receive hotel payments. A method stays hidden until all its fields are supplied.</p>
-    <form method="post">
-        <?= csrf_field() ?>
-        <input type="hidden" name="action" value="settings">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-            <?php foreach(['gcash_number'=>'GCash Number','gcash_name'=>'GCash Account Name','discount_bank_name'=>'Bank Name','discount_bank_account'=>'Bank Account Number','discount_bank_holder'=>'Bank Account Holder'] as $key=>$label): ?>
-            <div>
-                <label><?= dh($label) ?></label>
-                <input name="<?= dh($key) ?>" value="<?= dh($settings[$key]??'') ?>" maxlength="150" placeholder="Enter <?= strtolower($label) ?>...">
-            </div>
-            <?php endforeach ?>
-        </div>
-        <div style="margin-top:20px;">
-            <button class="discount-button">Save Payment Instructions</button>
-        </div>
-    </form>
-</section>
-<?php endif ?>
 <?php endif ?>
         </div><!-- /.discount-shell -->
     </div><!-- /.admin-body -->
@@ -374,6 +354,16 @@ const modalErrorDetail = document.getElementById('imageModalErrorDetail');
 const closeBtn = document.getElementById('closeImageModal');
 let documentObjectUrl = null;
 let documentRequest = null;
+
+const auditToggle = document.getElementById('auditToggle');
+auditToggle?.addEventListener('click', () => {
+    const expanded = auditToggle.getAttribute('aria-expanded') === 'true';
+    document.querySelectorAll('.audit-entry-extra').forEach(entry => { entry.hidden = expanded; });
+    auditToggle.setAttribute('aria-expanded', String(!expanded));
+    auditToggle.innerHTML = expanded
+        ? `Show <?= max(0, ($historyCount ?? 0) - 5) ?> more events <span aria-hidden="true">&#8595;</span>`
+        : 'Show less <span aria-hidden="true">&#8593;</span>';
+});
 
 document.querySelectorAll('.js-preview-doc').forEach(btn => {
     btn.addEventListener('click', async () => {

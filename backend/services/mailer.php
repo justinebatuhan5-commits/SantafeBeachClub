@@ -157,8 +157,20 @@ function sendBookingStatusEmail(
             }
         }
 
-        // Generate invoice URL from checkin URL
-        $invoice_url = $checkin_url ? str_replace('/checkin?', '/invoice?', $checkin_url) : '';
+        // Use the real PHP file because extensionless routes are not reliable on all hosts.
+        $invoice_url = '';
+        if ($checkin_url) {
+            $checkin_parts = parse_url($checkin_url);
+            if (!empty($checkin_parts['scheme']) && !empty($checkin_parts['host'])) {
+                parse_str($checkin_parts['query'] ?? '', $checkin_query);
+                $invoice_token = (string)($checkin_query['token'] ?? '');
+                $invoice_origin = $checkin_parts['scheme'] . '://' . $checkin_parts['host']
+                    . (isset($checkin_parts['port']) ? ':' . (int)$checkin_parts['port'] : '');
+                $invoice_directory = rtrim(str_replace('\\', '/', dirname($checkin_parts['path'] ?? '/')), '/');
+                $invoice_url = $invoice_origin . $invoice_directory . '/invoice.php?ref=' . rawurlencode($booking_ref)
+                    . '&token=' . rawurlencode($invoice_token);
+            }
+        }
 
         // Content
         $checkin_fmt  = date('D, M j, Y', strtotime($check_in));

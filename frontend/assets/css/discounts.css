@@ -552,22 +552,43 @@ body.discount-page {
 .audit-timeline {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 12px;
+  margin-top: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.audit-heading {
+  align-items: center;
+}
+
+.audit-heading p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.audit-count {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .audit-entry {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) minmax(150px, auto);
+  gap: 12px;
+  align-items: center;
   position: relative;
-  padding-bottom: 16px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .audit-entry:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
 .audit-dot {
@@ -575,14 +596,24 @@ body.discount-page {
   height: 10px;
   border-radius: 50%;
   background: var(--primary);
-  margin-top: 6px;
   flex-shrink: 0;
   box-shadow: 0 0 0 3px var(--primary-subtle);
 }
 
 .audit-meta {
-  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 12px;
   color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.audit-meta span {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .audit-title {
@@ -592,9 +623,41 @@ body.discount-page {
 }
 
 .audit-details {
-  font-size: 13px;
+  overflow: hidden;
+  font-size: 12.5px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audit-toggle {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #FFFFFF;
+  color: var(--primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.audit-toggle:hover {
+  background: var(--primary-light);
+}
+
+@media (max-width: 700px) {
+  .audit-entry {
+    grid-template-columns: 10px minmax(0, 1fr);
+  }
+  .audit-meta {
+    grid-column: 2;
+    align-items: flex-start;
+    white-space: normal;
+  }
 }
 
 /* ── Lightbox Image Modal ── */

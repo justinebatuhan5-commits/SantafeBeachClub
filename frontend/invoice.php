@@ -89,7 +89,7 @@ $created_fmt = date('F j, Y g:i A', strtotime($booking['created_at'] ?? 'now'));
 $base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
           . '://' . $_SERVER['HTTP_HOST']
           . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
-$checkin_url = $base_url . '/checkin?ref=' . urlencode($booking_ref) . '&token=' . urlencode($booking['checkin_token'] ?? '');
+$checkin_url = $base_url . '/checkin.php?ref=' . urlencode($booking_ref) . '&token=' . urlencode($booking['checkin_token'] ?? '');
 
 $qr_dir = __DIR__ . '/assets/qrcodes/';
 if (!is_dir($qr_dir)) {
