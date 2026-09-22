@@ -10,17 +10,18 @@ require_once __DIR__ . '/../backend/helpers/prearrival_reminder_helper.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'checkin') {
     $booking_id = intval($_POST['booking_id']);
     $discountCheckin = pm_query($conn, 'SELECT * FROM booking_discounts WHERE booking_id=?', [$booking_id])->get_result()->fetch_assoc();
-    if ($discountCheckin && ($discountCheckin['state'] !== 'Confirmed' || discount_due($conn, $discountCheckin) > 0)) {
+    if ($discountCheckin && $discountCheckin['state'] !== 'Confirmed') {
         header('Location: discount_requests.php?booking=' . $booking_id);
         exit;
     }
-    if ($discountCheckin) $_POST['collect_payment'] = '0';
     $print_params = '';
     
     // Check if there is a payment to record
     if (isset($_POST['collect_payment']) && $_POST['collect_payment'] === '1') {
         $payment_method = $_POST['payment_method'] ?? 'Front Desk Cash';
-        $balance_amount = floatval($_POST['balance_amount'] ?? 0);
+        $balance_amount = $discountCheckin
+            ? discount_due($conn, $discountCheckin) / 100
+            : floatval($_POST['balance_amount'] ?? 0);
         
         $amount_tendered = isset($_POST['amount_tendered']) && $_POST['amount_tendered'] !== '' ? floatval($_POST['amount_tendered']) : $balance_amount;
         $change_amount = isset($_POST['change_amount']) && $_POST['change_amount'] !== '' ? floatval($_POST['change_amount']) : 0;
@@ -42,7 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $p_stmt = $conn->prepare("INSERT INTO payments (booking_id, guest_name, guest_email, amount, payment_method, transaction_id, status, accounting_status, amount_tendered, change_amount) VALUES (?, ?, ?, ?, ?, ?, 'verified', 'deferred', ?, ?)");
                 $p_stmt->bind_param("issdssdd", $booking_id, $guest_name, $guest_email, $balance_amount, $payment_method, $txn_id, $amount_tendered, $change_amount);
                 $p_stmt->execute();
+                $payment_id = (int)$conn->insert_id;
                 $p_stmt->close();
+
+                if ($discountCheckin) {
+                    pm_query($conn, 'INSERT INTO discount_payments (payment_id, booking_id, purpose, reference_key) VALUES (?, ?, \'balance\', NULL)', [$payment_id, $booking_id]);
+                    discount_audit($conn, $booking_id, $_SESSION['admin_username'] ?? 'Reception', 'Balance paid at check-in', $payment_method . ' · ' . $txn_id);
+                }
                 
                 $print_params = "&print_rcpt=1&bid=" . urlencode($booking_id) . "&txn=" . urlencode($txn_id) . "&method=" . urlencode($payment_method) . "&amount=" . urlencode($balance_amount) . "&tendered=" . urlencode($amount_tendered) . "&change=" . urlencode($change_amount);
                 
@@ -245,6 +252,7 @@ if (!empty($ref) && !empty($token)) {
             DATEDIFF(b.check_out, b.check_in) AS nights,
             COALESCE(r.price_per_night, rt.price, 0) AS price_per_night,
             COALESCE((SELECT d.total_centavos / 100 FROM booking_discounts d WHERE d.booking_id=b.id), DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
+            (SELECT d.category FROM booking_discounts d WHERE d.booking_id=b.id) AS discount_category,
             (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.booking_id = b.id AND p.status = 'verified') AS amount_paid
         FROM bookings b
         LEFT JOIN rooms r ON b.room_id = r.id
@@ -284,6 +292,7 @@ $bookings_query = $conn->query("
         DATEDIFF(b.check_out, b.check_in) AS nights,
         COALESCE(r.price_per_night, rt.price, 0) AS price_per_night,
         COALESCE((SELECT d.total_centavos / 100 FROM booking_discounts d WHERE d.booking_id=b.id), DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
+        (SELECT d.category FROM booking_discounts d WHERE d.booking_id=b.id) AS discount_category,
         (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.booking_id = b.id AND p.status = 'verified') AS amount_paid
     FROM bookings b
     LEFT JOIN rooms r ON b.room_id = r.id
@@ -570,6 +579,9 @@ $bookings_query = $conn->query("
                 $spec_total = floatval($specific_booking['total_cost']);
                 $spec_paid = floatval($specific_booking['amount_paid']);
                 $spec_balance = max(0, $spec_total - $spec_paid);
+                $spec_discount_category = in_array($specific_booking['discount_category'] ?? '', ['senior', 'pwd'], true)
+                    ? $specific_booking['discount_category']
+                    : '';
                 ?>
                 <div class="specific-checkin-overlay" style="background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 10000;">
                     <div style="background: #ffffff; border-radius: 22px; width: 100%; max-width: 440px; padding: 34px 28px 26px; box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.28), 0 0 1px rgba(15, 23, 42, 0.1); position: relative; text-align: center; animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
@@ -595,6 +607,12 @@ $bookings_query = $conn->query("
                                 <span style="font-size: 12px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Booking Ref</span>
                                 <span style="background: #EFF6FF; color: #1D4ED8; font-weight: 800; font-size: 12px; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; font-family: monospace;"><?php echo htmlspecialchars($ref); ?></span>
                             </div>
+                            <?php if ($spec_discount_category): ?>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px dashed #E2E8F0;">
+                                <span style="font-size:12px; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Discount</span>
+                                <span style="background:#F3E8FF; color:#7E22CE; font-weight:800; font-size:11px; padding:4px 9px; border-radius:999px;"><?php echo $spec_discount_category === 'senior' ? 'SENIOR CITIZEN · 20%' : 'PWD · 20%'; ?></span>
+                            </div>
+                            <?php endif; ?>
                         </div>
                         
                         <?php if ($spec_balance > 0): ?>
@@ -619,7 +637,7 @@ $bookings_query = $conn->query("
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="checkin">
                             <input type="hidden" name="booking_id" value="<?php echo $spec_id; ?>">
-                            <button type="submit" style="width: 100%; padding: 13px 0; background: linear-gradient(135deg, #15803D, #166534); color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(22, 101, 52, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(22, 101, 52, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(22, 101, 52, 0.35)';" onclick="handleCheckinClick(event, <?php echo $spec_id; ?>, <?php echo xss_attr_json($spec_name); ?>, <?php echo xss_attr_json($spec_acc); ?>, <?php echo $spec_total; ?>, <?php echo $spec_balance; ?>)">
+                            <button type="submit" style="width: 100%; padding: 13px 0; background: linear-gradient(135deg, #15803D, #166534); color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(22, 101, 52, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease, box-shadow 0.15s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(22, 101, 52, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(22, 101, 52, 0.35)';" onclick="handleCheckinClick(event, <?php echo $spec_id; ?>, <?php echo xss_attr_json($spec_name); ?>, <?php echo xss_attr_json($spec_acc); ?>, <?php echo $spec_total; ?>, <?php echo $spec_balance; ?>, <?php echo xss_attr_json($spec_discount_category); ?>)">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                 Check In Guest Now
                             </button>
@@ -670,12 +688,20 @@ $bookings_query = $conn->query("
                                 $total_cost = floatval($row['total_cost']);
                                 $amount_paid = floatval($row['amount_paid']);
                                 $balance_due = max(0, $total_cost - $amount_paid);
+                                $discount_category = in_array($row['discount_category'] ?? '', ['senior', 'pwd'], true)
+                                    ? $row['discount_category']
+                                    : '';
 
                                 echo "<tr>";
                                 echo "<td>#$id</td>";
                                 echo "<td><strong>{$name}</strong></td>";
                                 echo "<td>{$email}</td>";
-                                echo "<td>{$type}</td>";
+                                echo "<td>{$type}";
+                                if ($discount_category) {
+                                    $discount_label = $discount_category === 'senior' ? 'SENIOR · 20%' : 'PWD · 20%';
+                                    echo "<div style='margin-top:5px;'><span style='display:inline-block; background:#F3E8FF; color:#7E22CE; padding:3px 7px; border-radius:999px; font-weight:800; font-size:10px;'>{$discount_label}</span></div>";
+                                }
+                                echo "</td>";
                                 echo "<td>{$accommodation}</td>";
                                 
                                 // Check-in date with Overdue / Due Today badge
@@ -712,7 +738,7 @@ $bookings_query = $conn->query("
                                         <form method='POST' action='admin_checkin' style='display:inline; margin:0;'>
                                             <input type='hidden' name='action' value='checkin'>
                                             <input type='hidden' name='booking_id' value='{$id}'>
-                                            <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "', '" . xss_attr_string(htmlspecialchars_decode($accommodation, ENT_QUOTES)) . "', {$total_cost}, {$balance_due})\">
+                                            <button type='submit' class='btn-checkin' onclick=\"handleCheckinClick(event, {$id}, '" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "', '" . xss_attr_string(htmlspecialchars_decode($accommodation, ENT_QUOTES)) . "', {$total_cost}, {$balance_due}, '" . xss_attr_string($discount_category) . "')\">
                                                 <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>
                                                 Check-in
                                             </button>
@@ -983,6 +1009,10 @@ $bookings_query = $conn->query("
                     <span style="color: #666;">Accommodation:</span>
                     <strong id="modalAccName">Standard Room</strong>
                 </div>
+                <div id="modalDiscountRow" style="display:none; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:14px;">
+                    <span style="color:#666;">Discount:</span>
+                    <strong id="modalDiscountBadge" style="background:#F3E8FF; color:#7E22CE; padding:4px 9px; border-radius:999px; font-size:11px;"></strong>
+                </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; border-bottom: 1px dashed #E5E7EB; padding-bottom: 12px;">
                     <span style="color: #666;">Total Cost:</span>
                     <strong id="modalTotalCost">&#8369;0.00</strong>
@@ -1199,7 +1229,7 @@ document.getElementById('walkinModalOverlay').addEventListener('click', function
 });
 
 // --- Existing Balance Checkin Modal Logic ---
-function handleCheckinClick(event, bookingId, guestName, accName, totalCost, balanceDue) {
+function handleCheckinClick(event, bookingId, guestName, accName, totalCost, balanceDue, discountCategory = '') {
     if (balanceDue > 0.01) {
         event.preventDefault();
         
@@ -1210,6 +1240,15 @@ function handleCheckinClick(event, bookingId, guestName, accName, totalCost, bal
         document.getElementById('modalBookingId').value = bookingId;
         document.getElementById('modalGuestName').textContent = guestName;
         document.getElementById('modalAccName').textContent = accName;
+        const discountRow = document.getElementById('modalDiscountRow');
+        const discountBadge = document.getElementById('modalDiscountBadge');
+        if (discountCategory === 'senior' || discountCategory === 'pwd') {
+            discountBadge.textContent = discountCategory === 'senior' ? 'SENIOR CITIZEN · 20%' : 'PWD · 20%';
+            discountRow.style.display = 'flex';
+        } else {
+            discountRow.style.display = 'none';
+            discountBadge.textContent = '';
+        }
         document.getElementById('modalTotalCost').textContent = '₱' + totalCost.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('modalBalanceDue').textContent = '₱' + balanceDue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('modalBalanceAmountInput').value = balanceDue;
@@ -1325,7 +1364,7 @@ if (searchInput) {
     $change = (float)($_GET['change'] ?? 0);
     
     // Get basic booking details for print
-    $pr_stmt = $conn->prepare("SELECT guest_name, accommodation_name FROM bookings WHERE id = ?");
+    $pr_stmt = $conn->prepare("SELECT b.guest_name, b.accommodation_name, d.category AS discount_category FROM bookings b LEFT JOIN booking_discounts d ON d.booking_id=b.id WHERE b.id = ?");
     $pr_stmt->bind_param("i", $bid);
     $pr_stmt->execute();
     $pr_res = $pr_stmt->get_result()->fetch_assoc();
@@ -1338,6 +1377,9 @@ if (searchInput) {
         $dateStr = date('M d, Y');
         $timeStr = date('h:i A');
         $admin_name = $_SESSION['admin_username'] ?? 'Reception';
+        $receipt_discount_label = ($pr_res['discount_category'] ?? '') === 'senior'
+            ? 'Senior Citizen (20%)'
+            : ((($pr_res['discount_category'] ?? '') === 'pwd') ? 'PWD (20%)' : '');
 ?>
 <script>
 window.onload = function() {
@@ -1377,6 +1419,7 @@ window.onload = function() {
         <div class="sep">${sep}</div>
         <div class="row"><span>Guest Name:</span><strong>${Security.escapeHTML(<?php echo xss_json($guest_name); ?>)}</strong></div>
         <div class="row"><span>Accommodation:</span><strong>${Security.escapeHTML(<?php echo xss_json($room); ?>)}</strong></div>
+        <?php if ($receipt_discount_label): ?><div class="row"><span>Discount:</span><strong><?php echo htmlspecialchars($receipt_discount_label, ENT_QUOTES, 'UTF-8'); ?></strong></div><?php endif; ?>
         <div class="sep">${sep}</div>
         <div class="row"><span>Payment Type:</span><strong>${Security.escapeHTML(<?php echo xss_json($method); ?>)}</strong></div>
         <div class="row"><span>Ref/Txn #:</span><strong>${Security.escapeHTML(<?php echo xss_json($txn); ?>)}</strong></div>
