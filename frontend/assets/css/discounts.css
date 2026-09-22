@@ -688,6 +688,19 @@ body.discount-page {
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
+.image-modal-body img {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.image-modal-body iframe[hidden],
+.image-modal-body img[hidden] {
+  display: none;
+}
+
 .document-modal-message {
   padding: 40px 20px;
   color: #CBD5E1;

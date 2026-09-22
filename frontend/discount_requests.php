@@ -350,7 +350,8 @@ $active_page = 'discount_requests';
         </div>
         <div class="image-modal-body">
             <div id="imageModalLoading" class="document-modal-message" role="status">Loading document&hellip;</div>
-            <iframe id="imageModalSrc" title="Document Preview"></iframe>
+            <img id="imageModalImage" alt="Document preview" hidden>
+            <iframe id="imageModalPdf" title="PDF document preview" hidden></iframe>
             <div id="imageModalError" class="document-modal-message" role="alert" hidden>
                 <div class="document-modal-icon" aria-hidden="true">&#128196;</div>
                 <strong>Document unavailable</strong>
@@ -365,7 +366,8 @@ document.getElementById('copyLink')?.addEventListener('click',async()=>{const fi
 // In-page modal preview for private ID and receipts
 const modal = document.getElementById('imageModal');
 const modalTitle = document.getElementById('imageModalTitle');
-const modalFrame = document.getElementById('imageModalSrc');
+const modalImage = document.getElementById('imageModalImage');
+const modalPdf = document.getElementById('imageModalPdf');
 const modalLoading = document.getElementById('imageModalLoading');
 const modalError = document.getElementById('imageModalError');
 const closeBtn = document.getElementById('closeImageModal');
@@ -377,7 +379,8 @@ document.querySelectorAll('.js-preview-doc').forEach(btn => {
         const url = btn.getAttribute('data-url');
         const title = btn.getAttribute('data-title') || 'Document Preview';
         modalTitle.textContent = title;
-        modalFrame.hidden = true;
+        modalImage.hidden = true;
+        modalPdf.hidden = true;
         modalError.hidden = true;
         modalLoading.hidden = false;
         modal.classList.add('active');
@@ -385,6 +388,7 @@ document.querySelectorAll('.js-preview-doc').forEach(btn => {
 
         documentRequest?.abort();
         documentRequest = new AbortController();
+        const activeRequest = documentRequest;
         if (documentObjectUrl) URL.revokeObjectURL(documentObjectUrl);
         documentObjectUrl = null;
 
@@ -392,19 +396,29 @@ document.querySelectorAll('.js-preview-doc').forEach(btn => {
             const response = await fetch(url, {
                 credentials: 'same-origin',
                 cache: 'no-store',
-                signal: documentRequest.signal
+                signal: activeRequest.signal
             });
             if (!response.ok) throw new Error(`Document request failed (${response.status})`);
             const documentBlob = await response.blob();
+            if (!documentBlob.size) throw new Error('The document is empty');
             if (!documentBlob.type.startsWith('image/') && documentBlob.type !== 'application/pdf') {
                 throw new Error('Unsupported document type');
             }
             documentObjectUrl = URL.createObjectURL(documentBlob);
-            modalFrame.src = documentObjectUrl;
-            modalFrame.hidden = false;
+            if (documentBlob.type.startsWith('image/')) {
+                await new Promise((resolve, reject) => {
+                    modalImage.onload = resolve;
+                    modalImage.onerror = () => reject(new Error('The image data is invalid'));
+                    modalImage.src = documentObjectUrl;
+                });
+                modalImage.hidden = false;
+            } else {
+                modalPdf.src = documentObjectUrl;
+                modalPdf.hidden = false;
+            }
             modalLoading.hidden = true;
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || documentRequest !== activeRequest) return;
             modalLoading.hidden = true;
             modalError.hidden = false;
         }
@@ -416,8 +430,10 @@ function closeModal() {
     documentRequest = null;
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
-    modalFrame.src = 'about:blank';
-    modalFrame.hidden = true;
+    modalImage.removeAttribute('src');
+    modalImage.hidden = true;
+    modalPdf.src = 'about:blank';
+    modalPdf.hidden = true;
     modalError.hidden = true;
     modalLoading.hidden = false;
     if (documentObjectUrl) URL.revokeObjectURL(documentObjectUrl);
