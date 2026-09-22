@@ -138,7 +138,7 @@ $type_long_descriptions = [
     'beachview_duplex' => "Front-row. Serene. Intimate. Sensual.\nCozy Modern Tropical bedroom is the other half of the duplex structure facing the beach. Perfect people watching spot by your terrace or enjoy the property's entire beach view inside your room.\nYou can even transform to a blackout window cave-like dwelling with the drop-down projector screen.",
     'seaview_duplex'   => "Front-row. Inspiring. Captivating. Sensual.\nDesigned to make you never want to leave your room. A reading nook and desk crafted to connect you to nature while your cozy bedroom feels like a warm embrace even introverts would love.\nA secret back door offers direct access to the allure of the sea calling just beyond.",
     'beach_villa'      => "Beachfront. Natural light-filled. Calm.\nAn intimate 59sqm tropical modern coastal accommodation featuring atmospheric high ceilings to maximize a biophilic natural light-filled layout.\n*26 sqm bedroom 2x Queen beds\n*12 sqm glass-walled shower room with dual skylit vanity lavatories\n*4 sqm pocket garden for air-drying\n*10 sqm Covered beachfront lounge\n\nMaximum of 2 kids for free, 10 years and below.",
-    'standard_room'    => "Standard Room\nMaximum of 2 kids for free, 10 years and below.\nMaximum occupancy of 5 adults.",
+    'standard_room'    => "Standard Room\nMaximum of 2 kids for free, 10 years and below.\nMaximum occupancy of 2 adults.",
     'standard_king'    => "Standard Family Room\nMaximum of 2 kids for free, 10 years and below.",
 ];
 
@@ -729,7 +729,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                             <div class="rate-pricing">
                                 <div class="rate-from-label">From</div>
                                 <div class="rate-price-main">&#8369;<?php echo number_format($price, 2); ?></div>
-                                <div class="rate-price-sub">per night &middot; <?php echo max(1,$filter_guests); ?> adult<?php echo $filter_guests > 1 ? 's' : ''; ?></div>
+                                <div class="rate-price-sub">per night &middot; includes up to <?php echo (int)$capacity; ?> adults</div>
                                 <div class="rate-price-note">All taxes &amp; fees included</div>
                             </div>
                             <div class="rate-actions-box">
@@ -914,7 +914,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                             <div class="rate-pricing">
                                 <div class="rate-from-label">From</div>
                                 <div class="rate-price-main">&#8369;<?php echo number_format($price, 2); ?></div>
-                                <div class="rate-price-sub">per night &middot; <?php echo max(1,$filter_guests); ?> adult<?php echo $filter_guests > 1 ? 's' : ''; ?></div>
+                                <div class="rate-price-sub">per night &middot; includes up to <?php echo (int)$capacity; ?> adults</div>
                                 <div class="rate-price-note">All taxes &amp; fees included</div>
                             </div>
                             <div class="rate-actions-box">
@@ -1032,7 +1032,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                             <h4 class="rate-name"><?php echo htmlspecialchars($label); ?></h4>
                             <div class="rate-pricing">
                                 <div class="rate-price-main">&#8369;<?php echo number_format($price, 2); ?></div>
-                                <div class="rate-price-sub">per night &middot; <?php echo max(1,$filter_guests); ?> adult<?php echo $filter_guests > 1 ? 's' : ''; ?></div>
+                                <div class="rate-price-sub">per night &middot; includes up to <?php echo (int)$capacity; ?> adults</div>
                             </div>
 
                             <?php if (!$is_all_maintenance): ?>

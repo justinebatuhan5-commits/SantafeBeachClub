@@ -172,8 +172,9 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
         $currentDate->modify('+1 day');
     }
 
-    // 3.5 Extra Person / Extra Adult calculation. This is a one-time charge
-    // per additional adult, not a nightly charge.
+    // 3.5 Extra Person / Extra Adult calculation. Each nightly room rate
+    // includes the room's standard adult capacity; extra adults are charged
+    // once per stay, not once per night.
     $extraRates = [
         'beachview_duplex' => 1000.00,
         'seaview_duplex'   => 1000.00,
@@ -181,7 +182,14 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
         'standard_room'    => 700.00,
         'standard_king'    => 700.00,
     ];
-    $baseCapacity = 1; // 1 adult included in standard base rate; every additional adult adds fee
+    $includedCapacity = [
+        'beachview_duplex' => 2,
+        'seaview_duplex'   => 2,
+        'beach_villa'      => 4,
+        'standard_king'    => 4,
+        'standard_room'    => 2,
+    ];
+    $baseCapacity = $includedCapacity[$roomType] ?? 2;
     $extraAdults = max(0, $guests - $baseCapacity);
     $extraRatePerAdult = $extraRates[$roomType] ?? 700.00;
     $extraPersonTotal = $extraAdults * $extraRatePerAdult;
