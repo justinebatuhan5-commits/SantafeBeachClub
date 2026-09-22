@@ -80,7 +80,7 @@ function sf_room_status_label(string $status): string
 /**
  * Calculate dynamic stay pricing with night-by-night breakdown, weekend surcharges, seasonal pricing, extra guest fees, and promotions.
  */
-function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, string $checkOut, ?string $promoCode = null, int $guests = 2): array
+function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, string $checkOut, ?string $promoCode = null, int $guests = 2, int $extraAdultsOverride = -1): array
 {
     $start = new DateTime($checkIn);
     $end = new DateTime($checkOut);
@@ -182,16 +182,23 @@ function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, s
         'standard_room'    => 700.00,
         'standard_king'    => 700.00,
     ];
+    // Base pax included in the nightly rate (no extra charge up to this count)
     $includedCapacity = [
-        'beachview_duplex' => 2,
-        'seaview_duplex'   => 2,
-        'beach_villa'      => 2,
-        'standard_king'    => 2,
-        'standard_room'    => 2,
+        'beachview_duplex' => 2, // 6,900/night includes 2 pax
+        'seaview_duplex'   => 2, // 7,900/night includes 2 pax
+        'beach_villa'      => 4, // 7,900/night includes 4 pax
+        'standard_king'    => 4, // 4,300/night includes 4 pax
+        'standard_room'    => 2, // 2,900/night includes 2 pax
     ];
-    $baseCapacity = $includedCapacity[$roomType] ?? 2;
-    $extraAdults = max(0, $guests - $baseCapacity);
     $extraRatePerAdult = $extraRates[$roomType] ?? 700.00;
+    // If caller passed an explicit extra-adult count (from rooms.php selector),
+    // use it directly. Otherwise fall back to capacity-based math.
+    if ($extraAdultsOverride >= 0) {
+        $extraAdults = $extraAdultsOverride;
+    } else {
+        $baseCapacity = $includedCapacity[$roomType] ?? 2;
+        $extraAdults  = max(0, $guests - $baseCapacity);
+    }
     $extraPersonTotal = $extraAdults * $extraRatePerAdult;
     $subtotal += $extraPersonTotal;
 

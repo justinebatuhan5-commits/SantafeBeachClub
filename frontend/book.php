@@ -130,9 +130,9 @@ if (isset($_POST['apply_promo'])) {
 }
 $applied_promo = $_SESSION['applied_promo_code'] ?? ($_REQUEST['promo_code'] ?? null);
 
-// Fetch Dynamic Stay Pricing factoring in weekend surcharges, seasonal pricing rules, extra adult fees, and coupon discounts.
-// Pass guests_total so extra adults selected on rooms.php are correctly priced.
-$pricing = calculateStayPricing($conn, $room_type, $checkin, $checkout, $applied_promo, $guests_total);
+// Fetch Dynamic Stay Pricing. $extra_adults is passed as the override so the
+// pricing function charges exactly the extras selected on rooms.php.
+$pricing = calculateStayPricing($conn, $room_type, $checkin, $checkout, $applied_promo, $guests_total, $extra_adults);
 $room_price = $pricing['base_price_per_night'];
 $nights = $pricing['nights'];
 $subtotal_amount = $pricing['subtotal'];
