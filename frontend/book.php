@@ -52,11 +52,13 @@ if (isset($_REQUEST['extra_adults'])) {
 }
 $extra_adults   = isset($_SESSION['book_extra_adults'])   ? (int)$_SESSION['book_extra_adults']   : 0;
 $extra_children = isset($_SESSION['book_extra_children']) ? (int)$_SESSION['book_extra_children'] : 0;
-// Total occupancy = base guests from search + extra persons chosen on rooms page.
-$guests_total = $guests + $extra_adults + $extra_children;
-// Each room's rate already includes its base capacity — display at least that many guests.
+// The nightly rate includes the room's base occupancy. A smaller search count
+// must not reduce that included occupancy; selected extras are added afterward.
+// Example: Standard Room searched for 1 adult => 2 included adults; selecting
+// 1 extra adult => 3 total adults (not 2).
 $_base_capacity = ['beachview_duplex' => 2, 'seaview_duplex' => 2, 'beach_villa' => 4, 'standard_king' => 4, 'standard_room' => 2];
-$guests_total = max($guests_total, $_base_capacity[$room_type] ?? 2);
+$included_guests = max($guests, $_base_capacity[$room_type] ?? 2);
+$guests_total = $included_guests + $extra_adults + $extra_children;
 
 // Store in session to persist across steps
 $_SESSION['book_checkin']   = $checkin;
