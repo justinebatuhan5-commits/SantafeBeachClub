@@ -440,13 +440,6 @@ try {
     safe_query($conn, "ALTER TABLE password_resets ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) NOT NULL DEFAULT 'admin'");
     safe_query($conn, "ALTER TABLE password_resets DROP FOREIGN KEY password_resets_ibfk_1");
 
-    // Seed default admin in administrators table if empty
-    $adminCheck = $conn->query("SELECT id FROM administrators LIMIT 1");
-    if (!$adminCheck || $adminCheck->num_rows == 0) {
-        $hashedPassword = pw_hash('BeachAdmin@2024!');
-        $conn->query("INSERT INTO administrators (username, password, email) VALUES ('admin@beachclub.com', '$hashedPassword', 'admin@beachclub.com')");
-    }
-
     // Ensure activity_logs table exists
     $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (
         id INT AUTO_INCREMENT PRIMARY KEY,
