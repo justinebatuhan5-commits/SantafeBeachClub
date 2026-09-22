@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/services/mailer.php';
+require_once __DIR__ . '/../backend/helpers/private_storage_helper.php';
 
 function recordPaymentAction(mysqli $conn, int $paymentId, string $action, string $details = ''): void
 {
@@ -559,8 +560,20 @@ if ($bk_res) {
                                 echo "<td><strong>PHP {$amount}</strong></td>";
                                 
                                 if (!empty($receipt_url)) {
-                                    $safe_url = htmlspecialchars($receipt_url);
-                                    echo "<td><a href='javascript:void(0)' onclick='openProofImageModal(\"" . xss_attr_string(htmlspecialchars_decode($safe_url, ENT_QUOTES)) . "\")' style='color:#007AFF; font-size:12px; font-weight:600; text-decoration:underline;'>View Receipt</a></td>";
+                                    $receipt_available = true;
+                                    if (preg_match('~^(?:storage|uploads)/receipts/([^/]+)$~', $receipt_url, $receipt_match)) {
+                                        try {
+                                            $receipt_available = private_storage_file('receipts/' . $receipt_match[1]) !== null;
+                                        } catch (Throwable $e) {
+                                            $receipt_available = false;
+                                        }
+                                    }
+                                    if ($receipt_available) {
+                                        $safe_url = htmlspecialchars($receipt_url);
+                                        echo "<td><a href='javascript:void(0)' onclick='openProofImageModal(\"" . xss_attr_string(htmlspecialchars_decode($safe_url, ENT_QUOTES)) . "\")' style='color:#007AFF; font-size:12px; font-weight:600; text-decoration:underline;'>View Receipt</a></td>";
+                                    } else {
+                                        echo "<td><span style='color:#B91C1C; font-size:12px; font-weight:600;' title='The database record exists, but the receipt file is missing from private storage.'>Receipt unavailable</span></td>";
+                                    }
                                 } else {
                                     echo "<td><span style='color:#999; font-size:12px;'>No Receipt</span></td>";
                                 }
