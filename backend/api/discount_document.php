@@ -19,14 +19,28 @@ try {
     error_log("discount_document error for key [{$key}]: " . $e->getMessage());
     $path = null;
 }
-if (!$path) { 
+if (!$path) {
     error_log("discount_document: File not found or inaccessible for key [{$key}].");
     http_response_code(404); 
     exit('Document unavailable.'); 
 }
-discount_audit($conn,$id,$_SESSION['admin_username']??'Staff',$pid?'Receipt viewed':'ID viewed');
+$mime = (new finfo(FILEINFO_MIME_TYPE))->file($path);
+if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'], true)) {
+    error_log("discount_document: Unsupported MIME type [{$mime}] for key [{$key}].");
+    http_response_code(415);
+    exit('Unsupported document type.');
+}
+// Viewing must not fail merely because an audit insert is temporarily unavailable.
+try {
+    discount_audit($conn,$id,$_SESSION['admin_username']??'Staff',$pid?'Receipt viewed':'ID viewed');
+} catch (Throwable $e) {
+    error_log("discount_document: Audit logging failed for booking [{$id}]: " . $e->getMessage());
+}
 header('Cache-Control: no-store'); header('X-Content-Type-Options: nosniff');
 header('Content-Security-Policy: sandbox'); header('Referrer-Policy: no-referrer');
-header('Content-Type: '.(new finfo(FILEINFO_MIME_TYPE))->file($path));
+header('Content-Type: '.$mime);
+header('Content-Length: '.filesize($path));
 header('Content-Disposition: inline; filename="verification-image.'.pathinfo($path,PATHINFO_EXTENSION).'"');
-readfile($path);
+if (readfile($path) === false) {
+    error_log("discount_document: Failed while streaming key [{$key}].");
+}
