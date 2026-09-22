@@ -196,7 +196,10 @@ if ($room_type_id > 0) {
 // Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
-    if (isset($_POST['action'])) {
+    // Applying or removing a coupon must refresh Step 1 in place. These buttons
+    // share the form with the hidden go_step_2 action, so exclude promo submits
+    // from the step-navigation handler.
+    if (isset($_POST['action']) && !isset($_POST['apply_promo']) && !isset($_POST['remove_promo'])) {
         if ($_POST['action'] === 'go_step_2') {
             header('Location: book?step=2');
             exit;
