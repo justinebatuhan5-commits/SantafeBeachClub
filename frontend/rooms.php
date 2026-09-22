@@ -1568,7 +1568,7 @@ function updateExtraPersonsSummary(type) {
                 bRow.className = 'rate-extra-breakdown-row';
                 bRow.innerHTML =
                     '<div class="rate-extra-breakdown-col">' + (index + 1) + '</div>' +
-                    '<div class="rate-extra-breakdown-col">' + (adultCost > 0 ? ('â‚± ' + adultCost.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})) : '-') + '</div>' +
+                    '<div class="rate-extra-breakdown-col">' + (adultCost > 0 ? ('\u20B1 ' + adultCost.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})) : '-') + '</div>' +
                     '<div class="rate-extra-breakdown-col">-</div>';
                 breakdownEl.appendChild(bRow);
             });
@@ -1578,7 +1578,7 @@ function updateExtraPersonsSummary(type) {
     // Update Total
     if (totalEl) {
         totalEl.textContent = extraCharge > 0
-            ? ('&#8369; ' + extraCharge.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}))
+            ? ('\u20B1 ' + extraCharge.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}))
             : (totalPersons > 0 ? 'Free / Included' : '-');
     }
 
@@ -1881,7 +1881,7 @@ function openAvailabilityCalendar(type, label, price) {
     currentCalMonth = baseDate.getMonth();
 
     document.getElementById('avail-modal-title').textContent = label;
-    document.getElementById('avail-modal-price').textContent = 'From â‚± ' + price.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' / night';
+    document.getElementById('avail-modal-price').textContent = 'From \u20B1 ' + price.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' / night';
 
     renderCalendarDays();
 
