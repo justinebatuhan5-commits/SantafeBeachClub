@@ -54,6 +54,9 @@ $extra_adults   = isset($_SESSION['book_extra_adults'])   ? (int)$_SESSION['book
 $extra_children = isset($_SESSION['book_extra_children']) ? (int)$_SESSION['book_extra_children'] : 0;
 // Total occupancy = base guests from search + extra persons chosen on rooms page.
 $guests_total = $guests + $extra_adults + $extra_children;
+// Each room's rate already includes its base capacity — display at least that many guests.
+$_base_capacity = ['beachview_duplex' => 2, 'seaview_duplex' => 2, 'beach_villa' => 4, 'standard_king' => 4, 'standard_room' => 2];
+$guests_total = max($guests_total, $_base_capacity[$room_type] ?? 2);
 
 // Store in session to persist across steps
 $_SESSION['book_checkin']   = $checkin;
