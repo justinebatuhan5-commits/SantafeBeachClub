@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
@@ -625,7 +625,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                         </div>
                         <div>
                             <span style="font-size: 11px; color: #888; text-transform: uppercase;">Guests</span><br>
-                            <strong><?php echo $guests; ?> Adults</strong>
+                            <strong><?php echo $guests_total; ?> Adult<?php echo $guests_total > 1 ? 's' : ''; ?></strong>
                         </div>
                     </div>
                 </div>
@@ -751,7 +751,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                                     <span class="stay-facts" aria-label="Stay details">
                                         <span><?php echo $nights; ?> night<?php echo $nights > 1 ? 's' : ''; ?></span>
                                         <span>1 room</span>
-                                        <span><?php echo $guests; ?> adult<?php echo $guests > 1 ? 's' : ''; ?></span>
+                                        <span><?php echo $guests_total; ?> adult<?php echo $guests_total > 1 ? 's' : ''; ?></span>
                                     </span>
                                     <?php if (($pricing['extra_person_total'] ?? 0) > 0): ?>
                                         <span style="color:#0284C7; font-weight:600;">(includes <?php echo $pricing['extra_adults']; ?> extra adult<?php echo $pricing['extra_adults']>1?'s':''; ?>)</span>
@@ -1210,7 +1210,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                         <span class="stay-facts" aria-label="Stay details">
                             <span><?php echo $nights; ?> night<?php echo $nights > 1 ? 's' : ''; ?></span>
                             <span>1 room</span>
-                            <span><?php echo $guests; ?> adult<?php echo $guests > 1 ? 's' : ''; ?></span>
+                            <span><?php echo $guests_total; ?> adult<?php echo $guests_total > 1 ? 's' : ''; ?></span>
                         </span>
                     </div>
 
@@ -1249,7 +1249,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
 
                     <div class="bk-sb-room-detail">
                         <strong>1 × <?php echo htmlspecialchars($accommodation_name); ?></strong>
-                        <?php echo $guests; ?> adult<?php echo $guests>1?'s':''; ?>
+                        <?php echo $guests_total; ?> adult<?php echo $guests_total>1?'s':''; ?>
                         <?php if ($has_breakfast): ?><br><span style="color:var(--green); font-size:12px; font-weight:600;">✓ Breakfast included</span><?php endif; ?>
                     </div>
 
@@ -1614,17 +1614,26 @@ function showFileError(input, errorDiv, message) {
                 </select>
             </div>
 
+<?php
+// Per-room included capacity & extra rate for the Edit modal dropdown
+$_editIncluded = in_array($room_type, ['beach_villa', 'standard_king']) ? 4 : 2;
+$_editRate     = (int)$pricing['extra_rate_per_adult'];
+function _editExtraLabel(int $n, int $inc, int $rate): string {
+    $extra = max(0, $n - $inc);
+    return $extra > 0 ? ' (+&#8369;' . number_format($extra * $rate, 0) . ')' : ' (Included)';
+}
+?>
             <!-- Guest in Room 1 -->
             <div id="editGuestSection" style="border:1.5px solid #E5E7EB; border-radius:10px; overflow:hidden;">
                 <div style="background:#F8FAFC; padding:12px 16px; font-size:13px; font-weight:700; color:#374151; border-bottom:1px solid #E5E7EB;">Guest in Room 1</div>
                 <div style="padding:14px 16px; display:flex; gap:12px; align-items:center;">
                     <div style="font-size:13px; font-weight:600; color:#6B7280; flex-shrink:0; width:40px;">Main</div>
                     <select id="editAdults" style="flex:1; padding:10px 14px; border:1.5px solid #E5E7EB; border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; color:#1A1A2E; background:#fff; outline:none; cursor:pointer; appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position:calc(100% - 12px) center;">
-                        <option value="1" <?php echo ($guests == 1) ? 'selected' : ''; ?>>1 adult (Standard)</option>
-                        <option value="2" <?php echo ($guests == 2) ? 'selected' : ''; ?>>2 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'], 0); ?>)</option>
-                        <option value="3" <?php echo ($guests == 3) ? 'selected' : ''; ?>>3 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 2, 0); ?>)</option>
-                        <option value="4" <?php echo ($guests == 4) ? 'selected' : ''; ?>>4 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 3, 0); ?>)</option>
-                        <option value="5" <?php echo ($guests >= 5) ? 'selected' : ''; ?>>5 adults (+₱<?php echo number_format($pricing['extra_rate_per_adult'] * 4, 0); ?>)</option>
+                        <option value="1" <?php echo ($guests_total == 1) ? 'selected' : ''; ?>>1 adult<?php echo _editExtraLabel(1, $_editIncluded, $_editRate); ?></option>
+                        <option value="2" <?php echo ($guests_total == 2) ? 'selected' : ''; ?>>2 adults<?php echo _editExtraLabel(2, $_editIncluded, $_editRate); ?></option>
+                        <option value="3" <?php echo ($guests_total == 3) ? 'selected' : ''; ?>>3 adults<?php echo _editExtraLabel(3, $_editIncluded, $_editRate); ?></option>
+                        <option value="4" <?php echo ($guests_total == 4) ? 'selected' : ''; ?>>4 adults<?php echo _editExtraLabel(4, $_editIncluded, $_editRate); ?></option>
+                        <option value="5" <?php echo ($guests_total >= 5) ? 'selected' : ''; ?>>5 adults<?php echo _editExtraLabel(5, $_editIncluded, $_editRate); ?></option>
                     </select>
                     <select id="editChildren" style="flex:1; padding:10px 14px; border:1.5px solid #E5E7EB; border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; color:#1A1A2E; background:#fff; outline:none; cursor:pointer; appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position:calc(100% - 12px) center;">
                         <option value="0" selected>0 children</option>
@@ -1723,11 +1732,15 @@ function showFileError(input, errorDiv, message) {
         document.body.style.overflow = '';
     });
     if (applyEditBtn) applyEditBtn.addEventListener('click', function(){
-        var adults   = document.getElementById('editAdults').value;
+        var adults   = parseInt(document.getElementById('editAdults').value, 10) || 1;
+        var includedCap = (['beach_villa','standard_king'].indexOf(roomType) !== -1) ? 4 : 2;
+        var baseGuests  = Math.min(adults, includedCap);
+        var extraAdults = Math.max(0, adults - includedCap);
         var roomType = document.getElementById('editRoomType') ? document.getElementById('editRoomType').value : <?php echo xss_json($room_type); ?>;
         var params   = new URLSearchParams(window.location.search);
         params.set('step', '1');
-        params.set('guests', adults);
+        params.set('guests', baseGuests);
+        params.set('extra_adults', extraAdults);
         params.set('checkin',  <?php echo xss_json($checkin); ?>);
         params.set('checkout', <?php echo xss_json($checkout); ?>);
         params.set('room_type', roomType);
