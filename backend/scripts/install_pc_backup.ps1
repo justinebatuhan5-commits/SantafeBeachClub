@@ -33,7 +33,7 @@ $action = New-ScheduledTaskAction -Execute $powershell -Argument ('-NoProfile -N
 $triggers = @((New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15)), (New-ScheduledTaskTrigger -AtLogOn -User $identity.Name))
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 20) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 10)
 $principal = New-ScheduledTaskPrincipal -UserId $identity.Name -LogonType Interactive -RunLevel Limited
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description 'Check every 15 minutes while signed in; download a verified database backup when six hours have elapsed since the last success. Catch up at logon.' -Force | Out-Null
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description 'Check every 15 minutes while signed in; download a verified database and private-upload backup when six hours have elapsed since the last success. Catch up at logon.' -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 Write-Output ('Installed. Backups: ' + $Destination)
 Write-Output ('Check first-download status in: ' + (Join-Path $taskRoot 'download.log'))

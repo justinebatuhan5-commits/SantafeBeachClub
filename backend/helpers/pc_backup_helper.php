@@ -57,6 +57,51 @@ function pc_backup_revoke(): void
     try { pc_backup_write([]); } finally { flock($lock, LOCK_UN); fclose($lock); }
 }
 
+/** Build a portable bundle containing the SQL snapshot and all private uploads. */
+function pc_backup_bundle(array $databaseEntry): array
+{
+    $backupDirectory = backup_directory();
+    $databaseName = $databaseEntry['name'] ?? '';
+    if (!preg_match('/\Asantafe_\d{8}_\d{6}_[a-f0-9]{8}\.sql\z/', $databaseName)) {
+        throw new RuntimeException('Invalid database backup entry.');
+    }
+    $databasePath = $backupDirectory . '/' . $databaseName;
+    if (!is_file($databasePath) || is_link($databasePath)) throw new RuntimeException('Database backup is unavailable.');
+
+    $bundleName = substr($databaseName, 0, -4) . '_complete.tar';
+    $bundlePath = $backupDirectory . '/' . $bundleName;
+    $temporary = $bundlePath . '.partial.tar';
+    if (is_file($temporary)) unlink($temporary);
+
+    try {
+        $archive = new PharData($temporary);
+        $archive->addFile($databasePath, 'database.sql');
+        $privateRoot = private_storage_root();
+        foreach (['discount_ids', 'receipts', 'avatars'] as $category) {
+            $directory = $privateRoot . DIRECTORY_SEPARATOR . $category;
+            if (!is_dir($directory)) continue;
+            foreach (new DirectoryIterator($directory) as $file) {
+                if (!$file->isFile() || $file->isLink()) continue;
+                $resolved = $file->getRealPath();
+                if (!$resolved || !private_path_within($resolved, $directory)) continue;
+                $archive->addFile($resolved, 'private/' . $category . '/' . $file->getFilename());
+            }
+        }
+        $archive->addFromString('RESTORE.json', json_encode([
+            'created_at' => gmdate(DATE_ATOM),
+            'database_file' => 'database.sql',
+            'private_directories' => ['discount_ids', 'receipts', 'avatars'],
+        ], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+        unset($archive);
+        if (!is_file($temporary) || filesize($temporary) === 0 || !rename($temporary, $bundlePath)) {
+            throw new RuntimeException('Cannot finalize the complete backup bundle.');
+        }
+        return ['name' => $bundleName, 'bytes' => filesize($bundlePath), 'sha256' => hash_file('sha256', $bundlePath)];
+    } finally {
+        if (is_file($temporary)) unlink($temporary);
+    }
+}
+
 /** Retries with the same request ID reuse the completed export after network failure. */
 function pc_backup_prepare(string $token, string $requestId, ?callable $export = null): array
 {
@@ -70,13 +115,18 @@ function pc_backup_prepare(string $token, string $requestId, ?callable $export =
             if (time() - ($state['last_created'] ?? 0) < 300) throw new RuntimeException('A backup was created recently. Retry in five minutes.');
             $result = $export ? $export() : backup_run(false, 'pc_download');
             if (($result['status'] ?? '') !== 'created') throw new RuntimeException('Database export is busy. Retry shortly.');
-            $entry = $result['backup'];
+            $entry = pc_backup_bundle($result['backup']);
             $state['last_backup'] = $entry;
             $state['request_id'] = $requestId;
             $state['last_created'] = time();
             pc_backup_write($state);
+            foreach (glob(backup_directory() . '/santafe_*_complete.tar') ?: [] as $oldBundle) {
+                if ($oldBundle !== backup_directory() . '/' . $entry['name'] && filemtime($oldBundle) < time() - 30 * 86400) {
+                    unlink($oldBundle);
+                }
+            }
         }
-        if (!preg_match('/\Asantafe_\d{8}_\d{6}_[a-f0-9]{8}\.sql\z/', $entry['name'] ?? '')) throw new RuntimeException('Invalid backup file.');
+        if (!preg_match('/\Asantafe_\d{8}_\d{6}_[a-f0-9]{8}_complete\.tar\z/', $entry['name'] ?? '')) throw new RuntimeException('Invalid backup file.');
         $path = backup_directory() . '/' . $entry['name'];
         if (!is_file($path) || is_link($path) || !hash_equals($entry['sha256'], hash_file('sha256', $path))) throw new RuntimeException('Backup verification failed.');
         return $entry;

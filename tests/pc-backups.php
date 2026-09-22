@@ -14,6 +14,8 @@ try {
     pc_check($pair['endpoint'] === 'https://example.test/hotel/backend/api/pc_backup.php', 'Website subfolders are preserved');
     pc_check(!str_contains(file_get_contents(backup_directory() . '/pc-client.json'), $pair['token']), 'The server stores only a hash of the PC key');
     pc_check(pc_backup_authorized($pair['token'], pc_backup_read()) && !pc_backup_authorized(str_repeat('0', 64), pc_backup_read()), 'Only the paired key is accepted');
+    mkdir($root . '/private/discount_ids', 0700, true);
+    file_put_contents($root . '/private/discount_ids/test-id.png', 'private image fixture');
     $exports = 0;
     $export = static function () use (&$exports) {
         $exports++;
@@ -24,12 +26,15 @@ try {
     };
     $request = bin2hex(random_bytes(16));
     $entry = pc_backup_prepare($pair['token'], $request, $export);
-    pc_check($entry === pc_backup_prepare($pair['token'], $request, $export) && $exports === 1, 'Retrying a download reuses its database export');
+    $bundle = new PharData(backup_directory() . '/' . $entry['name']);
+    pc_check(isset($bundle['database.sql']) && isset($bundle['private/discount_ids/test-id.png']) && isset($bundle['RESTORE.json']), 'Complete bundle contains the database, private uploads and restore manifest');
+    unset($bundle);
+    pc_check($entry === pc_backup_prepare($pair['token'], $request, $export) && $exports === 1, 'Retrying a download reuses its complete backup bundle');
     try { pc_backup_prepare($pair['token'], bin2hex(random_bytes(16)), $export); throw new LogicException('No rate limit'); }
     catch (RuntimeException $e) { pc_check(str_contains($e->getMessage(), 'five minutes'), 'Rapid fresh exports are limited'); }
     file_put_contents(backup_directory() . '/' . $entry['name'], 'changed');
     try { pc_backup_prepare($pair['token'], $request, $export); throw new LogicException('Tamper accepted'); }
-    catch (RuntimeException $e) { pc_check(str_contains($e->getMessage(), 'verification'), 'Modified SQL files are rejected'); }
+    catch (RuntimeException $e) { pc_check(str_contains($e->getMessage(), 'verification'), 'Modified backup bundles are rejected'); }
     $newPair = pc_backup_pair('https://example.test/hotel');
     pc_check(!pc_backup_authorized($pair['token'], pc_backup_read()) && pc_backup_authorized($newPair['token'], pc_backup_read()), 'Re-pairing invalidates the old access key');
     pc_backup_revoke();

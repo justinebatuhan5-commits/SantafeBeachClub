@@ -39,7 +39,7 @@ try {
         if (!$response.IsSuccessStatusCode) { throw ('Agila returned HTTP ' + [int]$response.StatusCode + '. Check deployment, PC access key and hosting backup support.') }
         $name = [string]($response.Headers.GetValues('X-Backup-Name') | Select-Object -First 1)
         $expectedHash = [string]($response.Headers.GetValues('X-Backup-SHA256') | Select-Object -First 1)
-        if ($name -notmatch '^santafe_\d{8}_\d{6}_[a-f0-9]{8}\.sql$' -or $expectedHash -notmatch '^[a-f0-9]{64}$') { throw 'The server did not return a valid database backup.' }
+        if ($name -notmatch '^santafe_\d{8}_\d{6}_[a-f0-9]{8}_complete\.tar$' -or $expectedHash -notmatch '^[a-f0-9]{64}$') { throw 'The server did not return a valid complete backup.' }
         $partial = Join-Path $destination ($state.request_id + '.partial')
         $target = Join-Path $destination $name
         $output = [IO.File]::Open($partial, 'Create', 'Write', 'None')

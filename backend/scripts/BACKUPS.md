@@ -1,8 +1,9 @@
-# Agila database backups to your PC
+# Complete Agila backups to your PC
 
 This replaces the Google Drive, daily local and code-change backup automations.
 Existing SQL files are preserved. No hosting cron job is required: the Windows task
-requests a fresh export from Agila and downloads it every six hours.
+requests a fresh export from Agila and downloads it every six hours. Each TAR bundle
+contains `database.sql` and the private `discount_ids`, `receipts`, and `avatars` folders.
 
 ## Enable on Agila
 
@@ -51,14 +52,16 @@ are retained for 30 days following successful new exports.
 After the first successful download, delete the downloaded `santabeachclub-pc.json`.
 It contains a private bearer key. The installer stores that key using Windows DPAPI
 for the current user in `%LOCALAPPDATA%\SantaBeachClubBackups\access-key.xml` and
-restricts that directory to the user. Do not share the setup file or saved SQL files.
+restricts that directory to the user. Do not share the setup file or saved TAR bundles.
+Keep the destination on a BitLocker-encrypted Windows drive because the bundles contain
+guest identity documents and payment receipts.
 
 ## Check results
 
 See `%LOCALAPPDATA%\SantaBeachClubBackups\download.log` for SUCCESS/FAILED messages.
 The website reports the last requested server export, not proof that the PC saved it.
 Downloads use HTTPS without redirects and verify byte count plus SHA-256 before a
-`.partial` file is renamed to `.sql`. Retrying a failed download reuses its request ID
+`.partial` file is renamed to `.tar`. Retrying a failed download reuses its request ID
 and server export. Generating a new connection file revokes the old PC key, so reinstall
 after pairing again. **Revoke PC access** immediately disables the current key.
 
@@ -73,8 +76,8 @@ The included Apache rewrite preserves Authorization for PHP. A 503 means the hos
 could not export or verify a backup; verify PHP/mysqldump access and database settings.
 Redirects are rejected: use the website's final HTTPS URL in the connection file.
 
-These are database backups only, excluding receipt images, source code and other
-uploaded files. Test recovery into a separate database before relying on an export.
+Website source files and public gallery/room images are not included. Test recovery
+into a separate database and private-storage directory before relying on an export.
 
 Local verification: `php tests/pc-backups.php`, `php tests/backups.php`,
 `node tests/backups-access.cjs`, and `powershell -File tests/pc-downloader.ps1`.

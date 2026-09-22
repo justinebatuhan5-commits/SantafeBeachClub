@@ -22,8 +22,10 @@ Before accepting bookings on an existing installation:
 
 Migration preserves filenames and database keys, verifies copied file hashes, and
 only then removes each original. Conflicting destination files stop migration.
-It is safe to rerun after a successful migration. Back up the private directory
-alongside the database; existing project-only backups do not include it.
+It is safe to rerun after a successful migration. The paired PC downloader creates
+a complete TAR bundle every six hours containing `database.sql` plus the
+`discount_ids`, `receipts`, and `avatars` private folders. Keep its destination on
+an encrypted Windows drive because these files contain sensitive guest information.
 
 Missing or unsafe private storage fails closed. There is no public-storage fallback.
 Historical `uploads/receipts/` and current `storage/receipts/` database keys both

@@ -13,7 +13,7 @@ try {
     set_time_limit(600);
     $entry = pc_backup_prepare($token, $_SERVER['HTTP_X_BACKUP_REQUEST'] ?? '');
     $path = backup_directory() . '/' . $entry['name'];
-    header('Content-Type: application/sql');
+    header('Content-Type: application/x-tar');
     header('Content-Disposition: attachment; filename="' . $entry['name'] . '"');
     header('Content-Length: ' . filesize($path));
     header('X-Backup-Name: ' . $entry['name']);

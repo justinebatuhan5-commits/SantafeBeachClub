@@ -20,10 +20,10 @@ public class PcBackupTestClient : IDisposable {
     public static bool BadHash = false;
     public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption mode) {
         if (request.Method != HttpMethod.Post || request.Headers.Authorization.Scheme != "Bearer" || !request.Headers.Contains("X-Backup-Request")) throw new Exception("Missing authenticated POST request.");
-        byte[] bytes = Encoding.UTF8.GetBytes("-- SQL fixture\nSELECT 1;\n");
+        byte[] bytes = Encoding.UTF8.GetBytes("complete TAR fixture");
         string hash = BitConverter.ToString(SHA256.Create().ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
         var response = new HttpResponseMessage(HttpStatusCode.OK);
-        response.Headers.Add("X-Backup-Name", "santafe_20260917_010000_1234abcd.sql");
+        response.Headers.Add("X-Backup-Name", "santafe_20260917_010000_1234abcd_complete.tar");
         response.Headers.Add("X-Backup-SHA256", BadHash ? new string('0', 64) : hash);
         response.Content = new ByteArrayContent(bytes);
         return Task.FromResult(response);
@@ -36,7 +36,7 @@ public class PcBackupTestClient : IDisposable {
     # Keep script failure observable inside the test host instead of exiting it.
     $source = $source.Replace('Write-Error $_.Exception.Message', 'throw $_.Exception.Message')
     & ([ScriptBlock]::Create($source)) -ConfigPath $configPath -Force
-    $download = Join-Path $root 'downloads/santafe_20260917_010000_1234abcd.sql'
+    $download = Join-Path $root 'downloads/santafe_20260917_010000_1234abcd_complete.tar'
     if (!(Test-Path -LiteralPath $download)) { throw 'Verified download was not saved.' }
     $state = Get-Content -LiteralPath (Join-Path $root 'download-state.json') -Raw | ConvertFrom-Json
     if (!$state.last_success -or $state.request_id) { throw 'Success state was not saved.' }
