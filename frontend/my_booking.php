@@ -24,14 +24,28 @@ if (isset($_GET['logout'])) {
 
 $guest_data = get_guest_booking();
 $booking    = $guest_data['booking'] ?? null;
-// Use the live discounted totals and payment workflow instead of inferring total
-// from a single payment (which may now be a balance or an unverified receipt).
+$discountBooking = null;
+$verifiedPaid = 0.0;
+
+// Keep Senior/PWD guests inside their normal account. Load the authoritative
+// discount totals here instead of redirecting to the private payment workflow.
 if ($booking && !empty($booking['id'])) {
-    $discountPortal = pm_query($conn, 'SELECT token FROM booking_discounts WHERE booking_id=?', [(int)$booking['id']])->get_result()->fetch_assoc();
-    if ($discountPortal) {
-        $_SESSION['discount_tokens'][(int)$booking['id']] = $discountPortal['token'];
-        header('Location: discount_booking.php?booking=' . (int)$booking['id']);
-        exit;
+    $discountBooking = pm_query($conn, '
+        SELECT category, state, original_centavos, total_centavos,
+               deposit_centavos, hold_until, note, token
+        FROM booking_discounts
+        WHERE booking_id=?
+        LIMIT 1
+    ', [(int)$booking['id']])->get_result()->fetch_assoc();
+
+    $verifiedPaid = (float)(pm_query($conn, "
+        SELECT COALESCE(SUM(amount), 0)
+        FROM payments
+        WHERE booking_id=? AND status='verified'
+    ", [(int)$booking['id']])->get_result()->fetch_row()[0] ?? 0);
+
+    if ($discountBooking) {
+        $_SESSION['discount_tokens'][(int)$booking['id']] = $discountBooking['token'];
     }
 }
 $payment    = $guest_data['payment'] ?? null;
@@ -39,9 +53,20 @@ $payment    = $guest_data['payment'] ?? null;
 // If a verified session exists, compute extra display values
 if ($booking) {
     $nights        = max(1, (int)($booking['nights'] ?? 1));
-    $total_amount  = $payment ? (float)$payment['amount'] * 2 : 0; // deposit was 50%
-    $deposit_paid  = $payment ? (float)$payment['amount'] : 0;
-    $remaining     = $total_amount - $deposit_paid;
+    if ($discountBooking) {
+        $original_amount = (int)$discountBooking['original_centavos'] / 100;
+        $total_amount = (int)$discountBooking['total_centavos'] / 100;
+        $required_deposit = (int)$discountBooking['deposit_centavos'] / 100;
+        $discount_amount = max(0, $original_amount - $total_amount);
+        $deposit_paid = $verifiedPaid;
+    } else {
+        $original_amount = $payment ? (float)$payment['amount'] * 2 : 0;
+        $total_amount = $original_amount;
+        $required_deposit = $total_amount / 2;
+        $discount_amount = 0.0;
+        $deposit_paid = $verifiedPaid > 0 ? $verifiedPaid : ($payment ? (float)$payment['amount'] : 0);
+    }
+    $remaining = max(0, $total_amount - $deposit_paid);
     $checkin_fmt   = date('D, d M Y', strtotime($booking['check_in']));
     $checkout_fmt  = date('D, d M Y', strtotime($booking['check_out']));
 
@@ -63,7 +88,7 @@ if ($booking) {
         'rejected' => ['bg' => '#FEE2E2', 'color' => '#991B1B', 'label' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Rejected'],
         'refunded' => ['bg' => '#EDE9FE', 'color' => '#5B21B6', 'label' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg> Refunded'],
     ];
-    $pay_status    = strtolower($payment['payment_status'] ?? 'pending');
+    $pay_status    = $verifiedPaid > 0 ? 'verified' : strtolower($payment['payment_status'] ?? 'pending');
     $pay_style     = $pay_status_colors[$pay_status] ?? $pay_status_colors['pending'];
 
     // QR Code — regenerate on-the-fly into a temp buffer, output as data URI
@@ -102,7 +127,10 @@ if ($booking) {
     // Payment Expiry Countdown (30 minute hold window from created_at)
     $is_pending_payment = in_array($bk_status, ['Pending Payment', 'Pending']);
     $created_timestamp  = !empty($booking['created_at']) ? strtotime($booking['created_at']) : time();
-    $expiry_timestamp   = $created_timestamp + (30 * 60);
+    $discount_hold_timestamp = $discountBooking && !empty($discountBooking['hold_until'])
+        ? strtotime($discountBooking['hold_until'])
+        : false;
+    $expiry_timestamp   = $discount_hold_timestamp ?: ($created_timestamp + (30 * 60));
     $seconds_remaining  = max(0, $expiry_timestamp - time());
     $is_payment_expired = ($seconds_remaining <= 0);
 }
@@ -942,6 +970,16 @@ $csrf_token = get_csrf_token();
                     <span><?php echo htmlspecialchars($booking['guest_type']); ?></span>
                 </div>
                 <?php endif; ?>
+                <?php if ($discountBooking): ?>
+                <div class="info-item">
+                    <label>Discount</label>
+                    <span><?php echo strtoupper(htmlspecialchars($discountBooking['category'])); ?> — 20%</span>
+                </div>
+                <div class="info-item">
+                    <label>Discount Status</label>
+                    <span><?php echo htmlspecialchars($discountBooking['state']); ?></span>
+                </div>
+                <?php endif; ?>
                 <?php if (!empty($booking['guest_special_requests'])): ?>
                 <div class="info-item" style="grid-column: 1 / -1;">
                     <label>Special Requests</label>
@@ -953,7 +991,7 @@ $csrf_token = get_csrf_token();
     </div>
 
     <!-- ── Payment Card ── -->
-    <?php if ($payment): ?>
+    <?php if ($payment || $discountBooking): ?>
     <div class="portal-card">
         <div class="portal-card-header">
             <span class="portal-card-icon">💳</span>
@@ -971,8 +1009,22 @@ $csrf_token = get_csrf_token();
                 <label>Reference / Transaction ID</label>
                 <strong><?php echo htmlspecialchars($payment['transaction_id'] ?? '—'); ?></strong>
             </div>
+            <?php if ($discountBooking): ?>
             <div class="payment-row">
-                <label>Deposit Paid (50%)</label>
+                <label>Original Stay Cost</label>
+                <strong>₱ <?php echo number_format($original_amount, 2); ?></strong>
+            </div>
+            <div class="payment-row">
+                <label>Senior Citizen / PWD Discount (20%)</label>
+                <strong style="color:#15803d;">− ₱ <?php echo number_format($discount_amount, 2); ?></strong>
+            </div>
+            <div class="payment-row">
+                <label>Required Deposit (50%)</label>
+                <strong>₱ <?php echo number_format($required_deposit, 2); ?></strong>
+            </div>
+            <?php endif; ?>
+            <div class="payment-row">
+                <label><?php echo $discountBooking ? 'Verified Payments' : 'Deposit Paid (50%)'; ?></label>
                 <strong style="color:#0284c7;">₱ <?php echo number_format($deposit_paid, 2); ?></strong>
             </div>
             <div class="payment-row">
@@ -1017,6 +1069,13 @@ $csrf_token = get_csrf_token();
                 <?php endif; ?>
 
                 <!-- Resume Payment -->
+                <?php if ($discountBooking): ?>
+                <a href="discount_booking.php?booking=<?php echo (int)$booking['id']; ?>"
+                   class="btn-action" style="background:#0e7490; color:#fff;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Manage Discount &amp; Payment
+                </a>
+                <?php endif; ?>
                 <?php 
                 if ($bk_status === 'Pending Payment' && !empty($payment['receipt_url']) && strpos($payment['receipt_url'], 'http') === 0): 
                 ?>

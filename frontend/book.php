@@ -72,16 +72,50 @@ $booking_id = 0;
 
 // Handle cancellation from PayMongo checkout screen
 if (isset($_GET['cancelled']) && $_GET['cancelled'] == 1) {
-    if (!empty($_GET['cancel_bk_id'])) {
-        $cbId = (int)$_GET['cancel_bk_id'];
-        // Only remove if it's still unverified / Pending Payment
-        $bkCheck = $conn->query("SELECT status FROM bookings WHERE id = $cbId LIMIT 1");
-        if ($bkCheck && $bRow = $bkCheck->fetch_assoc()) {
-            if ($bRow['status'] === 'Pending Payment') {
-                $conn->query("DELETE FROM payments WHERE booking_id = $cbId AND status = 'pending'");
-                $conn->query("DELETE FROM bookings WHERE id = $cbId AND status = 'Pending Payment'");
+    $paymentCancelToken = trim((string)($_GET['cancel_token'] ?? ''));
+    if (preg_match('/\A[a-f0-9]{32}\z/', $paymentCancelToken)) {
+        // The random booking token is the authority to cancel this pending
+        // checkout. A public numeric booking ID must never authorize deletion.
+        $bkCheck = $conn->prepare(
+            "SELECT id FROM bookings
+             WHERE cancellation_token = ? AND status = 'Pending Payment'
+             LIMIT 1"
+        );
+        $bkCheck->bind_param('s', $paymentCancelToken);
+        $bkCheck->execute();
+        $bookingToCancel = $bkCheck->get_result()->fetch_assoc();
+        $bkCheck->close();
+
+        if ($bookingToCancel) {
+            $cbId = (int)$bookingToCancel['id'];
+            $conn->begin_transaction();
+            try {
+                $deletePayments = $conn->prepare(
+                    "DELETE FROM payments WHERE booking_id = ? AND status = 'pending'"
+                );
+                $deletePayments->bind_param('i', $cbId);
+                $deletePayments->execute();
+                $deletePayments->close();
+
+                $deleteBooking = $conn->prepare(
+                    "DELETE FROM bookings
+                     WHERE id = ? AND cancellation_token = ? AND status = 'Pending Payment'"
+                );
+                $deleteBooking->bind_param('is', $cbId, $paymentCancelToken);
+                $deleteBooking->execute();
+                $bookingDeleted = $deleteBooking->affected_rows === 1;
+                $deleteBooking->close();
+
+                if (!$bookingDeleted) {
+                    throw new RuntimeException('Pending booking was not cancelled.');
+                }
+                $conn->commit();
+
                 $qr_f = __DIR__ . '/assets/qrcodes/qr_booking_' . $cbId . '.png';
-                if (file_exists($qr_f)) { @unlink($qr_f); }
+                if (is_file($qr_f)) { @unlink($qr_f); }
+            } catch (Throwable $e) {
+                $conn->rollback();
+                error_log('Pending PayMongo cancellation cleanup failed: ' . $e->getMessage());
             }
         }
     }
@@ -461,7 +495,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // If PayMongo Online Checkout is selected, create session and redirect
                         if ($payment_method === 'PayMongo Online') {
                             $successUrl = rtrim($base_url, '/') . '/payment_success.php?booking_id=' . $booking_id . '&session_id={CHECKOUT_SESSION_ID}';
-                            $cancelPaymentUrl = rtrim($base_url, '/') . '/book.php?step=3&cancelled=1&cancel_bk_id=' . $booking_id;
+                            $cancelPaymentUrl = rtrim($base_url, '/') . '/book.php?step=3&cancelled=1&cancel_token=' . rawurlencode($cancel_token);
                             $desc = '50% Booking Deposit for ' . $db_acc_name . ' (' . $booking_ref . ')';
 
                             $paymongoRes = PayMongoService::createCheckoutSession(

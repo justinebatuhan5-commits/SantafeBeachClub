@@ -20,29 +20,51 @@ header('Content-Type: application/json');
 $action = trim($_GET['action'] ?? '');
 $response = ['success' => false, 'message' => '', 'data' => null];
 
+function refund_admin_authenticated(): bool
+{
+    return isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+}
+
+function refund_request_token(): string
+{
+    $token = trim((string)($_POST['booking_token'] ?? $_GET['booking_token'] ?? ''));
+    return preg_match('/\A[a-f0-9]{32}\z/', $token) ? $token : '';
+}
+
 try {
     if ($action === 'submit_request') {
-        // Guest or Admin submits a refund request
-        $booking_id = intval($_POST['booking_id'] ?? 0);
-        $payment_id = intval($_POST['payment_id'] ?? 0);
+        // Admins may select a booking by ID. Guests must present the random
+        // cancellation token and the booking ID is then derived from it.
+        $is_admin = refund_admin_authenticated();
+        $booking_id = $is_admin ? intval($_POST['booking_id'] ?? 0) : 0;
+        $booking_token = refund_request_token();
         $reason = trim($_POST['reason'] ?? '');
-        $request_type = trim($_POST['request_type'] ?? 'guest'); // 'guest' or 'admin'
-        $requested_by = trim($_POST['requested_by'] ?? 'Guest');
 
-        if (!$booking_id || !$reason) {
-            throw new Exception('Booking ID and reason are required.');
+        if ($reason === '') {
+            throw new Exception('A refund reason is required.');
+        }
+        if (!$is_admin && $booking_token === '') {
+            http_response_code(401);
+            throw new Exception('A valid booking refund token is required.');
+        }
+        if ($is_admin && !$booking_id) {
+            throw new Exception('Booking ID is required.');
         }
 
-        // Get booking details
+        // Resolve the booking from trusted server state. The guest path never
+        // accepts a numeric booking ID as proof of ownership.
         $bstmt = $conn->prepare("
-            SELECT b.id, b.guest_name, b.guest_email, b.check_in, b.check_out, 
-                   b.status, p.amount, p.id as payment_id
+            SELECT b.id, b.guest_name, b.guest_email, b.check_in, b.check_out,
+                   b.status
             FROM bookings b
-            LEFT JOIN payments p ON b.id = p.booking_id
-            WHERE b.id = ?
+            WHERE " . ($is_admin ? 'b.id = ?' : 'b.cancellation_token = ?') . "
             LIMIT 1
         ");
-        $bstmt->bind_param("i", $booking_id);
+        if ($is_admin) {
+            $bstmt->bind_param('i', $booking_id);
+        } else {
+            $bstmt->bind_param('s', $booking_token);
+        }
         $bstmt->execute();
         $booking = $bstmt->get_result()->fetch_assoc();
         $bstmt->close();
@@ -50,15 +72,36 @@ try {
         if (!$booking) {
             throw new Exception('Booking not found.');
         }
+        $booking_id = (int)$booking['id'];
+        $request_type = $is_admin ? 'admin' : 'guest';
+        $requested_by = $is_admin
+            ? (string)($_SESSION['admin_username'] ?? 'Administrator')
+            : (string)$booking['guest_name'];
+
+        // Never accept payment_id or amount from the client. Select a verified
+        // payment that belongs to the authorized booking.
+        $pstmt = $conn->prepare("
+            SELECT id, amount
+            FROM payments
+            WHERE booking_id = ? AND status = 'verified'
+            ORDER BY paid_at DESC, id DESC
+            LIMIT 1
+        ");
+        $pstmt->bind_param('i', $booking_id);
+        $pstmt->execute();
+        $payment = $pstmt->get_result()->fetch_assoc();
+        $pstmt->close();
+
+        if (!$payment || (float)$payment['amount'] <= 0) {
+            throw new Exception('No verified payment found for this booking.');
+        }
+        $payment_id = (int)$payment['id'];
 
         // Calculate refund amount based on cancellation policy
         $policy = sf_get_cancellation_policy($booking['check_in'], $booking['check_out']);
         $refund_percentage = $policy['refund_percentage'] ?? 0;
         
-        $total_amount = (float)($booking['amount'] ?? 0);
-        if ($total_amount <= 0) {
-            throw new Exception('No payment found for this booking.');
-        }
+        $total_amount = (float)$payment['amount'];
 
         $refund_amount = ($total_amount * $refund_percentage) / 100;
         $refund_fee = $total_amount - $refund_amount;
@@ -87,7 +130,7 @@ try {
         ");
         $net_refund = $refund_amount;
         $req_stmt->bind_param(
-            "iisssdd",
+            "iisssddd",
             $booking_id,
             $payment_id,
             $requested_by,
@@ -165,9 +208,15 @@ try {
     } elseif ($action === 'get_request') {
         // Get refund request details
         $request_id = intval($_GET['request_id'] ?? 0);
+        $is_admin = refund_admin_authenticated();
+        $booking_token = refund_request_token();
 
         if (!$request_id) {
             throw new Exception('Request ID is required.');
+        }
+        if (!$is_admin && $booking_token === '') {
+            http_response_code(401);
+            throw new Exception('Authentication or a valid booking refund token is required.');
         }
 
         $stmt = $conn->prepare("
@@ -177,9 +226,14 @@ try {
             JOIN bookings b ON r.booking_id = b.id
             LEFT JOIN payments p ON r.payment_id = p.id
             WHERE r.id = ?
+              " . ($is_admin ? '' : 'AND b.cancellation_token = ?') . "
             LIMIT 1
         ");
-        $stmt->bind_param("i", $request_id);
+        if ($is_admin) {
+            $stmt->bind_param('i', $request_id);
+        } else {
+            $stmt->bind_param('is', $request_id, $booking_token);
+        }
         $stmt->execute();
         $request = $stmt->get_result()->fetch_assoc();
         $stmt->close();
