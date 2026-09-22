@@ -3,25 +3,9 @@ require_once __DIR__ . '/paymongo_confirmation.php';
 require_once __DIR__ . '/../helpers/private_storage_helper.php';
 
 function discount_schema(mysqli $db): void {
-    $db->query("CREATE TABLE IF NOT EXISTS booking_discounts (
-        booking_id INT PRIMARY KEY, category VARCHAR(10) NOT NULL, eligible_guest VARCHAR(150) NOT NULL,
-        id_file VARCHAR(100) NULL, token CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,
-        state VARCHAR(40) NOT NULL DEFAULT 'Awaiting ID verification', original_centavos BIGINT NOT NULL,
-        total_centavos BIGINT NOT NULL, deposit_centavos BIGINT NOT NULL,
-        room_id INT NOT NULL, check_in DATE NOT NULL, check_out DATE NOT NULL, guests_count INT NOT NULL,
-        hold_until DATETIME NOT NULL, note TEXT NULL, reviewed_by VARCHAR(100) NULL,
-        reviewed_at DATETIME NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX(state, hold_until)
-    ) ENGINE=InnoDB");
-    $db->query("CREATE TABLE IF NOT EXISTS discount_history (
-        id INT AUTO_INCREMENT PRIMARY KEY, booking_id INT NOT NULL, actor VARCHAR(100) NOT NULL,
-        action VARCHAR(60) NOT NULL, details TEXT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB");
-    $db->query("CREATE TABLE IF NOT EXISTS discount_payments (
-        payment_id INT PRIMARY KEY, booking_id INT NOT NULL, purpose VARCHAR(10) NOT NULL,
-        checkout_url TEXT NULL, reference_key CHAR(64) NULL UNIQUE, INDEX(booking_id)
-    ) ENGINE=InnoDB");
+    foreach (['booking_discounts', 'discount_history', 'discount_payments'] as $table) {
+        $db->query("SELECT 1 FROM `{$table}` LIMIT 0");
+    }
 }
 
 function discount_amounts(int $original, bool $approved = true): array {

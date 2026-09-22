@@ -5,587 +5,79 @@ require_once __DIR__ . '/../helpers/error_handler.php';
 require_once __DIR__ . '/../helpers/business_time_helper.php';
 require_once __DIR__ . '/../helpers/password_helper.php';
 
-// MySQL database connection configuration (Supports Cloud Env Vars, Local XAMPP & Live Agila Hosting MySQL)
-$is_local_env = in_array($_SERVER['HTTP_HOST'] ?? '127.0.0.1', ['localhost', '127.0.0.1', '::1']);
-
-// Suppress strict reporting during initial connection attempts
+// Connection bootstrap only. Schema and catalog changes belong in
+// backend/scripts/migrate.php and must never be triggered by an HTTP request.
+$is_local_env = in_array($_SERVER['HTTP_HOST'] ?? '127.0.0.1', ['localhost', '127.0.0.1', '::1'], true);
 mysqli_report(MYSQLI_REPORT_OFF);
-
 $conn = null;
+$cloud_connect_error = null;
 
-// 1. Check for Cloud Environment Variables (e.g. Render / Aiven Cloud MySQL)
 $env_host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? null));
 if ($env_host) {
     $env_user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? ($_SERVER['DB_USER'] ?? 'root'));
     $env_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? ($_SERVER['DB_PASS'] ?? ''));
     $env_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? 'defaultdb'));
     $env_port = (int)(getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? ($_SERVER['DB_PORT'] ?? 3306)));
-
     $conn = mysqli_init();
     if ($conn) {
         $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
-        $conn->ssl_set(NULL, NULL, NULL, NULL, NULL);
-        if (!@$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port, NULL, MYSQLI_CLIENT_SSL)) {
-            // Retry plain if SSL handshake not strictly required
+        $conn->ssl_set(null, null, null, null, null);
+        if (!@$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port, null, MYSQLI_CLIENT_SSL)) {
             @$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port);
         }
-        if (!$conn->connect_error) {
-            $dbname = $env_name;
-        } else {
-            $cloud_connect_error = $conn->connect_error;
-        }
+        if (!$conn->connect_error) $dbname = $env_name;
+        else $cloud_connect_error = $conn->connect_error;
     }
 }
 
-// 2. Try Local XAMPP Database (Port 3307 or 3306)
-if (!$env_host && (!$conn || $conn->connect_error)) {
-    if ($is_local_env) {
-        $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3307);
-        if (!$conn || $conn->connect_error) {
-            $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3306);
-        }
-        if ($conn && !$conn->connect_error) {
-            $dbname = 'santafe_beach_club';
-        }
-    }
+if (!$env_host && (!$conn || $conn->connect_error) && $is_local_env) {
+    $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3307);
+    if (!$conn || $conn->connect_error) $conn = @new mysqli('127.0.0.1', 'root', '', 'santafe_beach_club', 3306);
+    if ($conn && !$conn->connect_error) $dbname = 'santafe_beach_club';
 }
 
-// 3. Try Agila Hosting Local MySQL (when deployed on Agila server)
 if (!$env_host && !$is_local_env && (!$conn || $conn->connect_error)) {
     require_once __DIR__ . '/agila_database.php';
-    $agila_config = agila_database_config();
-    $agila_host = $agila_config['host'];
-    $agila_user = $agila_config['user'];
-    $agila_pass = $agila_config['password'];
-    $agila_db = $agila_config['database'];
-
-    $agila_conn = @new mysqli($agila_host, $agila_user, $agila_pass, $agila_db);
-    if ($agila_conn && !$agila_conn->connect_error) {
-        $conn = $agila_conn;
-        $dbname = $agila_db;
+    $config = agila_database_config();
+    $candidate = @new mysqli($config['host'], $config['user'], $config['password'], $config['database']);
+    if ($candidate && !$candidate->connect_error) {
+        $conn = $candidate;
+        $dbname = $config['database'];
     }
 }
 
-// Aiven Cloud MySQL Database removed - configure DB_HOST environment variable instead
-
-// Restore strict reporting for application queries
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
-// Helper: run schema-migration queries silently (ALTER TABLE, CREATE TABLE IF NOT EXISTS)
-// Aiven and other managed MySQL servers may reject certain DDL syntax; never crash on these.
-function safe_query($conn, $sql) {
-    try { @$conn->query($sql); } catch (Throwable $t) { error_log('[safe_query] ' . $t->getMessage()); }
-}
-
-// Type assertion: $conn is guaranteed to be mysqli at this point (or script has died above)
-/** @var mysqli $conn */
-
 try {
     if (!$conn || $conn->connect_error) {
-        $err = $conn ? $conn->connect_error : ($cloud_connect_error ?? 'Unable to connect to database host');
-        throw new mysqli_sql_exception("Connection failed: " . $err . " (Configure DB_HOST environment variable or use local XAMPP)");
-    }
-    
-    try {
-        @$conn->query("CREATE DATABASE IF NOT EXISTS $dbname");
-    } catch (Throwable $t) {
-        // Cloud managed databases like Aiven restrict CREATE DATABASE; ignore if db already exists
+        $error = $conn ? $conn->connect_error : ($cloud_connect_error ?? 'Unable to connect to database host');
+        throw new mysqli_sql_exception('Connection failed: ' . $error . ' (Configure DB_HOST or use local XAMPP)');
     }
     @$conn->select_db($dbname);
-
-    // ---------------------------------------------------------------------------
-    // SCHEMA MIGRATION: Only runs when tables are missing OR once per session.
-    // This prevents 50+ DDL queries from firing on every page load, which was
-    // causing 5-10 second load times over the remote Aiven MySQL connection.
-    // To force a re-run, add ?migrate=1 to any URL or clear your session.
-    // ---------------------------------------------------------------------------
-    if (session_status() === PHP_SESSION_NONE) {
-        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-                || (($_SERVER['SERVER_PORT'] ?? 80) == 443)
-                || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
-
-        session_set_cookie_params([
-            'lifetime' => 0,
-            'path'     => '/',
-            'domain'   => '',
-            'secure'   => $isHttps,
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
-        @session_start();
+    try {
+        $propertyTimezone = sf_get_property_timezone_setting($conn);
+    } catch (mysqli_sql_exception $e) {
+        // A brand-new database can be connected only so the CLI migrator can
+        // create its schema. HTTP requests still perform no schema writes.
+        $propertyTimezone = SF_DEFAULT_PROPERTY_TIMEZONE;
     }
-    $force_migrate = isset($_GET['migrate']) && $_GET['migrate'] === '1';
-    $tableCheck = $conn->query("SHOW TABLES LIKE 'rooms'");
-    $tables_exist = $tableCheck && $tableCheck->num_rows > 0;
-    $need_migration = !$tables_exist || $force_migrate || empty($_SESSION['_db_migrated']);
-
-    if ($need_migration) {
-
-    // Verify tables exist, else run the schema
-    if (!$tables_exist) {
-        $schema = file_get_contents(__DIR__ . '/../database/database.sql');
-        $queries = explode(';', $schema);
-        foreach ($queries as $q) {
-            $q = trim($q);
-            if (!empty($q)) {
-                try { $conn->query($q); } catch (Exception $e) {}
-            }
-        }
-    }
-
-    // Ensure token & email & payment columns exist
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkin_token VARCHAR(64) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_token VARCHAR(64) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelled_at DATETIME DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guest_email VARCHAR(150) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Pay at Check-in'");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS room_type_id INT DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkout_notified_at DATETIME DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_deadline DATETIME DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_reason VARCHAR(255) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS promo_code VARCHAR(50) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0.00");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_email_sent_at DATETIME DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS prearrival_reminder_sent_at DATETIME DEFAULT NULL");
-    
-    // Helper function to safely add a column if it doesn't already exist (MySQL 8 compatible)
-    $ensure_column = function($conn, $dbname, $table, $col, $col_def) {
-        $check = @$conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = '$table' AND COLUMN_NAME = '$col'");
-        if ($check && $check->num_rows == 0) {
-            @$conn->query("ALTER TABLE `$table` ADD COLUMN `$col` $col_def");
-        }
-    };
-
-    $ensure_column($conn, $dbname, 'room_types', 'image_url', 'VARCHAR(255) DEFAULT NULL');
-    $ensure_column($conn, $dbname, 'room_types', 'gallery_images', 'TEXT DEFAULT NULL');
-    $ensure_column($conn, $dbname, 'bookings', 'guest_phone', 'VARCHAR(20) DEFAULT NULL');
-    $ensure_column($conn, $dbname, 'bookings', 'guest_country', 'VARCHAR(50) DEFAULT NULL');
-    $ensure_column($conn, $dbname, 'bookings', 'guest_special_requests', 'TEXT DEFAULT NULL');
-    $ensure_column($conn, $dbname, 'bookings', 'guest_notes', 'TEXT DEFAULT NULL');
-
-
-    // Reviews table schema
-    $conn->query("CREATE TABLE IF NOT EXISTS reviews (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        booking_id INT DEFAULT NULL,
-        guest_name VARCHAR(100) NOT NULL,
-        guest_location VARCHAR(100) DEFAULT 'Philippines',
-        rating TINYINT UNSIGNED NOT NULL DEFAULT 5,
-        review_text TEXT NOT NULL,
-        is_approved TINYINT(1) DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-    // Promotions table schema support (promo code)
-    $conn->query("CREATE TABLE IF NOT EXISTS promotions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        code VARCHAR(50) DEFAULT NULL,
-        title VARCHAR(150) NOT NULL,
-        description TEXT,
-        discount_type VARCHAR(20) DEFAULT 'percent',
-        discount_value DECIMAL(10,2) DEFAULT 0,
-        valid_from DATE,
-        valid_until DATE,
-        is_active TINYINT(1) DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-    safe_query($conn, "ALTER TABLE promotions ADD COLUMN IF NOT EXISTS code VARCHAR(50) DEFAULT NULL");
-
-    // Pricing Rules table schema support (seasonal and weekend pricing)
-    $conn->query("CREATE TABLE IF NOT EXISTS pricing_rules (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(150) NOT NULL,
-        room_type VARCHAR(50) DEFAULT 'all',
-        rule_type VARCHAR(20) NOT NULL DEFAULT 'weekend', -- 'weekend', 'date_range'
-        start_date DATE DEFAULT NULL,
-        end_date DATE DEFAULT NULL,
-        days_of_week VARCHAR(30) DEFAULT '5,6,0', -- Friday=5, Saturday=6, Sunday=0
-        adjustment_type VARCHAR(20) DEFAULT 'percent', -- 'percent', 'fixed'
-        adjustment_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-        is_active TINYINT(1) DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // Room types table for availability detection
-    $conn->query("CREATE TABLE IF NOT EXISTS room_types (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL UNIQUE,
-        total_rooms INT NOT NULL DEFAULT 0,
-        price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-        image_url TEXT DEFAULT NULL,
-        gallery_images TEXT DEFAULT NULL
-    )");
-
-    // Ensure image columns exist on upgrading existing tables
-    safe_query($conn, "ALTER TABLE room_types ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE room_types ADD COLUMN IF NOT EXISTS gallery_images TEXT DEFAULT NULL");
-
-    // Enforce current room catalog, counts, capacities and rates.
-    $catalogRooms = [
-        ['101', 'Beachview Duplex 101', 'beachview_duplex', 6900.00, 2],
-        ['102', 'Seaview Duplex 102', 'seaview_duplex', 7900.00, 2],
-        ['103', 'Beach Villa 103', 'beach_villa', 7900.00, 4],
-        ['104', 'Beach Villa 104', 'beach_villa', 7900.00, 4],
-        ['105', 'Beach Villa 105', 'beach_villa', 7900.00, 4],
-        ['106', 'Standard Family Room 106', 'standard_king', 4300.00, 4],
-        ['203', 'Standard Family Room 203', 'standard_king', 4300.00, 4],
-        ['107', 'Standard Room 107', 'standard_room', 2900.00, 2],
-        ['108', 'Standard Room 108', 'standard_room', 2900.00, 2],
-        ['109', 'Standard Room 109', 'standard_room', 2900.00, 2],
-        ['110', 'Standard Room 110', 'standard_room', 2900.00, 2],
-    ];
-
-    $catalogUpsertStmt = $conn->prepare("
-        INSERT INTO rooms (room_number, name, type, price_per_night, capacity, status)
-        VALUES (?, ?, ?, ?, ?, 'ready')
-        ON DUPLICATE KEY UPDATE
-            name = VALUES(name),
-            type = VALUES(type),
-            capacity = VALUES(capacity)
-    ");
-    foreach ($catalogRooms as [$roomNumber, $roomName, $roomType, $roomPrice, $roomCapacity]) {
-        $catalogUpsertStmt->bind_param("sssdi", $roomNumber, $roomName, $roomType, $roomPrice, $roomCapacity);
-        $catalogUpsertStmt->execute();
-    }
-    $catalogUpsertStmt->close();
-
-    $catalogRoomNumbers = [];
-    foreach ($catalogRooms as [$roomNumber]) {
-        $catalogRoomNumbers[] = "'" . $conn->real_escape_string($roomNumber) . "'";
-    }
-    $catalogRoomNumbersSql = implode(',', $catalogRoomNumbers);
-    $conn->query("DELETE FROM rooms WHERE room_number NOT IN ($catalogRoomNumbersSql)");
-
-    // Keep room type inventory synced from the current rooms table.
-    $roomTypesResult = $conn->query("
-        SELECT type AS name, COUNT(*) AS total_rooms, MIN(price_per_night) AS price
-        FROM rooms
-        WHERE type IS NOT NULL AND type <> ''
-        GROUP BY type
-    ");
-    if ($roomTypesResult) {
-        $roomTypeStmt = $conn->prepare("
-            INSERT INTO room_types (name, total_rooms, price)
-            VALUES (?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                total_rooms = VALUES(total_rooms)
-        ");
-        while ($roomType = $roomTypesResult->fetch_assoc()) {
-            $name = $roomType['name'];
-            $totalRooms = (int)$roomType['total_rooms'];
-            $price = (float)$roomType['price'];
-            $roomTypeStmt->bind_param("sid", $name, $totalRooms, $price);
-            $roomTypeStmt->execute();
-        }
-        $roomTypeStmt->close();
-    }
-    $conn->query("DELETE FROM room_types WHERE name NOT IN ('beachview_duplex','seaview_duplex','beach_villa','standard_room','standard_king')");
-
-    // Backfill room_type_id from the current rooms table where possible
-    $conn->query("
-        UPDATE bookings b
-        JOIN rooms r ON b.room_id = r.id
-        JOIN room_types rt ON rt.name = r.type
-        SET b.room_type_id = rt.id
-        WHERE b.room_type_id IS NULL
-    ");
-
-    // Ensure payments table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS payments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        booking_id INT NOT NULL,
-        guest_name VARCHAR(100) NOT NULL,
-        guest_email VARCHAR(150),
-        amount DECIMAL(10, 2) NOT NULL,
-        payment_method VARCHAR(50) NOT NULL,
-        transaction_id VARCHAR(100),
-        status ENUM('pending', 'verified', 'rejected', 'refunded') DEFAULT 'pending',
-        accounting_status VARCHAR(20) DEFAULT 'deferred',
-        paid_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-    
-    // Add accounting_status to payments if upgrading from older schema
-    safe_query($conn, "ALTER TABLE payments ADD COLUMN IF NOT EXISTS accounting_status VARCHAR(20) DEFAULT 'deferred'");
-    safe_query($conn, "ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_tendered DECIMAL(10,2) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE payments ADD COLUMN IF NOT EXISTS change_amount DECIMAL(10,2) DEFAULT NULL");
-
-    // Keep an immutable audit trail for every payment status action.
-    $conn->query("CREATE TABLE IF NOT EXISTS payment_action_history (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        payment_id INT NOT NULL,
-        action VARCHAR(30) NOT NULL,
-        performed_by VARCHAR(100) NOT NULL,
-        details TEXT DEFAULT NULL,
-        performed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_payment_history_payment (payment_id),
-        INDEX idx_payment_history_time (performed_at)
-    )");
-
-    // Refund Requests — Multi-step approval workflow
-    $conn->query("CREATE TABLE IF NOT EXISTS refund_requests (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        booking_id INT NOT NULL,
-        payment_id INT,
-        requested_by VARCHAR(100) NOT NULL,
-        request_type VARCHAR(20) DEFAULT 'guest', -- 'guest' or 'admin'
-        status VARCHAR(30) DEFAULT 'requested', -- requested, approved, rejected, processing, completed, failed
-        reason TEXT,
-        refund_amount DECIMAL(10, 2) NOT NULL,
-        refund_fee DECIMAL(10, 2) DEFAULT 0.00,
-        net_refund DECIMAL(10, 2) NOT NULL,
-        approved_by VARCHAR(100) DEFAULT NULL,
-        approved_at DATETIME DEFAULT NULL,
-        rejection_reason TEXT DEFAULT NULL,
-        paymongo_refund_id VARCHAR(100) DEFAULT NULL,
-        paymongo_status VARCHAR(50) DEFAULT NULL,
-        completed_at DATETIME DEFAULT NULL,
-        requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
-        FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE SET NULL,
-        INDEX idx_booking_status (booking_id, status),
-        INDEX idx_status_time (status, requested_at),
-        INDEX idx_approved_by (approved_by)
-    )");
-
-    // Refund tracking in bookings table
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_status VARCHAR(50) DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_request_id INT DEFAULT NULL");
-    safe_query($conn, "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancellation_reason VARCHAR(255) DEFAULT NULL");
-
-    // Ensure notifications table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS notifications (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(150) NOT NULL,
-        message TEXT NOT NULL,
-        type VARCHAR(30) DEFAULT 'info',
-        is_read TINYINT(1) DEFAULT 0,
-        booking_id INT DEFAULT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-    safe_query($conn, "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS booking_id INT DEFAULT NULL");
-
-    // -----------------------------------------------------------------------
-    // SEPARATE TABLES: administrators and receptionists
-    // -----------------------------------------------------------------------
-    $conn->query("CREATE TABLE IF NOT EXISTS administrators (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        email VARCHAR(150) DEFAULT NULL,
-        profile_photo VARCHAR(255) DEFAULT NULL,
-        failed_login_count INT NOT NULL DEFAULT 0,
-        locked_until DATETIME NULL DEFAULT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    $conn->query("CREATE TABLE IF NOT EXISTS receptionists (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        email VARCHAR(150) DEFAULT NULL,
-        profile_photo VARCHAR(255) DEFAULT NULL,
-        failed_login_count INT NOT NULL DEFAULT 0,
-        locked_until DATETIME NULL DEFAULT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // -----------------------------------------------------------------------
-    // MFA: admin_otps — stores hashed OTPs for two-factor login
-    // Supports both 'admin' and 'receptionist' user types via user_type column
-    // -----------------------------------------------------------------------
-    $conn->query("CREATE TABLE IF NOT EXISTS admin_otps (
-        id         INT AUTO_INCREMENT PRIMARY KEY,
-        admin_id   INT          NOT NULL,
-        user_type  VARCHAR(20)  NOT NULL DEFAULT 'admin',
-        otp_hash   VARCHAR(64)  NOT NULL,
-        expires_at DATETIME     NOT NULL,
-        attempts   TINYINT      NOT NULL DEFAULT 0,
-        used       TINYINT(1)   NOT NULL DEFAULT 0,
-        created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_admin_otp_lookup (admin_id, used, expires_at)
-    )");
-    safe_query($conn, "ALTER TABLE admin_otps ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) NOT NULL DEFAULT 'admin'");
-    safe_query($conn, "ALTER TABLE admin_otps DROP FOREIGN KEY admin_otps_ibfk_1");
-
-    // -----------------------------------------------------------------------
-    // MFA: guest_otps — stores hashed OTPs for customer booking portal login
-    // -----------------------------------------------------------------------
-    $conn->query("CREATE TABLE IF NOT EXISTS guest_otps (
-        id         INT AUTO_INCREMENT PRIMARY KEY,
-        booking_id INT          NOT NULL,
-        otp_hash   VARCHAR(64)  NOT NULL,
-        expires_at DATETIME     NOT NULL,
-        attempts   TINYINT      NOT NULL DEFAULT 0,
-        used       TINYINT(1)   NOT NULL DEFAULT 0,
-        created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_guest_otp_lookup (booking_id, used, expires_at),
-        FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
-    )");
-
-    // -----------------------------------------------------------------------
-    // Password Resets: stores hashed tokens for forgotten password recovery
-    // Supports both 'admin' and 'receptionist' user types via user_type column
-    // -----------------------------------------------------------------------
-    $conn->query("CREATE TABLE IF NOT EXISTS password_resets (
-        id         INT AUTO_INCREMENT PRIMARY KEY,
-        admin_id   INT          NOT NULL,
-        user_type  VARCHAR(20)  NOT NULL DEFAULT 'admin',
-        token_hash VARCHAR(64)  NOT NULL,
-        expires_at DATETIME     NOT NULL,
-        used       TINYINT(1)   NOT NULL DEFAULT 0,
-        ip_address VARCHAR(45)  DEFAULT NULL,
-        created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_reset_token (token_hash, used, expires_at)
-    )");
-    safe_query($conn, "ALTER TABLE password_resets ADD COLUMN IF NOT EXISTS user_type VARCHAR(20) NOT NULL DEFAULT 'admin'");
-    safe_query($conn, "ALTER TABLE password_resets DROP FOREIGN KEY password_resets_ibfk_1");
-
-    // Ensure activity_logs table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        admin_username VARCHAR(50) NOT NULL,
-        action VARCHAR(100) NOT NULL,
-        details TEXT,
-        ip_address VARCHAR(45),
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // Ensure property settings table exists (key/value store)
-    $conn->query("CREATE TABLE IF NOT EXISTS settings (
-        setting_key VARCHAR(100) PRIMARY KEY,
-        setting_value TEXT NOT NULL,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-
-    // Ensure gallery table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS gallery (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        file_name VARCHAR(255) NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // Ensure inquiries table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS inquiries (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        guest_name VARCHAR(150) NOT NULL,
-        guest_email VARCHAR(150) NOT NULL,
-        subject VARCHAR(200) NOT NULL,
-        message TEXT NOT NULL,
-        status VARCHAR(20) DEFAULT 'Unread',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // Ensure security_logs table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS security_logs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        event_type VARCHAR(50) NOT NULL,
-        event_level VARCHAR(20) NOT NULL DEFAULT 'INFO',
-        username VARCHAR(100) DEFAULT 'anonymous',
-        ip_address VARCHAR(45) NOT NULL,
-        user_agent VARCHAR(255) DEFAULT NULL,
-        request_uri VARCHAR(255) DEFAULT NULL,
-        description TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // Ensure rate_limits table exists
-    $conn->query("CREATE TABLE IF NOT EXISTS rate_limits (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        ip_address VARCHAR(45) NOT NULL,
-        action VARCHAR(50) NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_ip_action_time (ip_address, action, created_at)
-    )");
-
-    // Seed any missing property settings without overwriting existing values
-    $defaults = [
-        ['property_name',     'Santa Fe Beach Club'],
-        ['property_address',  'Barangay Poblacion, Santa Fe, Cebu'],
-        ['property_phone',    '+63 32 123 4567'],
-        ['property_email',    'info@santafebeachclub.com'],
-        ['checkin_time',      '14:00'],
-        ['checkout_time',     '12:00'],
-        ['property_timezone', SF_DEFAULT_PROPERTY_TIMEZONE],
-        ['currency',          'PHP'],
-        ['gcash_number',      '0950 522 3146'],
-        ['gcash_name',        'Justine B'],
-    ];
-    $stmt = $conn->prepare("
-        INSERT INTO settings (setting_key, setting_value)
-        VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE setting_value = setting_value
-    ");
-    foreach ($defaults as [$k, $v]) {
-        $stmt->bind_param("ss", $k, $v);
-        $stmt->execute();
-    }
-    $stmt->close();
-
-    // Mark migration as done for this session
-    $_SESSION['_db_migrated'] = true;
-
-    } // end if ($need_migration)
-
-    $propertyTimezone = sf_get_property_timezone_setting($conn);
     date_default_timezone_set($propertyTimezone);
-
-    $timezoneOffset = (new DateTimeImmutable('now', new DateTimeZone($propertyTimezone)))->format('P');
-    $conn->query("SET time_zone = '" . $conn->real_escape_string($timezoneOffset) . "'");
-
+    $offset = (new DateTimeImmutable('now', new DateTimeZone($propertyTimezone)))->format('P');
+    $conn->query("SET time_zone = '" . $conn->real_escape_string($offset) . "'");
 } catch (mysqli_sql_exception $e) {
-    echo "<!DOCTYPE html>
-    <html lang='en'>
-    <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <title>Database Connection Error</title>
-        <link rel='stylesheet' href='styles.css'>
-        <style>
-            body { font-family: 'Outfit', sans-serif; background: #F3F4F6; }
-            .error-container {
-                max-width: 600px; margin: 100px auto; padding: 30px;
-                background: white; border-radius: 12px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center;
-            }
-            .error-title { color: #D84315; font-size: 24px; font-weight: 700; margin-bottom: 15px; }
-            .error-body { font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 25px; }
-            .xampp-instructions {
-                background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;
-                padding: 15px; text-align: left; font-size: 13px; color: #374151;
-            }
-            .xampp-instructions ol { margin-left: 20px; margin-top: 8px; }
-            .xampp-instructions li { margin-bottom: 5px; }
-        </style>
-    </head>
-    <body>
-        <div class='error-container'>
-            <div class='error-title'>MySQL Database Offline</div>
-            <div class='error-body'>Cannot connect to MySQL. " . htmlspecialchars($e->getMessage()) . "</div>
-            <div class='xampp-instructions'>
-                <strong>Troubleshooting:</strong>
-                <ol>
-                    <li>If hosted locally: Make sure MySQL is running in your <strong>XAMPP Control Panel</strong>.</li>
-                    <li>If hosted on Agila: Verify MySQL is running and your database name and credentials are correct.</li>
-                    <li>Refresh this page.</li>
-                </ol>
-            </div>
-        </div>
-    </body>
-    </html>";
+    http_response_code(503);
+    echo "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0'><title>Database Connection Error</title></head><body><main><h1>MySQL Database Offline</h1><p>Cannot connect to MySQL. "
+        . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
+        . "</p><p>Verify the database credentials and run deployment migrations from the command line.</p></main></body></html>";
     exit;
 }
 
 require_once __DIR__ . '/../services/discount_service.php';
-discount_schema($conn);
-discount_maintenance($conn);
 
-// Helper: write an entry to activity_logs
 function log_activity($conn, $username, $action, $details = '') {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    $stmt = $conn->prepare("INSERT INTO activity_logs (admin_username, action, details, ip_address) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $username, $action, $details, $ip);
+    $stmt = $conn->prepare('INSERT INTO activity_logs (admin_username, action, details, ip_address) VALUES (?, ?, ?, ?)');
+    $stmt->bind_param('ssss', $username, $action, $details, $ip);
     $stmt->execute();
     $stmt->close();
 }
 ?>
-

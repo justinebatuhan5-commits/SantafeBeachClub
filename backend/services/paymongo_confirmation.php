@@ -11,23 +11,8 @@ function pm_query(mysqli $db, string $sql, array $params = []): mysqli_stmt
 
 function pm_checkout_schema(mysqli $db): void
 {
-    // Separate immutable checkout identity from the final provider transaction ID.
-    if (!$db->query("CREATE TABLE IF NOT EXISTS paymongo_checkouts (
-        session_id VARCHAR(100) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
-        payment_id INT NOT NULL UNIQUE,
-        booking_id INT NOT NULL,
-        amount_centavos BIGINT NOT NULL,
-        currency CHAR(3) NOT NULL,
-        provider_payment_id VARCHAR(100) CHARACTER SET ascii COLLATE ascii_bin NULL UNIQUE
-    ) ENGINE=InnoDB")) {
-        throw new RuntimeException('Checkout storage is unavailable.');
-    }
-    // Preserve existing pending checkouts while their original session ID still exists.
-    pm_query($db, "INSERT INTO paymongo_checkouts (session_id, payment_id, booking_id, amount_centavos, currency)
-        SELECT p.transaction_id, p.id, p.booking_id, ROUND(p.amount * 100), 'PHP'
-        FROM payments p WHERE p.payment_method = 'PayMongo Online' AND p.status = 'pending'
-        AND p.transaction_id LIKE 'cs\\_%'
-        AND NOT EXISTS (SELECT 1 FROM paymongo_checkouts c WHERE c.payment_id = p.id)");
+    // Availability check only. The CLI deployment migration owns this table.
+    $db->query('SELECT 1 FROM paymongo_checkouts LIMIT 0');
 }
 
 function pm_store_checkout(mysqli $db, string $sessionId, int $paymentId, int $bookingId, float $amount): void

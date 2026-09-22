@@ -15,7 +15,9 @@ $db->query("CREATE TEMPORARY TABLE rooms (id INT PRIMARY KEY,name VARCHAR(100),t
 $db->query("INSERT INTO rooms VALUES (1,'Test Room','standard_room','ready')");
 $db->query("CREATE TEMPORARY TABLE bookings (id INT AUTO_INCREMENT PRIMARY KEY,guest_name VARCHAR(100),guest_email VARCHAR(150),guest_type VARCHAR(50),check_in DATE,check_out DATE,guests_count INT,room_id INT,accommodation_name VARCHAR(100),eta VARCHAR(10),status VARCHAR(30),checkin_token VARCHAR(50),cancellation_token VARCHAR(50),payment_method VARCHAR(50),guest_phone VARCHAR(30),discount_amount DECIMAL(10,2)) ENGINE=InnoDB");
 $db->query("CREATE TEMPORARY TABLE notifications (title VARCHAR(100),message TEXT,type VARCHAR(30),booking_id INT) ENGINE=InnoDB");
-discount_schema($db);
+$db->query("CREATE TEMPORARY TABLE booking_discounts (booking_id INT PRIMARY KEY,category VARCHAR(10),eligible_guest VARCHAR(150),id_file VARCHAR(100),token CHAR(64) UNIQUE,state VARCHAR(40) DEFAULT 'Awaiting ID verification',original_centavos BIGINT,total_centavos BIGINT,deposit_centavos BIGINT,room_id INT,check_in DATE,check_out DATE,guests_count INT,hold_until DATETIME,note TEXT,reviewed_by VARCHAR(100),reviewed_at DATETIME,created_at DATETIME DEFAULT CURRENT_TIMESTAMP,updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+$db->query("CREATE TEMPORARY TABLE discount_history (id INT AUTO_INCREMENT PRIMARY KEY,booking_id INT,actor VARCHAR(100),action VARCHAR(60),details TEXT,created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+$db->query("CREATE TEMPORARY TABLE discount_payments (payment_id INT PRIMARY KEY,booking_id INT,purpose VARCHAR(10),checkout_url TEXT,reference_key CHAR(64) UNIQUE)");
 $fixture=sys_get_temp_dir().'/sbc-discount-upload-'.bin2hex(random_bytes(8));
 mkdir($fixture); mkdir($fixture.'/www');
 putenv('PRIVATE_STORAGE_DOCUMENT_ROOT='.$fixture.'/www'); putenv('PRIVATE_STORAGE_DIR='.$fixture.'/private');
