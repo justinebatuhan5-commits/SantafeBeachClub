@@ -355,7 +355,7 @@ $active_page = 'discount_requests';
             <div id="imageModalError" class="document-modal-message" role="alert" hidden>
                 <div class="document-modal-icon" aria-hidden="true">&#128196;</div>
                 <strong>Document unavailable</strong>
-                <p>The file could not be loaded. It may have been archived or removed from private storage.</p>
+                <p id="imageModalErrorDetail">The file could not be loaded.</p>
             </div>
         </div>
     </div>
@@ -370,6 +370,7 @@ const modalImage = document.getElementById('imageModalImage');
 const modalPdf = document.getElementById('imageModalPdf');
 const modalLoading = document.getElementById('imageModalLoading');
 const modalError = document.getElementById('imageModalError');
+const modalErrorDetail = document.getElementById('imageModalErrorDetail');
 const closeBtn = document.getElementById('closeImageModal');
 let documentObjectUrl = null;
 let documentRequest = null;
@@ -398,21 +399,30 @@ document.querySelectorAll('.js-preview-doc').forEach(btn => {
                 cache: 'no-store',
                 signal: activeRequest.signal
             });
-            if (!response.ok) throw new Error(`Document request failed (${response.status})`);
-            const documentBlob = await response.blob();
-            if (!documentBlob.size) throw new Error('The document is empty');
-            if (!documentBlob.type.startsWith('image/') && documentBlob.type !== 'application/pdf') {
-                throw new Error('Unsupported document type');
+            if (!response.ok) {
+                const serverMessage = (await response.text()).trim().slice(0, 160);
+                throw new Error(`Server returned HTTP ${response.status}${serverMessage ? `: ${serverMessage}` : ''}`);
             }
-            documentObjectUrl = URL.createObjectURL(documentBlob);
+            const documentBlob = await response.blob();
+            if (!documentBlob.size) throw new Error('The server returned an empty document');
+            if (!documentBlob.type.startsWith('image/') && documentBlob.type !== 'application/pdf') {
+                throw new Error(`The server returned an unsupported document type (${documentBlob.type || 'unknown'})`);
+            }
             if (documentBlob.type.startsWith('image/')) {
+                const imageDataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error('The downloaded image could not be read'));
+                    reader.readAsDataURL(documentBlob);
+                });
                 await new Promise((resolve, reject) => {
                     modalImage.onload = resolve;
                     modalImage.onerror = () => reject(new Error('The image data is invalid'));
-                    modalImage.src = documentObjectUrl;
+                    modalImage.src = imageDataUrl;
                 });
                 modalImage.hidden = false;
             } else {
+                documentObjectUrl = URL.createObjectURL(documentBlob);
                 modalPdf.src = documentObjectUrl;
                 modalPdf.hidden = false;
             }
@@ -420,6 +430,7 @@ document.querySelectorAll('.js-preview-doc').forEach(btn => {
         } catch (error) {
             if (error.name === 'AbortError' || documentRequest !== activeRequest) return;
             modalLoading.hidden = true;
+            modalErrorDetail.textContent = error instanceof Error ? error.message : 'The document could not be loaded.';
             modalError.hidden = false;
         }
     });
