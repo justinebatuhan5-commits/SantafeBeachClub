@@ -82,6 +82,9 @@ function sf_get_cancellation_policy(string $check_in, string $check_out): array
     $now_timestamp = time();
 
     $is_expired = ($now_timestamp >= $deadline_timestamp);
+    // Guests cancelling before the applicable deadline receive the paid
+    // amount back. After the deadline, the booking is non-refundable.
+    $refund_percentage = $is_expired ? 0 : 100;
     $hours_left = max(0, round(($deadline_timestamp - $now_timestamp) / 3600));
     $days_left = ceil($hours_left / 24);
 
@@ -93,6 +96,7 @@ function sf_get_cancellation_policy(string $check_in, string $check_out): array
         'deadline_timestamp' => $deadline_timestamp,
         'deadline_formatted' => date('M j, Y \a\t g:i A', $deadline_timestamp),
         'is_expired'         => $is_expired,
+        'refund_percentage'  => $refund_percentage,
         'hours_left'         => $hours_left,
         'days_left'          => $days_left,
     ];
