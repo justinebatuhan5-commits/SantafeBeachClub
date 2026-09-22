@@ -44,6 +44,8 @@ $countdown = [
     'intervalSeconds' => 6 * 60 * 60,
     'serverNow' => time(),
     'available' => $error === '',
+    'pcSavedAt' => (int)($state['pc_saved_at'] ?? 0),
+    'pcSavedName' => (string)($state['pc_saved_name'] ?? ''),
 ];
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['backup_status'])) {
     header('Content-Type: application/json');
@@ -59,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['backup_status'])) {
 <link rel="stylesheet" href="assets/css/backups.css?v=<?= filemtime(__DIR__ . '/assets/css/backups.css') ?>">
 </head><body>
 <?php $active_page = 'backups'; include __DIR__ . '/partials/_sidebar.php'; ?>
-<main class="admin-main"><?php $page_title = 'PC Database Backups'; $page_subtitle = 'Download your hosted database to your computer every six hours.'; include __DIR__ . '/partials/_page_header.php'; ?>
+<main class="admin-main"><?php $page_title = 'PC Complete Backups'; $page_subtitle = 'Download your hosted database and private uploads to your computer every six hours.'; include __DIR__ . '/partials/_page_header.php'; ?>
 <div class="admin-body backup-page">
 <section class="backup-hero">
 <div><span class="backup-eyebrow">COMPLETE BACKUPS</span><h2>A little peace of mind.<br>A copy on your PC.</h2><p>Keep your database and private guest uploads together with scheduled downloads to your Windows computer.</p><a class="backup-hero-link" href="#backup-setup">Set up your PC <span aria-hidden="true">&#8599;</span></a></div>
@@ -68,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['backup_status'])) {
 <div class="backup-stats">
 <div class="backup-stat"><span class="backup-stat-label">PC access key</span><strong><i class="backup-dot <?= !empty($state['token_hash']) ? 'is-enabled' : '' ?>"></i><?= !empty($state['token_hash']) ? 'Enabled' : 'Not connected' ?></strong><span><?= !empty($state['token_hash']) ? 'Complete setup on your Windows PC' : 'Start with the connection file below' ?></span></div>
 <div class="backup-stat"><span class="backup-stat-label">Download schedule</span><strong>Every 6 hours</strong><span>While your PC is awake and signed in</span></div>
-<div class="backup-stat"><span class="backup-stat-label">Last PC request</span><strong><?= !empty($state['last_created']) ? pc_html(date('M d, Y · H:i', $state['last_created'])) : 'No requests yet' ?></strong><span>Confirm saved files in your PC download log</span></div>
+<div class="backup-stat"><span class="backup-stat-label">Last PC download</span><strong id="backup-pc-saved-time"><?= !empty($state['pc_saved_at']) ? pc_html(date('M d, Y · H:i', $state['pc_saved_at'])) : 'Not confirmed yet' ?></strong><span id="backup-pc-saved-name"><?= !empty($state['pc_saved_name']) ? pc_html($state['pc_saved_name']) : 'Waiting for the PC to save and verify a bundle' ?></span><button type="button" class="btn btn-secondary" id="backup-check-status">Check download status</button></div>
 </div>
 <section class="backup-countdown" aria-label="Estimated next automatic backup">
 <div><span class="backup-eyebrow">NEXT AUTOMATIC BACKUP · ESTIMATED</span><h2 id="backup-countdown-status">Checking schedule…</h2><p id="backup-countdown-note">Based on the last PC request and the six-hour interval. Windows controls the actual run time.</p></div>
@@ -107,7 +109,7 @@ foreach ($diagnostics as $label => $value): ?>
 <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="installer"><button class="btn btn-secondary">Download installer</button></form>
 <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="downloader"><button class="btn btn-secondary">Download downloader</button></form>
 </div><span class="backup-file-note">2 PowerShell files · .ps1</span></article>
-<article class="backup-step"><span class="backup-step-number">03</span><h3>Turn on the schedule</h3><p>Right-click the installer and select <strong>Run with PowerShell</strong>.</p><div class="backup-run-note"><span aria-hidden="true">&gt;_</span><div><strong>Run with PowerShell</strong><small>install_pc_backup.ps1</small></div></div><p>This creates the six-hour task and attempts your first download. Verified SQL files are saved in your Documents folder.</p></article></div>
+<article class="backup-step"><span class="backup-step-number">03</span><h3>Turn on the schedule</h3><p>Right-click the installer and select <strong>Run with PowerShell</strong>.</p><div class="backup-run-note"><span aria-hidden="true">&gt;_</span><div><strong>Run with PowerShell</strong><small>install_pc_backup.ps1</small></div></div><p>This creates the six-hour task and attempts your first download. Verified complete TAR bundles are saved in your Documents folder.</p></article></div>
 <div class="backup-notice"><strong>Keep your PC ready</strong><p>Your computer must be on, awake, online, and signed in. Missed runs are checked when you sign in again.</p></div>
 <div class="backup-security"><div><strong>Your connection file is private</strong><p>After installation, remove the downloaded connection file. Windows stores the key encrypted for your account.</p></div><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="revoke"><button class="btn btn-secondary backup-revoke">Revoke PC access</button></form></div>
 </section><section class="backup-card backup-history"><div class="backup-section-heading"><div><span class="backup-eyebrow">BACKUP LIBRARY</span><h2>Server copies <span class="backup-count"><?= count($entries) ?></span></h2><p>Retained for 30 days after a successful new export. PC copies stay until you remove them.</p></div><span class="backup-tag">SQL database records</span></div>

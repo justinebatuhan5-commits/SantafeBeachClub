@@ -8,6 +8,9 @@
     const title = document.getElementById('backup-countdown-status');
     const note = document.getElementById('backup-countdown-note');
     const digits = ['hours', 'minutes', 'seconds'].map(unit => document.getElementById(`backup-${unit}`));
+    const savedTime = document.getElementById('backup-pc-saved-time');
+    const savedName = document.getElementById('backup-pc-saved-name');
+    const checkButton = document.getElementById('backup-check-status');
     function render() {
         let remaining = null;
         if (stale || !state.available) {
@@ -29,6 +32,12 @@
         }
         const values = remaining === null ? ['--', '--', '--'] : [Math.floor(remaining / 3600), Math.floor(remaining / 60) % 60, remaining % 60].map(value => String(value).padStart(2, '0'));
         digits.forEach((element, index) => { element.textContent = values[index]; });
+        if (savedTime && savedName) {
+            savedTime.textContent = state.pcSavedAt
+                ? new Date(state.pcSavedAt * 1000).toLocaleString()
+                : 'Not confirmed yet';
+            savedName.textContent = state.pcSavedName || 'Waiting for the PC to save and verify a bundle';
+        }
     }
     let refreshing = false;
     async function refresh() {
@@ -47,10 +56,11 @@
             receivedAt = performance.now();
             stale = false;
         } catch (_) { stale = true; }
-        finally { clearTimeout(timeout); refreshing = false; render(); }
+        finally { clearTimeout(timeout); refreshing = false; if (checkButton) checkButton.disabled = false; render(); }
     }
     render();
     setInterval(render, 1000);
     setInterval(refresh, 30000);
+    checkButton?.addEventListener('click', () => { checkButton.disabled = true; refresh(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 })();

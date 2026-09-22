@@ -51,6 +51,14 @@ try {
             Remove-Item -LiteralPath $partial
         } else { Move-Item -LiteralPath $partial -Destination $target }
         $partial = $null
+        $ack = New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post, $endpoint)
+        $ack.Headers.Authorization = New-Object Net.Http.Headers.AuthenticationHeaderValue('Bearer', $token)
+        $ack.Headers.Add('X-Backup-Request', [string]$state.request_id)
+        $ack.Headers.Add('X-Backup-Acknowledge', $expectedHash)
+        $ackResponse = $client.SendAsync($ack).GetAwaiter().GetResult()
+        try {
+            if (!$ackResponse.IsSuccessStatusCode) { throw ('Backup was saved, but Agila could not confirm it (HTTP ' + [int]$ackResponse.StatusCode + ').') }
+        } finally { $ackResponse.Dispose(); $ack.Dispose() }
         $state.last_success = [DateTimeOffset]::UtcNow.ToString('o')
         $state.request_id = $null
         Save-DownloadState $state

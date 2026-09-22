@@ -57,6 +57,29 @@ function pc_backup_revoke(): void
     try { pc_backup_write([]); } finally { flock($lock, LOCK_UN); fclose($lock); }
 }
 
+function pc_backup_acknowledge(string $token, string $requestId, string $sha256): void
+{
+    if (!preg_match('/\A[a-f0-9]{32}\z/', $requestId) || !preg_match('/\A[a-f0-9]{64}\z/', $sha256)) {
+        throw new InvalidArgumentException('Invalid backup acknowledgement.');
+    }
+    $lock = pc_backup_lock();
+    try {
+        $state = pc_backup_read();
+        if (!pc_backup_authorized($token, $state)) throw new RuntimeException('PC backup access denied.');
+        $entry = $state['last_backup'] ?? [];
+        if (($state['request_id'] ?? '') !== $requestId || !hash_equals($entry['sha256'] ?? '', $sha256)) {
+            throw new RuntimeException('Backup acknowledgement does not match the latest download.');
+        }
+        $state['pc_saved_at'] = time();
+        $state['pc_saved_name'] = $entry['name'];
+        $state['pc_saved_sha256'] = $sha256;
+        pc_backup_write($state);
+    } finally {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+    }
+}
+
 /** Build a portable bundle containing the SQL snapshot and all private uploads. */
 function pc_backup_bundle(array $databaseEntry): array
 {

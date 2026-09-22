@@ -10,6 +10,12 @@ try {
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['SERVER_PORT'] ?? 0) == 443)
         || (strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
     if (!$https) { http_response_code(403); exit('HTTPS is required.'); }
+    $acknowledgement = strtolower(trim($_SERVER['HTTP_X_BACKUP_ACKNOWLEDGE'] ?? ''));
+    if ($acknowledgement !== '') {
+        pc_backup_acknowledge($token, $_SERVER['HTTP_X_BACKUP_REQUEST'] ?? '', $acknowledgement);
+        http_response_code(204);
+        exit;
+    }
     set_time_limit(600);
     $entry = pc_backup_prepare($token, $_SERVER['HTTP_X_BACKUP_REQUEST'] ?? '');
     $path = backup_directory() . '/' . $entry['name'];

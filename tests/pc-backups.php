@@ -29,6 +29,9 @@ try {
     $bundle = new PharData(backup_directory() . '/' . $entry['name']);
     pc_check(isset($bundle['database.sql']) && isset($bundle['private/discount_ids/test-id.png']) && isset($bundle['RESTORE.json']), 'Complete bundle contains the database, private uploads and restore manifest');
     unset($bundle);
+    pc_backup_acknowledge($pair['token'], $request, $entry['sha256']);
+    $acknowledged = pc_backup_read();
+    pc_check(!empty($acknowledged['pc_saved_at']) && $acknowledged['pc_saved_name'] === $entry['name'], 'Verified PC download acknowledgement is recorded');
     pc_check($entry === pc_backup_prepare($pair['token'], $request, $export) && $exports === 1, 'Retrying a download reuses its complete backup bundle');
     try { pc_backup_prepare($pair['token'], bin2hex(random_bytes(16)), $export); throw new LogicException('No rate limit'); }
     catch (RuntimeException $e) { pc_check(str_contains($e->getMessage(), 'five minutes'), 'Rapid fresh exports are limited'); }
