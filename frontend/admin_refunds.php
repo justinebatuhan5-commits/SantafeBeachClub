@@ -408,11 +408,11 @@ foreach ($valid_statuses as $s) {
             <div class="filter-tabs">
                 <?php
                 $tab_labels = [
-                    'requested'  => ['📋 Pending', 'Awaiting approval'],
-                    'approved'   => ['✅ Approved', 'Awaiting refund processing'],
-                    'processing' => ['⏳ Processing', 'PayMongo initiated'],
-                    'completed'  => ['✓ Completed', 'Refund sent'],
-                    'rejected'   => ['❌ Rejected', 'Denied'],
+                    'requested'  => ['Pending', 'Awaiting approval'],
+                    'approved'   => ['Approved', 'Awaiting refund processing'],
+                    'processing' => ['Processing', 'PayMongo initiated'],
+                    'completed'  => ['Completed', 'Refund sent'],
+                    'rejected'   => ['Rejected', 'Denied'],
                 ];
                 foreach ($valid_statuses as $s):
                     $label = $tab_labels[$s][0] ?? $s;
@@ -542,7 +542,7 @@ foreach ($valid_statuses as $s) {
     <!-- Reject Modal -->
     <div id="rejectModal" class="modal-backdrop">
         <div class="modal-box">
-            <div class="modal-title">❌ Reject Refund Request</div>
+            <div class="modal-title">Reject Refund Request</div>
             <div class="modal-field">
                 <label>Guest</label>
                 <div id="rejectGuestName" style="padding: 8px 12px; background: var(--bg-alt, #f8fafc); border-radius: 6px; font-size: 13.5px; font-weight: 600; color: var(--text-main);"></div>
@@ -561,7 +561,7 @@ foreach ($valid_statuses as $s) {
     <!-- Details Modal -->
     <div id="detailsModal" class="modal-backdrop">
         <div class="modal-box" style="max-width: 520px;">
-            <div class="modal-title">📋 Refund Request Details</div>
+            <div class="modal-title">Refund Request Details</div>
             <div id="detailsContent" style="font-size: 13.5px; line-height: 1.7; color: var(--text-main);"></div>
             <div class="modal-footer">
                 <button class="btn-secondary-sm" onclick="closeModal('detailsModal')">Close</button>
@@ -587,7 +587,7 @@ foreach ($valid_statuses as $s) {
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        showToast('✓ Refund approved. Payment processing remains pending.', 'success');
+                        showToast('Refund approved. Payment processing remains pending.', 'success');
                         setTimeout(() => location.reload(), 1200);
                     } else {
                         btn.innerHTML = origHTML;
@@ -632,7 +632,7 @@ foreach ($valid_statuses as $s) {
                 .then(data => {
                     if (data.success) {
                         closeModal('rejectModal');
-                        showToast('✓ Refund rejected. Guest has been notified.', 'success');
+                        showToast('Refund rejected. Guest has been notified.', 'success');
                         setTimeout(() => location.reload(), 1200);
                     } else {
                         btn.innerHTML = 'Reject Request';
