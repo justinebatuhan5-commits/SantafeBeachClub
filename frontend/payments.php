@@ -258,11 +258,15 @@ $payments_query = $conn->query("
         b.guests_count,
         b.extra_adults,
         b.extra_children,
+        b.discount_amount,
+        d.category as discount_category,
+        d.total_centavos as discounted_total_centavos,
         DATEDIFF(b.check_out, b.check_in) as nights,
         r.price_per_night
     FROM payments p
     LEFT JOIN bookings b ON p.booking_id = b.id
     LEFT JOIN rooms r ON b.room_id = r.id
+    LEFT JOIN booking_discounts d ON d.booking_id = b.id
     ORDER BY p.id DESC
 ");
 
@@ -622,7 +626,11 @@ if ($bk_res) {
                                     $rcpt_num = 'RCPT-' . str_pad($pay_id, 6, '0', STR_PAD_LEFT);
                                     $nights = max(1, intval($row['nights'] ?? 1));
                                     $price_per_night = floatval($row['price_per_night'] ?? 0);
-                                    $b_total = ($price_per_night > 0) ? ($price_per_night * $nights) : $raw_amount;
+                                    $discount_amount = max(0, (float)($row['discount_amount'] ?? 0));
+                                    $discounted_total = isset($row['discounted_total_centavos']) ? ((float)$row['discounted_total_centavos'] / 100) : null;
+                                    $b_total = $discounted_total !== null
+                                        ? $discounted_total
+                                        : (($price_per_night > 0) ? max(0, ($price_per_night * $nights) - $discount_amount) : $raw_amount);
                                     if ($b_total < $raw_amount) $b_total = $raw_amount;
                                     $b_paid = $raw_amount;
                                     $bid = $row['booking_id'];
@@ -630,7 +638,8 @@ if ($bk_res) {
                                     $guest_count = max(0, (int)($row['guests_count'] ?? 0));
                                     $extra_adults = max(0, (int)($row['extra_adults'] ?? 0));
                                     $extra_children = max(0, (int)($row['extra_children'] ?? 0));
-                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($room, ENT_QUOTES)) . "\", {$b_total}, {$guest_count}, {$extra_adults}, {$extra_children})'>Print Receipt</button>";
+                                    $discount_category = in_array($row['discount_category'] ?? '', ['senior', 'pwd'], true) ? $row['discount_category'] : '';
+                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($room, ENT_QUOTES)) . "\", {$b_total}, {$guest_count}, {$extra_adults}, {$extra_children}, \"{$discount_category}\", {$discount_amount})'>Print Receipt</button>";
                                     echo "<a href='payments?send_booking_id={$bid}' class='btn-pay' style='padding:6px 12px; font-size:12px; text-decoration:none;'>Resend Confirmation</a>";
                                     echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#6A1B9A; border-color:#6A1B9A;' onclick='openRefundModal({$pay_id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"PHP {$amount}\")'>Refund</button>";
                                     echo "</div>";
@@ -904,12 +913,13 @@ if ($bk_res) {
         const RECEPTIONIST_NAME = <?php echo xss_json($_SESSION['admin_username'] ?? 'Administrator'); ?>;
         let _receiptData = {};
 
-        function openReceiptModal(bid, rcpt, inv, guest, room, totalCost, guestCount, extraAdults, extraChildren) {
+        function openReceiptModal(bid, rcpt, inv, guest, room, totalCost, guestCount, extraAdults, extraChildren, discountCategory, discountAmount) {
             const payments = PAYMENTS_BREAKDOWN[bid] || [];
             const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
             _receiptData = { bid, rcpt, inv, guest, room, totalCost: parseFloat(totalCost) || 0,
                 guestCount: parseInt(guestCount, 10) || 0, extraAdults: parseInt(extraAdults, 10) || 0,
-                extraChildren: parseInt(extraChildren, 10) || 0, payments, totalPaid };
+                extraChildren: parseInt(extraChildren, 10) || 0, discountCategory: discountCategory || '',
+                discountAmount: parseFloat(discountAmount) || 0, payments, totalPaid };
             renderReceipt();
             const ov = document.getElementById('receiptOverlay');
             ov.classList.add('active');
@@ -938,6 +948,8 @@ if ($bk_res) {
             const guestBreakdown = `<div style="display:flex; justify-content:space-between;"><span>Included Guests:</span><strong>${includedGuests}</strong></div>` +
                 (d.extraAdults > 0 ? `<div style="display:flex; justify-content:space-between;"><span>Extra Adult${d.extraAdults === 1 ? '' : 's'}:</span><strong>${d.extraAdults}</strong></div>` : '') +
                 (d.extraChildren > 0 ? `<div style="display:flex; justify-content:space-between;"><span>Child${d.extraChildren === 1 ? '' : 'ren'}:</span><strong>${d.extraChildren}</strong></div>` : '');
+            const discountLabel = d.discountCategory === 'senior' ? 'Senior Citizen Discount (20%)' : (d.discountCategory === 'pwd' ? 'PWD Discount (20%)' : 'Discount');
+            const discountRow = d.discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; color:#15803d;"><span>${discountLabel}:</span><strong>-${fmt(d.discountAmount)}</strong></div>` : '';
 
             let breakdownHtml = `<div style="margin:12px 0 4px; font-size:13px; font-weight:800; letter-spacing:1px; text-align:center;">PAYMENT BREAKDOWN</div>`;
             if (d.payments.length === 0) {
@@ -972,6 +984,8 @@ if ($bk_res) {
                 </div>
                 ${sep}
                 <div style="text-align:left; margin:8px 0;">
+                    ${d.discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; color:#666;"><span>Original Stay Cost:</span><strong>${fmt(d.totalCost + d.discountAmount)}</strong></div>` : ''}
+                    ${discountRow}
                     <div style="display:flex; justify-content:space-between; color:#666;"><span>Total Booking Cost:</span><strong>${fmt(d.totalCost)}</strong></div>
                     ${balance > 0.01 ? `<div style="display:flex; justify-content:space-between; color:#d32f2f; margin-top:4px;"><span>Remaining Balance:</span><strong>${fmt(balance)}</strong></div>` : ''}
                 </div>
@@ -1005,6 +1019,8 @@ if ($bk_res) {
             const guestBreakdown = `<div class="row"><span>Included Guests:</span><strong>${includedGuests}</strong></div>` +
                 (d.extraAdults > 0 ? `<div class="row"><span>Extra Adult${d.extraAdults === 1 ? '' : 's'}:</span><strong>${d.extraAdults}</strong></div>` : '') +
                 (d.extraChildren > 0 ? `<div class="row"><span>Child${d.extraChildren === 1 ? '' : 'ren'}:</span><strong>${d.extraChildren}</strong></div>` : '');
+            const discountLabel = d.discountCategory === 'senior' ? 'Senior Citizen Discount (20%)' : (d.discountCategory === 'pwd' ? 'PWD Discount (20%)' : 'Discount');
+            const discountRow = d.discountAmount > 0 ? `<div class="row"><span>${discountLabel}:</span><strong>-${fmt(d.discountAmount)}</strong></div>` : '';
             const sep = '--------------------------------------';
 
             let breakdownHtml = `<div class="center total-label">PAYMENT BREAKDOWN</div>`;
@@ -1052,6 +1068,8 @@ if ($bk_res) {
                 <div class="row"><span>Accommodation:</span><strong>${Security.escapeHTML(d.room)}</strong></div>
                 ${guestBreakdown}
                 <div class="sep">${sep}</div>
+                ${d.discountAmount > 0 ? `<div class="row"><span>Original Stay Cost:</span><strong>${fmt(d.totalCost + d.discountAmount)}</strong></div>` : ''}
+                ${discountRow}
                 <div class="row"><span>Total Cost:</span><strong>${fmt(d.totalCost)}</strong></div>
                 ${balance > 0.01 ? `<div class="row" style="color:#d32f2f;"><span>Remaining Balance:</span><strong>${fmt(balance)}</strong></div>` : ''}
                 <div class="sep">${sep}</div>

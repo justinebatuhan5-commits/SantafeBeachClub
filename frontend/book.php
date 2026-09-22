@@ -232,6 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email' => $_SESSION['guest_email'] ?? '', 'phone' => $_SESSION['guest_phone'] ?? '',
                     'eta' => $_SESSION['guest_eta'] ?? '14:00', 'room_type' => $room_type,
                     'checkin' => $checkin, 'checkout' => $checkout, 'guests' => $guests_total,
+                    'extra_adults' => $extra_adults, 'extra_children' => $extra_children,
                     // Subtotal is calculated server-side before promo codes. Discounts never stack.
                     'original' => (int)round($pricing['subtotal'] * 100),
                 ], $_FILES['discount_id'] ?? []);

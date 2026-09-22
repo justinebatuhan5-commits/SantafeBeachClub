@@ -142,8 +142,8 @@ function discount_create(mysqli $db, array $data, array $file): array {
         $hours = max(1, min(72, (int)(getenv('DISCOUNT_HOLD_HOURS') ?: 24)));
         $hold = date('Y-m-d H:i:s', min(time() + $hours * 3600, strtotime($data['checkin'] . ' 13:30:00')));
         if (strtotime($hold) <= time()) throw new RuntimeException('Please contact reception for same-day bookings.');
-        pm_query($db, "INSERT INTO bookings (guest_name,guest_email,guest_type,check_in,check_out,guests_count,room_id,accommodation_name,eta,status,checkin_token,cancellation_token,payment_method,guest_phone,discount_amount) VALUES (?,?,'First Visit',?,?,?,?,?,?,'Pending Payment',?,?,'Discount Request',?,0)",
-            [$data['name'],$data['email'],$data['checkin'],$data['checkout'],$data['guests'],$room['id'],$room['name'],$data['eta'],bin2hex(random_bytes(16)),bin2hex(random_bytes(16)),$data['phone']]);
+        pm_query($db, "INSERT INTO bookings (guest_name,guest_email,guest_type,check_in,check_out,guests_count,extra_adults,extra_children,room_id,accommodation_name,eta,status,checkin_token,cancellation_token,payment_method,guest_phone,discount_amount) VALUES (?,?,'First Visit',?,?,?,?,?,?,?,?,'Pending Payment',?,?,'Discount Request',?,0)",
+            [$data['name'],$data['email'],$data['checkin'],$data['checkout'],$data['guests'],max(0,(int)($data['extra_adults']??0)),max(0,(int)($data['extra_children']??0)),$room['id'],$room['name'],$data['eta'],bin2hex(random_bytes(16)),bin2hex(random_bytes(16)),$data['phone']]);
         $id = (int)$db->insert_id;
         $token = bin2hex(random_bytes(32));
         pm_query($db, 'INSERT INTO booking_discounts (booking_id,category,eligible_guest,id_file,token,original_centavos,total_centavos,deposit_centavos,room_id,check_in,check_out,guests_count,hold_until) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',

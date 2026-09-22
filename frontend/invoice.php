@@ -40,7 +40,11 @@ $stmt = $conn->prepare("
            p.status                            AS payment_status,
            p.payment_method                    AS payment_method_detail,
            p.transaction_id,
-           p.paid_at
+           p.paid_at,
+           d.category AS discount_category,
+           d.state AS discount_state,
+           d.original_centavos,
+           d.total_centavos
     FROM bookings b
     LEFT JOIN rooms r ON r.id = b.room_id
     LEFT JOIN room_types rt ON rt.id = b.room_type_id
@@ -50,6 +54,7 @@ $stmt = $conn->prepare("
         WHERE latest.booking_id = b.id AND latest.status = 'verified'
         ORDER BY latest.id DESC LIMIT 1
     )
+    LEFT JOIN booking_discounts d ON d.booking_id = b.id
     WHERE b.id = ?
     LIMIT 1
 ");
@@ -80,8 +85,17 @@ $discount_amt  = (float)($booking['discount_amount'] ?? 0);
 $extra_adults = max(0, (int)($booking['extra_adults'] ?? 0));
 $extra_children = max(0, (int)($booking['extra_children'] ?? 0));
 $included_guests = max(0, (int)$booking['guests_count'] - $extra_adults - $extra_children);
-// Use the accommodation rate and recorded discount, not a presumed deposit ratio.
-$total_amount = max(0, $nights * (float)$booking['nightly_rate'] - $discount_amt);
+$discount_category = strtolower((string)($booking['discount_category'] ?? ''));
+$discount_label = $discount_category === 'senior' ? 'Senior Citizen Discount (20%)'
+    : ($discount_category === 'pwd' ? 'PWD Discount (20%)' : 'Promo Discount');
+// Discount requests preserve their authoritative original and approved totals,
+// including any selected extra-person charges.
+if (!empty($booking['discount_category']) && isset($booking['total_centavos'])) {
+    $total_amount = max(0, (float)$booking['total_centavos'] / 100);
+    $discount_amt = max(0, ((float)$booking['original_centavos'] - (float)$booking['total_centavos']) / 100);
+} else {
+    $total_amount = max(0, $nights * (float)$booking['nightly_rate'] - $discount_amt);
+}
 $remaining_balance = max(0, $total_amount - $deposit_paid);
 
 $checkin_fmt = date('D, F j, Y', strtotime($booking['check_in']));
@@ -503,7 +517,7 @@ $autoPrint = isset($_GET['print']) && $_GET['print'] == '1';
                 </div>
                 <?php if ($discount_amt > 0): ?>
                 <div class="tot-row">
-                    <span style="color:#16A34A; font-weight:600;">Promo Discount <?php echo !empty($booking['promo_code']) ? '('.$booking['promo_code'].')' : ''; ?>:</span>
+                    <span style="color:#16A34A; font-weight:600;"><?php echo htmlspecialchars($discount_label); ?> <?php echo !empty($booking['promo_code']) ? '('.htmlspecialchars($booking['promo_code']).')' : ''; ?>:</span>
                     <span style="color:#16A34A; font-weight:700;">-₱ <?php echo number_format($discount_amt, 2); ?></span>
                 </div>
                 <div class="tot-row" style="border-top:1px dashed #E2E8F0; padding-top:6px;">
