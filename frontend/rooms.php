@@ -1430,10 +1430,17 @@ function proceedToBook() {
     var keys = Object.keys(selectedRooms);
     if (keys.length === 0) return;
     var targetUrl = selectedRooms[keys[0]].bookUrl;
-    var personList = extraPersonsByType[keys[0]] || [];
-    var totalAdults = personList.reduce(function(sum, v) { return sum + (parseInt(v.adults, 10) || 0); }, 0);
-    var totalChildren = personList.reduce(function(sum, v) { return sum + (parseInt(v.children, 10) || 0); }, 0);
-    if (totalAdults > 0) targetUrl += '&extra_adults=' + encodeURIComponent(totalAdults);
+    // Collect extra persons from all selected room types
+    var totalAdults = 0;
+    var totalChildren = 0;
+    keys.forEach(function(k) {
+        var personList = extraPersonsByType[k] || [];
+        personList.forEach(function(v) {
+            totalAdults   += (parseInt(v.adults,   10) || 0);
+            totalChildren += (parseInt(v.children, 10) || 0);
+        });
+    });
+    if (totalAdults   > 0) targetUrl += '&extra_adults='   + encodeURIComponent(totalAdults);
     if (totalChildren > 0) targetUrl += '&extra_children=' + encodeURIComponent(totalChildren);
     window.location.href = targetUrl;
 }
