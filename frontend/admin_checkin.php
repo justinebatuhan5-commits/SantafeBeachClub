@@ -1245,8 +1245,23 @@ async function handleCheckinClick(event, bookingId, guestName, accName, totalCos
     const isEarly = scheduledCheckin && scheduledCheckin > today;
     const isOverdue = scheduledCheckin && scheduledCheckin < today;
     const timingLabel = isEarly ? 'EARLY CHECK-IN' : (isOverdue ? 'OVERDUE ARRIVAL' : 'SCHEDULED TODAY');
+    const hasBalance = balanceDue > 0.01;
+    const timingWarning = isEarly
+        ? 'The guest is checking in before the scheduled date. Confirm that the room is ready.'
+        : (isOverdue ? 'The scheduled check-in date has already passed.' : 'The guest is checking in on the scheduled date.');
+    const accepted = await SiteDialog.confirm(
+        `${timingLabel}\n\n${timingWarning}\n\nGuest: ${guestName}\nRoom: ${accName}\nScheduled check-in: ${scheduledLabel}` +
+        (hasBalance ? `\nBalance to collect: ₱${balanceDue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\nPayment status: Paid in full') +
+        (hasBalance ? '\n\nContinue to review and collect the payment?' : '\n\nContinuing will mark the guest as Checked In and the room as occupied.'),
+        {
+            title: isEarly ? 'Early check-in warning' : 'Confirm guest check-in',
+            confirmText: hasBalance ? 'Continue to payment' : 'Yes, check in guest',
+            danger: isEarly
+        }
+    );
+    if (!accepted) return;
 
-    if (balanceDue > 0.01) {
+    if (hasBalance) {
         // Hide the scanned guest overlay if it's open
         const scannedOverlay = document.querySelector('.specific-checkin-overlay');
         if (scannedOverlay) scannedOverlay.style.display = 'none';
@@ -1282,11 +1297,7 @@ async function handleCheckinClick(event, bookingId, guestName, accName, totalCos
         return;
     }
 
-    const accepted = await SiteDialog.confirm(
-        `${timingLabel}\n\nGuest: ${guestName}\nRoom: ${accName}\nScheduled check-in: ${scheduledLabel}\n\nContinuing will mark the guest as Checked In and the assigned room as occupied.`,
-        { title: 'Confirm guest check-in', confirmText: 'Yes, check in guest', danger: isEarly }
-    );
-    if (accepted && checkinForm) checkinForm.submit();
+    if (checkinForm) checkinForm.submit();
 }
 
 function closeBalanceModal() {
