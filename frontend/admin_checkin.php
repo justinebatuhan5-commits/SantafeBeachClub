@@ -280,7 +280,7 @@ $available_rooms = $available_rooms_query ? $available_rooms_query->fetch_all(MY
 
 $bookings_query = $conn->query("
     SELECT 
-        b.id, b.guest_name, b.guest_email, b.guest_type, b.accommodation_name, b.check_in, b.check_out, b.status,
+        b.id, b.guest_name, b.guest_email, b.guest_type, b.accommodation_name, b.check_in, b.check_out, b.eta, b.status,
         DATEDIFF(b.check_out, b.check_in) AS nights,
         COALESCE(r.price_per_night, rt.price, 0) AS price_per_night,
         COALESCE((SELECT d.total_centavos / 100 FROM booking_discounts d WHERE d.booking_id=b.id), DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
@@ -652,7 +652,7 @@ $bookings_query = $conn->query("
                             <th>Email</th>
                             <th>Type</th>
                             <th>Accommodation</th>
-                            <th>Check-in Date</th>
+                            <th>Check-in Date &amp; Time</th>
                             <th>Balance Status</th>
                             <th>Action</th>
                         </tr>
@@ -686,6 +686,12 @@ $bookings_query = $conn->query("
                                 
                                 echo "<td>";
                                 echo "<div>" . date('M j, Y', strtotime($row['check_in'])) . "</div>";
+                                if (!empty($row['eta']) && preg_match('/^([01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/', $row['eta'])) {
+                                    $arrival_time = date('g:i A', strtotime($row['eta']));
+                                    echo "<div style='margin-top:3px; color:#64748B; font-size:12px; font-weight:600;'>🕐 Expected {$arrival_time}</div>";
+                                } else {
+                                    echo "<div style='margin-top:3px; color:#94A3B8; font-size:12px;'>Time not provided</div>";
+                                }
                                 if ($is_overdue) {
                                     $days_late = (int)ceil((strtotime($today_date) - strtotime($checkin_date_only)) / 86400);
                                     echo "<span class='badge-overdue' title='Check-in date has passed by {$days_late} day(s)'>⚠️ Overdue (" . $days_late . "d)</span>";
