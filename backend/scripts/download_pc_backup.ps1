@@ -27,6 +27,8 @@ try {
     if ($token -notmatch '^[a-f0-9]{64}$') { throw 'Invalid PC backup access key. Install a new connection file.' }
     $destination = [IO.Path]::GetFullPath($config.destination)
     if (!(Test-Path -LiteralPath $destination)) { New-Item -ItemType Directory -Path $destination | Out-Null }
+    $completeDestination = Join-Path $destination 'Complete Backups'
+    if (!(Test-Path -LiteralPath $completeDestination)) { New-Item -ItemType Directory -Path $completeDestination | Out-Null }
     $handler = New-Object Net.Http.HttpClientHandler
     $handler.AllowAutoRedirect = $false
     $client = New-Object Net.Http.HttpClient($handler)
@@ -40,8 +42,8 @@ try {
         $name = [string]($response.Headers.GetValues('X-Backup-Name') | Select-Object -First 1)
         $expectedHash = [string]($response.Headers.GetValues('X-Backup-SHA256') | Select-Object -First 1)
         if ($name -notmatch '^santafe_\d{8}_\d{6}_[a-f0-9]{8}_complete\.tar$' -or $expectedHash -notmatch '^[a-f0-9]{64}$') { throw 'The server did not return a valid complete backup.' }
-        $partial = Join-Path $destination ($state.request_id + '.partial')
-        $target = Join-Path $destination $name
+        $partial = Join-Path $completeDestination ($state.request_id + '.partial')
+        $target = Join-Path $completeDestination $name
         $output = [IO.File]::Open($partial, 'Create', 'Write', 'None')
         try { $response.Content.CopyToAsync($output).GetAwaiter().GetResult() } finally { $output.Dispose() }
         $size = (Get-Item -LiteralPath $partial).Length

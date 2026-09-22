@@ -35,6 +35,6 @@ $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatt
 $principal = New-ScheduledTaskPrincipal -UserId $identity.Name -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description 'Check every 15 minutes while signed in; download a verified database and private-upload backup when six hours have elapsed since the last success. Catch up at logon.' -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
-Write-Output ('Installed. Backups: ' + $Destination)
+Write-Output ('Installed. Complete backups: ' + (Join-Path $Destination 'Complete Backups'))
 Write-Output ('Check first-download status in: ' + (Join-Path $taskRoot 'download.log'))
 Write-Output 'After the first successful download, remove santabeachclub-pc.json from your Downloads folder.'

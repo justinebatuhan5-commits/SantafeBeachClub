@@ -40,6 +40,8 @@ Optional destination override:
 ```
 
 The default destination is your Windows Documents folder under **SantaBeachClub Backups**.
+New TAR bundles are saved inside its **Complete Backups** subfolder. Older standalone
+SQL exports can be kept separately in a **Database Backups** subfolder.
 The task is named **SantaBeachClub Agila PC Backups**. It runs every six hours, starts
 once immediately, and checks missed runs at sign-in. Failures retry up to three times
 at ten-minute intervals. Your PC must be awake, online and signed in as the installing

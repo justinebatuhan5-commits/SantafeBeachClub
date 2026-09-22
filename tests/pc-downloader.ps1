@@ -36,7 +36,7 @@ public class PcBackupTestClient : IDisposable {
     # Keep script failure observable inside the test host instead of exiting it.
     $source = $source.Replace('Write-Error $_.Exception.Message', 'throw $_.Exception.Message')
     & ([ScriptBlock]::Create($source)) -ConfigPath $configPath -Force
-    $download = Join-Path $root 'downloads/santafe_20260917_010000_1234abcd_complete.tar'
+    $download = Join-Path $root 'downloads/Complete Backups/santafe_20260917_010000_1234abcd_complete.tar'
     if (!(Test-Path -LiteralPath $download)) { throw 'Verified download was not saved.' }
     $state = Get-Content -LiteralPath (Join-Path $root 'download-state.json') -Raw | ConvertFrom-Json
     if (!$state.last_success -or $state.request_id) { throw 'Success state was not saved.' }
@@ -45,7 +45,7 @@ public class PcBackupTestClient : IDisposable {
     $failed = $false
     try { & ([ScriptBlock]::Create($source)) -ConfigPath $configPath -Force } catch { $failed = $true }
     if (!$failed) { throw 'Corrupted download was accepted.' }
-    if ((Get-ChildItem -LiteralPath (Join-Path $root 'downloads') -Filter '*.partial').Count -ne 0) { throw 'Partial file remained.' }
+    if ((Get-ChildItem -LiteralPath (Join-Path $root 'downloads/Complete Backups') -Filter '*.partial').Count -ne 0) { throw 'Partial file remained.' }
     $state = Get-Content -LiteralPath (Join-Path $root 'download-state.json') -Raw | ConvertFrom-Json
     if (!$state.request_id) { throw 'Failed request ID was not kept for retry.' }
     Write-Output 'PASS: Corruption is rejected, partial data removed and retry request retained.'
