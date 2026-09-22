@@ -349,7 +349,13 @@ $active_page = 'discount_requests';
             <button type="button" class="image-modal-close" id="closeImageModal" aria-label="Close">&times;</button>
         </div>
         <div class="image-modal-body">
-            <img id="imageModalSrc" src="" alt="Document Preview">
+            <div id="imageModalLoading" class="document-modal-message" role="status">Loading document&hellip;</div>
+            <iframe id="imageModalSrc" title="Document Preview"></iframe>
+            <div id="imageModalError" class="document-modal-message" role="alert" hidden>
+                <div class="document-modal-icon" aria-hidden="true">&#128196;</div>
+                <strong>Document unavailable</strong>
+                <p>The file could not be loaded. It may have been archived or removed from private storage.</p>
+            </div>
         </div>
     </div>
 </div>
@@ -359,43 +365,63 @@ document.getElementById('copyLink')?.addEventListener('click',async()=>{const fi
 // In-page modal preview for private ID and receipts
 const modal = document.getElementById('imageModal');
 const modalTitle = document.getElementById('imageModalTitle');
-const modalImg = document.getElementById('imageModalSrc');
+const modalFrame = document.getElementById('imageModalSrc');
+const modalLoading = document.getElementById('imageModalLoading');
+const modalError = document.getElementById('imageModalError');
 const closeBtn = document.getElementById('closeImageModal');
-
-modalImg.onerror = function() {
-    this.style.display = 'none';
-    let err = document.getElementById('imageModalError');
-    if (!err) {
-        err = document.createElement('div');
-        err.id = 'imageModalError';
-        err.style.cssText = 'padding: 40px 20px; text-align: center; color: #64748B;';
-        this.parentNode.appendChild(err);
-    }
-    err.innerHTML = '<div style="font-size:36px; margin-bottom:12px;">📄</div><strong style="color:#0F172A; font-size:16px;">Document Unavailable</strong><p style="margin-top:6px; font-size:13px;">The document file was not found on the server storage, or permission was denied.</p><a href="' + this.src + '" target="_blank" style="display:inline-block; margin-top:12px; font-size:13px; color:#2563EB; font-weight:600; text-decoration:none;">Open direct URL &rarr;</a>';
-    err.style.display = 'block';
-};
+let documentObjectUrl = null;
+let documentRequest = null;
 
 document.querySelectorAll('.js-preview-doc').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
         const url = btn.getAttribute('data-url');
         const title = btn.getAttribute('data-title') || 'Document Preview';
         modalTitle.textContent = title;
-        modalImg.style.display = 'block';
-        const err = document.getElementById('imageModalError');
-        if (err) err.style.display = 'none';
-        modalImg.src = url;
+        modalFrame.hidden = true;
+        modalError.hidden = true;
+        modalLoading.hidden = false;
         modal.classList.add('active');
         modal.setAttribute('aria-hidden', 'false');
+
+        documentRequest?.abort();
+        documentRequest = new AbortController();
+        if (documentObjectUrl) URL.revokeObjectURL(documentObjectUrl);
+        documentObjectUrl = null;
+
+        try {
+            const response = await fetch(url, {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                signal: documentRequest.signal
+            });
+            if (!response.ok) throw new Error(`Document request failed (${response.status})`);
+            const documentBlob = await response.blob();
+            if (!documentBlob.type.startsWith('image/') && documentBlob.type !== 'application/pdf') {
+                throw new Error('Unsupported document type');
+            }
+            documentObjectUrl = URL.createObjectURL(documentBlob);
+            modalFrame.src = documentObjectUrl;
+            modalFrame.hidden = false;
+            modalLoading.hidden = true;
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            modalLoading.hidden = true;
+            modalError.hidden = false;
+        }
     });
 });
 
 function closeModal() {
+    documentRequest?.abort();
+    documentRequest = null;
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
-    modalImg.src = '';
-    modalImg.style.display = 'block';
-    const err = document.getElementById('imageModalError');
-    if (err) err.style.display = 'none';
+    modalFrame.src = 'about:blank';
+    modalFrame.hidden = true;
+    modalError.hidden = true;
+    modalLoading.hidden = false;
+    if (documentObjectUrl) URL.revokeObjectURL(documentObjectUrl);
+    documentObjectUrl = null;
 }
 
 closeBtn?.addEventListener('click', closeModal);

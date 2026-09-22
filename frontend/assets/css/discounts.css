@@ -679,12 +679,38 @@ body.discount-page {
   justify-content: center;
 }
 
-.image-modal-body img {
-  max-width: 100%;
-  max-height: 75vh;
-  object-fit: contain;
+.image-modal-body iframe {
+  width: 100%;
+  height: min(75vh, 760px);
+  border: 0;
+  background: #FFFFFF;
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.document-modal-message {
+  padding: 40px 20px;
+  color: #CBD5E1;
+  text-align: center;
+}
+
+.document-modal-message[hidden] {
+  display: none;
+}
+
+.document-modal-message strong {
+  color: #FFFFFF;
+  font-size: 16px;
+}
+
+.document-modal-message p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.document-modal-icon {
+  margin-bottom: 12px;
+  font-size: 36px;
 }
 
 /* ── Responsive adjustments ── */
