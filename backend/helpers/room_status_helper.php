@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/date_helper.php';
+
 function sf_get_checked_in_room_ids(mysqli $conn): array
 {
     $room_ids = [];
@@ -82,15 +84,17 @@ function sf_room_status_label(string $status): string
  */
 function calculateStayPricing(mysqli $conn, string $roomType, string $checkIn, string $checkOut, ?string $promoCode = null, int $guests = 2, int $extraAdultsOverride = -1): array
 {
-    $start = new DateTime($checkIn);
-    $end = new DateTime($checkOut);
-
-    if ($start >= $end) {
-        $nights = 1;
-    } else {
-        $interval = $start->diff($end);
-        $nights = max(1, (int)$interval->days);
+    $parsedStart = sf_parse_exact_date($checkIn);
+    $parsedEnd = sf_parse_exact_date($checkOut);
+    if (!$parsedStart || !$parsedEnd || $parsedStart >= $parsedEnd) {
+        throw new InvalidArgumentException('Check-out must be a valid calendar date later than check-in.');
     }
+    // The pricing loop currently uses mutable DateTime instances.
+    $start = new DateTime($parsedStart->format('Y-m-d'));
+    $end = new DateTime($parsedEnd->format('Y-m-d'));
+
+    $interval = $start->diff($end);
+    $nights = (int)$interval->days;
 
     // 1. Fetch room base price
     $basePrice = 2900.00;

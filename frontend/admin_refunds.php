@@ -8,6 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $page_title = 'Refund Requests Management';
 $is_admin_user = (($_SESSION['admin_role'] ?? 'receptionist') === 'admin');
+$csrf_token = get_csrf_token();
 
 // Get filter status
 $filter_status = trim($_GET['status'] ?? 'requested');
@@ -408,7 +409,7 @@ foreach ($valid_statuses as $s) {
                 <?php
                 $tab_labels = [
                     'requested'  => ['📋 Pending', 'Awaiting approval'],
-                    'approved'   => ['✅ Approved', 'Ready to process'],
+                    'approved'   => ['✅ Approved', 'Awaiting refund processing'],
                     'processing' => ['⏳ Processing', 'PayMongo initiated'],
                     'completed'  => ['✓ Completed', 'Refund sent'],
                     'rejected'   => ['❌ Rejected', 'Denied'],
@@ -515,9 +516,9 @@ foreach ($valid_statuses as $s) {
                                 Reject
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
-                            <button class="btn-process" id="process-btn-<?php echo $refund['id']; ?>" onclick="processRefund(<?php echo $refund['id']; ?>)">
+                            <button class="btn-process" type="button" disabled title="PayMongo refund API integration is not available yet" style="opacity:.55; cursor:not-allowed;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                Process to PayMongo
+                                PayMongo Processing Unavailable
                             </button>
                         <?php endif; ?>
                         <button class="btn-secondary-sm" onclick="viewDetails(<?php echo $refund['id']; ?>)">
@@ -566,6 +567,7 @@ foreach ($valid_statuses as $s) {
 
     <script>
         let currentRefundId = null;
+        const refundCsrfToken = <?php echo json_encode($csrf_token, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
         async function approveRefund(refundId, guestName, amount, btn) {
             if (!await SiteDialog.confirm(`Approve the refund request for ${guestName}?\n\nAmount to be refunded: ₱${amount}\n\nThis will notify the guest and move the request to "Approved".`, { title: 'Approve refund?', confirmText: 'Approve refund' })) return;
@@ -575,12 +577,13 @@ foreach ($valid_statuses as $s) {
 
             const fd = new FormData();
             fd.append('request_id', refundId);
+            fd.append('csrf_token', refundCsrfToken);
 
             fetch('../backend/api/refund_request_api.php?action=approve', { method: 'POST', body: fd })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        showToast('✓ Refund approved! Ready for PayMongo processing.', 'success');
+                        showToast('✓ Refund approved. Payment processing remains pending.', 'success');
                         setTimeout(() => location.reload(), 1200);
                     } else {
                         btn.innerHTML = origHTML;
@@ -618,6 +621,7 @@ foreach ($valid_statuses as $s) {
             const fd = new FormData();
             fd.append('request_id', currentRefundId);
             fd.append('rejection_reason', reason);
+            fd.append('csrf_token', refundCsrfToken);
 
             fetch('../backend/api/refund_request_api.php?action=reject', { method: 'POST', body: fd })
                 .then(r => r.json())
@@ -634,35 +638,6 @@ foreach ($valid_statuses as $s) {
                 })
                 .catch(() => {
                     btn.innerHTML = 'Reject Request';
-                    btn.disabled = false;
-                    showToast('Network error. Please try again.', 'error');
-                });
-        }
-
-        async function processRefund(refundId) {
-            if (!await SiteDialog.confirm('Process this refund to PayMongo?\n\nThis will initiate the actual payment refund and notify the guest by email.\n\nThis action cannot be undone.', { title: 'Process refund?', confirmText: 'Process refund', danger: true })) return;
-
-            const btn = document.getElementById(`process-btn-${refundId}`);
-            btn.innerHTML = '<span class="loading-dot"></span> Processing...';
-            btn.disabled = true;
-
-            const fd = new FormData();
-            fd.append('request_id', refundId);
-
-            fetch('../backend/api/refund_request_api.php?action=process_paymongo', { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('✓ Refund processed. Guest will receive it within 3-5 business days.', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Process to PayMongo';
-                        btn.disabled = false;
-                        showToast('Error: ' + data.message, 'error');
-                    }
-                })
-                .catch(() => {
-                    btn.innerHTML = 'Process to PayMongo';
                     btn.disabled = false;
                     showToast('Network error. Please try again.', 'error');
                 });

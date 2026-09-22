@@ -8,6 +8,71 @@ require_once __DIR__ . '/../backend/services/booking_service.php';
 require_once __DIR__ . '/../backend/services/paymongo.php';
 require_once __DIR__ . '/../backend/services/paymongo_confirmation.php';
 
+function booking_public_frontend_url(): string
+{
+    $configured = rtrim((string)(getenv('PUBLIC_APP_URL') ?: ''), '/');
+    if ($configured === '' || filter_var($configured, FILTER_VALIDATE_URL) === false) {
+        throw new RuntimeException('PUBLIC_APP_URL is not configured correctly.');
+    }
+    $host = strtolower((string)parse_url($configured, PHP_URL_HOST));
+    $scheme = strtolower((string)parse_url($configured, PHP_URL_SCHEME));
+    if ($scheme !== 'https' && !in_array($host, ['localhost', '127.0.0.1'], true)) {
+        throw new RuntimeException('PUBLIC_APP_URL must use HTTPS.');
+    }
+    return str_ends_with($configured, '/frontend') ? $configured : $configured . '/frontend';
+}
+
+/** Remove a locally-created booking when PayMongo never created a checkout. */
+function cleanup_failed_paymongo_booking(mysqli $conn, int $bookingId, string $cancellationToken): bool
+{
+    if ($bookingId <= 0 || !preg_match('/\A[a-f0-9]{32}\z/', $cancellationToken)) {
+        return false;
+    }
+
+    $conn->begin_transaction();
+    try {
+        $lock = $conn->prepare(
+            "SELECT id FROM bookings
+             WHERE id = ? AND cancellation_token = ? AND status = 'Pending Payment'
+             FOR UPDATE"
+        );
+        $lock->bind_param('is', $bookingId, $cancellationToken);
+        $lock->execute();
+        $ownedPendingBooking = $lock->get_result()->fetch_assoc();
+        $lock->close();
+        if (!$ownedPendingBooking) {
+            $conn->rollback();
+            return false;
+        }
+
+        $payments = $conn->prepare(
+            "DELETE FROM payments WHERE booking_id = ? AND status = 'pending'"
+        );
+        $payments->bind_param('i', $bookingId);
+        $payments->execute();
+        $payments->close();
+
+        $booking = $conn->prepare(
+            "DELETE FROM bookings
+             WHERE id = ? AND cancellation_token = ? AND status = 'Pending Payment'"
+        );
+        $booking->bind_param('is', $bookingId, $cancellationToken);
+        $booking->execute();
+        $deleted = $booking->affected_rows === 1;
+        $booking->close();
+
+        if (!$deleted) {
+            throw new RuntimeException('The failed PayMongo booking was not deleted.');
+        }
+        $conn->commit();
+        return true;
+    } catch (Throwable $e) {
+        try { $conn->rollback(); } catch (Throwable $rollbackError) { /* already closed */ }
+        error_log('Failed PayMongo booking cleanup error: ' . $e->getMessage());
+        return false;
+    }
+}
+
 // Initialize session if not started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -69,6 +134,16 @@ $_SESSION['book_room_type'] = $room_type;
 $error = '';
 $success = false;
 $booking_id = 0;
+
+// Reject malformed or impossible calendar dates before pricing constructs
+// DateTime objects. Reset to a safe range so the page can render the error.
+if (!isValidDateRange((string)$checkin, (string)$checkout)) {
+    $error = 'Please select valid check-in and check-out dates. Check-out must be later than check-in.';
+    $checkin = date('Y-m-d');
+    $checkout = date('Y-m-d', strtotime('+1 day'));
+    $_SESSION['book_checkin'] = $checkin;
+    $_SESSION['book_checkout'] = $checkout;
+}
 
 // Handle cancellation from PayMongo checkout screen
 if (isset($_GET['cancelled']) && $_GET['cancelled'] == 1) {
@@ -144,7 +219,7 @@ if (isset($_GET['success']) && $_GET['success'] == 1 && isset($_SESSION['booking
     $guests = $_SESSION['booking_success']['guests'] ?? $guests;
     $booking_eta = $_SESSION['booking_success']['eta'] ?? '14:00';
     
-    $base_url = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']);
+    $base_url = booking_public_frontend_url();
     $cancel_url = rtrim($base_url, '/') . '/cancel_booking?token=' . $cancel_token;
 }
 
@@ -286,6 +361,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($_POST['action'] === 'confirm_booking') {
             $bookingTransactionOpen = false;
+            $paymongoSessionCreated = false;
+            $storedReceiptPath = null;
             // Check required fields again just in case
             $guest_name = ($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? '');
             $guest_email = $_SESSION['guest_email'] ?? '';
@@ -309,7 +386,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $step = 3;
                     }
                 } catch (Throwable $e) {
-                    $error = 'DB Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine();
+                    error_log('Booking availability check failed: ' . $e->getMessage());
+                    $error = 'We could not confirm availability right now. Please try again.';
                     $step = 3;
                 }
             }
@@ -403,6 +481,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $new_filename = 'rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
                             if (store_private_receipt($tmpFile, $new_filename)) {
                                 $receipt_url = 'storage/receipts/' . $new_filename;
+                                $storedReceiptPath = private_storage_file('receipts/' . $new_filename);
                             } else {
                                 $error = 'Failed to upload receipt image. Please try again.';
                                 $step  = 3; $skip_insert = true;
@@ -446,6 +525,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $new_filename = 'gcash_rcpt_' . bin2hex(random_bytes(16)) . '.' . $file_ext;
                             if (store_private_receipt($tmpFile, $new_filename)) {
                                 $receipt_url = 'storage/receipts/' . $new_filename;
+                                $storedReceiptPath = private_storage_file('receipts/' . $new_filename);
                             } else {
                                 $error = 'Failed to upload GCash receipt. Please try again.';
                                 $step  = 3; $skip_insert = true;
@@ -484,7 +564,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $bookingTransactionOpen = false;
 
                         // QR Code for check-in
-                        $base_url   = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']);
+                        $base_url   = booking_public_frontend_url();
                         $checkin_url = rtrim($base_url, '/') . '/checkin?ref=' . $booking_ref . '&token=' . $checkin_token;
                         $cancel_url  = rtrim($base_url, '/') . '/cancel_booking?token=' . $cancel_token;
                         $qr_dir  = __DIR__ . '/assets/qrcodes/';
@@ -510,6 +590,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             );
 
                             if (!empty($paymongoRes['success']) && !empty($paymongoRes['checkout_url'])) {
+                                $paymongoSessionCreated = true;
                                 $sessId = $paymongoRes['session_id'] ?? '';
                                 pm_store_checkout($conn, $sessId, $checkoutPaymentId, (int)$booking_id, (float)$deposit_amount);
                                 pm_query($conn, "UPDATE payments SET transaction_id = ? WHERE id = ? AND status = 'pending'", [$sessId, $checkoutPaymentId]);
@@ -522,13 +603,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 exit;
                             } else {
                                 $pmErr = $paymongoRes['error'] ?? 'PayMongo service error';
-                                $error = 'Online Payment Error: ' . $pmErr;
+                                error_log('PayMongo checkout creation failed: ' . $pmErr);
+                                $error = 'Online payment could not be started. Please try again.';
                                 $step = 3;
 
-                                // Rollback: delete the un-initiated booking and payment so it does not clutter the admin table
-                                $conn->query("DELETE FROM payments WHERE booking_id = " . (int)$booking_id);
-                                $conn->query("DELETE FROM bookings WHERE booking_id = " . (int)$booking_id);
-                                if (!empty($qr_file) && file_exists($qr_file)) {
+                                // PayMongo did not create a checkout, so atomically remove
+                                // the local pending payment and its exact token-bound booking.
+                                $cleaned = cleanup_failed_paymongo_booking(
+                                    $conn,
+                                    (int)$booking_id,
+                                    $cancel_token
+                                );
+                                if (!$cleaned) {
+                                    error_log('Failed PayMongo setup left booking REF-' . (int)$booking_id . ' for manual review.');
+                                }
+                                if ($cleaned && !empty($qr_file) && is_file($qr_file)) {
                                     @unlink($qr_file);
                                 }
                             }
@@ -593,11 +682,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $error = 'Error saving your booking. Please try again.';
                     }
-                } catch (Exception $e) {
-                    $error = 'Error saving your booking: ' . $e->getMessage();
+                } catch (Throwable $e) {
+                    // If the provider failed before returning a checkout session,
+                    // clean up the already-committed local booking as well.
+                    if (($payment_method ?? '') === 'PayMongo Online'
+                        && !$paymongoSessionCreated
+                        && !$bookingTransactionOpen
+                        && !empty($booking_id)
+                        && !empty($cancel_token)) {
+                        $cleaned = cleanup_failed_paymongo_booking($conn, (int)$booking_id, $cancel_token);
+                        if ($cleaned && !empty($qr_file) && is_file($qr_file)) @unlink($qr_file);
+                    }
+                    error_log('Booking save failed: ' . $e->getMessage());
+                    $error = 'Error saving your booking. Please try again.';
                 }
             }
             if ($bookingTransactionOpen) $conn->rollback();
+            if (!empty($storedReceiptPath) && is_file($storedReceiptPath)) {
+                if (!@unlink($storedReceiptPath)) {
+                    error_log('Could not remove orphaned receipt after booking failure.');
+                }
+            }
         }
     }
 }

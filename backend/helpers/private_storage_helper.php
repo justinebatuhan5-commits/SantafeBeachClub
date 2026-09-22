@@ -36,6 +36,13 @@ function private_storage_root(bool $create = false): string
     if ($resolvedAncestor === false) {
         throw new RuntimeException('PHP cannot resolve the private storage path. Check folder permissions and the hosting open_basedir restriction.');
     }
+    // Validate the future path through its nearest existing ancestor before
+    // mkdir, including cases where that ancestor resolves through a symlink.
+    $suffix = substr($configured, strlen($ancestor));
+    $prospective = rtrim($resolvedAncestor, '/\\') . $suffix;
+    if (private_path_within($prospective, $documentRoot) || private_path_within($prospective, $project)) {
+        throw new RuntimeException('Private storage must be outside the web root.');
+    }
     // If the configured folder already exists, ensure it is outside documentRoot and project.
     if (file_exists($configured)) {
         $resolvedConfigured = realpath($configured);

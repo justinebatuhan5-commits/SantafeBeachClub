@@ -1,11 +1,12 @@
 <?php
 
 require_once __DIR__ . '/../config/db_pdo.php';
+require_once __DIR__ . '/../helpers/date_helper.php';
 
 function isValidDateRange(string $checkIn, string $checkOut): bool
 {
-    $start = DateTimeImmutable::createFromFormat('Y-m-d', $checkIn);
-    $end = DateTimeImmutable::createFromFormat('Y-m-d', $checkOut);
+    $start = sf_parse_exact_date($checkIn);
+    $end = sf_parse_exact_date($checkOut);
 
     if (!$start || !$end) {
         return false;
@@ -20,7 +21,7 @@ function getAvailableRooms(PDO $pdo, int $roomTypeId, string $checkIn, string $c
         return 0;
     }
 
-    $roomTypeStmt = $pdo->prepare('SELECT total_rooms FROM room_types WHERE id = :id');
+    $roomTypeStmt = $pdo->prepare('SELECT name FROM room_types WHERE id = :id');
     $roomTypeStmt->execute([':id' => $roomTypeId]);
     $roomType = $roomTypeStmt->fetch();
 
@@ -28,18 +29,25 @@ function getAvailableRooms(PDO $pdo, int $roomTypeId, string $checkIn, string $c
         return 0;
     }
 
+    // Physical, usable rooms are the inventory source of truth. Catalog
+    // total_rooms may include rooms currently removed for maintenance.
+    $capacityStmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM rooms WHERE type = :type AND status <> 'maintenance'"
+    );
+    $capacityStmt->execute([':type' => $roomType['name']]);
+    $usableCapacity = (int)$capacityStmt->fetchColumn();
+
     $overlapStmt = $pdo->prepare(
         "SELECT COUNT(*) AS overlap_count
          FROM bookings b
          LEFT JOIN rooms r ON r.id = b.room_id
          WHERE (
-             b.room_type_id = :room_type_id
-             OR (b.room_id IS NOT NULL AND r.type = (SELECT rt.name FROM room_types rt WHERE rt.id = :room_type_id LIMIT 1))
-             OR (
-                 b.room_type_id IS NULL
-                 AND LOWER(COALESCE(b.accommodation_name, '')) LIKE CONCAT('%', LOWER((SELECT rt.name FROM room_types rt WHERE rt.id = :room_type_id LIMIT 1)), '%')
+             (b.room_id IS NOT NULL AND r.type = :assigned_type AND r.status <> 'maintenance')
+             OR (b.room_id IS NULL AND (
+                 b.room_type_id = :unassigned_room_type_id
+                 OR LOWER(COALESCE(b.accommodation_name, '')) LIKE :legacy_name_pattern
+             ))
              )
-         )
            AND LOWER(COALESCE(b.status, '')) NOT IN ('cancelled', 'canceled', 'checked out')
            AND LOWER(COALESCE(b.status, '')) IN ('confirmed', 'checked in', 'pending payment', 'pending')
            AND b.check_in < :requested_checkout
@@ -53,13 +61,15 @@ function getAvailableRooms(PDO $pdo, int $roomTypeId, string $checkIn, string $c
     //   AND existing check-out is after the requested check-in
     // This excludes back-to-back stays from being counted as conflicts.
     $overlapStmt->execute([
-        ':room_type_id' => $roomTypeId,
+        ':assigned_type' => $roomType['name'],
+        ':unassigned_room_type_id' => $roomTypeId,
+        ':legacy_name_pattern' => '%' . strtolower($roomType['name']) . '%',
         ':requested_checkout' => $checkOut,
         ':requested_checkin' => $checkIn,
     ]);
 
     $overlapCount = (int) $overlapStmt->fetchColumn();
-    $available = (int) $roomType['total_rooms'] - $overlapCount;
+    $available = $usableCapacity - $overlapCount;
 
     return max(0, $available);
 }
@@ -89,7 +99,7 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
     $pdo->beginTransaction();
 
     try {
-        $lockRoomTypeStmt = $pdo->prepare('SELECT id, total_rooms FROM room_types WHERE id = :id FOR UPDATE');
+        $lockRoomTypeStmt = $pdo->prepare('SELECT id, name FROM room_types WHERE id = :id FOR UPDATE');
         $lockRoomTypeStmt->execute([':id' => $roomTypeId]);
         $roomType = $lockRoomTypeStmt->fetch();
 
@@ -97,21 +107,21 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
             throw new RuntimeException('Room type not found.');
         }
         // Use the same physical-room lock as guest and discount requests.
-        $roomLocks = $pdo->prepare("SELECT id FROM rooms WHERE type=(SELECT name FROM room_types WHERE id=?) AND status<>'maintenance' ORDER BY id FOR UPDATE");
-        $roomLocks->execute([$roomTypeId]);
-        $roomLocks->fetchAll();
+        $roomLocks = $pdo->prepare("SELECT id FROM rooms WHERE type=? AND status<>'maintenance' ORDER BY id FOR UPDATE");
+        $roomLocks->execute([$roomType['name']]);
+        $lockedUsableRooms = $roomLocks->fetchAll();
+        $usableCapacity = count($lockedUsableRooms);
 
         $overlapStmt = $pdo->prepare(
             "SELECT COUNT(*) AS overlap_count
              FROM bookings b
              LEFT JOIN rooms r ON r.id = b.room_id
              WHERE (
-                 b.room_type_id = :room_type_id
-                 OR (b.room_id IS NOT NULL AND r.type = (SELECT rt.name FROM room_types rt WHERE rt.id = :room_type_id LIMIT 1))
-                 OR (
-                     b.room_type_id IS NULL
-                     AND LOWER(COALESCE(b.accommodation_name, '')) LIKE CONCAT('%', LOWER((SELECT rt.name FROM room_types rt WHERE rt.id = :room_type_id LIMIT 1)), '%')
-                 )
+                 (b.room_id IS NOT NULL AND r.type = :assigned_type AND r.status <> 'maintenance')
+                 OR (b.room_id IS NULL AND (
+                     b.room_type_id = :unassigned_room_type_id
+                     OR LOWER(COALESCE(b.accommodation_name, '')) LIKE :legacy_name_pattern
+                 ))
              )
                AND LOWER(COALESCE(b.status, '')) NOT IN ('cancelled', 'canceled', 'checked out')
                AND LOWER(COALESCE(b.status, '')) IN ('confirmed', 'checked in', 'pending payment', 'pending')
@@ -120,13 +130,15 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
              FOR UPDATE"
         );
         $overlapStmt->execute([
-            ':room_type_id' => $roomTypeId,
+            ':assigned_type' => $roomType['name'],
+            ':unassigned_room_type_id' => $roomTypeId,
+            ':legacy_name_pattern' => '%' . strtolower($roomType['name']) . '%',
             ':requested_checkout' => $checkOut,
             ':requested_checkin' => $checkIn,
         ]);
 
         $overlapCount = (int) $overlapStmt->fetchColumn();
-        $available = max(0, (int) $roomType['total_rooms'] - $overlapCount);
+        $available = max(0, $usableCapacity - $overlapCount);
 
         if ($available <= 0) {
             $pdo->rollBack();
@@ -137,9 +149,7 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
             ];
         }
 
-        $roomTypeNameStmt = $pdo->prepare('SELECT name FROM room_types WHERE id = :id');
-        $roomTypeNameStmt->execute([':id' => $roomTypeId]);
-        $roomTypeName = (string) $roomTypeNameStmt->fetchColumn();
+        $roomTypeName = (string)$roomType['name'];
 
         // Find an available room that is not under maintenance and has no overlapping booking.
         $roomStmt = $pdo->prepare("

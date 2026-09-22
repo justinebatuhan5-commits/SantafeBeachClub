@@ -151,6 +151,7 @@ try {
         'sold_out' => $available === 0,
     ]);
 } catch (Throwable $e) {
+    error_log('Availability API failure: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Availability could not be checked right now. Please try again.']);
 }

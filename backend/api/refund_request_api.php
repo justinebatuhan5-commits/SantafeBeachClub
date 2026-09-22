@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../helpers/api_auth_helper.php';
+require_once __DIR__ . '/../helpers/csrf_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -29,6 +30,25 @@ function refund_request_token(): string
 {
     $token = trim((string)($_POST['booking_token'] ?? $_GET['booking_token'] ?? ''));
     return preg_match('/\A[a-f0-9]{32}\z/', $token) ? $token : '';
+}
+
+function require_refund_state_change_request(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        http_response_code(405);
+        header('Allow: POST');
+        echo json_encode(['success' => false, 'message' => 'Method not allowed. Use POST.']);
+        exit;
+    }
+    if (!verify_csrf_token()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Invalid or expired security token. Please refresh and try again.']);
+        exit;
+    }
+}
+
+if (in_array($action, ['submit_request', 'approve', 'reject', 'process_paymongo'], true)) {
+    require_refund_state_change_request();
 }
 
 try {
@@ -309,7 +329,7 @@ try {
 
         // Send notification to guest
         $notif_title = 'Refund Request Approved';
-        $notif_msg = "Your refund request for {$refund['accommodation_name']} has been approved. PHP " . number_format($refund['net_refund'], 2) . " will be refunded to your original payment method.";
+        $notif_msg = "Your refund request for {$refund['accommodation_name']} has been approved for PHP " . number_format($refund['net_refund'], 2) . ". Payment processing is pending and the front desk will notify you when the refund has actually been issued.";
         $notif_type = 'success';
         
         $notif_stmt = $conn->prepare("
@@ -331,7 +351,7 @@ try {
         }
 
         $response['success'] = true;
-        $response['message'] = 'Refund request approved. Ready for processing.';
+        $response['message'] = 'Refund request approved. Payment processing remains pending.';
         $response['data'] = ['refund_request_id' => $request_id];
 
     } elseif ($action === 'reject') {
@@ -422,106 +442,12 @@ try {
         $response['message'] = 'Refund request rejected.';
 
     } elseif ($action === 'process_paymongo') {
-        // Process refund to PayMongo (admin only)
+        // Deliberately disabled until a real PayMongo refund request and its
+        // provider response can be verified. This branch must not mutate any
+        // refund, payment, or booking record.
         require_admin_access();
-
-        $request_id = intval($_POST['request_id'] ?? 0);
-        $approved_by = $_SESSION['admin_username'] ?? 'system';
-
-        if (!$request_id) {
-            throw new Exception('Request ID is required.');
-        }
-
-        $stmt = $conn->prepare("
-            SELECT r.*, p.transaction_id, p.amount, b.guest_email, b.guest_name
-            FROM refund_requests r
-            JOIN payments p ON r.payment_id = p.id
-            JOIN bookings b ON r.booking_id = b.id
-            WHERE r.id = ? AND r.status = 'approved'
-            LIMIT 1
-        ");
-        $stmt->bind_param("i", $request_id);
-        $stmt->execute();
-        $refund = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if (!$refund) {
-            throw new Exception('Refund request not found or not approved yet.');
-        }
-
-        if (empty($refund['transaction_id'])) {
-            throw new Exception('No PayMongo transaction ID found for this payment.');
-        }
-
-        // Update status to processing
-        $upd_stmt = $conn->prepare("
-            UPDATE refund_requests
-            SET status = 'processing'
-            WHERE id = ?
-        ");
-        $upd_stmt->bind_param("i", $request_id);
-        $upd_stmt->execute();
-        $upd_stmt->close();
-
-        // TODO: Integrate actual PayMongo refund API call here
-        // For now, simulate processing
-        // $paymongo_refund_id = call_paymongo_refund_api($refund['transaction_id'], $refund['net_refund']);
-
-        // Mark as completed (in real scenario, would be async)
-        $complete_stmt = $conn->prepare("
-            UPDATE refund_requests
-            SET status = 'completed', paymongo_status = 'success', completed_at = NOW()
-            WHERE id = ?
-        ");
-        $complete_stmt->bind_param("i", $request_id);
-        $complete_stmt->execute();
-        $complete_stmt->close();
-
-        // Update payment status to refunded
-        $pay_stmt = $conn->prepare("
-            UPDATE payments
-            SET status = 'refunded'
-            WHERE id = ?
-        ");
-        $pay_stmt->bind_param("i", $refund['payment_id']);
-        $pay_stmt->execute();
-        $pay_stmt->close();
-
-        // Update booking status
-        $book_stmt = $conn->prepare("
-            UPDATE bookings
-            SET refund_status = 'completed', status = 'Cancelled'
-            WHERE id = ?
-        ");
-        $book_stmt->bind_param("i", $refund['booking_id']);
-        $book_stmt->execute();
-        $book_stmt->close();
-
-        // Log completion
-        $log_action = 'Refund Processed';
-        $log_details = "Refund request #{$request_id} processed to PayMongo. Amount: PHP " . number_format($refund['net_refund'], 2) . " refunded to {$refund['guest_name']}";
-        $log_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        
-        $log_stmt = $conn->prepare("
-            INSERT INTO activity_logs (admin_username, action, details, ip_address)
-            VALUES (?, ?, ?, ?)
-        ");
-        $log_stmt->bind_param("ssss", $approved_by, $log_action, $log_details, $log_ip);
-        $log_stmt->execute();
-        $log_stmt->close();
-
-        // Send email to guest
-        $email_result = sendRefundCompletedEmail(
-            $refund['guest_email'],
-            $refund['guest_name'],
-            'REF-' . str_pad($refund['booking_id'], 3, '0', STR_PAD_LEFT),
-            $refund['net_refund'],
-            $refund['reason']
-        );
-
-        $response['success'] = true;
-        $response['message'] = 'Refund processed successfully to PayMongo.';
-        $response['data'] = ['refund_request_id' => $request_id];
+        http_response_code(501);
+        $response['message'] = 'PayMongo refund processing is not available yet. No records or payment statuses were changed.';
 
     } elseif ($action === 'list_pending') {
         // Get all pending refund requests (admin only)
