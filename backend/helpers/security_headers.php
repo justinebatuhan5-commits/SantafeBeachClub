@@ -30,7 +30,7 @@ if (!headers_sent()) {
          . "font-src 'self' https://fonts.gstatic.com data:; "
          . "img-src 'self' data: blob: https: https://api.qrserver.com https://images.unsplash.com; "
          . "frame-src 'self' blob: https://www.google.com/recaptcha/ https://recaptcha.google.com/ https://www.google.com/maps/; "
-         . "connect-src 'self' https://www.google.com/recaptcha/ https://api.qrserver.com; "
+         . "connect-src 'self' https://www.google.com/recaptcha/ https://api.qrserver.com https://cdn.jsdelivr.net; "
          . "object-src 'none'; "
          . "base-uri 'self'; "
          . "frame-ancestors 'self';";
