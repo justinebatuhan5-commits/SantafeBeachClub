@@ -1007,6 +1007,32 @@ body {
 
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 860px) {
+    /* The shared mobile navigation stacks full site menus. The booking header has
+       only one link, so keep it beside the logo instead of creating an empty row. */
+    .booking-flow-page .main-header {
+        flex-wrap: nowrap;
+        min-height: 64px;
+    }
+    .booking-flow-page .main-header .nav-menu {
+        order: initial;
+        width: auto;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+    }
+    .booking-flow-page .main-header .nav-menu ul {
+        width: auto;
+        gap: 0;
+    }
+    .booking-flow-page .main-header .nav-menu a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+    }
     .bk-columns {
         display: flex;
         flex-direction: column;

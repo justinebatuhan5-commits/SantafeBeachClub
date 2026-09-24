@@ -729,7 +729,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
 <script src="assets/js/site-dialog.js?v=1"></script>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
-<body>
+<body class="booking-flow-page">
 
     <!-- Header -->
     <header class="main-header">
