@@ -18,7 +18,8 @@ $id = (int)($_GET['booking'] ?? 0);
 if (!$id && $_SERVER['REQUEST_METHOD'] === 'GET') {
     // Remove the fragment immediately, then exchange it in a CSRF-protected POST.
     ?>
-    <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Open your booking</title></head><body>
+    <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Open your booking</title><?php require __DIR__ . '/partials/_responsive.php'; ?>
+</head><body>
     <p id="accessMessage">Opening your private booking…</p>
     <form id="accessForm" method="post" hidden><?= csrf_field() ?><input type="hidden" name="action" value="access"><input type="hidden" name="access_token" id="accessToken"></form>
     <noscript>Enable JavaScript to open your private booking link, or contact reception.</noscript>
@@ -117,7 +118,8 @@ $paid = (int)pm_query($conn,"SELECT COALESCE(ROUND(SUM(amount)*100),0) FROM paym
 $pending = pm_query($conn,"SELECT p.*,x.checkout_url FROM discount_payments x JOIN payments p ON p.id=x.payment_id WHERE x.booking_id=? AND p.status='pending' ORDER BY p.id DESC LIMIT 1",[$id])->get_result()->fetch_assoc();
 $estimate = in_array($d['state'],['Awaiting ID verification','More information needed'],true);
 ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your discount request · Santa Fe Beach Club</title><link rel="stylesheet" href="assets/css/discounts.css"></head>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your discount request · Santa Fe Beach Club</title><link rel="stylesheet" href="assets/css/discounts.css"><?php require __DIR__ . '/partials/_responsive.php'; ?>
+</head>
 <body class="discount-page"><main class="discount-shell"><a href="index.php">Santa Fe Beach Club</a><h1>Your booking & payment</h1><p>REF-<?= dh(str_pad((string)$id,3,'0',STR_PAD_LEFT)) ?> · <?= dh($d['accommodation_name']) ?></p>
 <?php if ($message): ?><div class="discount-note" role="status"><?= dh($message) ?></div><?php endif ?>
 <?php if ($error): ?><div class="discount-note discount-error" role="alert"><?= dh($error) ?></div><?php endif ?>

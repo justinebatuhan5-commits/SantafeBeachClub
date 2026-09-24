@@ -215,6 +215,7 @@ $checkInDate = !empty($bookingData['check_in']) ? date('M j, Y', strtotime($book
             color: #0F172A;
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

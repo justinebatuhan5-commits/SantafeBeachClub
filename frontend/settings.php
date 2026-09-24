@@ -716,6 +716,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
         .notif-permission-note.visible { display: flex; gap: 10px; align-items: flex-start; }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

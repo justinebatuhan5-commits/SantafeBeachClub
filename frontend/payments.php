@@ -445,6 +445,7 @@ if ($bk_res) {
         }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body class="payments-page">
 

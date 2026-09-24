@@ -242,6 +242,7 @@ if ($tab === 'security') {
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
     <script src="assets/js/security.js" defer></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <?php $active_page = 'logs'; include __DIR__ . '/partials/_sidebar.php'; ?>

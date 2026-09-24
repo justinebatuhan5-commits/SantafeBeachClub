@@ -32,6 +32,7 @@ $checked_in_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE statu
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Reservations — Admin Command</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

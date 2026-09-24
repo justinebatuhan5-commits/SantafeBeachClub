@@ -59,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['backup_status'])) {
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
 <title>PC Database Backups — Santa Fe Beach Club</title><link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
 <link rel="stylesheet" href="assets/css/backups.css?v=<?= filemtime(__DIR__ . '/assets/css/backups.css') ?>">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head><body>
 <?php $active_page = 'backups'; include __DIR__ . '/partials/_sidebar.php'; ?>
 <main class="admin-main"><?php $page_title = 'PC Complete Backups'; $page_subtitle = 'Download your hosted database and private uploads to your computer every six hours.'; include __DIR__ . '/partials/_page_header.php'; ?>

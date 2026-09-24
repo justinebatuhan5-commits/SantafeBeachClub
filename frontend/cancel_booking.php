@@ -459,6 +459,7 @@ $checkout_fmt = $booking ? date('D, d M Y', strtotime($booking['check_out'])) : 
         }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <div class="cancel-wrap">

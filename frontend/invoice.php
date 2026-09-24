@@ -382,6 +382,7 @@ $autoPrint = isset($_GET['print']) && $_GET['print'] == '1';
             .invoice-header, .checkin-pass-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

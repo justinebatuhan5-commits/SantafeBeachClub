@@ -149,6 +149,7 @@ unset($_SESSION['notif_flash']);
             color: #1F2937;
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

@@ -212,6 +212,7 @@ function inquiry_value(string $field): string {
         }
     </style>
     <link rel="stylesheet" href="assets/css/contact.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/contact.css'); ?>">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body class="contact-page">
 

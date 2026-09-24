@@ -415,6 +415,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Management — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <?php $active_page = 'staff'; include __DIR__ . '/partials/_sidebar.php'; ?>
@@ -430,10 +431,10 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <?php if ($success): ?><div class="alert alert-success"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><?php echo htmlspecialchars($success); ?></div><?php endif; ?>
             <?php if ($error):   ?><div class="alert alert-error"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
-            <div style="display:grid;grid-template-columns:1.8fr 1fr;gap:24px;align-items:start;">
+            <div class="responsive-stack" style="display:grid;grid-template-columns:1.8fr 1fr;gap:24px;align-items:start;">
 
             <!-- Staff Table - Modern Card Design -->
-            <div class="admin-card" style="overflow:hidden;">
+            <div class="admin-card staff-list-card" style="overflow:hidden;">
                 <div class="admin-card-header" style="padding:20px 24px;border-bottom:1px solid var(--border-light);background:linear-gradient(135deg,rgba(124,83,60,0.04),rgba(180,130,90,0.02));">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#7C533C,#b4824a);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,83,60,0.3);flex-shrink:0;">
@@ -451,7 +452,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                 </div>
 
                 <!-- Column Headers -->
-                <div style="display:grid;grid-template-columns:2fr 1.8fr 1fr 1fr 1.6fr;gap:0;padding:10px 24px;background:rgba(248,250,252,0.9);border-bottom:1px solid var(--border-light);">
+                <div class="staff-grid-head" style="display:grid;grid-template-columns:2fr 1.8fr 1fr 1fr 1.6fr;gap:0;padding:10px 24px;background:rgba(248,250,252,0.9);border-bottom:1px solid var(--border-light);">
                     <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Account</span>
                     <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">OTP Email</span>
                     <span style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Role</span>
@@ -469,7 +470,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
                     $rowBg     = $isLocked ? 'rgba(254,242,242,0.6)' : 'transparent';
                     $rowHover  = $isLocked ? 'rgba(254,226,226,0.5)' : 'rgba(248,250,252,0.9)';
                 ?>
-                <div style="display:grid;grid-template-columns:2fr 1.8fr 1fr 1fr 1.6fr;gap:0;align-items:center;padding:14px 24px;border-bottom:1px solid var(--border-light);background:<?php echo $rowBg; ?>;transition:background 0.15s;" onmouseover="this.style.background='<?php echo $rowHover; ?>'" onmouseout="this.style.background='<?php echo $rowBg; ?>'">
+                <div class="staff-grid-row" style="display:grid;grid-template-columns:2fr 1.8fr 1fr 1fr 1.6fr;gap:0;align-items:center;padding:14px 24px;border-bottom:1px solid var(--border-light);background:<?php echo $rowBg; ?>;transition:background 0.15s;" onmouseover="this.style.background='<?php echo $rowHover; ?>'" onmouseout="this.style.background='<?php echo $rowBg; ?>'">
 
                     <!-- Account -->
                     <div style="display:flex;align-items:center;gap:11px;min-width:0;">

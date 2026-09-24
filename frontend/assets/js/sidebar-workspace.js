@@ -22,7 +22,7 @@
         toggle.setAttribute('aria-controls', 'appSidebar');
         toggle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 7-5 5 5 5"/></svg>';
         sidebar.appendChild(toggle);
-        var compact = window.matchMedia('(max-width: 600px)').matches;
+        var compact = false;
         try {
             var saved = localStorage.getItem('sbc_sidebar_compact');
             if (saved !== null) compact = saved === 'true';
@@ -35,10 +35,14 @@
             toggle.title = value ? 'Expand sidebar' : 'Collapse sidebar';
         }
         toggle.addEventListener('click', function () {
-            setCompact(!compact);
+            if (window.matchMedia('(max-width: 1024px)').matches) {
+                document.dispatchEvent(new Event('sbc:close-navigation'));
+                return;
+            }
+            setCompact(!root.classList.contains('sbc-sidebar-compact'));
             try { localStorage.setItem('sbc_sidebar_compact', String(compact)); } catch (error) { /* Storage is optional. */ }
         });
-        setCompact(compact);
+        setCompact(window.matchMedia('(max-width: 1024px)').matches ? false : compact);
         var footer = sidebar.querySelector('.sidebar-bottom');
         footer.appendChild(theme);
         var groups = [

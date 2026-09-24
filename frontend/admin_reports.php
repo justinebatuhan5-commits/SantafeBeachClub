@@ -340,6 +340,7 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             }
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <?php $active_page = 'reports'; include __DIR__ . '/partials/_sidebar.php'; ?>

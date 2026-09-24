@@ -439,6 +439,7 @@ unset($_SESSION['notif_flash']);
         }
 
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

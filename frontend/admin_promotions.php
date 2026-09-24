@@ -107,6 +107,7 @@ $promos = $conn->query("SELECT p.*,
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Promotions — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <?php $active_page = 'promotions'; include __DIR__ . '/partials/_sidebar.php'; ?>
@@ -134,7 +135,7 @@ $promos = $conn->query("SELECT p.*,
             <p>No promotions yet. Click <strong>New Promotion</strong> to create one.</p>
         </div></div>
         <?php else: ?>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
+        <div class="responsive-stack" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
         <?php while ($p = $promos->fetch_assoc()):
             $expired = strtotime($p['valid_until']) < strtotime(date('Y-m-d'));
             $active  = $p['is_active'] && !$expired;

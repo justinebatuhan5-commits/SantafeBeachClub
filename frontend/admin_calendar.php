@@ -620,6 +620,7 @@ if ($rtResult) {
         .cal-filter-select { margin-left: 0; }
     }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

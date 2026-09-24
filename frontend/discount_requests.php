@@ -46,6 +46,7 @@ $active_page = 'discount_requests';
     <title>Discount Requests — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
     <link rel="stylesheet" href="assets/css/discounts.css?v=<?php echo filemtime(__DIR__ . '/assets/css/discounts.css'); ?>">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

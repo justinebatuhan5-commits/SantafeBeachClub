@@ -152,6 +152,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     <title>Gallery — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <?php $active_page = 'gallery'; include __DIR__ . '/partials/_sidebar.php'; ?>
@@ -179,7 +180,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
             <p>No photos yet. Click <strong>Add Photo</strong> to upload one.</p>
         </div></div>
         <?php else: ?>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;">
+        <div class="responsive-stack" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;">
         <?php while ($p = $photos->fetch_assoc()): ?>
         <div class="admin-card" style="padding:0;overflow:hidden;">
             <div style="height:200px;background:#f3f4f6;">

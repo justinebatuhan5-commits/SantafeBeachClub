@@ -360,6 +360,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     <title>Rooms & Accommodations â€“ Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/rooms.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/rooms.css'); ?>">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body class="rooms-page">
 
@@ -463,7 +464,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                     </h3>
                     <p style="font-size: 13px; color: #64748B; margin: 4px 0 0;">Green dates indicate open availability; red dates are sold out. Click any date to set your check-in!</p>
                 </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div class="rooms-calendar-nav" style="display: flex; gap: 8px; align-items: center;">
                     <button type="button" id="cal-prev-month" class="btn-secondary" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; cursor: pointer;">&larr; Prev</button>
                     <span id="cal-month-title" style="font-weight: 800; font-size: 15px; color: #0F172A; min-width: 140px; text-align: center;">...</span>
                     <button type="button" id="cal-next-month" class="btn-secondary" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; cursor: pointer;">Next &rarr;</button>

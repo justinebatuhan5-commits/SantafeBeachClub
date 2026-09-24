@@ -446,6 +446,7 @@ foreach ($valid_statuses as $s) {
         }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

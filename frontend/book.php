@@ -727,6 +727,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
     <link rel="stylesheet" href="assets/css/book.css?v=<?= time(); ?>">
     <script src="assets/js/security.js?v=<?= time(); ?>" defer></script>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

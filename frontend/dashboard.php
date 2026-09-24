@@ -148,6 +148,7 @@ if (empty($room_types)) {
         }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 
@@ -467,7 +468,7 @@ if (empty($room_types)) {
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
+                <div class="mobile-form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
                     <button type="button" class="btn-secondary" onclick="submitReservation('Pending')">
                         Save as Pending
                     </button>

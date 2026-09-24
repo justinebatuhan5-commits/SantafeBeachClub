@@ -371,6 +371,7 @@ function booking_room_type(array $booking): string {
         .btn-export:hover { background: var(--sidebar-hover); border-color: var(--primary); color: var(--primary); }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

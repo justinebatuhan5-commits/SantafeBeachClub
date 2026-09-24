@@ -91,6 +91,7 @@ $bookings_query = $conn->query("SELECT id, guest_name, guest_email, guest_type, 
             font-weight: 600;
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

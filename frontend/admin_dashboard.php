@@ -169,6 +169,7 @@ try {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Beach Club">
     <meta name="description" content="Admin Dashboard for Santa Fe Beach Club Booking System">
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

@@ -50,6 +50,7 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 .review-delete:hover { background:#fef2f2; }
 .review-delete:focus-visible { outline:2px solid #b91c1c; outline-offset:3px; }
 </style><script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head><body>
 <?php include __DIR__ . '/partials/_sidebar.php'; ?>
 <main class="admin-main">

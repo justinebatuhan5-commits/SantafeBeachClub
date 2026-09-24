@@ -543,6 +543,7 @@ $bookings_query = $conn->query("
         .pay-card-inner .label { font-size: 12px; }
     </style>
 <script src="assets/js/site-dialog.js?v=2"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 
@@ -798,7 +799,7 @@ $bookings_query = $conn->query("
                 <input type="hidden" name="action" value="walkin_checkin">
                 
                 <!-- Guest Information -->
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div class="mobile-form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
                     <div style="grid-column: span 2;">
                         <label style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Guest Full Name *</label>
                         <input type="text" name="guest_name" id="walkinGuestName" required placeholder="e.g. Maria Santos" style="width:100%; padding:10px 12px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:14px; box-sizing:border-box;">
@@ -834,7 +835,7 @@ $bookings_query = $conn->query("
                         </select>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                    <div class="mobile-form-grid" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                         <div>
                             <label style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase;">Check-in</label>
                             <input type="date" name="check_in" id="walkinCheckIn" value="<?php echo date('Y-m-d'); ?>" min="<?php echo date('Y-m-d'); ?>" onchange="updateWalkinTotals()" style="width:100%; padding:8px 10px; border:1px solid #D1D5DB; border-radius:6px; font-size:13px; box-sizing:border-box;">
@@ -864,7 +865,7 @@ $bookings_query = $conn->query("
                 <!-- Payment Method Section -->
                 <div style="margin-bottom: 16px;">
                     <label style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Payment Method</label>
-                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div class="mobile-form-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                         <label class="pay-method-card">
                             <input type="radio" name="payment_method" value="Front Desk Cash" checked style="display:none;" onchange="updateWalkinPaySelectors()">
                             <div class="pay-card-inner">
@@ -1053,7 +1054,7 @@ $bookings_query = $conn->query("
                 
                 <div style="margin-bottom: 24px;">
                     <label style="display: block; font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Select Payment Method</label>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div class="mobile-form-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                         <label class="pay-method-card">
                             <input type="radio" name="payment_method" value="Front Desk Cash" checked style="display:none;" onchange="updatePaySelectors()">
                             <div class="pay-card-inner">

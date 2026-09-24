@@ -154,6 +154,7 @@ if ($rooms_query && $rooms_query->num_rows > 0) {
             color: #991B1B;
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <?php $active_page = 'accommodations'; include __DIR__ . '/partials/_sidebar.php'; ?>

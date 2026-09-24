@@ -80,6 +80,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
         .lightbox-controls span { font-size: 13px; color: #e0d6cc; }
         @media (max-width: 400px) { .photo-grid { grid-template-columns: minmax(0, 1fr); } }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body class="gallery-page">
     <!-- ── Header ── -->

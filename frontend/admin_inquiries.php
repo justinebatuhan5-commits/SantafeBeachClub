@@ -135,6 +135,7 @@ $inquiriesResult = $conn->query("SELECT * FROM inquiries ORDER BY created_at DES
         [data-theme="dark"] .status-read { background: #334155; color: #CBD5E1; }
         [data-theme="dark"] .status-resolved { background: rgba(16, 185, 129, 0.2); color: #6EE7B7; }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <?php

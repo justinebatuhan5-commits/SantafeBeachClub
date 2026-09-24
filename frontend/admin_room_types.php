@@ -405,6 +405,7 @@ $default_prices = [
         }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 <?php $active_page = 'room_photos'; include __DIR__ . '/partials/_sidebar.php'; ?>

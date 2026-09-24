@@ -1,0 +1,170 @@
+/* Shared mobile layouts. Print styles and desktop page layouts stay independent. */
+@media screen and (max-width: 1024px) {
+    html { -webkit-text-size-adjust: 100%; }
+    body:has(.otp-wrapper) { overflow-y: auto; overflow-x: hidden; }
+    body:has(.otp-wrapper) .bg-shape { display: none; }
+    *, *::before, *::after { box-sizing: border-box; }
+    :is(.admin-main, .main-content, .admin-body, .page-content, .content-body,
+        .card, .admin-card, .dashboard-grid, .bk-main-col, .bk-side-col) { min-width: 0; }
+    :is(.table-responsive, .table-wrapper, .table-container, .mobile-table-scroll,
+        .cal-scroll-wrapper, .backup-scroll) {
+        min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .mobile-table-scroll:focus-visible { outline: 2px solid var(--primary, #84563c); outline-offset: -2px; }
+    .responsive-stack { grid-template-columns: minmax(0, 1fr) !important; }
+    .staff-list-card { min-width: 0; overflow-x: auto !important; }
+    :is(.staff-grid-head, .staff-grid-row) { min-width: 720px; }
+
+    /* A drawer gives staff pages the entire phone/tablet width. */
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown body :is(.admin-main, .main-content) {
+        margin-left: 0 !important; width: 100% !important; max-width: 100% !important;
+    }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown body #appSidebar.workspace-sidebar {
+        width: min(300px, calc(100vw - 48px)) !important;
+        height: 100vh; height: 100dvh;
+        transform: translateX(-105%) !important;
+        visibility: hidden; pointer-events: none; z-index: 1201;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown body #appSidebar.workspace-sidebar.open {
+        transform: translateX(0) !important; visibility: visible; pointer-events: auto;
+    }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown .sidebar-toggle-btn {
+        display: inline-flex !important; align-items: center; justify-content: center;
+        width: 44px; height: 44px; flex: 0 0 44px;
+    }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown body .mobile-nav-backdrop:not([hidden]) {
+        display: block !important; position: fixed; inset: 0; z-index: 1200;
+        background: rgb(15 23 42 / 48%); border: 0; border-radius: 0;
+    }
+    .mobile-nav-backdrop[hidden] { display: none !important; }
+    html.sbc-mobile-nav-open { overflow: hidden; }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown #appSidebar .workspace-collapse {
+        top: 22px; right: 12px; width: 44px; height: 44px;
+        background: var(--sidebar-bg); box-shadow: none;
+    }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown #appSidebar :is(.sidebar-brand, .sidebar-logo) { padding-right: 58px; }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown #appSidebar :is(.sidebar-link, .nav-item) { font-size: 14px; }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown #appSidebar .sidebar-search-input { font-size: 16px; }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown #appSidebar .sidebar-section-label { font-size: 10px; }
+}
+
+@media screen and (max-width: 768px) {
+    body { min-width: 0; }
+    :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+        min-width: 0; max-width: 100%; min-height: 44px; font-size: 16px !important;
+    }
+    textarea { resize: vertical; }
+    :is(button, .btn, .btn-primary, .btn-secondary, .filter-tab, .tab-btn) {
+        min-height: 44px; touch-action: manipulation;
+    }
+    :is(button, input, select, textarea, a):focus-visible {
+        outline: 2px solid var(--primary, #84563c); outline-offset: 3px;
+    }
+    :is(.admin-body, .content-body) { padding: 18px 16px 32px; }
+    html.sbc-sidebar-docked.sbc-sidebar-dropdown body .page-header {
+        padding: 12px 16px !important; gap: 12px; flex-wrap: wrap;
+    }
+    :is(.page-header-left, .page-header-actions, .header-actions) { min-width: 0; flex-wrap: wrap; gap: 8px; }
+    .page-header-left { flex: 1 1 auto; }
+    .page-header-title { font-size: 20px; overflow-wrap: anywhere; }
+    .page-header-actions { max-width: 100%; }
+    :is(.admin-search-wrapper, .search-wrapper) { display: flex; min-width: 0; max-width: 100%; }
+    :is(.admin-search-input, .admin-search-input:focus, .search-input, .search-input:focus) { width: 100%; min-width: 0; }
+    :is(.header-notif-dropdown, .header-user-dropdown) { max-width: calc(100vw - 24px); }
+    .header-notif-dropdown { position: fixed; top: 76px; right: 12px; width: min(380px, calc(100vw - 24px)); }
+    :is(.dashboard-grid, .charts-grid, .lower-grid, .settings-form .form-row,
+        .admin-form-row, .form-grid, .rp-grid, .contact-container, .guest-info-grid,
+        .guest-stats, .section-grid, .ticket-grid) { grid-template-columns: minmax(0, 1fr) !important; }
+    :is(.metrics-row, .stats-grid, .daily-summary-strip) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    :is(.card-header, .admin-card-header, .table-header, .filter-bar, .filters-bar,
+        .toolbar, .cal-toolbar, .cal-availability-search, .refund-header, .refund-actions,
+        .pagination, .pagination-controls, .no-print-bar) { flex-wrap: wrap; gap: 10px; }
+    :is(.filter-bar, .filters-bar, .toolbar, .cal-toolbar) :is(input, select) { max-width: 100%; min-width: 0; }
+    :is(.filter-tabs, .tab-nav, .tabs, .room-tabs-inner) {
+        max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    :is(.filter-tabs, .tab-nav, .tabs) > * { flex-shrink: 0; }
+    :is(.info-value, .detail-value, .refund-reason-text, .cal-detail-value, .activity-text) {
+        min-width: 0; overflow-wrap: anywhere;
+    }
+    :is(.settings-card, .discount-card) { padding: 20px 16px; }
+    .cal-detail-panel { width: min(400px, 100vw); max-width: 100vw; }
+    .cal-range-label { min-width: 0; }
+    :is(.cal-date-field, .cal-filter-select) { min-width: 0; max-width: 100%; }
+
+    /* Long forms remain scrollable even in landscape or above the keyboard. */
+    :is(.modal-overlay, .modal-backdrop, .gcash-overlay, .avail-modal-overlay,
+        .guest-modal-overlay, .image-modal-overlay, .room-modal,
+        #editRoomModal, #availabilityCalendarModal, #reviewModal) {
+        padding: 12px !important; overflow-y: auto; overscroll-behavior: contain;
+    }
+    :is(.modal-content, .admin-modal-content, .modal-box, .gcash-modal,
+        .avail-modal, .guest-modal, .image-modal-content, .room-modal-dialog,
+        #editRoomModal > div, #availabilityCalendarModal > div, #reviewModal > div) {
+        box-sizing: border-box; min-width: 0; width: 100% !important;
+        max-width: calc(100vw - 24px) !important;
+        max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px);
+        overflow-y: auto; overscroll-behavior: contain;
+    }
+    :is(.room-modal-dialog, #editRoomModal > div) { margin: 0 auto !important; }
+    :is(.modal-content, .admin-modal-content, .modal-box, .gcash-modal) { padding: 20px 16px !important; margin: auto !important; }
+    :is(.modal-footer, .modal-actions, .form-actions, .btn-row, .button-group) { flex-wrap: wrap; gap: 10px; }
+    :is(.modal-footer, .modal-actions, .form-actions) > button { flex: 1 1 140px; white-space: normal; }
+
+    /* Guest pages: keep navigation in document flow as its links wrap. */
+    .home-page .main-header, .site-navbar {
+        position: relative !important; top: auto !important; left: auto !important;
+        transform: none !important; margin: 10px auto; height: auto;
+    }
+    .home-page .hero-section { padding-top: 60px; min-height: 70svh; }
+    .booking-lookup-page .lookup-section { padding-top: 40px; }
+    .booking-lookup-page .lookup-card { width: 100%; min-width: 0; }
+    :is(.bk-layout, .booking-page-container) { min-width: 0; max-width: 100%; }
+    .bk-columns > * { min-width: 0; width: 100%; }
+    :is(.bk-main, .bk-form-group, .bk-input-combo, .bk-room-left) { min-width: 0; max-width: 100%; }
+    .be-bar-form { width: 100%; max-width: 100%; align-self: stretch; }
+    .rooms-hero { padding-top: 40px; }
+    .bk-side-col { position: static; width: 100%; }
+    :is(.invoice-header, .invoice-body, .cancel-head, .cancel-body) { padding: 24px 18px; }
+    .invoice-header { flex-direction: column; gap: 20px; }
+    .invoice-meta { text-align: left; }
+    :is(.success-card, .auth-card) { max-width: 100%; padding: 28px 20px; }
+    body:has(.otp-wrapper) { overflow-y: auto; overflow-x: hidden; padding: 20px 12px; }
+    .otp-wrapper { width: 100%; max-width: 460px; padding: 28px 18px; margin-block: auto; }
+    .otp-inputs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+    .otp-inputs .otp-digit { width: 100%; min-width: 0; font-size: 22px !important; }
+    body:has(.card-title) > .card { padding: 28px 20px; }
+    :is(.modal-kpi-row, .contact-grid) { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media screen and (max-width: 480px) {
+    :is(.admin-body, .content-body) { padding-inline: 12px; }
+    :is(.page-header-actions, .header-actions) { flex-wrap: wrap; }
+    .page-header-actions .admin-search-wrapper { flex: 1 1 100%; }
+    :is(.metrics-row, .stats-grid, .guest-stats-grid, .refund-info,
+        .pricing-breakdown-card, .details-grid) { grid-template-columns: minmax(0, 1fr) !important; }
+    .daily-summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .mobile-form-grid { grid-template-columns: minmax(0, 1fr) !important; }
+    .mobile-form-grid > [style*="grid-column"] { grid-column: 1 / -1 !important; }
+    :is(.photo-grid, .rp-grid) { grid-template-columns: minmax(0, 1fr); }
+    :is(.btn-row, .button-group, .success-card .btn-group) { flex-direction: column; }
+    :is(.btn-row, .button-group, .success-card .btn-group) > * { width: 100%; }
+    .resort-name { font-size: 19px; }
+    .resort-logo { width: 48px; height: 48px; flex-shrink: 0; }
+    .ticket-qr { justify-self: center; }
+    .bk-room-box { flex-direction: column; align-items: stretch; }
+    .bk-room-name { overflow-wrap: anywhere; }
+    .be-field--dates { flex-direction: column; align-items: stretch; gap: 8px; }
+    .be-date-segment { padding: 0; }
+    .be-date-arrow { display: none; }
+    .rooms-cal-wrapper > div { padding: 18px 12px !important; }
+    .rooms-calendar-nav { width: 100%; gap: 6px !important; }
+    .rooms-calendar-nav button { padding-inline: 8px !important; }
+    .rooms-calendar-nav #cal-month-title { min-width: 0 !important; flex: 1; font-size: 13px !important; }
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+    .workspace-sidebar, .mobile-nav-backdrop { transition: none !important; }
+}

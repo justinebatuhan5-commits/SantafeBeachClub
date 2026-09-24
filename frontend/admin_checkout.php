@@ -156,6 +156,7 @@ $overdue_guest_names = [];
             color: white;
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 

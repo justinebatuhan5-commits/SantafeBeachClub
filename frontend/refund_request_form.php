@@ -423,6 +423,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
             }
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <div class="container">

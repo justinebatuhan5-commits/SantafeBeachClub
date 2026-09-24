@@ -65,6 +65,7 @@ if ($price_q) {
         }
     </style>
 <script src="assets/js/site-dialog.js?v=1"></script>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body class="home-page">
 
@@ -413,7 +414,7 @@ if ($price_q) {
                     </div>
                     <input type="hidden" name="rating" id="reviewRatingInput" value="5" required>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div class="mobile-form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
                     <div>
                         <label style="display:block; font-size:12px; font-weight:700; color:#374151; margin-bottom:4px;">YOUR NAME *</label>
                         <input type="text" name="guest_name" required placeholder="e.g. Maria R." autocomplete="off" style="width:100%; padding:10px 12px; border:1px solid #D1D5DB; border-radius:8px; font-size:14px; box-sizing:border-box;">

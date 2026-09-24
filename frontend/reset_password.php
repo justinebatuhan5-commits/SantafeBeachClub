@@ -355,6 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: #059669;
         }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <div class="bg-backdrop"></div>

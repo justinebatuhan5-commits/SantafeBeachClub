@@ -8,7 +8,7 @@ http_response_code(404);
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-circle-32.png?v=3">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset=UTF-8>
-    <meta name=viewport content=width=device-width, initial-scale=1.0>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 Error</title>
     <style>
         body { 
@@ -26,10 +26,11 @@ http_response_code(404);
         h2 { font-size: 1.5rem; margin: 1rem 0 0.5rem; color: #1e293b; }
         p { font-size: 1rem; color: #64748b; margin: 0; }
     </style>
+<?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
     <div class=box>
-        <h1>Neonel Anciano Pogi</h1>=
+        <h1>404</h1>
         <h2>Page Not Found</h2>
         <p>The requested page could not be found.</p>
     </div>
