@@ -1,7 +1,12 @@
 <?php
-require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
+require_once __DIR__ . '/../backend/helpers/auth_check.php';
+if (!in_array($_SESSION['admin_role'] ?? '', ['admin', 'receptionist'], true)) {
+    http_response_code(403);
+    exit('Access denied.');
+}
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/prearrival_reminder_helper.php';
+require_once __DIR__ . '/../backend/helpers/noshow_refund_helper.php';
 
 // Trigger automated pre-arrival reminders for upcoming check-ins (1-2 days ahead)
 @sf_send_prearrival_checkin_reminders($conn, 2);
@@ -194,6 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Handle POST request to mark booking as Cancelled / No-Show
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'cancel_noshow') {
+    require_csrf_token();
+    unset($_SESSION['noshow_refund_handoff']);
     $booking_id = intval($_POST['booking_id'] ?? 0);
     $cancel_reason = trim($_POST['cancel_reason'] ?? 'No-Show / Overdue Check-in');
     if (empty($cancel_reason)) {
@@ -202,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     if ($booking_id > 0) {
         // Fetch booking details for logging & room release
-        $b_stmt = $conn->prepare("SELECT guest_name, accommodation_name, room_id, status FROM bookings WHERE id = ?");
+        $b_stmt = $conn->prepare("SELECT guest_name, accommodation_name, room_id, status, check_in, check_out FROM bookings WHERE id = ?");
         $b_stmt->bind_param("i", $booking_id);
         $b_stmt->execute();
         $b_data = $b_stmt->get_result()->fetch_assoc();
@@ -232,6 +239,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $n_stmt->execute();
             $n_stmt->close();
 
+            $_SESSION['noshow_refund_handoff'] = sf_noshow_refund_handoff(
+                $_SESSION['admin_role'] ?? '', $booking_id, $b_data, $cancel_reason
+            );
             header("Location: admin_checkin?cancelled=1&bid=" . urlencode($booking_id));
             exit;
         }
@@ -568,6 +578,11 @@ $bookings_query = $conn->query("
                 <div class="alert-warning" style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:18px;">⚠️</span>
                     <span>Reservation #<?php echo htmlspecialchars($_GET['bid'] ?? ''); ?> has been marked as <strong>Cancelled / No-Show</strong>. Room availability has been released.</span>
+                    <?php if (($_SESSION['admin_role'] ?? '') === 'receptionist'
+                        && !empty($_SESSION['noshow_refund_handoff'])
+                        && $_SESSION['noshow_refund_handoff']['booking_id'] === (int)($_GET['bid'] ?? 0)): ?>
+                        <a href="admin_refunds?noshow_handoff=1">Open refund request</a>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
 
@@ -960,6 +975,7 @@ $bookings_query = $conn->query("
             </p>
 
             <form method="POST" id="noshowForm" action="admin_checkin">
+                <?php echo csrf_field(); ?>
                 <input type="hidden" name="action" value="cancel_noshow">
                 <input type="hidden" name="booking_id" id="noshowBookingId" value="">
 

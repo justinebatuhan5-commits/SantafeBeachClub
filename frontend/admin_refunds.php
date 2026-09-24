@@ -9,6 +9,11 @@ if (session_status() === PHP_SESSION_NONE) {
 $page_title = 'Refund Requests Management';
 $is_admin_user = (($_SESSION['admin_role'] ?? 'receptionist') === 'admin');
 $csrf_token = get_csrf_token();
+$noshow_handoff = null;
+if (($_SESSION['admin_role'] ?? '') === 'receptionist' && isset($_GET['noshow_handoff'])) {
+    $noshow_handoff = $_SESSION['noshow_refund_handoff'] ?? null;
+    unset($_SESSION['noshow_refund_handoff']);
+}
 
 // Get filter status
 $filter_status = trim($_GET['status'] ?? 'requested');
@@ -685,11 +690,11 @@ foreach ($valid_statuses as $s) {
         let currentRefundId = null;
         const refundCsrfToken = <?php echo json_encode($csrf_token, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
-        function openReceptionRefundModal() {
+        function openReceptionRefundModal(handoff = null) {
             const modal = document.getElementById('receptionRefundModal');
             if (!modal) return;
-            document.getElementById('receptionBookingRef').value = '';
-            document.getElementById('receptionRefundReason').value = '';
+            document.getElementById('receptionBookingRef').value = handoff ? 'REF-' + String(handoff.booking_id).padStart(3, '0') : '';
+            document.getElementById('receptionRefundReason').value = handoff ? handoff.reason : '';
             document.getElementById('receptionBookingError').classList.remove('show');
             document.getElementById('receptionReasonError').classList.remove('show');
             modal.classList.add('show');
@@ -700,6 +705,9 @@ foreach ($valid_statuses as $s) {
             const modal = document.getElementById('receptionRefundModal');
             if (modal) modal.classList.remove('show');
         }
+
+        const noshowHandoff = <?php echo json_encode($noshow_handoff, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        if (noshowHandoff) openReceptionRefundModal(noshowHandoff);
 
         async function submitReceptionRefund() {
             const referenceInput = document.getElementById('receptionBookingRef');
