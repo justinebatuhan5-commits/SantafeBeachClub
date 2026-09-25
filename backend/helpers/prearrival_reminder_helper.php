@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/business_time_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
+require_once __DIR__ . '/balance_payment_helper.php';
 
 /**
  * Automatically checks for upcoming guest arrivals (within 1 to 2 days)
@@ -85,16 +86,7 @@ function sf_send_prearrival_checkin_reminders(mysqli $conn, int $days_ahead = 2)
     $results['checked'] = count($bookings);
 
     // Determine Base URL
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $script_dir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
-    
-    // Normalize base URL to point to /frontend
-    if (strpos($script_dir, '/frontend') !== false) {
-        $base_url = 'http://' . $host . $script_dir;
-    } else {
-        $base_url = 'http://' . $host . '/SantaBeachClub-BookingSystem/frontend';
-    }
-    $base_url = rtrim($base_url, '/');
+    $base_url = sf_balance_public_url();
 
     $mark_stmt = $conn->prepare("UPDATE bookings SET prearrival_reminder_sent_at = ? WHERE id = ? AND prearrival_reminder_sent_at IS NULL");
 
@@ -108,6 +100,8 @@ function sf_send_prearrival_checkin_reminders(mysqli $conn, int $days_ahead = 2)
         $total_cost = (float)($b['total_cost'] ?? 0);
         $amount_paid = (float)($b['amount_paid'] ?? 0);
         $balance_due = max(0, $total_cost - $amount_paid);
+        sf_initialize_balance_deadline($conn, $booking_id);
+        $balance_booking = sf_booking_financials($conn, $booking_id);
 
         $booking_ref = 'REF-' . str_pad($booking_id, 3, '0', STR_PAD_LEFT);
 
@@ -132,6 +126,7 @@ function sf_send_prearrival_checkin_reminders(mysqli $conn, int $days_ahead = 2)
         $explanation_url = $base_url . '/cancel_booking?token=' . urlencode($cancellation_token);
         // Link to check-in pass
         $checkin_url = $base_url . '/checkin?ref=' . urlencode($booking_ref) . '&token=' . urlencode($checkin_token);
+        $balance_url = $base_url . '/balance_payment.php?token=' . urlencode($cancellation_token);
 
         // Send email
         $mail_res = sendPreArrivalReminderEmail(
@@ -143,7 +138,9 @@ function sf_send_prearrival_checkin_reminders(mysqli $conn, int $days_ahead = 2)
             $check_out,
             $balance_due,
             $explanation_url,
-            $checkin_url
+            $checkin_url,
+            $balance_url,
+            (string)($balance_booking['balance_due_at'] ?? '')
         );
 
         if ($mail_res['success']) {

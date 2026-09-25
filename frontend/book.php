@@ -1303,7 +1303,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                         <div class="bk-policy-box">
                             <strong><?php echo htmlspecialchars($accommodation_name, ENT_QUOTES, 'UTF-8'); ?></strong>
                             <p>Cancellation: If cancelled, modified or in case of no-show, the first night will be charged.</p>
-                            <p>Payment: 50% of the booking item amount deposit will be charged. Balance due 1 day before arrival.</p>
+                            <p>Payment: A 50% deposit confirms the reservation. The remaining balance must be paid by the displayed deadline, one day before arrival. Unpaid bookings enter a grace period and may then be cancelled after staff review.</p>
                             <p>Other policies: - Guests availing of a Senior Citizen or PWD discount must provide a valid ID for verification. Please message the hotel’s official Facebook page <a href="https://www.facebook.com/SantaFeBeachClub" target="_blank" rel="noopener noreferrer">https://www.facebook.com/SantaFeBeachClub</a> or email <a href="mailto:santafebeachclub@gmail.com">santafebeachclub@gmail.com</a> to submit your ID. Once approved, the hotel will send a payment link with the discounted amount. Only one discount may be applied per booking.</p>
                             - 1,000+ 150/pax for excess of 10pax<br>
                             - 1,000 50 to 10 pax<br>

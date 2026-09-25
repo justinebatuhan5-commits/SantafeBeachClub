@@ -572,7 +572,7 @@ foreach ($valid_statuses as $s) {
 
                     <!-- Actions -->
                     <div class="refund-actions">
-                        <?php if ($is_admin_user && $filter_status === 'requested'): ?>
+                        <?php if ($is_admin_user && $filter_status === 'requested' && (float)$refund['net_refund'] > 0): ?>
                             <button class="btn-approve" onclick="approveRefund(<?php echo $refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, '<?php echo number_format($refund['net_refund'], 2); ?>', this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                 Approve Request
@@ -581,7 +581,7 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 Reject
                             </button>
-                        <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
+                        <?php elseif ($is_admin_user && $filter_status === 'approved' && (float)$refund['net_refund'] > 0): ?>
                             <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
                                 Email Refund Link
                             </button>
@@ -596,7 +596,7 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 Cancel Refund Approval
                             </button>
-                        <?php elseif ($is_admin_user && $filter_status === 'processing'): ?>
+                        <?php elseif ($is_admin_user && $filter_status === 'processing' && (float)$refund['net_refund'] > 0): ?>
                             <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
                                 Email Refund Link
                             </button>

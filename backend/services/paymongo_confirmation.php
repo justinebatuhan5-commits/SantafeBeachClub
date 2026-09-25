@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/balance_payment_helper.php';
 
 function pm_query(mysqli $db, string $sql, array $params = []): mysqli_stmt
 {
@@ -61,7 +62,7 @@ function pm_confirm_checkout(mysqli $db, int $bookingId, string $sessionId, arra
         $paymentId = (int)$checkout['payment_id'];
         $txn = $paid['id'];
         $payment = pm_query($db, 'SELECT * FROM payments WHERE id = ? FOR UPDATE', [$paymentId])->get_result()->fetch_assoc();
-        $booking = pm_query($db, 'SELECT status FROM bookings WHERE id = ? FOR UPDATE', [$bookingId])->get_result()->fetch_assoc();
+        $booking = pm_query($db, 'SELECT status,balance_status FROM bookings WHERE id = ? FOR UPDATE', [$bookingId])->get_result()->fetch_assoc();
         if (!$payment || !$booking || (int)$payment['booking_id'] !== $bookingId
             || (int)round((float)$payment['amount'] * 100) !== (int)$checkout['amount_centavos']) {
             throw new RuntimeException('Stored payment does not match checkout.');
@@ -97,6 +98,16 @@ function pm_confirm_checkout(mysqli $db, int $bookingId, string $sessionId, arra
         pm_query($db, "UPDATE payments SET status = 'verified', payment_method = ?, transaction_id = ? WHERE id = ?",
             [$method, $txn, $paymentId]);
         pm_query($db, "UPDATE bookings SET status = 'Confirmed' WHERE id = ?", [$bookingId]);
+        if (($payment['purpose'] ?? 'deposit') === 'balance') {
+            $financial = sf_booking_financials($db, $bookingId);
+            if ($financial && $financial['balance_due'] <= 0.009) {
+                pm_query($db, "UPDATE bookings SET balance_status='paid',balance_paid_at=NOW() WHERE id=?", [$bookingId]);
+            } else {
+                pm_query($db, "UPDATE bookings SET balance_status='balance_pending' WHERE id=?", [$bookingId]);
+            }
+        } else {
+            sf_initialize_balance_deadline($db, $bookingId);
+        }
         if ($discountBooking) {
             pm_query($db, "UPDATE booking_discounts SET state='Confirmed' WHERE booking_id=?", [$bookingId]);
             discount_audit($db, $bookingId, 'PayMongo', 'Payment verified', $txn);

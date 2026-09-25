@@ -134,6 +134,9 @@ try {
 
         $refund_amount = ($total_amount * $refund_percentage) / 100;
         $refund_fee = $total_amount - $refund_amount;
+        if ($refund_amount < 0.01) {
+            throw new Exception('This cancellation policy produces a zero refund. No refund request can be created.');
+        }
 
         // Check if refund request already exists and is pending
         $check_stmt = $conn->prepare("
@@ -302,6 +305,7 @@ try {
         if (!$refund) {
             throw new Exception('Refund request not found or already processed.');
         }
+        if ((float)$refund['net_refund'] < 0.01) throw new Exception('A zero-value refund cannot be approved.');
 
         // Update refund request status
         $upd_stmt = $conn->prepare("
@@ -545,6 +549,7 @@ try {
         $refund = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         if (!$refund) throw new Exception('Only an approved or processing refund can receive a PayMongo link.');
+        if ((float)$refund['net_refund'] < 0.01) throw new Exception('A zero-value refund cannot receive a PayMongo link.');
         if (!filter_var($refund['guest_email'], FILTER_VALIDATE_EMAIL)) {
             throw new Exception('This guest does not have a valid email address. Update the booking first.');
         }

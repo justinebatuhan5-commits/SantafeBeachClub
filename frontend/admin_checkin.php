@@ -7,13 +7,23 @@ if (!in_array($_SESSION['admin_role'] ?? '', ['admin', 'receptionist'], true)) {
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/prearrival_reminder_helper.php';
 require_once __DIR__ . '/../backend/helpers/noshow_refund_helper.php';
+require_once __DIR__ . '/../backend/helpers/balance_payment_helper.php';
 
 // Trigger automated pre-arrival reminders for upcoming check-ins (1-2 days ahead)
 @sf_send_prearrival_checkin_reminders($conn, 2);
+@sf_process_balance_deadlines($conn);
 
 // Handle POST request to check-in
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'checkin') {
     $booking_id = intval($_POST['booking_id']);
+    $serverFinancials = sf_booking_financials($conn, $booking_id);
+    if (!$serverFinancials || !in_array($serverFinancials['status'], ['Pending','Confirmed'], true)) {
+        http_response_code(409); exit('Booking is not eligible for check-in.');
+    }
+    $serverBalanceDue = (float)$serverFinancials['balance_due'];
+    if ($serverBalanceDue > 0.009 && ($_POST['collect_payment'] ?? '') !== '1') {
+        http_response_code(409); exit('The remaining balance must be paid before check-in.');
+    }
     $discountCheckin = pm_query($conn, 'SELECT * FROM booking_discounts WHERE booking_id=?', [$booking_id])->get_result()->fetch_assoc();
     if ($discountCheckin && $discountCheckin['state'] !== 'Confirmed') {
         header('Location: discount_requests.php?booking=' . $booking_id);
@@ -26,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $payment_method = $_POST['payment_method'] ?? 'Front Desk Cash';
         $balance_amount = $discountCheckin
             ? discount_due($conn, $discountCheckin) / 100
-            : floatval($_POST['balance_amount'] ?? 0);
+            : $serverBalanceDue;
         
         $amount_tendered = isset($_POST['amount_tendered']) && $_POST['amount_tendered'] !== '' ? floatval($_POST['amount_tendered']) : $balance_amount;
         $change_amount = isset($_POST['change_amount']) && $_POST['change_amount'] !== '' ? floatval($_POST['change_amount']) : 0;
@@ -45,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $guest_email = $g_res['guest_email'];
                 $txn_id = (!empty($ref_no) && $payment_method !== 'Front Desk Cash') ? $ref_no : 'TXN-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
                 
-                $p_stmt = $conn->prepare("INSERT INTO payments (booking_id, guest_name, guest_email, amount, payment_method, transaction_id, status, accounting_status, amount_tendered, change_amount) VALUES (?, ?, ?, ?, ?, ?, 'verified', 'deferred', ?, ?)");
+                $p_stmt = $conn->prepare("INSERT INTO payments (booking_id, guest_name, guest_email, amount, payment_method, transaction_id, status, accounting_status, amount_tendered, change_amount, purpose) VALUES (?, ?, ?, ?, ?, ?, 'verified', 'deferred', ?, ?, 'balance')");
                 $p_stmt->bind_param("issdssdd", $booking_id, $guest_name, $guest_email, $balance_amount, $payment_method, $txn_id, $amount_tendered, $change_amount);
                 $p_stmt->execute();
                 $payment_id = (int)$conn->insert_id;
@@ -75,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt->bind_param("i", $booking_id);
     $stmt->execute();
     $stmt->close();
+    sf_refresh_balance_status($conn, $booking_id);
 
     $room_query = $conn->query("SELECT room_id FROM bookings WHERE id = $booking_id");
     if ($room_query && $room_query->num_rows > 0) {
@@ -217,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         if ($b_data && in_array($b_data['status'], ['Pending', 'Confirmed'])) {
             // Update booking status to Cancelled
-            $u_stmt = $conn->prepare("UPDATE bookings SET status = 'Cancelled', cancelled_at = NOW(), cancellation_reason = ? WHERE id = ?");
+            $u_stmt = $conn->prepare("UPDATE bookings SET status = 'Cancelled', cancelled_at = NOW(), cancellation_reason = ?, cancelled_for_nonpayment_at=CASE WHEN balance_status='cancellation_review' THEN NOW() ELSE cancelled_for_nonpayment_at END, balance_status='cancelled' WHERE id = ?");
             $u_stmt->bind_param("si", $cancel_reason, $booking_id);
             $u_stmt->execute();
             $u_stmt->close();
@@ -299,6 +310,7 @@ $available_rooms = $available_rooms_query ? $available_rooms_query->fetch_all(MY
 $bookings_query = $conn->query("
     SELECT 
         b.id, b.guest_name, b.guest_email, b.guest_type, b.accommodation_name, b.check_in, b.check_out, b.eta, b.status,
+        b.balance_status, b.balance_due_at, b.balance_grace_expires_at,
         DATEDIFF(b.check_out, b.check_in) AS nights,
         COALESCE(r.price_per_night, rt.price, 0) AS price_per_night,
         COALESCE((SELECT d.total_centavos / 100 FROM booking_discounts d WHERE d.booking_id=b.id), DATEDIFF(b.check_out, b.check_in) * COALESCE(r.price_per_night, rt.price, 0)) AS total_cost,
@@ -745,7 +757,10 @@ $bookings_query = $conn->query("
                                 
                                 // Render balance badge
                                 if ($balance_due > 0) {
-                                    echo "<td><span style='background: #FFF3E0; color: #E65100; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;'>₱" . number_format($balance_due, 2) . " Due</span></td>";
+                                    $balanceState = htmlspecialchars((string)($row['balance_status'] ?? 'balance_pending'));
+                                    $deadlineText = !empty($row['balance_due_at']) ? date('M j, g:i A', strtotime($row['balance_due_at'])) : 'Not set';
+                                    $stateColor = $balanceState === 'cancellation_review' ? '#991B1B' : ($balanceState === 'overdue' ? '#B45309' : '#E65100');
+                                    echo "<td><span style='background:#FFF3E0;color:{$stateColor};padding:4px 8px;border-radius:4px;font-weight:700;font-size:12px;'>₱" . number_format($balance_due, 2) . " Due</span><div style='font-size:10px;margin-top:4px;color:{$stateColor};text-transform:uppercase;font-weight:700;'>" . str_replace('_',' ',$balanceState) . "</div><div style='font-size:10px;color:#64748B;'>Deadline: {$deadlineText}</div></td>";
                                 } else {
                                     echo "<td><span style='background: #E8F5E9; color: #2E7D32; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;'>Paid In Full</span></td>";
                                 }
@@ -986,6 +1001,7 @@ $bookings_query = $conn->query("
                         <option value="Guest did not arrive (No-Show)">Guest did not arrive (No-Show)</option>
                         <option value="Contacted guest - unable to arrive / cancelled travel">Contacted guest - unable to arrive / cancelled travel</option>
                         <option value="Check-in date overdue by >24 hours with no response">Check-in date overdue by &gt;24 hours with no response</option>
+                        <option value="Balance unpaid after payment deadline and grace period">Balance unpaid after payment deadline and grace period</option>
                         <option value="Other / Staff cancellation">Other / Staff cancellation</option>
                     </select>
                 </div>

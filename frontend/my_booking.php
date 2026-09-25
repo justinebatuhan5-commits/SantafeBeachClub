@@ -1034,7 +1034,7 @@ $csrf_token = get_csrf_token();
             </div>
             <?php if ($remaining > 0 && !in_array($bk_status, ['Checked Out', 'Cancelled'])): ?>
             <div class="payment-row balance-row" style="margin-left:-24px; margin-right:-24px; padding-left:24px; padding-right:24px;">
-                <label>Balance Due at Front Desk</label>
+                <label>Balance Due Before Arrival</label>
                 <strong>₱ <?php echo number_format($remaining, 2); ?></strong>
             </div>
             <?php endif; ?>
@@ -1075,6 +1075,13 @@ $csrf_token = get_csrf_token();
                    class="btn-action" style="background:#0e7490; color:#fff;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     Manage Discount &amp; Payment
+                </a>
+                <?php endif; ?>
+
+                <?php if ($remaining > 0 && in_array($bk_status, ['Pending','Confirmed'], true) && !empty($booking['cancellation_token'])): ?>
+                <a href="balance_payment.php?token=<?php echo urlencode($booking['cancellation_token']); ?>"
+                   class="btn-action" style="background:#15803d;color:#fff;">
+                    Pay Remaining Balance
                 </a>
                 <?php endif; ?>
                 <?php 

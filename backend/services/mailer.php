@@ -548,6 +548,23 @@ function sendPayMongoRefundLinkEmail(
     }
 }
 
+function sendBalanceDeadlineEmail(string $to_email, string $guest_name, string $booking_ref, float $amount, string $deadline, string $payment_url, string $stage): array
+{
+    if (!filter_var($to_email, FILTER_VALIDATE_EMAIL)) return ['success'=>false,'error'=>'No valid guest email address.'];
+    $mail=createMailer();
+    try {
+        $mail->addAddress($to_email,$guest_name);
+        $isOverdue=$stage==='overdue';
+        $heading=$isOverdue?'Balance Payment Overdue':($stage==='final'?'Final Balance Reminder':'Balance Payment Reminder');
+        $mail->Subject="{$heading} – {$booking_ref} – Santa Fe Beach Club";
+        $safeUrl=htmlspecialchars($payment_url,ENT_QUOTES,'UTF-8');
+        $mail->isHTML(true);
+        $mail->Body="<div style='font-family:Arial,sans-serif;max-width:540px;margin:auto'><h2>".htmlspecialchars($heading)."</h2><p>Hi ".htmlspecialchars($guest_name).",</p><p>Your remaining balance for <strong>".htmlspecialchars($booking_ref)."</strong> is <strong>PHP ".number_format($amount,2)."</strong>.</p><p>Payment deadline: <strong>".htmlspecialchars($deadline)."</strong>.</p>".($isOverdue?"<p style='color:#991b1b'>Your booking is in its grace period and may be cancelled after staff review if payment is not received.</p>":'')."<p><a href='{$safeUrl}' style='background:#15803d;color:#fff;padding:12px 20px;border-radius:7px;text-decoration:none;font-weight:bold'>Pay Remaining Balance</a></p><p style='font-size:12px;color:#6b7280'>Pay only through the secure PayMongo checkout. Never share your password, PIN, or OTP.</p></div>";
+        $mail->AltBody="Hi {$guest_name}, your remaining balance of PHP ".number_format($amount,2)." for {$booking_ref} is due {$deadline}. Pay securely: {$payment_url}";
+        $mail->send(); return ['success'=>true,'error'=>null];
+    } catch (Exception $e) { return ['success'=>false,'error'=>$mail->ErrorInfo ?: $e->getMessage()]; }
+}
+
 /**
  * Sends a confirmation email when a refund request is submitted.
  *
@@ -776,7 +793,9 @@ function sendPreArrivalReminderEmail(
     string $check_out,
     float $balance_due,
     string $explanation_url,
-    string $checkin_url
+    string $checkin_url,
+    string $balance_url = '',
+    string $balance_due_at = ''
 ): array {
     if (empty($to_email)) {
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
@@ -799,10 +818,13 @@ function sendPreArrivalReminderEmail(
         // Balance section
         $balance_section = '';
         if ($balance_due > 0) {
+            $deadline_text = $balance_due_at !== '' ? date('F j, Y \a\t g:i A', strtotime($balance_due_at)) : 'one day before arrival';
+            $safe_balance_url = htmlspecialchars($balance_url, ENT_QUOTES, 'UTF-8');
             $balance_section = "
                 <div style='background:#fef3c7;border-left:4px solid #f59e0b;padding:14px 18px;margin:18px 0;border-radius:6px;'>
                     <p style='margin:0;color:#92400e;font-weight:600;font-size:14px;'>💰 Balance Due: ₱" . number_format($balance_due, 2) . "</p>
-                    <p style='margin:4px 0 0;color:#a16207;font-size:13px;'>Please settle the remaining balance upon check-in at the Front Desk.</p>
+                    <p style='margin:4px 0 12px;color:#a16207;font-size:13px;'>Please pay by <strong>{$deadline_text}</strong> to keep your reservation active.</p>" .
+                    ($safe_balance_url !== '' ? "<a href='{$safe_balance_url}' style='display:inline-block;background:#b45309;color:#fff;padding:10px 18px;border-radius:7px;text-decoration:none;font-weight:700;font-size:13px;'>Pay Remaining Balance</a>" : '') . "
                 </div>";
         }
 
@@ -895,7 +917,7 @@ function sendPreArrivalReminderEmail(
 
         $mail->AltBody = "Hi {$guest_name}, your check-in at Santa Fe Beach Club is coming up on {$check_in}! "
             . "Booking: {$booking_ref}, Room: {$room_name}, Check-out: {$check_out}. "
-            . ($balance_due > 0 ? "Balance due: P" . number_format($balance_due, 2) . ". " : "")
+            . ($balance_due > 0 ? "Balance due: P" . number_format($balance_due, 2) . ($balance_due_at ? ' by ' . date('M j, Y g:i A', strtotime($balance_due_at)) : '') . ". Pay: {$balance_url} " : "")
             . "View your check-in pass: {$checkin_url} . "
             . "Can't make it? Send an explanation: {$explanation_url}";
 

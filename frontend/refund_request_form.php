@@ -75,6 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                 $refund_amount = ($total_amount * $refund_percentage) / 100;
                 $refund_fee    = $total_amount - $refund_amount;
                 $net_refund    = $refund_amount;
+                if ($net_refund < 0.01) {
+                    throw new Exception('This booking is outside the refundable cancellation window, so no refund request can be submitted.');
+                }
                 $payment_id    = (int)($booking['payment_id'] ?? 0);
                 $request_type  = 'guest';
 

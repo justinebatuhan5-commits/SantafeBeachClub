@@ -1,23 +1,32 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/balance_payment_helper.php';
 
 // Handle POST request to check-in
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'checkin') {
     require_csrf_token();
     $booking_id = intval($_POST['booking_id']);
+    $serverFinancials = sf_booking_financials($conn, $booking_id);
+    if (!$serverFinancials || !in_array($serverFinancials['status'], ['Pending','Confirmed'], true)) {
+        http_response_code(409); exit('Booking is not eligible for check-in.');
+    }
+    $serverBalanceDue = (float)$serverFinancials['balance_due'];
     $discountCheckin = pm_query($conn, 'SELECT * FROM booking_discounts WHERE booking_id=?', [$booking_id])->get_result()->fetch_assoc();
     if ($discountCheckin && ($discountCheckin['state'] !== 'Confirmed' || discount_due($conn, $discountCheckin) > 0)) {
         header('Location: discount_requests.php?booking=' . $booking_id);
         exit;
     }
     if ($discountCheckin) $_POST['collect_payment'] = '0';
+    if (!$discountCheckin && $serverBalanceDue > 0.009 && ($_POST['collect_payment'] ?? '') !== '1') {
+        http_response_code(409); exit('The remaining balance must be paid before check-in.');
+    }
     $print_params = '';
     
     // Check if there is a payment to record
     if (isset($_POST['collect_payment']) && $_POST['collect_payment'] === '1') {
         $payment_method = $_POST['payment_method'] ?? 'Front Desk Cash';
-        $balance_amount = floatval($_POST['balance_amount'] ?? 0);
+        $balance_amount = $serverBalanceDue;
         
         $amount_tendered = isset($_POST['amount_tendered']) && $_POST['amount_tendered'] !== '' ? floatval($_POST['amount_tendered']) : $balance_amount;
         $change_amount = isset($_POST['change_amount']) && $_POST['change_amount'] !== '' ? floatval($_POST['change_amount']) : 0;
@@ -36,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $guest_email = $g_res['guest_email'];
                 $txn_id = (!empty($ref_no) && $payment_method !== 'Front Desk Cash') ? $ref_no : 'TXN-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
                 
-                $p_stmt = $conn->prepare("INSERT INTO payments (booking_id, guest_name, guest_email, amount, payment_method, transaction_id, status, accounting_status, amount_tendered, change_amount) VALUES (?, ?, ?, ?, ?, ?, 'verified', 'deferred', ?, ?)");
+                $p_stmt = $conn->prepare("INSERT INTO payments (booking_id, guest_name, guest_email, amount, payment_method, transaction_id, status, accounting_status, amount_tendered, change_amount, purpose) VALUES (?, ?, ?, ?, ?, ?, 'verified', 'deferred', ?, ?, 'balance')");
                 $p_stmt->bind_param("issdssdd", $booking_id, $guest_name, $guest_email, $balance_amount, $payment_method, $txn_id, $amount_tendered, $change_amount);
                 $p_stmt->execute();
                 $p_stmt->close();
@@ -61,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt->bind_param("i", $booking_id);
     $stmt->execute();
     $stmt->close();
+    sf_refresh_balance_status($conn, $booking_id);
     
     // Also update room status to occupied
     $stmt = $conn->prepare("SELECT room_id FROM bookings WHERE id = ?");
