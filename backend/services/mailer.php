@@ -555,12 +555,13 @@ function sendBalanceDeadlineEmail(string $to_email, string $guest_name, string $
     try {
         $mail->addAddress($to_email,$guest_name);
         $isOverdue=$stage==='overdue';
-        $heading=$isOverdue?'Balance Payment Overdue':($stage==='final'?'Final Balance Reminder':'Balance Payment Reminder');
+        $isPractice=$stage==='practice';
+        $heading=$isPractice?'Practice: Balance Payment Email':($isOverdue?'Balance Payment Overdue':($stage==='final'?'Final Balance Reminder':'Balance Payment Reminder'));
         $mail->Subject="{$heading} – {$booking_ref} – Santa Fe Beach Club";
         $safeUrl=htmlspecialchars($payment_url,ENT_QUOTES,'UTF-8');
         $mail->isHTML(true);
-        $mail->Body="<div style='font-family:Arial,sans-serif;max-width:540px;margin:auto'><h2>".htmlspecialchars($heading)."</h2><p>Hi ".htmlspecialchars($guest_name).",</p><p>Your remaining balance for <strong>".htmlspecialchars($booking_ref)."</strong> is <strong>PHP ".number_format($amount,2)."</strong>.</p><p>Payment deadline: <strong>".htmlspecialchars($deadline)."</strong>.</p>".($isOverdue?"<p style='color:#991b1b'>Your booking is in its grace period and may be cancelled after staff review if payment is not received.</p>":'')."<p><a href='{$safeUrl}' style='background:#15803d;color:#fff;padding:12px 20px;border-radius:7px;text-decoration:none;font-weight:bold'>Pay Remaining Balance</a></p><p style='font-size:12px;color:#6b7280'>Pay only through the secure PayMongo checkout. Never share your password, PIN, or OTP.</p></div>";
-        $mail->AltBody="Hi {$guest_name}, your remaining balance of PHP ".number_format($amount,2)." for {$booking_ref} is due {$deadline}. Pay securely: {$payment_url}";
+        $mail->Body="<div style='font-family:Arial,sans-serif;max-width:540px;margin:auto'>".($isPractice?"<div style='background:#dbeafe;color:#1e40af;padding:12px;border-radius:8px'><strong>Practice email only — no payment is required.</strong></div>":'')."<h2>".htmlspecialchars($heading)."</h2><p>Hi ".htmlspecialchars($guest_name).",</p><p>Your remaining balance for <strong>".htmlspecialchars($booking_ref)."</strong> is <strong>PHP ".number_format($amount,2)."</strong>.</p><p>Payment deadline: <strong>".htmlspecialchars($deadline)."</strong>.</p>".($isOverdue?"<p style='color:#991b1b'>Your booking is in its grace period and may be cancelled after staff review if payment is not received.</p>":'').(!$isPractice?"<p><a href='{$safeUrl}' style='background:#15803d;color:#fff;padding:12px 20px;border-radius:7px;text-decoration:none;font-weight:bold'>Pay Remaining Balance</a></p>":"<p style='color:#64748b'><em>The live email will show the secure Pay Remaining Balance button here.</em></p>")."<p style='font-size:12px;color:#6b7280'>Pay only through the secure PayMongo checkout. Never share your password, PIN, or OTP.</p></div>";
+        $mail->AltBody=($isPractice?'PRACTICE EMAIL ONLY - no payment is required. ':'')."Hi {$guest_name}, your remaining balance of PHP ".number_format($amount,2)." for {$booking_ref} is due {$deadline}.".(!$isPractice?" Pay securely: {$payment_url}":'');
         $mail->send(); return ['success'=>true,'error'=>null];
     } catch (Exception $e) { return ['success'=>false,'error'=>$mail->ErrorInfo ?: $e->getMessage()]; }
 }

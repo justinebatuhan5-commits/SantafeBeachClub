@@ -572,16 +572,21 @@ foreach ($valid_statuses as $s) {
 
                     <!-- Actions -->
                     <div class="refund-actions">
-                        <?php if ($is_admin_user && $filter_status === 'requested' && (float)$refund['net_refund'] > 0): ?>
+                        <?php if ($is_admin_user && $filter_status === 'requested'): ?>
+                            <?php if ((float)$refund['net_refund'] > 0): ?>
                             <button class="btn-approve" onclick="approveRefund(<?php echo $refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, '<?php echo number_format($refund['net_refund'], 2); ?>', this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                 Approve Request
                             </button>
+                            <?php else: ?>
+                            <span style="font-size:12px;color:#991b1b;font-weight:700;">Not refundable — approval disabled</span>
+                            <?php endif; ?>
                             <button class="btn-reject" onclick="openRejectModal(<?php echo $refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 Reject
                             </button>
-                        <?php elseif ($is_admin_user && $filter_status === 'approved' && (float)$refund['net_refund'] > 0): ?>
+                        <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
+                            <?php if ((float)$refund['net_refund'] > 0): ?>
                             <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
                                 Email Refund Link
                             </button>
@@ -592,6 +597,9 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
                                 Open PayMongo Dashboard
                             </a>
+                            <?php else: ?>
+                            <span style="font-size:12px;color:#991b1b;font-weight:700;">₱0.00 refund — PayMongo actions disabled</span>
+                            <?php endif; ?>
                             <button class="btn-reject" type="button" onclick="cancelRefundApproval(<?php echo $refund['id']; ?>, this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 Cancel Refund Approval
