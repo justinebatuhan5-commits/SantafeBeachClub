@@ -15,6 +15,15 @@ RateLimiter::enforce($conn, 'analytics_api', 120, 60);
 
 $action = $_GET['action'] ?? '';
 
+function sf_analytics_percent_change(float $current, float $previous): ?float
+{
+    if (abs($previous) < 0.00001) {
+        return abs($current) < 0.00001 ? 0.0 : null;
+    }
+
+    return round((($current - $previous) / abs($previous)) * 100, 1);
+}
+
 // Fallback path matching
 if (empty($action) && isset($_SERVER['PATH_INFO'])) {
     $action = trim($_SERVER['PATH_INFO'], '/');
@@ -247,6 +256,72 @@ switch ($action) {
         $occupied_rooms = count($checked_in_ids);
         $occupancy_rate = ($total_rooms > 0) ? round(($occupied_rooms / $total_rooms) * 100, 1) : 0.0;
 
+        // Compare the latest 30 complete/in-progress calendar days with the
+        // immediately preceding 30 days. These ranges are shared by every KPI
+        // badge so the percentages are comparable and reproducible.
+        $current_start = date('Y-m-d', strtotime('-29 days'));
+        $current_end = date('Y-m-d', strtotime('+1 day'));
+        $previous_start = date('Y-m-d', strtotime('-59 days'));
+        $previous_end = $current_start;
+
+        $periodValue = static function (mysqli $db, string $sql, string $start, string $end): float {
+            $stmt = $db->prepare($sql);
+            if (!$stmt) {
+                return 0.0;
+            }
+            $stmt->bind_param('ss', $start, $end);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_row();
+            $stmt->close();
+            return (float)($row[0] ?? 0);
+        };
+
+        $revenueSql = "SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='verified' AND paid_at >= ? AND paid_at < ?";
+        $bookingSql = "SELECT COUNT(*) FROM bookings WHERE created_at >= ? AND created_at < ?";
+        $guestSql = "SELECT COALESCE(SUM(guests_count),0) FROM bookings WHERE created_at >= ? AND created_at < ?";
+        $occupancySql = "SELECT COALESCE(SUM(GREATEST(0, DATEDIFF(LEAST(check_out, ?), GREATEST(check_in, ?)))),0) FROM bookings WHERE status != 'Cancelled' AND check_in < ? AND check_out > ?";
+
+        $current_revenue = $periodValue($conn, $revenueSql, $current_start, $current_end);
+        $previous_revenue = $periodValue($conn, $revenueSql, $previous_start, $previous_end);
+        $current_bookings = $periodValue($conn, $bookingSql, $current_start, $current_end);
+        $previous_bookings = $periodValue($conn, $bookingSql, $previous_start, $previous_end);
+        $current_guests = $periodValue($conn, $guestSql, $current_start, $current_end);
+        $previous_guests = $periodValue($conn, $guestSql, $previous_start, $previous_end);
+
+        $roomNights = static function (mysqli $db, string $start, string $end) use ($occupancySql): float {
+            $stmt = $db->prepare($occupancySql);
+            if (!$stmt) {
+                return 0.0;
+            }
+            $stmt->bind_param('ssss', $end, $start, $end, $start);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_row();
+            $stmt->close();
+            return (float)($row[0] ?? 0);
+        };
+        $roomCapacity = max(1, $total_rooms * 30);
+        $current_period_occupancy = round(($roomNights($conn, $current_start, $current_end) / $roomCapacity) * 100, 1);
+        $previous_period_occupancy = round(($roomNights($conn, $previous_start, $previous_end) / $roomCapacity) * 100, 1);
+
+        $trend = [
+            'period_days' => 30,
+            'revenue_pct' => sf_analytics_percent_change($current_revenue, $previous_revenue),
+            'bookings_pct' => sf_analytics_percent_change($current_bookings, $previous_bookings),
+            'guests_pct' => sf_analytics_percent_change($current_guests, $previous_guests),
+            'occupancy_pct' => sf_analytics_percent_change($current_period_occupancy, $previous_period_occupancy),
+        ];
+
+        $sparklines = ['revenue' => [], 'bookings' => [], 'guests' => [], 'occupancy' => []];
+        for ($i = 13; $i >= 0; $i--) {
+            $day = date('Y-m-d', strtotime("-$i days"));
+            $nextDay = date('Y-m-d', strtotime($day . ' +1 day'));
+            $sparklines['revenue'][] = $periodValue($conn, $revenueSql, $day, $nextDay);
+            $sparklines['bookings'][] = (int)$periodValue($conn, $bookingSql, $day, $nextDay);
+            $sparklines['guests'][] = (int)$periodValue($conn, $guestSql, $day, $nextDay);
+            $dailyRoomNights = $roomNights($conn, $day, $nextDay);
+            $sparklines['occupancy'][] = $total_rooms > 0 ? round(($dailyRoomNights / $total_rooms) * 100, 1) : 0;
+        }
+
         echo json_encode([
             'total_revenue'    => $total_revenue,
             'total_bookings'   => $total_bookings,
@@ -256,6 +331,8 @@ switch ($action) {
             'occupancy_rate'   => $occupancy_rate,
             'occupied_rooms'   => $occupied_rooms,
             'total_rooms'      => $total_rooms,
+            'trend'            => $trend,
+            'sparklines'       => $sparklines,
         ]);
         break;
 

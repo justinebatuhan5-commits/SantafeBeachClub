@@ -17,11 +17,23 @@ $paymentMethodUsed = 'PayMongo Online';
 
 require_once __DIR__ . '/../backend/services/paymongo_confirmation.php';
 header('Cache-Control: no-store');
-if ($bookingId > 0 && preg_match('/^cs_[A-Za-z0-9]+$/D', $sessionId)) {
+if ($bookingId > 0) {
     try {
         pm_checkout_schema($conn);
-        $stored = pm_query($conn, 'SELECT session_id FROM paymongo_checkouts WHERE session_id = ? AND booking_id = ?',
-            [$sessionId, $bookingId])->get_result()->fetch_assoc();
+        if (preg_match('/^cs_[A-Za-z0-9]+$/D', $sessionId)) {
+            $stored = pm_query($conn, 'SELECT c.session_id FROM paymongo_checkouts c WHERE c.session_id = ? AND c.booking_id = ?',
+                [$sessionId, $bookingId])->get_result()->fetch_assoc();
+        } else {
+            // PayMongo returns the configured success URL unchanged. Resolve the
+            // newest checkout using the immutable booking/payment relation stored
+            // when the session was created; provider retrieval still proves payment.
+            $stored = pm_query($conn, "SELECT c.session_id
+                FROM paymongo_checkouts c
+                JOIN payments p ON p.id = c.payment_id AND p.booking_id = c.booking_id
+                WHERE c.booking_id = ? AND p.status IN ('pending','verified')
+                ORDER BY p.id DESC LIMIT 1", [$bookingId])->get_result()->fetch_assoc();
+            $sessionId = (string)($stored['session_id'] ?? '');
+        }
         if (!$stored) throw new RuntimeException('Unknown checkout.');
         $sessionInfo = PayMongoService::retrieveCheckoutSession($sessionId);
         if (empty($sessionInfo['success'])) throw new RuntimeException('Provider verification unavailable.');

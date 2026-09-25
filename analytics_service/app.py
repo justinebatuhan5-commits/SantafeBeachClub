@@ -237,14 +237,66 @@ def dashboard_stats():
     total_rev  = fetchone(cursor, "SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='verified'")[0]
     total_bk   = fetchone(cursor, "SELECT COUNT(*) FROM bookings")[0]
     pending    = fetchone(cursor, "SELECT COUNT(*) FROM bookings WHERE status='Pending'")[0]
-    guests     = fetchone(cursor, "SELECT COUNT(DISTINCT guest_email) FROM bookings WHERE guest_email IS NOT NULL")[0]
-    avg_row    = fetchone(cursor, "SELECT AVG(DATEDIFF(check_out, check_in)) FROM bookings WHERE status IN ('Checked In','Checked Out')")
-    avg_stay   = f"{round(float(avg_row[0] or 0), 1)} nights"
+    guests     = fetchone(cursor, "SELECT COALESCE(SUM(guests_count),0) FROM bookings")[0]
+    avg_row    = fetchone(cursor, "SELECT AVG(DATEDIFF(check_out, check_in)) FROM bookings WHERE status != 'Cancelled'")
+    avg_stay   = round(float(avg_row[0] or 0), 1)
     
     # Occupancy
-    total_rooms = fetchone(cursor, "SELECT COUNT(*) FROM rooms")[0] or 1
+    total_rooms = fetchone(cursor, "SELECT COUNT(*) FROM rooms")[0] or 0
     checked_in = get_checked_in_count(cursor) or 0
     occ_rate = round((checked_in / total_rooms) * 100, 1)
+
+    today = date.today()
+    current_start = today - timedelta(days=29)
+    current_end = today + timedelta(days=1)
+    previous_start = today - timedelta(days=59)
+    previous_end = current_start
+
+    revenue_sql = "SELECT COALESCE(SUM(amount),0) FROM payments WHERE status='verified' AND paid_at >= %s AND paid_at < %s"
+    booking_sql = "SELECT COUNT(*) FROM bookings WHERE created_at >= %s AND created_at < %s"
+    guest_sql = "SELECT COALESCE(SUM(guests_count),0) FROM bookings WHERE created_at >= %s AND created_at < %s"
+    occupancy_sql = (
+        "SELECT COALESCE(SUM(GREATEST(0, DATEDIFF(LEAST(check_out,%s), GREATEST(check_in,%s)))),0) "
+        "FROM bookings WHERE status != 'Cancelled' AND check_in < %s AND check_out > %s"
+    )
+
+    def period_value(sql, start, end):
+        return float(fetchone(cursor, sql, (start, end))[0] or 0)
+
+    def room_nights(start, end):
+        return float(fetchone(cursor, occupancy_sql, (end, start, end, start))[0] or 0)
+
+    def percent_change(current, previous):
+        if abs(previous) < 0.00001:
+            return 0.0 if abs(current) < 0.00001 else None
+        return round(((current - previous) / abs(previous)) * 100, 1)
+
+    current_revenue = period_value(revenue_sql, current_start, current_end)
+    previous_revenue = period_value(revenue_sql, previous_start, previous_end)
+    current_bookings = period_value(booking_sql, current_start, current_end)
+    previous_bookings = period_value(booking_sql, previous_start, previous_end)
+    current_guests = period_value(guest_sql, current_start, current_end)
+    previous_guests = period_value(guest_sql, previous_start, previous_end)
+    capacity = max(1, total_rooms * 30)
+    current_period_occupancy = round((room_nights(current_start, current_end) / capacity) * 100, 1)
+    previous_period_occupancy = round((room_nights(previous_start, previous_end) / capacity) * 100, 1)
+
+    trend = {
+        'period_days': 30,
+        'revenue_pct': percent_change(current_revenue, previous_revenue),
+        'bookings_pct': percent_change(current_bookings, previous_bookings),
+        'guests_pct': percent_change(current_guests, previous_guests),
+        'occupancy_pct': percent_change(current_period_occupancy, previous_period_occupancy),
+    }
+    sparklines = {'revenue': [], 'bookings': [], 'guests': [], 'occupancy': []}
+    for offset in range(13, -1, -1):
+        day = today - timedelta(days=offset)
+        next_day = day + timedelta(days=1)
+        sparklines['revenue'].append(period_value(revenue_sql, day, next_day))
+        sparklines['bookings'].append(int(period_value(booking_sql, day, next_day)))
+        sparklines['guests'].append(int(period_value(guest_sql, day, next_day)))
+        daily_nights = room_nights(day, next_day)
+        sparklines['occupancy'].append(round((daily_nights / total_rooms) * 100, 1) if total_rooms else 0)
 
     cursor.close(); conn.close()
     return jsonify({
@@ -256,6 +308,8 @@ def dashboard_stats():
         'occupancy_rate': occ_rate,
         'occupied_rooms': checked_in,
         'total_rooms': total_rooms,
+        'trend': trend,
+        'sparklines': sparklines,
     })
 
 

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../backend/services/paymongo.php';
 require_once __DIR__ . '/../backend/services/paymongo_confirmation.php';
 require_once __DIR__ . '/../backend/helpers/balance_payment_helper.php';
@@ -32,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && $booking) {
             pm_query($conn,"INSERT INTO payments (booking_id,guest_name,guest_email,amount,payment_method,status,purpose) VALUES (?,?,?,?, 'PayMongo Online','pending','balance')",[(int)$booking['id'],$booking['guest_name'],$booking['guest_email'],$amount]);
             $paymentId=(int)$conn->insert_id;
             $base=sf_balance_public_url();
-            $return=$base.'/payment_success.php?booking_id='.(int)$booking['id'].'&session_id={CHECKOUT_SESSION_ID}';
+            $return=$base.'/payment_success.php?booking_id='.(int)$booking['id'];
             $cancel=$base.'/balance_payment.php?token='.urlencode($token);
             $result=PayMongoService::createCheckoutSession($amount,'Remaining balance for REF-'.str_pad((string)$booking['id'],3,'0',STR_PAD_LEFT),(int)$booking['id'],$booking['guest_name'],$booking['guest_email'],$booking['guest_phone']??'',$return,$cancel,'Remaining Booking Balance — Santa Fe Beach Club');
             if (!$result['success']) throw new RuntimeException($result['error']??'Could not create PayMongo checkout.');

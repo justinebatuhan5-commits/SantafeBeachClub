@@ -574,7 +574,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         // If PayMongo Online Checkout is selected, create session and redirect
                         if ($payment_method === 'PayMongo Online') {
-                            $successUrl = rtrim($base_url, '/') . '/payment_success.php?booking_id=' . $booking_id . '&session_id={CHECKOUT_SESSION_ID}';
+                            // PayMongo redirects to success_url verbatim; it does not
+                            // interpolate a checkout-session placeholder. The return
+                            // page resolves the session from our server-side binding.
+                            $successUrl = rtrim($base_url, '/') . '/payment_success.php?booking_id=' . $booking_id;
                             $cancelPaymentUrl = rtrim($base_url, '/') . '/book.php?step=3&cancelled=1&cancel_token=' . rawurlencode($cancel_token);
                             $desc = '50% Booking Deposit for ' . $db_acc_name . ' (' . $booking_ref . ')';
 

@@ -387,9 +387,9 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Total Revenue</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-revenue">₱0.00</div>
-                                <span class="kpi-card-badge">▲ 22.5%</span>
+                                <span class="kpi-card-badge" id="kpi-revenue-trend">—</span>
                             </div>
-                            <div class="kpi-card-sub">vs verified historical period</div>
+                            <div class="kpi-card-sub">vs previous 30 days</div>
                         </div>
                     </div>
                     <div class="kpi-sparkline-box">
@@ -407,7 +407,7 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Total Bookings</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-bookings">0</div>
-                                <span class="kpi-card-badge">▲ 18.6%</span>
+                                <span class="kpi-card-badge" id="kpi-bookings-trend">—</span>
                             </div>
                             <div class="kpi-card-sub"><span id="kpi-pending" style="color:#D97706; font-weight:700;">0</span> pending confirmation</div>
                         </div>
@@ -427,7 +427,7 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Total Guests</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-guests">0</div>
-                                <span class="kpi-card-badge" style="color:#059669;">▲ 15.3%</span>
+                                <span class="kpi-card-badge" id="kpi-guests-trend">—</span>
                             </div>
                             <div class="kpi-card-sub">across all hosted stays</div>
                         </div>
@@ -447,7 +447,7 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Occupancy Rate</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-occupancy">0%</div>
-                                <span class="kpi-card-badge" style="color:#059669;">▲ 8.7%</span>
+                                <span class="kpi-card-badge" id="kpi-occupancy-trend">—</span>
                             </div>
                             <div class="kpi-card-sub"><span id="kpi-avg-stay">0</span> avg stay duration</div>
                         </div>
@@ -656,13 +656,30 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             document.getElementById('kpi-pending').innerText = stats.pending_bookings || 0;
             document.getElementById('kpi-guests').innerText = Number(stats.total_guests || 0).toLocaleString();
             document.getElementById('kpi-occupancy').innerText = (stats.occupancy_rate || 0) + '%';
-            document.getElementById('kpi-avg-stay').innerText = (stats.avg_stay || '0') + 'n';
+            document.getElementById('kpi-avg-stay').innerText = (stats.avg_stay || '0') + ' nights';
 
-            // Sparklines with real / trend data points
-            const revTrend = [12, 19, 14, 25, 22, 30, 28, 35, 42, 40, 48];
-            const bkTrend = [5, 8, 7, 12, 10, 15, 14, 18, 20, 19, 24];
-            const guestTrend = [10, 16, 14, 24, 20, 30, 28, 36, 40, 38, 46];
-            const occTrend = [45, 52, 48, 60, 58, 65, 62, 70, 75, 72, 78];
+            const renderTrend = (id, value) => {
+                const badge = document.getElementById(id);
+                if (!badge) return;
+                if (value === null || typeof value === 'undefined') {
+                    badge.textContent = 'New';
+                    badge.style.color = '#2563EB';
+                    return;
+                }
+                const numeric = Number(value) || 0;
+                badge.textContent = `${numeric > 0 ? '▲' : numeric < 0 ? '▼' : '—'} ${Math.abs(numeric).toFixed(1)}%`;
+                badge.style.color = numeric > 0 ? '#059669' : numeric < 0 ? '#DC2626' : '#64748B';
+            };
+            renderTrend('kpi-revenue-trend', stats.trend?.revenue_pct);
+            renderTrend('kpi-bookings-trend', stats.trend?.bookings_pct);
+            renderTrend('kpi-guests-trend', stats.trend?.guests_pct);
+            renderTrend('kpi-occupancy-trend', stats.trend?.occupancy_pct);
+
+            // Actual daily values from the latest 14 days.
+            const revTrend = stats.sparklines?.revenue || [0];
+            const bkTrend = stats.sparklines?.bookings || [0];
+            const guestTrend = stats.sparklines?.guests || [0];
+            const occTrend = stats.sparklines?.occupancy || [0];
 
             createSparkline('sparkline-revenue', revTrend, '#84563C', 'rgba(132, 86, 60, 0.08)');
             createSparkline('sparkline-bookings', bkTrend, '#D97706', 'rgba(217, 119, 6, 0.08)');
