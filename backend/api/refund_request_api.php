@@ -55,7 +55,7 @@ function require_refund_state_change_request(): void
     }
 }
 
-if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo'], true)) {
+if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link'], true)) {
     require_refund_state_change_request();
 }
 
@@ -519,6 +519,59 @@ try {
         }
         $response['success'] = true;
         $response['message'] = 'Refund approval cancelled. The booking and payment were not changed.';
+
+    } elseif ($action === 'send_refund_link') {
+        require_admin_access();
+        $request_id = intval($_POST['request_id'] ?? 0);
+        $refundLink = trim((string)($_POST['refund_link'] ?? ''));
+        if (!$request_id) throw new Exception('Refund request ID is required.');
+
+        $parts = parse_url($refundLink);
+        if ($refundLink === '' || strlen($refundLink) > 2048
+            || strtolower((string)($parts['scheme'] ?? '')) !== 'https'
+            || strtolower((string)($parts['host'] ?? '')) !== 'transfer.paymongo.com'
+            || isset($parts['user']) || isset($parts['pass'])) {
+            throw new Exception('Paste a valid secure PayMongo refund link from transfer.paymongo.com.');
+        }
+
+        $stmt = $conn->prepare("SELECT r.id, r.booking_id, r.status, r.net_refund,
+                                      b.guest_name, b.guest_email
+                               FROM refund_requests r
+                               JOIN bookings b ON b.id = r.booking_id
+                               WHERE r.id = ? AND r.status IN ('approved','processing')
+                               LIMIT 1");
+        $stmt->bind_param('i', $request_id);
+        $stmt->execute();
+        $refund = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$refund) throw new Exception('Only an approved or processing refund can receive a PayMongo link.');
+        if (!filter_var($refund['guest_email'], FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('This guest does not have a valid email address. Update the booking first.');
+        }
+
+        $bookingRef = 'REF-' . str_pad($refund['booking_id'], 3, '0', STR_PAD_LEFT);
+        $mailResult = sendPayMongoRefundLinkEmail(
+            $refund['guest_email'],
+            $refund['guest_name'],
+            $bookingRef,
+            (float)$refund['net_refund'],
+            $refundLink
+        );
+        if (!$mailResult['success']) {
+            throw new Exception('The refund link email could not be sent. ' . ($mailResult['error'] ?? 'Check the Gmail SMTP settings.'));
+        }
+
+        $actor = (string)($_SESSION['admin_username'] ?? 'system');
+        $logAction = 'PayMongo Refund Link Emailed';
+        $logDetails = "Secure PayMongo refund form emailed to {$refund['guest_email']} for {$bookingRef}. Amount: PHP " . number_format((float)$refund['net_refund'], 2);
+        $logIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $log = $conn->prepare('INSERT INTO activity_logs (admin_username, action, details, ip_address) VALUES (?, ?, ?, ?)');
+        $log->bind_param('ssss', $actor, $logAction, $logDetails, $logIp);
+        $log->execute();
+        $log->close();
+
+        $response['success'] = true;
+        $response['message'] = 'Refund link emailed to ' . $refund['guest_email'] . '.';
 
     } elseif ($action === 'process_paymongo') {
         require_admin_access();

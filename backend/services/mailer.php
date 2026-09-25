@@ -500,6 +500,54 @@ function sendRefundCompletedEmail(
     }
 }
 
+/** Send PayMongo's short-lived QR Ph refund form to the booking email. */
+function sendPayMongoRefundLinkEmail(
+    string $to_email,
+    string $guest_name,
+    string $booking_ref,
+    float $refund_amount,
+    string $refund_link
+): array {
+    if (!filter_var($to_email, FILTER_VALIDATE_EMAIL)) {
+        return ['success' => false, 'error' => 'No valid guest email address is available.'];
+    }
+    $parts = parse_url($refund_link);
+    if (strtolower((string)($parts['scheme'] ?? '')) !== 'https'
+        || strtolower((string)($parts['host'] ?? '')) !== 'transfer.paymongo.com') {
+        return ['success' => false, 'error' => 'The refund link is not an official PayMongo transfer link.'];
+    }
+
+    $mail = createMailer();
+    try {
+        $mail->addAddress($to_email, $guest_name);
+        $safeName = htmlspecialchars($guest_name, ENT_QUOTES, 'UTF-8');
+        $safeRef = htmlspecialchars($booking_ref, ENT_QUOTES, 'UTF-8');
+        $safeLink = htmlspecialchars($refund_link, ENT_QUOTES, 'UTF-8');
+        $amount = number_format($refund_amount, 2);
+        $mail->isHTML(true);
+        $mail->Subject = "Action Required: Complete Your Refund – {$booking_ref}";
+        $mail->Body = "
+            <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1f2937;'>
+                <div style='background:#0f766e;padding:26px 30px;border-radius:12px 12px 0 0;color:#fff;'>
+                    <h2 style='margin:0;font-size:22px;'>Complete Your PayMongo Refund</h2>
+                </div>
+                <div style='padding:28px 30px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 12px 12px;'>
+                    <p>Hi {$safeName},</p>
+                    <p>We initiated your <strong>PHP {$amount}</strong> refund for booking <strong>{$safeRef}</strong>. Because the payment was made through QR Ph, please securely provide the bank or e-wallet account where PayMongo should send the refund.</p>
+                    <p style='margin:26px 0;text-align:center;'><a href='{$safeLink}' style='display:inline-block;background:#0f766e;color:#fff;text-decoration:none;padding:13px 22px;border-radius:7px;font-weight:700;'>Complete Refund Details</a></p>
+                    <p style='font-size:13px;color:#4b5563;'>This PayMongo link is valid for <strong>3 days</strong>. If the button does not open, copy this address into your browser:</p>
+                    <p style='font-size:12px;word-break:break-all;background:#f3f4f6;padding:12px;border-radius:6px;'>{$safeLink}</p>
+                    <div style='background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 14px;margin-top:20px;font-size:13px;'>Only enter details on <strong>transfer.paymongo.com</strong>. Santa Fe Beach Club and PayMongo will never ask for your password, PIN, or OTP.</div>
+                </div>
+            </div>";
+        $mail->AltBody = "Hi {$guest_name}, we initiated your PHP {$amount} refund for booking {$booking_ref}. Complete your bank or e-wallet details within 3 days using this secure PayMongo link: {$refund_link} Never share your password, PIN, or OTP.";
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo ?: $e->getMessage()];
+    }
+}
+
 /**
  * Sends a confirmation email when a refund request is submitted.
  *

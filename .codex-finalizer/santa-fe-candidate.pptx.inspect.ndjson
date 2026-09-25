@@ -1,0 +1,289 @@
+{"kind":"deck","id":"pr/akxmn0","name":"Deck"}
+{"kind":"layout","layoutId":"45990785-6590-4af6-b4c2-48f374e55c9a","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"0150061a-4324-4a53-86c5-c78f555f7e61","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/stsm7q","slide":1,"title":"SANTA FE","textShapes":4}
+{"kind":"shape","id":"sh/zyhc3it8","slide":1,"bbox":[0,520,1280,200]}
+{"kind":"shape","id":"sh/0zqdcnat","slide":1,"bbox":[0,500,1280,20]}
+{"kind":"textbox","id":"sh/lkzu5sre","slide":1,"text":"SANTA FE\nBEACH CLUB","textPreview":"SANTA FE | BEACH CLUB","textChars":19,"textLines":2,"bbox":[70,100,820,190]}
+{"kind":"textbox","id":"sh/ml8vedsz","slide":1,"text":"Web-Based Booking and Reservation Management System","textPreview":"Web-Based Booking and Reservation Management System","textChars":51,"textLines":1,"bbox":[74,305,900,60]}
+{"kind":"textbox","id":"sh/nmhc7i9k","slide":1,"text":"Project overview, requirements, architecture and operational flows","textPreview":"Project overview, requirements, architecture and operational flows","textChars":66,"textLines":1,"bbox":[74,555,850,45]}
+{"kind":"textbox","id":"sh/8nqdgna5","slide":1,"text":"Justine L. Batuhan  |  Project Developer","textPreview":"Justine L. Batuhan  |  Project Developer","textChars":40,"textLines":1,"bbox":[74,615,850,32]}
+{"kind":"notes","id":"nt/stsm7q","slide":1,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/cw3q9f","slide":2,"title":"SANTA FE BEACH CLUB","textShapes":8}
+{"kind":"shape","id":"sh/d4f2pgjm","slide":2,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/qhoje1kv","slide":2,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/r2xkn61g","slide":2,"text":"Project context","textPreview":"Project context","textChars":15,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/4f61cb2p","slide":2,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/5gf2lgja","slide":2,"text":"Tourism customers increasingly expect immediate access to resort information, availability and booking confirmation.","textPreview":"Tourism customers increasingly expect immediate access to resort information, availability and booking confirmation.","textChars":116,"textLines":1,"bbox":[70,155,1110,80]}
+{"kind":"shape","id":"sh/id4ja1kz","slide":2,"bbox":[70,265,520,300]}
+{"kind":"textbox","id":"sh/3edkj614","slide":2,"text":"Current challenge","textPreview":"Current challenge","textChars":17,"textLines":1,"bbox":[100,290,450,40]}
+{"kind":"textbox","id":"sh/gbm18r2t","slide":2,"text":"• Manual reservations can create delays and duplicate bookings\n• Fragmented records make payments and schedules harder to manage\n• Guests lack a convenient self-service booking channel","textPreview":"• Manual reservations can create delays and duplicate bookings | • Fragmented records make payments and schedules harder to manage | • Gu...","textChars":184,"textLines":3,"bbox":[100,345,445,185]}
+{"kind":"shape","id":"sh/hcv2hwje","slide":2,"bbox":[650,265,520,300]}
+{"kind":"textbox","id":"sh/x0vixorm","slide":2,"text":"Proposed response","textPreview":"Proposed response","textChars":17,"textLines":1,"bbox":[680,290,450,40]}
+{"kind":"textbox","id":"sh/wzm1ojah","slide":2,"text":"• A web-based reservation experience with real-time availability\n• Centralized booking, guest, payment and operational records\n• Secure tools for resort staff, administrators and guests","textPreview":"• A web-based reservation experience with real-time availability | • Centralized booking, guest, payment and operational records | • Secu...","textChars":185,"textLines":3,"bbox":[680,345,445,185]}
+{"kind":"textbox","id":"sh/byd0ve9w","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/cw3q9f","slide":2,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/s77q9k","slide":3,"title":"SANTA FE BEACH CLUB","textShapes":10}
+{"kind":"shape","id":"sh/ofep0byl","slide":3,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/nel8r6x0","slide":3,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/mdc7y1gf","slide":3,"text":"Statement of the problem","textPreview":"Statement of the problem","textChars":24,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/x4nqxgf2","slide":3,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/w3ep4bex","slide":3,"text":"How can a web-based system modernize reservations, improve resort operations and strengthen customer service?","textPreview":"How can a web-based system modernize reservations, improve resort operations and strengthen customer service?","textChars":109,"textLines":1,"bbox":[80,150,1080,90]}
+{"kind":"shape","id":"sh/bi58vqxc","slide":3,"bbox":[75,285,345,88]}
+{"kind":"textbox","id":"sh/ahw72lwr","slide":3,"text":"Online booking and customer convenience","textPreview":"Online booking and customer convenience","textChars":39,"textLines":1,"bbox":[95,300,305,58]}
+{"kind":"shape","id":"sh/l87q10fe","slide":3,"bbox":[460,285,345,88]}
+{"kind":"textbox","id":"sh/k7y98vet","slide":3,"text":"Real-time room inventory","textPreview":"Real-time room inventory","textChars":24,"textLines":1,"bbox":[480,300,305,58]}
+{"kind":"shape","id":"sh/6hkv2tcv","slide":3,"bbox":[845,285,345,88]}
+{"kind":"textbox","id":"sh/7idwvytg","slide":3,"text":"Centralized guest and transaction records","textPreview":"Centralized guest and transaction records","textChars":41,"textLines":1,"bbox":[865,300,305,58]}
+{"kind":"shape","id":"sh/8jmd43u1","slide":3,"bbox":[75,410,345,88]}
+{"kind":"textbox","id":"sh/tkvex8bm","slide":3,"text":"Front-desk workflows","textPreview":"Front-desk workflows","textChars":20,"textLines":1,"bbox":[95,425,305,58]}
+{"kind":"shape","id":"sh/ul4v6dc7","slide":3,"bbox":[460,410,345,88]}
+{"kind":"textbox","id":"sh/fmdwzitc","slide":3,"text":"Automated reports and analytics","textPreview":"Automated reports and analytics","textChars":31,"textLines":1,"bbox":[480,425,305,58]}
+{"kind":"shape","id":"sh/gnmd83ux","slide":3,"bbox":[845,410,345,88]}
+{"kind":"textbox","id":"sh/hove18bi","slide":3,"text":"Authentication and data protection","textPreview":"Authentication and data protection","textChars":34,"textLines":1,"bbox":[865,425,305,58]}
+{"kind":"textbox","id":"sh/ap0vu9cn","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/s77q9k","slide":3,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/brakm7","slide":4,"title":"SANTA FE BEACH CLUB","textShapes":6}
+{"kind":"shape","id":"sh/uhojator","slide":4,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/h4zi5oni","slide":4,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/g3q1c36x","slide":4,"text":"Study objectives","textPreview":"Study objectives","textChars":16,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/7ex0zepg","slide":4,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/6doj69ov","slide":4,"text":"General objective","textPreview":"General objective","textChars":17,"textLines":1,"bbox":[70,150,240,35]}
+{"kind":"textbox","id":"sh/tgfi1on6","slide":4,"text":"Design and develop a web-based booking and reservation management system for Santa Fe Beach Club.","textPreview":"Design and develop a web-based booking and reservation management system for Santa Fe Beach Club.","textChars":97,"textLines":1,"bbox":[70,190,1120,62]}
+{"kind":"textbox","id":"sh/sf618j61","slide":4,"text":"• Show resort information, room types and facilities\n• Check room and facility availability in real time\n• Create, update or cancel reservations online\n• Manage guest, booking and payment records\n• Generate booking, payment and reservation reports\n• Send confirmations and booking notifications\n• Manage room schedules and availability\n• Protect data with authentication and access control","textPreview":"• Show resort information, room types and facilities | • Check room and facility availability in real time | • Create, update or cancel r...","textChars":389,"textLines":8,"bbox":[90,285,1100,330]}
+{"kind":"textbox","id":"sh/ra10bi5k","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/brakm7","slide":4,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/yt38ne","slide":5,"title":"SANTA FE BEACH CLUB","textShapes":9}
+{"kind":"shape","id":"sh/7its72h0","slide":5,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/8j2t07il","slide":5,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/tkba9cz6","slide":5,"text":"Scope of the system","textPreview":"Scope of the system","textChars":19,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/ulkb2x0b","slide":5,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/vmtsb2hw","slide":5,"text":"Guest experience","textPreview":"Guest experience","textChars":16,"textLines":1,"bbox":[55,160,360,35]}
+{"kind":"textbox","id":"sh/gn2t47ih","slide":5,"text":"• Browse rooms and availability\n• Online and walk-in booking\n• Booking access with email and OTP\n• QR-supported check-in\n• Cancellations and refund requests","textPreview":"• Browse rooms and availability | • Online and walk-in booking | • Booking access with email and OTP | • QR-supported check-in | • Cancel...","textChars":156,"textLines":5,"bbox":[55,210,350,390]}
+{"kind":"textbox","id":"sh/hovadcz2","slide":5,"text":"Payments and pricing","textPreview":"Payments and pricing","textChars":20,"textLines":1,"bbox":[460,160,360,35]}
+{"kind":"textbox","id":"sh/ip4b6h0n","slide":5,"text":"• PayMongo online payments\n• GCash and bank-deposit records\n• Payment verification and balances\n• Promotional codes\n• Senior Citizen and PWD discounts","textPreview":"• PayMongo online payments | • GCash and bank-deposit records | • Payment verification and balances | • Promotional codes | • Senior Citi...","textChars":150,"textLines":5,"bbox":[460,210,350,390]}
+{"kind":"textbox","id":"sh/3qdsfmh8","slide":5,"text":"Operations and control","textPreview":"Operations and control","textChars":22,"textLines":1,"bbox":[865,160,360,35]}
+{"kind":"textbox","id":"sh/fexwbul4","slide":5,"text":"• Rooms, schedules and maintenance\n• Check-in, check-out and no-shows\n• Dashboards, reports and analytics\n• Role-based access and security logs\n• Backups and Progressive Web App support","textPreview":"• Rooms, schedules and maintenance | • Check-in, check-out and no-shows | • Dashboards, reports and analytics | • Role-based access and s...","textChars":185,"textLines":5,"bbox":[865,210,350,390]}
+{"kind":"textbox","id":"sh/ed4fip4j","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/yt38ne","slide":5,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/6pf7zh","slide":6,"title":"SANTA FE BEACH CLUB","textShapes":5}
+{"kind":"shape","id":"sh/v2hcb2to","slide":6,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/w3qdk7u9","slide":6,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/x4zudcbu","slide":6,"text":"Study limitations","textPreview":"Study limitations","textChars":17,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/i58vmhcf","slide":6,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/j6hcfmt0","slide":6,"text":"• Designed for one resort branch\n• No dedicated native Android or iOS app\n• No Agoda, Airbnb, Booking.com or Expedia integration\n• No automated SMS notifications\n• No AI recommendations, chatbot or dynamic pricing\n• No GPS, transport scheduling or navigation","textPreview":"• Designed for one resort branch | • No dedicated native Android or iOS app | • No Agoda, Airbnb, Booking.com or Expedia integration | • ...","textChars":258,"textLines":6,"bbox":[75,165,530,420]}
+{"kind":"textbox","id":"sh/krqdorul","slide":6,"text":"• Live transactions require stable internet\n• Manual payments require staff verification\n• PayMongo availability affects online payments\n• Refunds depend on resort policy and provider capability\n• Offline access covers cached interface resources only\n• Accuracy depends on data entered by guests and staff","textPreview":"• Live transactions require stable internet | • Manual payments require staff verification | • PayMongo availability affects online payme...","textChars":305,"textLines":6,"bbox":[675,165,530,420]}
+{"kind":"textbox","id":"sh/5szuhwb6","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/6pf7zh","slide":6,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/876r1j","slide":7,"title":"SANTA FE BEACH CLUB","textShapes":13}
+{"kind":"shape","id":"sh/kny5wba1","slide":7,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/jmpo369g","slide":7,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/ilgnu1sb","slide":7,"text":"Significance of the study","textPreview":"Significance of the study","textChars":25,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/tcr69gry","slide":7,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/sri50bad","slide":7,"text":"Management","textPreview":"Management","textChars":10,"textLines":1,"bbox":[75,155,245,55]}
+{"kind":"textbox","id":"sh/7qpo769s","slide":7,"text":"Centralized operational and financial information, fewer manual errors and better reporting","textPreview":"Centralized operational and financial information, fewer manual errors and better reporting","textChars":91,"textLines":1,"bbox":[330,155,850,60]}
+{"kind":"shape","id":"sh/6pgny1s7","slide":7,"bbox":[75,230,1105,1]}
+{"kind":"textbox","id":"sh/9wnmxcre","slide":7,"text":"Resort staff","textPreview":"Resort staff","textChars":12,"textLines":1,"bbox":[75,253,245,55]}
+{"kind":"textbox","id":"sh/8ve5o7at","slide":7,"text":"Simpler reservations, payment verification, guest service and task notifications","textPreview":"Simpler reservations, payment verification, guest service and task notifications","textChars":80,"textLines":1,"bbox":[330,253,850,60]}
+{"kind":"shape","id":"sh/a5gf2d4f","slide":7,"bbox":[75,328,1105,1]}
+{"kind":"textbox","id":"sh/b69wvil0","slide":7,"text":"Guests","textPreview":"Guests","textChars":6,"textLines":1,"bbox":[75,351,245,55]}
+{"kind":"textbox","id":"sh/w7ix4nm5","slide":7,"text":"Convenient booking, payment choices, confirmations, QR check-in and secure booking access","textPreview":"Convenient booking, payment choices, confirmations, QR check-in and secure booking access","textChars":89,"textLines":1,"bbox":[330,351,850,60]}
+{"kind":"shape","id":"sh/x8rexs3q","slide":7,"bbox":[75,426,1105,1]}
+{"kind":"textbox","id":"sh/y90f6x4b","slide":7,"text":"Administrators","textPreview":"Administrators","textChars":14,"textLines":1,"bbox":[75,449,245,55]}
+{"kind":"textbox","id":"sh/ja9wz2lw","slide":7,"text":"Controlled user access, content management, security monitoring and backups","textPreview":"Controlled user access, content management, security monitoring and backups","textChars":75,"textLines":1,"bbox":[330,449,850,60]}
+{"kind":"shape","id":"sh/kbix87mh","slide":7,"bbox":[75,524,1105,1]}
+{"kind":"textbox","id":"sh/5wre1s32","slide":7,"text":"Researchers and developers","textPreview":"Researchers and developers","textChars":26,"textLines":1,"bbox":[75,547,245,55]}
+{"kind":"textbox","id":"sh/6x0fax4n","slide":7,"text":"A reference for reservation systems, payment integration, QR codes and future expansion","textPreview":"A reference for reservation systems, payment integration, QR codes and future expansion","textChars":87,"textLines":1,"bbox":[330,547,850,60]}
+{"kind":"textbox","id":"sh/7ytw32ls","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/876r1j","slide":7,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/okjliq","slide":8,"title":"SANTA FE BEACH CLUB","textShapes":5}
+{"kind":"shape","id":"sh/wvmx8jip","slide":8,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/vutwze14","slide":8,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/utkf690j","slide":8,"text":"Proposed features","textPreview":"Proposed features","textChars":17,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/9sbexojy","slide":8,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/8r2x4jid","slide":8,"text":"• Secure guest, receptionist and administrator access\n• Online and walk-in reservations\n• Room browsing and real-time availability\n• Calendar and guest record management\n• PayMongo, GCash and bank-deposit support\n• Promotions and statutory discounts\n• Email confirmation and QR check-in","textPreview":"• Secure guest, receptionist and administrator access | • Online and walk-in reservations | • Room browsing and real-time availability | ...","textChars":286,"textLines":7,"bbox":[70,150,550,455]}
+{"kind":"textbox","id":"sh/7qtwve1s","slide":8,"text":"• Check-in, check-out, cancellation and refunds\n• Room, staff and website content management\n• Dashboards, reports, search and notifications\n• Activity logs and security monitoring\n• Database backup and restoration\n• Responsive design and PWA support","textPreview":"• Check-in, check-out, cancellation and refunds | • Room, staff and website content management | • Dashboards, reports, search and notifi...","textChars":250,"textLines":6,"bbox":[660,150,550,455]}
+{"kind":"textbox","id":"sh/mpkf2907","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/okjliq","slide":8,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/omy4ny","slide":9,"title":"SANTA FE BEACH CLUB","textShapes":4}
+{"kind":"shape","id":"sh/ax4n25sv","slide":9,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/x0vmdkrm","slide":9,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/czm54fa1","slide":9,"text":"Functional requirements","textPreview":"Functional requirements","textChars":23,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/z2x4fu9c","slide":9,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/y1on6ps7","slide":9,"text":"• Secure role-based login and verification\n• Guest room browsing, availability checks and booking access\n• Charge, discount, deposit and balance calculation\n• PayMongo processing plus staff-verified manual payments\n• Promotion and Senior Citizen or PWD discount management\n• Confirmations, email notifications and QR code generation\n• Walk-in booking, arrival, departure, cancellation, no-show and refund handling\n• Management of rooms, guests, staff, inquiries, reviews and site content\n• Calendars, dashboards, reports, logs and backups\n• Responsive access and PWA installation","textPreview":"• Secure role-based login and verification | • Guest room browsing, availability checks and booking access | • Charge, discount, deposit ...","textChars":579,"textLines":10,"bbox":[85,150,1110,470]}
+{"kind":"textbox","id":"sh/lofmh4ri","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/omy4ny","slide":9,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/p6owwx","slide":10,"title":"SANTA FE BEACH CLUB","textShapes":15}
+{"kind":"shape","id":"sh/jaxwfepc","slide":10,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/kb6dojqx","slide":10,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/5cfeho7i","slide":10,"text":"Non-functional requirements","textPreview":"Non-functional requirements","textChars":27,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/6dovqt83","slide":10,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/7yxwjepo","slide":10,"text":"Security","textPreview":"Security","textChars":8,"textLines":1,"bbox":[70,150,220,35]}
+{"kind":"textbox","id":"sh/sz6xsjq9","slide":10,"text":"Password hashing, sessions, 2FA, role permissions, CSRF protection, validation and protected documents","textPreview":"Password hashing, sessions, 2FA, role permissions, CSRF protection, validation and protected documents","textChars":102,"textLines":1,"bbox":[70,190,515,90]}
+{"kind":"textbox","id":"sh/t0felo7u","slide":10,"text":"Performance","textPreview":"Performance","textChars":11,"textLines":1,"bbox":[660,150,220,35]}
+{"kind":"textbox","id":"sh/mhkvep8z","slide":10,"text":"Responsive requests, immediate inventory updates, optimized queries and compressed assets","textPreview":"Responsive requests, immediate inventory updates, optimized queries and compressed assets","textChars":89,"textLines":1,"bbox":[660,190,515,90]}
+{"kind":"textbox","id":"sh/nidw7up4","slide":10,"text":"Reliability","textPreview":"Reliability","textChars":11,"textLines":1,"bbox":[70,310,220,35]}
+{"kind":"textbox","id":"sh/vq5k7ml0","slide":10,"text":"Duplicate-booking prevention, consistent transactions, backups and safe error handling","textPreview":"Duplicate-booking prevention, consistent transactions, backups and safe error handling","textChars":86,"textLines":1,"bbox":[70,350,515,90]}
+{"kind":"textbox","id":"sh/a5wjyhkf","slide":10,"text":"Usability","textPreview":"Usability","textChars":9,"textLines":1,"bbox":[660,310,220,35]}
+{"kind":"textbox","id":"sh/xsn29c36","slide":10,"text":"Clear navigation, validation messages, responsive layouts and visible statuses","textPreview":"Clear navigation, validation messages, responsive layouts and visible statuses","textChars":78,"textLines":1,"bbox":[660,350,515,90]}
+{"kind":"textbox","id":"sh/wre10r2l","slide":10,"text":"Compatibility","textPreview":"Compatibility","textChars":13,"textLines":1,"bbox":[70,470,220,35]}
+{"kind":"textbox","id":"sh/n2l032l4","slide":10,"text":"Current standards-compliant browsers, XAMPP and compatible hosting environments","textPreview":"Current standards-compliant browsers, XAMPP and compatible hosting environments","textChars":79,"textLines":1,"bbox":[70,510,515,90]}
+{"kind":"textbox","id":"sh/m1cjuxkj","slide":10,"text":"Maintainability","textPreview":"Maintainability","textChars":15,"textLines":1,"bbox":[660,470,220,35]}
+{"kind":"textbox","id":"sh/943i5c3u","slide":10,"text":"Separated components, protected configuration, controlled migrations and maintained documentation","textPreview":"Separated components, protected configuration, controlled migrations and maintained documentation","textChars":97,"textLines":1,"bbox":[660,510,515,90]}
+{"kind":"textbox","id":"sh/83u1w729","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/p6owwx","slide":10,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/7286kc","slide":11,"title":"SANTA FE BEACH CLUB","textShapes":17}
+{"kind":"shape","id":"sh/hk3ql0ja","slide":11,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/uhc7alkz","slide":11,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/fil8jq1k","slide":11,"text":"System modules","textPreview":"System modules","textChars":14,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/8fup8v2t","slide":11,"bbox":[52,126,1176,2]}
+{"kind":"shape","id":"sh/tg3qh0je","slide":11,"bbox":[65,145,550,100]}
+{"kind":"textbox","id":"sh/6ts76lkn","slide":11,"text":"Login and authentication","textPreview":"Login and authentication","textChars":24,"textLines":1,"bbox":[85,157,510,28]}
+{"kind":"textbox","id":"sh/7el8fq18","slide":11,"text":"Staff login, verification, password reset and role access","textPreview":"Staff login, verification, password reset and role access","textChars":57,"textLines":1,"bbox":[85,188,510,48]}
+{"kind":"shape","id":"sh/cbe9kfix","slide":11,"bbox":[665,145,550,100]}
+{"kind":"textbox","id":"sh/dcnqtkji","slide":11,"text":"Guest booking access","textPreview":"Guest booking access","textChars":20,"textLines":1,"bbox":[685,157,510,28]}
+{"kind":"textbox","id":"sh/943mp4vm","slide":11,"text":"Reference and email verification, OTP, status, QR, rebooking and refunds","textPreview":"Reference and email verification, OTP, status, QR, rebooking and refunds","textChars":72,"textLines":1,"bbox":[685,188,510,48]}
+{"kind":"shape","id":"sh/o3u5wzu1","slide":11,"bbox":[65,270,550,100]}
+{"kind":"textbox","id":"sh/n214nudg","slide":11,"text":"Dashboard","textPreview":"Dashboard","textChars":9,"textLines":1,"bbox":[85,282,510,28]}
+{"kind":"textbox","id":"sh/m1s3upcb","slide":11,"text":"Reservations, rooms, arrivals, payments, revenue and alerts","textPreview":"Reservations, rooms, arrivals, payments, revenue and alerts","textChars":59,"textLines":1,"bbox":[85,313,510,48]}
+{"kind":"shape","id":"sh/10jmlkvq","slide":11,"bbox":[665,270,550,100]}
+{"kind":"textbox","id":"sh/0zalsfu5","slide":11,"text":"Reservations","textPreview":"Reservations","textChars":12,"textLines":1,"bbox":[685,282,510,28]}
+{"kind":"textbox","id":"sh/zy14judk","slide":11,"text":"Online and walk-in bookings, availability, calendar, updates and history","textPreview":"Online and walk-in bookings, availability, calendar, updates and history","textChars":72,"textLines":1,"bbox":[685,313,510,48]}
+{"kind":"shape","id":"sh/exs3qpcz","slide":11,"bbox":[65,395,550,100]}
+{"kind":"textbox","id":"sh/lwnmxovu","slide":11,"text":"Payments and discounts","textPreview":"Payments and discounts","textChars":22,"textLines":1,"bbox":[85,407,510,28]}
+{"kind":"textbox","id":"sh/kve54ju9","slide":11,"text":"Payment methods, balances, promotions, discounts and refunds","textPreview":"Payment methods, balances, promotions, discounts and refunds","textChars":60,"textLines":1,"bbox":[85,438,510,48]}
+{"kind":"shape","id":"sh/4zmp0n2l","slide":11,"bbox":[665,395,550,100]}
+{"kind":"textbox","id":"sh/50v69sj6","slide":11,"text":"Guest service","textPreview":"Guest service","textChars":13,"textLines":1,"bbox":[685,407,510,28]}
+{"kind":"textbox","id":"sh/ixk7yxkf","slide":11,"text":"QR check-in, arrival/departure, reminders, inquiries and reviews","textPreview":"QR check-in, arrival/departure, reminders, inquiries and reviews","textChars":64,"textLines":1,"bbox":[685,438,510,48]}
+{"kind":"shape","id":"sh/jyto7i10","slide":11,"bbox":[65,520,550,100]}
+{"kind":"textbox","id":"sh/wb2pwn29","slide":11,"text":"Administration","textPreview":"Administration","textChars":14,"textLines":1,"bbox":[85,532,510,28]}
+{"kind":"textbox","id":"sh/hcb65sju","slide":11,"text":"Rooms, pricing, staff, content, reporting, logs and backups","textPreview":"Rooms, pricing, staff, content, reporting, logs and backups","textChars":59,"textLines":1,"bbox":[85,563,510,48]}
+{"kind":"textbox","id":"sh/u9k7udkj","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/7286kc","slide":11,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/rddcbr","slide":12,"title":"SANTA FE BEACH CLUB","textShapes":13}
+{"kind":"shape","id":"sh/fixkju9k","slide":12,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/0j61cza5","slide":12,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/1kf2l4rq","slide":12,"text":"Database structure","textPreview":"Database structure","textChars":18,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/258je9sb","slide":12,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/n6hkne9w","slide":12,"text":"Users and access","textPreview":"Users and access","textChars":16,"textLines":1,"bbox":[75,150,270,48]}
+{"kind":"textbox","id":"sh/o7q1gjah","slide":12,"text":"Administrators, receptionists, guest/admin OTPs, password resets and rate limits","textPreview":"Administrators, receptionists, guest/admin OTPs, password resets and rate limits","textChars":80,"textLines":1,"bbox":[355,150,825,55]}
+{"kind":"textbox","id":"sh/p8z2p4rm","slide":12,"text":"Booking and inventory","textPreview":"Booking and inventory","textChars":21,"textLines":1,"bbox":[75,246,270,48]}
+{"kind":"textbox","id":"sh/a983i9s7","slide":12,"text":"Bookings, room types and individual rooms","textPreview":"Bookings, room types and individual rooms","textChars":41,"textLines":1,"bbox":[355,246,825,55]}
+{"kind":"textbox","id":"sh/bahkre9s","slide":12,"text":"Payments and discounts","textPreview":"Payments and discounts","textChars":22,"textLines":1,"bbox":[75,342,270,48]}
+{"kind":"textbox","id":"sh/r2tcv2xk","slide":12,"text":"Payments, PayMongo checkouts, promotions, booking discounts, discount history and refunds","textPreview":"Payments, PayMongo checkouts, promotions, booking discounts, discount history and refunds","textChars":89,"textLines":1,"bbox":[355,342,825,55]}
+{"kind":"textbox","id":"sh/61kbmxgz","slide":12,"text":"Communication and content","textPreview":"Communication and content","textChars":25,"textLines":1,"bbox":[75,438,270,48]}
+{"kind":"textbox","id":"sh/t4buxcfq","slide":12,"text":"Notifications, inquiries, reviews, gallery and settings","textPreview":"Notifications, inquiries, reviews, gallery and settings","textChars":55,"textLines":1,"bbox":[355,438,825,55]}
+{"kind":"textbox","id":"sh/s32to7e5","slide":12,"text":"Audit and protection","textPreview":"Audit and protection","textChars":20,"textLines":1,"bbox":[75,534,270,48]}
+{"kind":"textbox","id":"sh/jetcr2x8","slide":12,"text":"Activity logs and security logs","textPreview":"Activity logs and security logs","textChars":31,"textLines":1,"bbox":[355,534,825,55]}
+{"kind":"textbox","id":"sh/id0bixg3","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/rddcbr","slide":12,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/2nggny","slide":13,"title":"SANTA FE BEACH CLUB","textShapes":19}
+{"kind":"shape","id":"sh/vudcfito","slide":13,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/wvmd8na9","slide":13,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/xwvuhsbu","slide":13,"text":"Technology stack","textPreview":"Technology stack","textChars":16,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/m5kb2ds7","slide":13,"bbox":[52,126,1176,2]}
+{"kind":"shape","id":"sh/n6tcbits","slide":13,"bbox":[95,145,1090,52]}
+{"kind":"textbox","id":"sh/872t4nad","slide":13,"text":"Frontend","textPreview":"Frontend","textChars":8,"textLines":1,"bbox":[120,150,280,42]}
+{"kind":"textbox","id":"sh/98vudsby","slide":13,"text":"HTML5, CSS3, JavaScript","textPreview":"HTML5, CSS3, JavaScript","textChars":23,"textLines":1,"bbox":[420,150,730,42]}
+{"kind":"shape","id":"sh/61ovexsb","slide":13,"bbox":[95,207,1090,52]}
+{"kind":"textbox","id":"sh/72xcn2tw","slide":13,"text":"Backend","textPreview":"Backend","textChars":7,"textLines":1,"bbox":[120,212,280,42]}
+{"kind":"textbox","id":"sh/7epcb6l8","slide":13,"text":"PHP and Python","textPreview":"PHP and Python","textChars":14,"textLines":1,"bbox":[420,212,730,42]}
+{"kind":"shape","id":"sh/6dgb21k3","slide":13,"bbox":[95,269,1090,52]}
+{"kind":"textbox","id":"sh/tg7udg3e","slide":13,"text":"Database","textPreview":"Database","textChars":8,"textLines":1,"bbox":[120,274,280,42]}
+{"kind":"textbox","id":"sh/8fyd4b2t","slide":13,"text":"MySQL","textPreview":"MySQL","textChars":5,"textLines":1,"bbox":[420,274,730,42]}
+{"kind":"shape","id":"sh/vipcf6lk","slide":13,"bbox":[95,331,1090,52]}
+{"kind":"textbox","id":"sh/uhgv61kz","slide":13,"text":"Web server","textPreview":"Web server","textChars":10,"textLines":1,"bbox":[120,336,280,42]}
+{"kind":"textbox","id":"sh/hkruhg3q","slide":13,"text":"Apache through XAMPP","textPreview":"Apache through XAMPP","textChars":20,"textLines":1,"bbox":[420,336,730,42]}
+{"kind":"shape","id":"sh/gjid8b25","slide":13,"bbox":[95,393,1090,52]}
+{"kind":"textbox","id":"sh/369cjqlg","slide":13,"text":"Email","textPreview":"Email","textChars":5,"textLines":1,"bbox":[120,398,280,42]}
+{"kind":"textbox","id":"sh/i50valkv","slide":13,"text":"PHPMailer and SMTP","textPreview":"PHPMailer and SMTP","textChars":18,"textLines":1,"bbox":[420,398,730,42]}
+{"kind":"shape","id":"sh/e1kf2p43","slide":13,"bbox":[95,455,1090,52]}
+{"kind":"textbox","id":"sh/z2dgbu5o","slide":13,"text":"Payments","textPreview":"Payments","textChars":8,"textLines":1,"bbox":[120,460,280,42]}
+{"kind":"textbox","id":"sh/03mx4zm9","slide":13,"text":"PayMongo API","textPreview":"PayMongo API","textChars":12,"textLines":1,"bbox":[420,460,730,42]}
+{"kind":"shape","id":"sh/14vyd4nu","slide":13,"bbox":[95,517,1090,52]}
+{"kind":"textbox","id":"sh/qdkfy547","slide":13,"text":"Development","textPreview":"Development","textChars":11,"textLines":1,"bbox":[120,522,280,42]}
+{"kind":"textbox","id":"sh/retw7a5s","slide":13,"text":"Visual Studio Code and Git","textPreview":"Visual Studio Code and Git","textChars":26,"textLines":1,"bbox":[420,522,730,42]}
+{"kind":"shape","id":"sh/sz2x0fmd","slide":13,"bbox":[95,579,1090,52]}
+{"kind":"textbox","id":"sh/d0be9kny","slide":13,"text":"Browsers","textPreview":"Browsers","textChars":8,"textLines":1,"bbox":[120,584,280,42]}
+{"kind":"textbox","id":"sh/a94fa94b","slide":13,"text":"Chrome, Edge and Firefox","textPreview":"Chrome, Edge and Firefox","textChars":24,"textLines":1,"bbox":[420,584,730,42]}
+{"kind":"textbox","id":"sh/baxgje5w","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/2nggny","slide":13,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/no93ub","slide":14,"title":"SANTA FE BEACH CLUB","textShapes":25}
+{"kind":"shape","id":"sh/ydsr614n","slide":14,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/l03q1gne","slide":14,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/kzu98bmt","slide":14,"text":"Agile development methodology","textPreview":"Agile development methodology","textChars":29,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/72l83q5k","slide":14,"bbox":[52,126,1176,2]}
+{"kind":"shape","id":"sh/m1cral4z","slide":14,"bbox":[45,215,150,245]}
+{"kind":"textbox","id":"sh/943a5gna","slide":14,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[90,232,60,45]}
+{"kind":"textbox","id":"sh/83u9cbmp","slide":14,"text":"Planning","textPreview":"Planning","textChars":8,"textLines":1,"bbox":[55,290,130,38]}
+{"kind":"textbox","id":"sh/v65s7q5g","slide":14,"text":"Define problems, objectives, scope and requirements","textPreview":"Define problems, objectives, scope and requirements","textChars":51,"textLines":1,"bbox":[59,338,122,105]}
+{"kind":"shape","id":"sh/u5crel4v","slide":14,"bbox":[220,215,150,245]}
+{"kind":"textbox","id":"sh/cbmxc7qd","slide":14,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[265,232,60,45]}
+{"kind":"textbox","id":"sh/xcvylc7y","slide":14,"text":"Analysis","textPreview":"Analysis","textChars":8,"textLines":1,"bbox":[230,290,130,38]}
+{"kind":"textbox","id":"sh/ap4fah8n","slide":14,"text":"Study resort operations, users, payments and security","textPreview":"Study resort operations, users, payments and security","textChars":53,"textLines":1,"bbox":[234,338,122,105]}
+{"kind":"shape","id":"sh/bqdwj2p8","slide":14,"bbox":[395,215,150,245]}
+{"kind":"textbox","id":"sh/kf6xgrqp","slide":14,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[440,232,60,45]}
+{"kind":"textbox","id":"sh/lgfypw7a","slide":14,"text":"Design","textPreview":"Design","textChars":6,"textLines":1,"bbox":[405,290,130,38]}
+{"kind":"textbox","id":"sh/yd4feh8j","slide":14,"text":"Prepare architecture, database, interfaces and process flows","textPreview":"Prepare architecture, database, interfaces and process flows","textChars":60,"textLines":1,"bbox":[409,338,122,105]}
+{"kind":"shape","id":"sh/zedgnmp4","slide":14,"bbox":[570,215,150,245]}
+{"kind":"textbox","id":"sh/8j6xkrql","slide":14,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[615,232,60,45]}
+{"kind":"textbox","id":"sh/9kfytw76","slide":14,"text":"Development","textPreview":"Development","textChars":11,"textLines":1,"bbox":[580,290,130,38]}
+{"kind":"textbox","id":"sh/h0bexwza","slide":14,"text":"Build guest, staff, booking, payment and reporting modules","textPreview":"Build guest, staff, booking, payment and reporting modules","textChars":58,"textLines":1,"bbox":[584,338,122,105]}
+{"kind":"shape","id":"sh/gz2x4rip","slide":14,"bbox":[745,215,150,245]}
+{"kind":"textbox","id":"sh/vytwvmhk","slide":14,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[790,232,60,45]}
+{"kind":"textbox","id":"sh/uxkf2h0z","slide":14,"text":"Testing","textPreview":"Testing","textChars":7,"textLines":1,"bbox":[755,290,130,38]}
+{"kind":"textbox","id":"sh/p4vy1gzm","slide":14,"text":"Check functions, usability, security, compatibility and errors","textPreview":"Check functions, usability, security, compatibility and errors","textChars":62,"textLines":1,"bbox":[759,338,122,105]}
+{"kind":"shape","id":"sh/43mx8by1","slide":14,"bbox":[920,215,150,245]}
+{"kind":"textbox","id":"sh/32dgz6hg","slide":14,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[965,232,60,45]}
+{"kind":"textbox","id":"sh/214f61gv","slide":14,"text":"Implementation","textPreview":"Implementation","textChars":14,"textLines":1,"bbox":[930,290,130,38]}
+{"kind":"textbox","id":"sh/l8repcz2","slide":14,"text":"Deploy the system and configure services and users","textPreview":"Deploy the system and configure services and users","textChars":50,"textLines":1,"bbox":[934,338,122,105]}
+{"kind":"shape","id":"sh/k7ixw7ix","slide":14,"bbox":[1095,215,150,245]}
+{"kind":"textbox","id":"sh/adgb6dgf","slide":14,"text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[1140,232,60,45]}
+{"kind":"textbox","id":"sh/bepczix0","slide":14,"text":"Evaluation","textPreview":"Evaluation","textChars":10,"textLines":1,"bbox":[1105,290,130,38]}
+{"kind":"textbox","id":"sh/wfyd8nyl","slide":14,"text":"Collect feedback, fix issues, monitor and improve","textPreview":"Collect feedback, fix issues, monitor and improve","textChars":49,"textLines":1,"bbox":[1109,338,122,105]}
+{"kind":"textbox","id":"sh/xg7u1sf6","slide":14,"text":"Repeated review and improvement connect each phase back to planning.","textPreview":"Repeated review and improvement connect each phase back to planning.","textChars":68,"textLines":1,"bbox":[260,520,760,50]}
+{"kind":"textbox","id":"sh/y1gvadgr","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/no93ub","slide":14,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/z9o3dv","slide":15,"title":"SANTA FE BEACH CLUB","textShapes":7}
+{"kind":"shape","id":"sh/t0nex03i","slide":15,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/6xwvml47","slide":15,"text":"SANTA FE BEACH CLUB","textPreview":"SANTA FE BEACH CLUB","textChars":19,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/ry5wvqls","slide":15,"text":"Expected output and future enhancements","textPreview":"Expected output and future enhancements","textChars":39,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/g3yxsfm9","slide":15,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/1o7e1k3u","slide":15,"text":"Expected system","textPreview":"Expected system","textChars":15,"textLines":1,"bbox":[70,150,500,40]}
+{"kind":"textbox","id":"sh/e1wfq543","slide":15,"text":"• Accommodation, price, amenity and availability display\n• Online and walk-in reservations\n• Multiple payment methods and discount handling\n• Confirmations, QR codes and email notices\n• Arrival, departure, cancellation and refund workflows\n• Operational monitoring, reports, logs and backups","textPreview":"• Accommodation, price, amenity and availability display | • Online and walk-in reservations | • Multiple payment methods and discount ha...","textChars":291,"textLines":6,"bbox":[70,200,520,350]}
+{"kind":"textbox","id":"sh/f2pwzalo","slide":15,"text":"Future enhancements","textPreview":"Future enhancements","textChars":19,"textLines":1,"bbox":[650,150,500,40]}
+{"kind":"textbox","id":"sh/oryxwfm5","slide":15,"text":"• Native mobile apps and SMS\n• Travel platform integrations\n• Chat support and AI room recommendations\n• Dynamic pricing and loyalty programs\n• Multi-resort management\n• Maps, transport and more payment gateways\n• Accounting integration and predictive analytics\n• Multilingual and biometric support\n• Expanded disaster recovery","textPreview":"• Native mobile apps and SMS | • Travel platform integrations | • Chat support and AI room recommendations | • Dynamic pricing and loyalt...","textChars":327,"textLines":9,"bbox":[650,200,520,390]}
+{"kind":"textbox","id":"sh/ps7e5k3q","slide":15,"text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"notes","id":"nt/z9o3dv","slide":15,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/u3pvk7","slide":16,"title":"SYSTEM FLOWCHART","textShapes":3}
+{"kind":"shape","id":"sh/u9knqtsv","slide":16,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/hcv6lorm","slide":16,"text":"SYSTEM FLOWCHART","textPreview":"SYSTEM FLOWCHART","textChars":16,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/gbm5sja1","slide":16,"text":"Guest reservation and payment","textPreview":"Guest reservation and payment","textChars":29,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/3ydony9c","slide":16,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/p0v6p8ri","slide":16,"text":"16","textPreview":"16","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"image","id":"im/nipsr29k","slide":16,"name":"","alt":"Guest reservation and payment flowchart","bbox":[55,125,1170,535]}
+{"kind":"notes","id":"nt/u3pvk7","slide":16,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/m7jebf","slide":17,"title":"SYSTEM FLOWCHART","textShapes":3}
+{"kind":"shape","id":"sh/x072hkfa","slide":17,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/adwjmpwz","slide":17,"text":"SYSTEM FLOWCHART","textPreview":"SYSTEM FLOWCHART","textChars":16,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/ve50fuxk","slide":17,"text":"Confirmed booking, check-in and check-out","textPreview":"Confirmed booking, check-in and check-out","textChars":41,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/k3y1sze1","slide":17,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/i1gjqpwv","slide":17,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"image","id":"im/gjqto7i9","slide":17,"name":"","alt":"Confirmed booking, check-in and check-out flowchart","bbox":[55,125,1170,535]}
+{"kind":"notes","id":"nt/m7jebf","slide":17,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/si7n2y","slide":18,"title":"SYSTEM FLOWCHART","textShapes":3}
+{"kind":"shape","id":"sh/i98jmtgn","slide":18,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/5czih8fy","slide":18,"text":"SYSTEM FLOWCHART","textPreview":"SYSTEM FLOWCHART","textChars":16,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/4bq1o3yd","slide":18,"text":"Guest portal, cancellation and refund","textPreview":"Guest portal, cancellation and refund","textChars":37,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/reh0jix4","slide":18,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/dgjilsfa","slide":18,"text":"18","textPreview":"18","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"image","id":"im/bi5sv6po","slide":18,"name":"","alt":"Guest portal, cancellation and refund flowchart","bbox":[55,125,1170,535]}
+{"kind":"notes","id":"nt/si7n2y","slide":18,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}
+{"kind":"slide","id":"sl/b6jlfm","slide":19,"title":"SYSTEM FLOWCHART","textShapes":3}
+{"kind":"shape","id":"sh/byt8v290","slide":19,"bbox":[0,0,18,720]}
+{"kind":"textbox","id":"sh/wzm947al","slide":19,"text":"SYSTEM FLOWCHART","textPreview":"SYSTEM FLOWCHART","textChars":16,"textLines":1,"bbox":[52,24,520,26]}
+{"kind":"textbox","id":"sh/xkvqxcr6","slide":19,"text":"Staff and administrator operations","textPreview":"Staff and administrator operations","textChars":34,"textLines":1,"bbox":[52,56,1175,62]}
+{"kind":"shape","id":"sh/yl4r6hsr","slide":19,"bbox":[52,126,1176,2]}
+{"kind":"textbox","id":"sh/knm98rqx","slide":19,"text":"19","textPreview":"19","textChars":2,"textLines":1,"bbox":[1160,675,55,22]}
+{"kind":"image","id":"im/ypg365ob","slide":19,"name":"","alt":"Staff and administrator operations flowchart","bbox":[55,125,1170,535]}
+{"kind":"notes","id":"nt/b6jlfm","slide":19,"text":"Source: SANTA FE BEACH CLUB.docx supplied by the user."}

@@ -582,6 +582,9 @@ foreach ($valid_statuses as $s) {
                                 Reject
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
+                            <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
+                                Email Refund Link
+                            </button>
                             <button class="btn-process" type="button" onclick="processPayMongoRefund(<?php echo $refund['id']; ?>)">
                                 Record PayMongo Refund
                             </button>
@@ -594,6 +597,9 @@ foreach ($valid_statuses as $s) {
                                 Cancel Refund Approval
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'processing'): ?>
+                            <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
+                                Email Refund Link
+                            </button>
                             <button class="btn-process" type="button" onclick="syncPayMongoRefund(<?php echo $refund['id']; ?>, this)">
                                 Verify PayMongo Status
                             </button>
@@ -672,6 +678,29 @@ foreach ($valid_statuses as $s) {
             <div class="modal-footer">
                 <button class="btn-secondary-sm" type="button" onclick="closePayMongoRefundModal()">Cancel</button>
                 <button class="btn-process" type="button" id="verifyPayMongoRefundBtn" onclick="submitPayMongoRefund()">Verify Refund</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email PayMongo Refund Link Modal -->
+    <div id="refundLinkModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="refundLinkTitle">
+        <div class="modal-box">
+            <div class="modal-title" id="refundLinkTitle">Email PayMongo Refund Link</div>
+            <div class="modal-help">
+                Copy the complete link from PayMongo's “Refund Transfers Link Generated” window and paste it here. It will be emailed to the guest's saved address with instructions and the 3-day expiry notice.
+            </div>
+            <div class="modal-field">
+                <label>Send to</label>
+                <div id="refundLinkRecipient" style="padding:10px 12px;background:var(--bg-alt, #f8fafc);border-radius:7px;font-size:13px;color:var(--text-main);"></div>
+            </div>
+            <div class="modal-field">
+                <label for="paymongoTransferLink">PayMongo Refund Transfers Link</label>
+                <input id="paymongoTransferLink" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://transfer.paymongo.com/..." maxlength="2048">
+                <div id="paymongoTransferLinkError" class="modal-error">Paste a valid https://transfer.paymongo.com/ link.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-sm" type="button" onclick="closeRefundLinkModal()">Cancel</button>
+                <button class="btn-approve" type="button" id="sendRefundLinkBtn" onclick="sendRefundLinkEmail()">Send to Guest Email</button>
             </div>
         </div>
     </div>
@@ -843,6 +872,59 @@ foreach ($valid_statuses as $s) {
             document.getElementById('paymongoRefundError').classList.remove('show');
             document.getElementById('paymongoRefundModal').classList.add('show');
             setTimeout(() => input.focus(), 50);
+        }
+
+        function openRefundLinkModal(refundId, guestName, guestEmail) {
+            currentRefundId = refundId;
+            const input = document.getElementById('paymongoTransferLink');
+            document.getElementById('refundLinkRecipient').textContent = guestName + ' — ' + (guestEmail || 'No email address');
+            input.value = '';
+            document.getElementById('paymongoTransferLinkError').classList.remove('show');
+            document.getElementById('refundLinkModal').classList.add('show');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function closeRefundLinkModal() {
+            document.getElementById('refundLinkModal').classList.remove('show');
+            document.getElementById('paymongoTransferLinkError').classList.remove('show');
+            currentRefundId = null;
+        }
+
+        async function sendRefundLinkEmail() {
+            const input = document.getElementById('paymongoTransferLink');
+            const link = input.value.trim();
+            const error = document.getElementById('paymongoTransferLinkError');
+            let valid = false;
+            try {
+                const parsed = new URL(link);
+                valid = parsed.protocol === 'https:' && parsed.hostname.toLowerCase() === 'transfer.paymongo.com';
+            } catch (_) {}
+            if (!valid) {
+                error.classList.add('show');
+                input.focus();
+                return;
+            }
+            error.classList.remove('show');
+            const btn = document.getElementById('sendRefundLinkBtn');
+            const original = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            const fd = new FormData();
+            fd.append('request_id', currentRefundId);
+            fd.append('refund_link', link);
+            fd.append('csrf_token', refundCsrfToken);
+            try {
+                const response = await fetch('../backend/api/refund_request_api.php?action=send_refund_link', { method: 'POST', body: fd });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'Could not email the refund link.');
+                closeRefundLinkModal();
+                showToast(data.message, 'success');
+            } catch (sendError) {
+                showToast(sendError.message || 'Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = original;
+            }
         }
 
         function closePayMongoRefundModal() {
