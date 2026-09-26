@@ -56,24 +56,12 @@ function require_refund_state_change_request(): void
     }
 }
 
-if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link', 'update_refund_methods'], true)) {
+if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link'], true)) {
     require_refund_state_change_request();
 }
 
 try {
-    if ($action === 'update_refund_methods') {
-        require_admin_access();
-        $paymongoEnabled = ($_POST['paymongo_enabled'] ?? '') === '1' ? '1' : '0';
-        $manualEnabled = ($_POST['manual_gcash_enabled'] ?? '') === '1' ? '1' : '0';
-        $stmt = $conn->prepare('INSERT INTO settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)');
-        foreach (['refund_paymongo_enabled' => $paymongoEnabled, 'refund_manual_gcash_enabled' => $manualEnabled] as $key => $value) {
-            $stmt->bind_param('ss', $key, $value); $stmt->execute();
-        }
-        $stmt->close();
-        log_activity($conn, (string)($_SESSION['admin_username'] ?? 'Admin'), 'Refund Methods Updated', 'PayMongo refunds: ' . ($paymongoEnabled === '1' ? 'enabled' : 'disabled') . '; Manual GCash refunds: ' . ($manualEnabled === '1' ? 'enabled' : 'disabled') . '.');
-        $response = ['success' => true, 'message' => 'Refund method availability updated.'];
-
-    } elseif ($action === 'submit_request') {
+    if ($action === 'submit_request') {
         // Admins may select a booking by ID. Guests must present the random
         // cancellation token and the booking ID is then derived from it.
         $is_admin = refund_admin_authenticated();

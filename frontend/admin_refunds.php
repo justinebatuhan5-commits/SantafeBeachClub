@@ -482,20 +482,6 @@ foreach ($valid_statuses as $s) {
             </div>
             <?php endif; ?>
 
-            <?php if ($is_admin_user): ?>
-            <div class="reception-refund-tools" style="margin-bottom:18px">
-                <div>
-                    <strong>Refund method availability</strong>
-                    <span>Temporarily disable a channel when its provider or manual process has an error. Existing requests remain recorded.</span>
-                </div>
-                <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-                    <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700"><input id="refundPaymongoEnabled" type="checkbox" <?php echo $refund_methods['paymongo'] ? 'checked' : ''; ?>> PayMongo refunds</label>
-                    <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700"><input id="refundManualEnabled" type="checkbox" <?php echo $refund_methods['manual_gcash'] ? 'checked' : ''; ?> <?php echo !$manual_refund_ready ? 'disabled' : ''; ?>> Manual GCash</label>
-                    <button class="btn-process" id="saveRefundMethodsBtn" type="button" onclick="saveRefundMethods()">Save availability</button>
-                </div>
-            </div>
-            <?php endif; ?>
-
             <?php if (!$is_admin_user): ?>
             <div class="reception-refund-tools">
                 <div>
@@ -820,13 +806,6 @@ foreach ($valid_statuses as $s) {
     <script>
         let currentRefundId = null;
         const refundCsrfToken = <?php echo json_encode($csrf_token, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-
-        async function saveRefundMethods() {
-            const btn=document.getElementById('saveRefundMethodsBtn'),original=btn.textContent; btn.disabled=true; btn.textContent='Saving...';
-            const fd=new FormData(); fd.append('paymongo_enabled',document.getElementById('refundPaymongoEnabled').checked?'1':'0'); fd.append('manual_gcash_enabled',document.getElementById('refundManualEnabled').checked?'1':'0'); fd.append('csrf_token',refundCsrfToken);
-            try { const response=await fetch('../backend/api/refund_request_api.php?action=update_refund_methods',{method:'POST',body:fd}),data=await response.json(); if(!data.success)throw new Error(data.message||'Could not update refund methods.'); showToast(data.message,'success'); setTimeout(()=>location.reload(),700); }
-            catch(error){btn.disabled=false;btn.textContent=original;showToast(error.message||'Network error.','error');}
-        }
 
         function openReceptionRefundModal(handoff = null) {
             const modal = document.getElementById('receptionRefundModal');

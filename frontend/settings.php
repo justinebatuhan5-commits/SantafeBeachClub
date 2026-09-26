@@ -332,6 +332,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = 'Payment instructions saved successfully.';
         }
     }
+
+    if ($action === 'save_refund_methods') {
+        RBAC::requireRole('admin');
+        $refundMethodValues = [
+            'refund_paymongo_enabled' => ($_POST['refund_paymongo_enabled'] ?? '0') === '1' ? '1' : '0',
+            'refund_manual_gcash_enabled' => ($_POST['refund_manual_gcash_enabled'] ?? '0') === '1' ? '1' : '0',
+        ];
+        $stmt = $conn->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+        foreach ($refundMethodValues as $key => $value) {
+            $stmt->bind_param('ss', $key, $value);
+            $stmt->execute();
+        }
+        $stmt->close();
+        SecurityLogger::log(
+            $conn,
+            'REFUND_METHODS_UPDATED',
+            'PayMongo refunds: ' . ($refundMethodValues['refund_paymongo_enabled'] === '1' ? 'enabled' : 'disabled')
+                . '; Manual GCash refunds: ' . ($refundMethodValues['refund_manual_gcash_enabled'] === '1' ? 'enabled' : 'disabled') . '.',
+            SecurityLogger::LEVEL_INFO,
+            $current_admin
+        );
+        $success = 'Refund method availability saved successfully.';
+    }
 }
 
 // ── FETCH DATA ─────────────────────────────────────────────────────────────────
@@ -1076,6 +1099,28 @@ $active_tab = $_GET['tab'] ?? 'profile';
                             </div>
                         </div>
                         <div class="form-actions"><button type="submit" class="btn-save">Save Payment Instructions</button></div>
+                    </form>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Refund Method Availability</h3>
+                    <p class="card-desc">Temporarily disable a channel when its provider or manual process has an error. Existing requests remain recorded.</p>
+                    <form method="POST" action="?tab=property" class="settings-form">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="save_refund_methods">
+                        <input type="hidden" name="refund_paymongo_enabled" value="0">
+                        <input type="hidden" name="refund_manual_gcash_enabled" value="0">
+                        <div class="form-row">
+                            <label style="display:flex;align-items:center;gap:9px;font-weight:700;cursor:pointer">
+                                <input type="checkbox" name="refund_paymongo_enabled" value="1" <?php echo ($settings['refund_paymongo_enabled'] ?? '1') === '1' ? 'checked' : ''; ?>>
+                                PayMongo refunds
+                            </label>
+                            <label style="display:flex;align-items:center;gap:9px;font-weight:700;cursor:pointer">
+                                <input type="checkbox" name="refund_manual_gcash_enabled" value="1" <?php echo ($settings['refund_manual_gcash_enabled'] ?? '1') === '1' ? 'checked' : ''; ?>>
+                                Manual GCash
+                            </label>
+                        </div>
+                        <div class="form-actions"><button type="submit" class="btn-save">Save Availability</button></div>
                     </form>
                 </div>
 
