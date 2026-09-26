@@ -605,14 +605,14 @@ img.logo-circle {
 .stay-operations-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    max-width: 620px;
+    gap: 5px;
+    max-width: 480px;
     margin: 0 0 24px;
-    padding: 6px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    box-shadow: var(--shadow-xs);
+    padding: 5px;
+    background: #f1ebe6;
+    border: 1px solid rgba(124, 83, 60, 0.13);
+    border-radius: 18px;
+    box-shadow: inset 0 1px 2px rgba(77, 51, 37, 0.05);
 }
 
 .stay-operations-tabs-wrap {
@@ -626,29 +626,54 @@ img.logo-circle {
 .stay-operations-tab {
     display: flex;
     align-items: center;
-    gap: 11px;
+    justify-content: center;
+    gap: 10px;
     min-width: 0;
-    padding: 11px 16px;
-    color: var(--text-muted);
+    min-height: 58px;
+    padding: 9px 18px;
+    color: #746a64;
     text-decoration: none;
     border: 1px solid transparent;
-    border-radius: 10px;
-    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 14px;
+    position: relative;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stay-operations-tab:hover {
     color: var(--primary);
-    background: var(--sidebar-hover);
+    background: rgba(255, 255, 255, 0.55);
 }
 
 .stay-operations-tab.active {
-    color: #fff;
+    color: var(--primary);
+    background: #fff;
+    border-color: rgba(124, 83, 60, 0.1);
+    box-shadow: 0 7px 18px rgba(91, 59, 42, 0.13);
+}
+
+.stay-operations-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    width: 22px;
+    height: 2px;
+    border-radius: 999px;
     background: var(--primary);
-    box-shadow: 0 6px 16px rgba(124, 83, 60, 0.22);
 }
 
 .stay-operations-tab svg {
     flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    padding: 7px;
+    box-sizing: content-box;
+    border-radius: 10px;
+    background: rgba(124, 83, 60, 0.08);
+}
+
+.stay-operations-tab.active svg {
+    color: #fff;
+    background: var(--primary);
 }
 
 .stay-operations-tab span {
@@ -658,7 +683,7 @@ img.logo-circle {
 }
 
 .stay-operations-tab strong {
-    font-size: 13px;
+    font-size: 13.5px;
     line-height: 1.3;
 }
 
@@ -666,7 +691,7 @@ img.logo-circle {
     margin-top: 2px;
     font-size: 11px;
     color: inherit;
-    opacity: 0.78;
+    opacity: 0.72;
 }
 
 /* Administrator workspace for guest feedback and contact messages */

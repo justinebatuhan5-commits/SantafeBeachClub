@@ -32,23 +32,116 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 <title>Guest Reviews - Santa Fe</title>
 <link rel="stylesheet" href="assets/css/admin.css?v=<?= filemtime(__DIR__ . '/assets/css/admin.css') ?>">
 <style>
-.review-list { display:grid; gap:16px; }
-.review-card { padding:24px; background:var(--bg-surface); border:1px solid var(--border); border-radius:16px; min-width:0; }
-.review-top { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.review-meta { color:var(--text-muted); font-size:13px; margin-top:6px; }
-.review-content { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.7; margin:18px 0; }
-.review-stars { color:var(--primary); margin-top:12px; }
-.review-status { color:var(--text-muted); font-size:13px; }
-.review-card h2 { overflow-wrap:anywhere; font-size:17px; }
-.review-note { color:var(--text-muted); margin-bottom:20px; }
-.review-tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:12px; }
-.review-tab { padding:8px 16px; border-radius:8px; font-weight:600; font-size:14px; text-decoration:none; display:flex; align-items:center; gap:8px; background:#F1F5F9; color:#475569; }
-.review-tab[aria-current="page"] { background:#7C533C; color:#fff; }
+.review-list {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px;
+}
+.review-card {
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:270px;
+    padding:20px;
+    background:var(--bg-surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow-xs);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.review-card:hover {
+    transform:translateY(-2px);
+    border-color:rgba(132, 86, 60, .3);
+    box-shadow:var(--shadow-md);
+}
+.review-card.review-empty {
+    grid-column:1 / -1;
+    min-height:auto;
+    align-items:center;
+    padding:42px 20px;
+    color:var(--text-muted);
+    text-align:center;
+}
+.review-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.review-person { min-width:0; }
+.review-meta { color:var(--text-muted); font-size:11px; margin:5px 0 0; overflow-wrap:anywhere; }
+.review-content {
+    flex:1;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+    line-height:1.6;
+    margin:14px 0 18px;
+    padding:14px;
+    color:var(--text-main);
+    background:var(--bg-body);
+    border-left:3px solid rgba(132, 86, 60, .45);
+    border-radius:0 10px 10px 0;
+}
+.review-stars { display:flex; align-items:center; gap:7px; color:var(--primary); margin-top:12px; font-size:14px; letter-spacing:2px; }
+.review-rating-label { color:var(--text-muted); font-size:10px; font-weight:700; letter-spacing:0; }
+.review-status {
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:5px 9px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:800;
+    white-space:nowrap;
+}
+.review-status.pending { color:#9A3412; background:#FFF7ED; border:1px solid #FED7AA; }
+.review-status.published { color:#166534; background:#F0FDF4; border:1px solid #BBF7D0; }
+.review-card h2 { margin:0; color:var(--text-main); overflow-wrap:anywhere; font-size:16px; line-height:1.35; }
+.review-note {
+    margin:0 0 18px;
+    padding:11px 14px;
+    color:var(--text-muted);
+    background:var(--bg-surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    font-size:12px;
+    line-height:1.5;
+}
+.review-tabs {
+    display:inline-flex;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-bottom:14px;
+    padding:5px;
+    background:var(--bg-surface);
+    border:1px solid var(--border);
+    border-radius:11px;
+}
+.review-tab {
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:8px 13px;
+    border-radius:8px;
+    color:var(--text-muted);
+    font-size:12px;
+    font-weight:700;
+    text-decoration:none;
+}
+.review-tab:hover { color:var(--primary); background:var(--sidebar-hover); }
+.review-tab[aria-current="page"] { background:var(--primary); color:#fff; box-shadow:0 3px 10px rgba(124,83,60,.2); }
 .review-tab:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
-.review-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
-.review-delete { padding:10px 18px; border:1px solid #b91c1c; border-radius:8px; background:#fff; color:#b91c1c; font:inherit; font-weight:600; cursor:pointer; }
-.review-delete:hover { background:#fef2f2; }
+.review-actions { display:flex; gap:8px; align-items:center; padding-top:15px; border-top:1px solid var(--border); }
+.review-actions form { flex:1; margin:0; }
+.review-actions button { width:100%; min-height:38px; justify-content:center; padding:8px 12px; font-size:12px; }
+.review-delete { border:1px solid #fecaca; border-radius:8px; background:#fff; color:#b91c1c; font:inherit; font-weight:700; cursor:pointer; }
+.review-delete:hover { background:#fef2f2; border-color:#f87171; }
 .review-delete:focus-visible { outline:2px solid #b91c1c; outline-offset:3px; }
+@media (max-width:1100px) { .review-list { grid-template-columns:1fr; } }
+@media (max-width:560px) {
+    .review-card { min-height:auto; padding:16px; }
+    .review-top { flex-direction:column; }
+    .review-actions { flex-direction:column; }
+    .review-actions form { width:100%; }
+    .review-tabs { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+    .review-tab { justify-content:center; text-align:center; }
+}
 </style><script src="assets/js/site-dialog.js?v=1"></script>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head><body>
@@ -68,14 +161,14 @@ Published Reviews</a>
 <p class="review-note"><?= $tab === 'published' ? 'These reviews are approved for display on the homepage. Hide a review to move it to Unpublished Reviews, or delete it permanently.' : 'These reviews are hidden or awaiting approval. Approve a review to move it to Published Reviews and make it available on the homepage, or delete it permanently.' ?></p>
 <div class="review-list">
 <?php if ($reviews->num_rows === 0): ?>
-<div class="review-card"><?= $tab === 'published' ? 'No published reviews yet. Approve a review from Unpublished Reviews to show it here.' : 'No unpublished reviews. New submissions and hidden reviews will appear here.' ?></div>
+<div class="review-card review-empty"><?= $tab === 'published' ? 'No published reviews yet. Approve a review from Unpublished Reviews to show it here.' : 'No unpublished reviews. New submissions and hidden reviews will appear here.' ?></div>
 <?php endif; ?>
 <?php while ($review = $reviews->fetch_assoc()): $published = (int)$review['is_approved'] === 1; $rating = max(1, min(5, (int)$review['rating'])); ?>
 <article class="review-card">
-<div class="review-top"><div><h2><?= review_html($review['guest_name']) ?></h2>
-<p class="review-meta"><?= review_html($review['guest_location'] ?: 'Location not provided') ?> &middot; <?= review_html($review['created_at']) ?></p></div>
-<span class="review-status"><?= $published ? 'Published' : 'Hidden / awaiting approval' ?></span></div>
-<div class="review-stars" aria-label="<?= $rating ?> out of 5 stars"><?= str_repeat('&#9733;', $rating) . str_repeat('&#9734;', 5 - $rating) ?></div>
+<div class="review-top"><div class="review-person"><h2><?= review_html($review['guest_name']) ?></h2>
+<p class="review-meta"><?= review_html($review['guest_location'] ?: 'Location not provided') ?> &middot; <?= review_html(date('M j, Y · g:i A', strtotime($review['created_at']))) ?></p></div>
+<span class="review-status <?= $published ? 'published' : 'pending' ?>"><?= $published ? 'Published' : 'Awaiting approval' ?></span></div>
+<div class="review-stars" aria-label="<?= $rating ?> out of 5 stars"><span><?= str_repeat('&#9733;', $rating) . str_repeat('&#9734;', 5 - $rating) ?></span><span class="review-rating-label"><?= $rating ?>/5</span></div>
 <p class="review-content"><?= review_html($review['review_text']) ?></p>
 <div class="review-actions">
 <form method="post" action="admin_reviews?tab=<?= review_html($tab) ?>"><?= csrf_field() ?>
