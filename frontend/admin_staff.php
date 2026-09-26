@@ -415,6 +415,54 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Management — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <style>
+        .staff-management-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+        .staff-list-card {
+            width: 100%;
+            overflow-x: auto !important;
+            border-radius: 16px;
+        }
+        .staff-grid-head,
+        .staff-grid-row {
+            grid-template-columns: minmax(230px, 2fr) minmax(220px, 1.7fr) minmax(115px, .8fr) minmax(90px, .7fr) minmax(210px, 1.4fr) !important;
+            min-width: 920px;
+        }
+        .staff-secondary-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(380px, .75fr);
+            gap: 20px;
+            align-items: start;
+        }
+        .staff-secondary-grid > .admin-card {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .staff-secondary-grid > .admin-card:first-child .admin-card-header {
+            padding: 16px 20px;
+        }
+        .staff-secondary-grid > .admin-card:first-child > div:last-child {
+            padding: 16px 20px !important;
+        }
+        .staff-secondary-grid .admin-table th,
+        .staff-secondary-grid .admin-table td {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        @media (max-width: 1120px) {
+            .staff-secondary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 640px) {
+            .staff-management-layout,
+            .staff-secondary-grid { gap: 14px; }
+        }
+    </style>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
@@ -431,7 +479,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             <?php if ($success): ?><div class="alert alert-success"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><?php echo htmlspecialchars($success); ?></div><?php endif; ?>
             <?php if ($error):   ?><div class="alert alert-error"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
-            <div class="responsive-stack" style="display:grid;grid-template-columns:1.8fr 1fr;gap:24px;align-items:start;">
+            <div class="responsive-stack staff-management-layout">
 
             <!-- Staff Table - Modern Card Design -->
             <div class="admin-card staff-list-card" style="overflow:hidden;">
@@ -584,7 +632,7 @@ $portalLockMsg  = $portalSettings['staff_portal_locked_msg'] ?? 'Front Desk Rece
             </div>
 
             <!-- Right Column: Portal Lockdown & Permission Reference -->
-            <div style="display:flex;flex-direction:column;gap:24px;">
+            <div class="staff-secondary-grid">
                 <!-- Reception Portal Lockdown & Maintenance Mode Control -->
                 <div class="admin-card" style="border:1.5px solid <?php echo $isPortalLocked ? '#FCA5A5' : 'var(--border)'; ?>;background:<?php echo $isPortalLocked ? '#FFF5F5' : 'var(--card-bg)'; ?>;">
                     <div class="admin-card-header" style="border-bottom:1px solid <?php echo $isPortalLocked ? '#FEE2E2' : 'var(--border-light)'; ?>;">
