@@ -740,7 +740,7 @@ function resolveNotificationAction(data) {
     var bookingRef = bookingId > 0 ? 'REF-' + String(bookingId).padStart(3, '0') : '';
     var query = bookingId > 0 ? encodeURIComponent(bookingRef) : '';
     var adminReservations = <?php echo json_encode($_ph_is_admin ? 'admin_reservations' : 'reservations'); ?>;
-    var checkinPage = <?php echo json_encode($_ph_is_admin ? 'admin_checkin' : 'checkin'); ?>;
+    var checkinPage = 'admin_checkin';
     var checkoutPage = <?php echo json_encode($_ph_is_admin ? 'admin_checkout' : 'checkout'); ?>;
 
     if (context.includes('discount')) {

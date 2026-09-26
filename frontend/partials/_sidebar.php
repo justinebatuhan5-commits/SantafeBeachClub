@@ -317,7 +317,7 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 Reservations
             </a></li>
-            <li><a href="checkin" class="nav-item <?php echo _sb_active('checkin',$_page); ?>" title="Check-in">
+            <li><a href="admin_checkin" class="nav-item <?php echo _sb_active('checkin',$_page); ?>" title="Check-in">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                 Express Check-in
             </a></li>
@@ -1194,7 +1194,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function () {
-    const CHECKIN_URL = '<?php echo $_is_admin ? "admin_checkin" : "checkin"; ?>';
+    const CHECKIN_URL = 'admin_checkin';
 
     let stream        = null;
     let rafId         = null;
