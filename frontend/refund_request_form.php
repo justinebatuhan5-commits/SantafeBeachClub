@@ -14,6 +14,10 @@ if (session_status() === PHP_SESSION_NONE) {
 $success_message = '';
 $error_message = '';
 $booking = null;
+$schema_name = $conn->query('SELECT DATABASE()')->fetch_row()[0];
+$preference_check = $conn->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name='preferred_refund_method'");
+$preference_check->bind_param('s', $schema_name); $preference_check->execute();
+$refund_preference_ready = ((int)$preference_check->get_result()->fetch_row()[0] === 1); $preference_check->close();
 
 // Get booking from token (same as cancel_booking.php)
 $token = trim($_REQUEST['token'] ?? '');
@@ -88,17 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                 $request_type  = 'guest';
 
                 // Insert refund request
-                $req_stmt = $conn->prepare("
-                    INSERT INTO refund_requests
-                        (booking_id, payment_id, requested_by, request_type, status, reason,
-                         refund_amount, refund_fee, net_refund, preferred_refund_method)
-                    VALUES (?, ?, ?, ?, 'requested', ?, ?, ?, ?, ?)
-                ");
-                $req_stmt->bind_param("iisssddds",
-                    $booking['id'], $payment_id, $requested_by,
-                    $request_type, $reason,
-                    $refund_amount, $refund_fee, $net_refund, $preferred_method
-                );
+                if ($refund_preference_ready) {
+                    $req_stmt = $conn->prepare("INSERT INTO refund_requests (booking_id,payment_id,requested_by,request_type,status,reason,refund_amount,refund_fee,net_refund,preferred_refund_method) VALUES (?,?,?,?,'requested',?,?,?,?,?)");
+                    $req_stmt->bind_param("iisssddds", $booking['id'], $payment_id, $requested_by, $request_type, $reason, $refund_amount, $refund_fee, $net_refund, $preferred_method);
+                } else {
+                    $req_stmt = $conn->prepare("INSERT INTO refund_requests (booking_id,payment_id,requested_by,request_type,status,reason,refund_amount,refund_fee,net_refund) VALUES (?,?,?,?,'requested',?,?,?,?)");
+                    $req_stmt->bind_param("iisssddd", $booking['id'], $payment_id, $requested_by, $request_type, $reason, $refund_amount, $refund_fee, $net_refund);
+                }
                 $req_stmt->execute();
                 $refund_request_id = $conn->insert_id;
                 $req_stmt->close();
@@ -508,7 +508,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                             <label for="preferredRefundMethod">Preferred refund method</label>
                             <select id="preferredRefundMethod" name="preferred_refund_method" style="width:100%;padding:12px;border:1px solid #d7dde7;border-radius:8px;font-size:14px;background:#fff">
                                 <option value="original_source">Return to original payment method</option>
-                                <?php if (stripos((string)($booking['payment_method'] ?? ''), 'PayMongo') === false): ?>
+                                <?php if ($refund_preference_ready && stripos((string)($booking['payment_method'] ?? ''), 'PayMongo') === false): ?>
                                 <option value="manual_gcash">Receive through GCash</option>
                                 <?php endif; ?>
                             </select>

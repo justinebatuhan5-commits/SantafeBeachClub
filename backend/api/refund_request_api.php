@@ -156,25 +156,18 @@ try {
         }
 
         // Create refund request
-        $req_stmt = $conn->prepare("
-            INSERT INTO refund_requests (
-                booking_id, payment_id, requested_by, request_type, status, reason,
-                refund_amount, refund_fee, net_refund, preferred_refund_method
-            ) VALUES (?, ?, ?, ?, 'requested', ?, ?, ?, ?, ?)
-        ");
         $net_refund = $refund_amount;
-        $req_stmt->bind_param(
-            "iisssddds",
-            $booking_id,
-            $payment_id,
-            $requested_by,
-            $request_type,
-            $reason,
-            $refund_amount,
-            $refund_fee,
-            $net_refund,
-            $preferred_method
-        );
+        $schema_name = $conn->query('SELECT DATABASE()')->fetch_row()[0];
+        $column_check = $conn->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name='preferred_refund_method'");
+        $column_check->bind_param('s', $schema_name); $column_check->execute();
+        $preference_ready = ((int)$column_check->get_result()->fetch_row()[0] === 1); $column_check->close();
+        if ($preference_ready) {
+            $req_stmt = $conn->prepare("INSERT INTO refund_requests (booking_id,payment_id,requested_by,request_type,status,reason,refund_amount,refund_fee,net_refund,preferred_refund_method) VALUES (?,?,?,?,'requested',?,?,?,?,?)");
+            $req_stmt->bind_param("iisssddds", $booking_id, $payment_id, $requested_by, $request_type, $reason, $refund_amount, $refund_fee, $net_refund, $preferred_method);
+        } else {
+            $req_stmt = $conn->prepare("INSERT INTO refund_requests (booking_id,payment_id,requested_by,request_type,status,reason,refund_amount,refund_fee,net_refund) VALUES (?,?,?,?,'requested',?,?,?,?)");
+            $req_stmt->bind_param("iisssddd", $booking_id, $payment_id, $requested_by, $request_type, $reason, $refund_amount, $refund_fee, $net_refund);
+        }
         $req_stmt->execute();
         $refund_request_id = $conn->insert_id;
         $req_stmt->close();
