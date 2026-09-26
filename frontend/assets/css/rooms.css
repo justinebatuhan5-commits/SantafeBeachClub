@@ -1953,7 +1953,15 @@ body.rooms-page {
 /* Photo-led room browsing and consistent comparison details. */
 .rate-card { grid-template-columns: minmax(0, 1fr) minmax(260px, 0.85fr); }
 .rate-card-left { display: contents; }
-.rate-photo { grid-column: 1 / -1; aspect-ratio: 16 / 9; height: auto; max-height: 480px; background-size: cover; background-position: center; }
+.rate-photo {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: clamp(320px, 28vw, 360px);
+    aspect-ratio: auto;
+    max-height: 360px;
+    background-size: cover;
+    background-position: center;
+}
 .rate-photo-overlay { padding: 24px; }
 .rate-photo-copy { padding-right: 70px; }
 .rate-photo-kicker { color: #fff; font-size: 13px; }
