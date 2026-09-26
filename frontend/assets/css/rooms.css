@@ -31,7 +31,7 @@ body.rooms-page {
 /* ── Header ─────────────────────────────────────────── */
 .rooms-page .main-header {
     position: fixed;
-    top: 8px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
     margin: 0;
