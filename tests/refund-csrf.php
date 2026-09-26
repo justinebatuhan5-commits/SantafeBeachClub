@@ -9,7 +9,7 @@ foreach ([
     "require_once __DIR__ . '/../helpers/csrf_helper.php'",
     "(\$_SERVER['REQUEST_METHOD'] ?? '') !== 'POST'",
     'verify_csrf_token()',
-        "['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link']",
+        "['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link', 'update_refund_methods']",
 ] as $fragment) {
     if (!str_contains($api, $fragment)) {
         throw new RuntimeException('Missing refund request safeguard: ' . $fragment);

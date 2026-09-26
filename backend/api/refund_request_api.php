@@ -12,6 +12,7 @@ require_once __DIR__ . '/../helpers/api_auth_helper.php';
 require_once __DIR__ . '/../helpers/csrf_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
 require_once __DIR__ . '/../services/paymongo.php';
+require_once __DIR__ . '/../helpers/refund_method_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -55,12 +56,24 @@ function require_refund_state_change_request(): void
     }
 }
 
-if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link'], true)) {
+if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link', 'update_refund_methods'], true)) {
     require_refund_state_change_request();
 }
 
 try {
-    if ($action === 'submit_request') {
+    if ($action === 'update_refund_methods') {
+        require_admin_access();
+        $paymongoEnabled = ($_POST['paymongo_enabled'] ?? '') === '1' ? '1' : '0';
+        $manualEnabled = ($_POST['manual_gcash_enabled'] ?? '') === '1' ? '1' : '0';
+        $stmt = $conn->prepare('INSERT INTO settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)');
+        foreach (['refund_paymongo_enabled' => $paymongoEnabled, 'refund_manual_gcash_enabled' => $manualEnabled] as $key => $value) {
+            $stmt->bind_param('ss', $key, $value); $stmt->execute();
+        }
+        $stmt->close();
+        log_activity($conn, (string)($_SESSION['admin_username'] ?? 'Admin'), 'Refund Methods Updated', 'PayMongo refunds: ' . ($paymongoEnabled === '1' ? 'enabled' : 'disabled') . '; Manual GCash refunds: ' . ($manualEnabled === '1' ? 'enabled' : 'disabled') . '.');
+        $response = ['success' => true, 'message' => 'Refund method availability updated.'];
+
+    } elseif ($action === 'submit_request') {
         // Admins may select a booking by ID. Guests must present the random
         // cancellation token and the booking ID is then derived from it.
         $is_admin = refund_admin_authenticated();
@@ -523,6 +536,7 @@ try {
 
     } elseif ($action === 'send_refund_link') {
         require_admin_access();
+        sf_require_refund_method($conn, 'paymongo');
         $request_id = intval($_POST['request_id'] ?? 0);
         $refundLink = trim((string)($_POST['refund_link'] ?? ''));
         if (!$request_id) throw new Exception('Refund request ID is required.');
@@ -577,6 +591,7 @@ try {
 
     } elseif ($action === 'process_paymongo') {
         require_admin_access();
+        sf_require_refund_method($conn, 'paymongo');
         $request_id = intval($_POST['request_id'] ?? 0);
         $submittedRefundId = trim((string)($_POST['paymongo_refund_id'] ?? ''));
         if (!$request_id || !preg_match('/^ref_[A-Za-z0-9]+$/D', $submittedRefundId)) {
@@ -647,6 +662,7 @@ try {
 
     } elseif ($action === 'sync_paymongo') {
         require_admin_access();
+        sf_require_refund_method($conn, 'paymongo');
         $request_id = intval($_POST['request_id'] ?? 0);
         $stmt = $conn->prepare("SELECT r.*, p.transaction_id FROM refund_requests r JOIN payments p ON p.id=r.payment_id AND p.booking_id=r.booking_id WHERE r.id=? AND r.status='processing' LIMIT 1");
         $stmt->bind_param('i', $request_id);

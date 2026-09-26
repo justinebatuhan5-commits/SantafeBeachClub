@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/services/mailer.php';
+require_once __DIR__ . '/../backend/helpers/refund_method_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -18,6 +19,7 @@ $schema_name = $conn->query('SELECT DATABASE()')->fetch_row()[0];
 $preference_check = $conn->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name='preferred_refund_method'");
 $preference_check->bind_param('s', $schema_name); $preference_check->execute();
 $refund_preference_ready = ((int)$preference_check->get_result()->fetch_row()[0] === 1); $preference_check->close();
+$refund_methods = sf_refund_method_settings($conn);
 
 // Get booking from token (same as cancel_booking.php)
 $token = trim($_REQUEST['token'] ?? '');
@@ -511,7 +513,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                                 <?php
                                 $requestPaymentMethod = (string)($booking['payment_method'] ?? '');
                                 $manualGcashAllowed = stripos($requestPaymentMethod, 'PayMongo') === false || stripos($requestPaymentMethod, 'GCash') !== false;
-                                if ($refund_preference_ready && $manualGcashAllowed): ?>
+                                if ($refund_preference_ready && $refund_methods['manual_gcash'] && $manualGcashAllowed): ?>
                                 <option value="manual_gcash">Receive through GCash</option>
                                 <?php endif; ?>
                             </select>

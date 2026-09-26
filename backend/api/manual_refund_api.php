@@ -5,6 +5,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../helpers/csrf_helper.php';
 require_once __DIR__ . '/../helpers/private_storage_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
+require_once __DIR__ . '/../helpers/refund_method_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
@@ -32,6 +33,7 @@ try {
     $action = trim((string)($_GET['action'] ?? ''));
     if ($action === 'generate_link') {
         manual_refund_admin(); manual_refund_post();
+        sf_require_refund_method($conn, 'manual_gcash');
         $requestId = (int)($_POST['request_id'] ?? 0);
         $stmt = $conn->prepare("SELECT r.id,r.booking_id,r.net_refund,r.status,b.guest_name,b.guest_email,p.payment_method
             FROM refund_requests r JOIN bookings b ON b.id=r.booking_id JOIN payments p ON p.id=r.payment_id
@@ -73,6 +75,7 @@ try {
 
     } elseif ($action === 'guest_submit') {
         manual_refund_post();
+        sf_require_refund_method($conn, 'manual_gcash');
         $token = trim((string)($_POST['token'] ?? ''));
         $name = trim(preg_replace('/\s+/', ' ', (string)($_POST['gcash_account_name'] ?? '')));
         $mobile = preg_replace('/\D+/', '', (string)($_POST['gcash_mobile'] ?? ''));
@@ -101,6 +104,7 @@ try {
 
     } elseif ($action === 'complete') {
         manual_refund_admin(); manual_refund_post();
+        sf_require_refund_method($conn, 'manual_gcash');
         $requestId = (int)($_POST['request_id'] ?? 0);
         $reference = strtoupper(trim((string)($_POST['transfer_reference'] ?? '')));
         $notes = trim((string)($_POST['notes'] ?? ''));

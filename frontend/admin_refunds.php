@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/refund_method_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -19,6 +20,7 @@ $schema_check->execute();
 $schema_state = $schema_check->get_result()->fetch_assoc();
 $schema_check->close();
 $manual_refund_ready = ((int)($schema_state['has_table'] ?? 0) === 1 && (int)($schema_state['column_count'] ?? 0) === 2);
+$refund_methods = sf_refund_method_settings($conn);
 $noshow_handoff = null;
 if (($_SESSION['admin_role'] ?? '') === 'receptionist' && isset($_GET['noshow_handoff'])) {
     $noshow_handoff = $_SESSION['noshow_refund_handoff'] ?? null;
@@ -480,6 +482,20 @@ foreach ($valid_statuses as $s) {
             </div>
             <?php endif; ?>
 
+            <?php if ($is_admin_user): ?>
+            <div class="reception-refund-tools" style="margin-bottom:18px">
+                <div>
+                    <strong>Refund method availability</strong>
+                    <span>Temporarily disable a channel when its provider or manual process has an error. Existing requests remain recorded.</span>
+                </div>
+                <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+                    <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700"><input id="refundPaymongoEnabled" type="checkbox" <?php echo $refund_methods['paymongo'] ? 'checked' : ''; ?>> PayMongo refunds</label>
+                    <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700"><input id="refundManualEnabled" type="checkbox" <?php echo $refund_methods['manual_gcash'] ? 'checked' : ''; ?> <?php echo !$manual_refund_ready ? 'disabled' : ''; ?>> Manual GCash</label>
+                    <button class="btn-process" id="saveRefundMethodsBtn" type="button" onclick="saveRefundMethods()">Save availability</button>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (!$is_admin_user): ?>
             <div class="reception-refund-tools">
                 <div>
@@ -616,7 +632,13 @@ foreach ($valid_statuses as $s) {
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
                             <?php if ((float)$refund['net_refund'] > 0): ?>
-                            <?php if (stripos((string)($refund['payment_method'] ?? ''), 'PayMongo') !== false): ?>
+                            <?php
+                            $approvedPaymentMethod = (string)($refund['payment_method'] ?? '');
+                            $approvedIsPayMongo = stripos($approvedPaymentMethod, 'PayMongo') !== false;
+                            $approvedIsGcash = stripos($approvedPaymentMethod, 'GCash') !== false;
+                            $hasAvailableApprovedRoute = false;
+                            if ($approvedIsPayMongo && $refund_methods['paymongo']): $hasAvailableApprovedRoute = true;
+                            ?>
                             <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
                                 Email Refund Link
                             </button>
@@ -627,18 +649,18 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
                                 Open PayMongo Dashboard
                             </a>
-                            <?php if ($manual_refund_ready && stripos((string)($refund['payment_method'] ?? ''), 'GCash') !== false): ?>
+                            <?php endif; ?>
+                            <?php if ($approvedIsPayMongo && $approvedIsGcash && $manual_refund_ready && $refund_methods['manual_gcash']): $hasAvailableApprovedRoute = true; ?>
                             <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this, true)">
                                 Manual GCash Fallback
                             </button>
                             <?php endif; ?>
-                            <?php elseif ($manual_refund_ready): ?>
+                            <?php if (!$approvedIsPayMongo && $manual_refund_ready && $refund_methods['manual_gcash']): $hasAvailableApprovedRoute = true; ?>
                             <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this)">
                                 Email GCash Details Link
                             </button>
-                            <?php else: ?>
-                            <span style="font-size:12px;color:#92400e;font-weight:700">Run the refund database migration to enable Manual GCash.</span>
                             <?php endif; ?>
+                            <?php if (!$hasAvailableApprovedRoute): ?><span style="font-size:12px;color:#92400e;font-weight:700">The applicable refund method is currently disabled.</span><?php endif; ?>
                             <?php else: ?>
                             <span style="font-size:12px;color:#991b1b;font-weight:700;">₱0.00 refund — PayMongo actions disabled</span>
                             <?php endif; ?>
@@ -647,16 +669,22 @@ foreach ($valid_statuses as $s) {
                                 Cancel Refund Approval
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'processing' && (float)$refund['net_refund'] > 0): ?>
+                            <?php if ($refund_methods['paymongo']): ?>
                             <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
                                 Email Refund Link
                             </button>
                             <button class="btn-process" type="button" onclick="syncPayMongoRefund(<?php echo $refund['id']; ?>, this)">
                                 Verify PayMongo Status
                             </button>
+                            <?php else: ?><span style="font-size:12px;color:#92400e;font-weight:700">PayMongo refunds are disabled.</span><?php endif; ?>
                         <?php elseif ($is_admin_user && $filter_status === 'awaiting_guest_details'): ?>
+                            <?php if ($refund_methods['manual_gcash']): ?>
                             <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this)">Resend New Secure Link</button>
+                            <?php else: ?><span style="font-size:12px;color:#92400e;font-weight:700">Manual GCash refunds are disabled.</span><?php endif; ?>
                         <?php elseif ($is_admin_user && $filter_status === 'details_submitted'): ?>
+                            <?php if ($refund_methods['manual_gcash']): ?>
                             <button class="btn-process" type="button" onclick="openManualRefundModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['gcash_account_name'] ?? ''); ?>, <?php echo xss_attr_json($refund['gcash_mobile'] ?? ''); ?>)">Record GCash Transfer</button>
+                            <?php else: ?><span style="font-size:12px;color:#92400e;font-weight:700">Manual GCash refunds are disabled.</span><?php endif; ?>
                         <?php endif; ?>
                         <button class="btn-secondary-sm" onclick="viewDetails(<?php echo $refund['id']; ?>)">
                             View Details
@@ -792,6 +820,13 @@ foreach ($valid_statuses as $s) {
     <script>
         let currentRefundId = null;
         const refundCsrfToken = <?php echo json_encode($csrf_token, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+        async function saveRefundMethods() {
+            const btn=document.getElementById('saveRefundMethodsBtn'),original=btn.textContent; btn.disabled=true; btn.textContent='Saving...';
+            const fd=new FormData(); fd.append('paymongo_enabled',document.getElementById('refundPaymongoEnabled').checked?'1':'0'); fd.append('manual_gcash_enabled',document.getElementById('refundManualEnabled').checked?'1':'0'); fd.append('csrf_token',refundCsrfToken);
+            try { const response=await fetch('../backend/api/refund_request_api.php?action=update_refund_methods',{method:'POST',body:fd}),data=await response.json(); if(!data.success)throw new Error(data.message||'Could not update refund methods.'); showToast(data.message,'success'); setTimeout(()=>location.reload(),700); }
+            catch(error){btn.disabled=false;btn.textContent=original;showToast(error.message||'Network error.','error');}
+        }
 
         function openReceptionRefundModal(handoff = null) {
             const modal = document.getElementById('receptionRefundModal');
