@@ -3,7 +3,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
-$token = trim((string)($_POST['token'] ?? $_GET['token'] ?? ''));
+header('Referrer-Policy: no-referrer');
+$queryToken = trim((string)($_GET['token'] ?? ''));
+if (preg_match('/^[a-f0-9]{64}$/', $queryToken)) {
+    $_SESSION['refund_confirmation_token'] = $queryToken;
+    header('Location: refund_confirmation.php', true, 303);
+    exit;
+}
+$token = trim((string)($_POST['token'] ?? $_SESSION['refund_confirmation_token'] ?? ''));
 $refund = null; $confirmed = false; $error = '';
 if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
     $error = 'This confirmation link is invalid.';
@@ -22,13 +29,14 @@ if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
                 $update->bind_param('i', $refund['refund_request_id']); $update->execute();
                 if ($update->affected_rows !== 1) throw new RuntimeException('This refund was already confirmed.');
                 $update->close(); $conn->commit(); $confirmed = true;
+                unset($_SESSION['refund_confirmation_token']);
                 log_activity($conn, 'Guest', 'Manual Refund Receipt Confirmed', 'Guest confirmed receipt for refund request #' . $refund['refund_request_id'] . '.');
             } catch (Throwable $e) { $conn->rollback(); $error = $e->getMessage(); }
         }
     } else {
         $stmt = $conn->prepare("SELECT r.booking_id,r.net_refund,d.transfer_reference,b.guest_name,d.confirmation_token_expires_at FROM manual_refund_details d JOIN refund_requests r ON r.id=d.refund_request_id JOIN bookings b ON b.id=r.booking_id WHERE d.confirmation_token_hash=? AND d.confirmation_token_expires_at>NOW() AND d.guest_confirmed_at IS NULL AND r.status='completed' LIMIT 1");
         $stmt->bind_param('s', $hash); $stmt->execute(); $refund = $stmt->get_result()->fetch_assoc(); $stmt->close();
-        if (!$refund) $error = 'This confirmation link is expired, already used, or invalid.';
+        if (!$refund) { $error = 'This confirmation link is expired, already used, or invalid.'; unset($_SESSION['refund_confirmation_token']); }
     }
 }
 ?>

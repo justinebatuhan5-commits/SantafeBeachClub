@@ -175,6 +175,7 @@ try {
             $book->bind_param('i', $refund['booking_id']); $book->execute(); $book->close();
             $conn->commit();
         } catch (Throwable $e) { $conn->rollback(); throw $e; }
+        unset($_SESSION['manual_refund_token']);
         $response = ['success' => true, 'message' => 'Your GCash details were submitted securely. The resort will verify and process the refund.'];
 
     } elseif ($action === 'complete') {

@@ -39,4 +39,7 @@ foreach (['Email GCash Details Link','Record GCash Transfer','Confirm Money Sent
 foreach (['ownership_confirmed','never ask for your GCash MPIN','csrf_token','Verify your saved phone','send_otp','verify_otp'] as $fragment) {
     if (!str_contains($guest, $fragment)) throw new RuntimeException('Missing secure guest refund form behavior: ' . $fragment);
 }
+foreach (["\$_SESSION['manual_refund_token']", "header('Location: refund_details.php'", "header('Referrer-Policy: no-referrer'"] as $fragment) {
+    if (!str_contains($guest, $fragment)) throw new RuntimeException('Refund link token is not removed from the browser address: ' . $fragment);
+}
 echo "Manual GCash refunds use expiring single-use links, restricted payment routing, private receipts, and administrator completion.\n";
