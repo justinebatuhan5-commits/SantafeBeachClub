@@ -249,7 +249,8 @@ try {
 
         $stmt = $conn->prepare("
             SELECT r.*, b.guest_name, b.guest_email, b.accommodation_name,
-                   b.check_in, b.check_out, p.amount as original_amount
+                   b.check_in, b.check_out, p.amount as original_amount,
+                   p.payment_method
             FROM refund_requests r
             JOIN bookings b ON r.booking_id = b.id
             LEFT JOIN payments p ON r.payment_id = p.id

@@ -1104,6 +1104,9 @@ foreach ($valid_statuses as $s) {
                     if (data.success) {
                         const r = data.data;
                         const fmtAmt = v => v ? '₱' + parseFloat(v).toLocaleString('en-PH', {minimumFractionDigits:2}) : '—';
+                        const refundSystem = r.approved_refund_method === 'manual_gcash'
+                            ? 'Manual GCash Transfer'
+                            : (r.paymongo_refund_id ? 'PayMongo Refund' : (/^PayMongo/i.test(r.payment_method || '') ? 'PayMongo / Original Source' : 'Original Payment Source'));
                         document.getElementById('detailsContent').innerHTML = `
                             <table style="width:100%; border-collapse:collapse; font-size:13px;">
                                 <tr><td style="padding:7px 0; color:var(--text-muted); width:140px;">Request ID</td><td style="font-weight:600;">#${Security.escapeHTML(r.id)}</td></tr>
@@ -1114,6 +1117,8 @@ foreach ($valid_statuses as $s) {
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Refund Amount</td><td style="font-weight:700; color:var(--primary);">${fmtAmt(r.net_refund)}</td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Cancellation Fee</td><td>${fmtAmt(r.refund_fee)}</td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Original Paid</td><td>${fmtAmt(r.original_amount)}</td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Original Payment</td><td>${Security.escapeHTML(r.payment_method || '—')}</td></tr>
+                                <tr><td style="padding:7px 0; color:var(--text-muted);">Refund System Used</td><td><strong>${Security.escapeHTML(refundSystem)}</strong></td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Status</td><td><strong style="text-transform:uppercase;">${Security.escapeHTML(r.status)}</strong></td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Requested</td><td>${Security.escapeHTML(r.requested_at)}</td></tr>
                                 ${r.approved_by ? `<tr><td style="padding:7px 0; color:var(--text-muted);">Reviewed By</td><td>${Security.escapeHTML(r.approved_by)} on ${Security.escapeHTML(r.approved_at)}</td></tr>` : ''}

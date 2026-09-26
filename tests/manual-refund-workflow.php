@@ -10,7 +10,7 @@ foreach (['token_hash','token_expires_at','gcash_account_name','transfer_referen
 foreach (["\$action === 'generate_link'", "\$action === 'guest_submit'", "\$action === 'complete'", "stripos(\$paymentMethod, 'PayMongo')", "stripos(\$paymentMethod, 'GCash')", 'store_private_receipt', "status='details_submitted'", "status='completed'"] as $fragment) {
     if (!str_contains($api, $fragment)) throw new RuntimeException('Missing protected manual refund behavior: ' . $fragment);
 }
-foreach (['Email GCash Details Link','Record GCash Transfer','Confirm Money Sent','refundCsrfToken','Show full number','toggleManualRefundMobile'] as $fragment) {
+foreach (['Email GCash Details Link','Record GCash Transfer','Confirm Money Sent','Refund System Used','Manual GCash Transfer','PayMongo Refund','refundCsrfToken','Show full number','toggleManualRefundMobile'] as $fragment) {
     if (!str_contains($admin, $fragment)) throw new RuntimeException('Missing manual refund admin control: ' . $fragment);
 }
 foreach (['ownership_confirmed','never ask for your GCash MPIN','csrf_token'] as $fragment) {
