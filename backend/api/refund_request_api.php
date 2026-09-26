@@ -13,6 +13,7 @@ require_once __DIR__ . '/../helpers/csrf_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
 require_once __DIR__ . '/../services/paymongo.php';
 require_once __DIR__ . '/../helpers/refund_method_helper.php';
+require_once __DIR__ . '/../helpers/admin_session_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -58,6 +59,11 @@ function require_refund_state_change_request(): void
 
 if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link'], true)) {
     require_refund_state_change_request();
+}
+
+if (in_array($action, ['approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link'], true)) {
+    require_admin_access();
+    require_recent_admin_password_json();
 }
 
 try {

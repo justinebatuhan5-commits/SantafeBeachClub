@@ -10,6 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/cors_helper.php';
 require_once __DIR__ . '/security_logger.php';
+require_once __DIR__ . '/admin_session_helper.php';
 
 function require_api_auth(mysqli $conn, ?string $requiredRole = null): void {
     handle_cors();
@@ -70,6 +71,7 @@ function require_api_auth(mysqli $conn, ?string $requiredRole = null): void {
  * Terminates with 401 JSON if admin session is not authenticated.
  */
 function require_admin_access(): void {
+    global $conn;
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -85,6 +87,14 @@ function require_admin_access(): void {
             'success' => false,
             'message' => 'Administrator access is required for this refund action.'
         ]);
+        exit;
+    }
+    if (!isset($conn) || !admin_session_validate($conn)) {
+        session_unset();
+        session_destroy();
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => 'This session was signed out remotely.', 'redirect' => '../frontend/admin_login']);
         exit;
     }
 }

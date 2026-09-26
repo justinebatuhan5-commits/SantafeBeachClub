@@ -5,6 +5,8 @@ $source = $_SESSION['login_source'] ?? ($role === 'admin' ? 'admin' : 'reception
 
 if (isset($_SESSION['admin_logged_in']) && isset($_SESSION['admin_username'])) {
     require_once __DIR__ . '/../backend/config/db.php';
+    require_once __DIR__ . '/../backend/helpers/admin_session_helper.php';
+    admin_session_revoke_current($conn);
     log_activity($conn, $_SESSION['admin_username'], 'Logout', 'Logged out');
 }
 

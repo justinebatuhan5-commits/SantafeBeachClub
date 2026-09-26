@@ -12,6 +12,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery - Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
+    <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <style>
         .gallery-page .site-navbar {
             position: fixed;

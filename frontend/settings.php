@@ -18,6 +18,11 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf_token();
     $action = $_POST['action'] ?? '';
+    $stepUpActions = ['add_admin', 'delete_admin', 'save_payment_instructions', 'save_refund_methods'];
+    if ($current_role === 'admin' && in_array($action, $stepUpActions, true) && !admin_password_recent()) {
+        $error = 'Confirm your administrator password before changing accounts, payment, or refund security settings.';
+        $action = '__reauth_required__';
+    }
 
     // --- Change own password ---
     if ($action === 'change_password') {
@@ -766,6 +771,9 @@ $active_tab = $_GET['tab'] ?? 'profile';
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <?php echo htmlspecialchars($error); ?>
                 </div>
+                <?php if (str_contains($error, 'Confirm your administrator password')): ?>
+                    <p style="margin:-6px 0 18px"><a class="btn-save" style="display:inline-block;text-decoration:none" href="admin_reauth.php?return=settings">Confirm Password</a></p>
+                <?php endif; ?>
             <?php endif; ?>
 
             <!-- Tab Nav -->
@@ -976,7 +984,6 @@ $active_tab = $_GET['tab'] ?? 'profile';
                         <div class="form-actions"><button type="submit" class="btn-save">Save Homepage Highlights</button></div>
                     </form>
                 </div>
-
                 <div class="settings-card">
                     <h3>Property Information</h3>
                     <p class="card-desc">These details appear on receipts, emails, and throughout the dashboard.</p>

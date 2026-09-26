@@ -22,6 +22,15 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/admin_session_helper.php';
+if (!admin_session_validate($conn)) {
+    session_unset();
+    session_destroy();
+    header('Location: admin_login?revoked=1');
+    exit;
+}
+
 // ── Absolute Session Lifetime Check (8 hours = 28800 seconds) ───────────
 $absolute_limit = 28800;
 if (isset($_SESSION['session_start_time']) && (time() - $_SESSION['session_start_time'] > $absolute_limit)) {

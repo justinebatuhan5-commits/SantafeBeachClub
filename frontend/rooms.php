@@ -359,6 +359,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rooms & Accommodations â€“ Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
+    <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <link rel="stylesheet" href="assets/css/rooms.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/rooms.css'); ?>">
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>

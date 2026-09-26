@@ -54,6 +54,21 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/admin_session_helper.php';
+if (!admin_session_validate($conn)) {
+    session_unset();
+    session_destroy();
+    if ($is_api_request) {
+        http_response_code(401);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'This session was signed out remotely.', 'redirect' => 'staff_login']);
+        exit;
+    }
+    header('Location: staff_login?revoked=1');
+    exit;
+}
+
 // ── Absolute Session Lifetime Check (8 hours = 28800 seconds) ───────────
 $absolute_limit = 28800;
 if (isset($_SESSION['session_start_time']) && (time() - $_SESSION['session_start_time'] > $absolute_limit)) {

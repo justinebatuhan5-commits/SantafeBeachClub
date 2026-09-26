@@ -8,15 +8,23 @@ require_once __DIR__ . '/../services/mailer.php';
 require_once __DIR__ . '/../helpers/refund_method_helper.php';
 require_once __DIR__ . '/../helpers/rate_limiter.php';
 require_once __DIR__ . '/../helpers/security_logger.php';
+require_once __DIR__ . '/../helpers/admin_session_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 $response = ['success' => false, 'message' => 'Invalid action.'];
 
 function manual_refund_admin(): void {
+    global $conn;
     if (($_SESSION['admin_logged_in'] ?? false) !== true || ($_SESSION['admin_role'] ?? '') !== 'admin') {
         http_response_code(403);
         throw new RuntimeException('Administrator access is required.');
+    }
+    if (!admin_session_validate($conn)) {
+        session_unset();
+        session_destroy();
+        http_response_code(401);
+        throw new RuntimeException('This session was signed out remotely.');
     }
 }
 
@@ -33,6 +41,10 @@ function manual_refund_post(): void {
 
 try {
     $action = trim((string)($_GET['action'] ?? ''));
+    if (in_array($action, ['generate_link', 'reset_verification', 'complete'], true)) {
+        manual_refund_admin();
+        require_recent_admin_password_json();
+    }
     if ($action === 'generate_link') {
         manual_refund_admin(); manual_refund_post();
         sf_require_refund_method($conn, 'manual_gcash');
