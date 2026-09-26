@@ -324,6 +324,7 @@ body.rooms-page {
     grid-template-columns: 1fr 296px;
     gap: 28px;
     align-items: start;
+    scroll-margin-top: 96px;
 }
 
 .rooms-main { min-width: 0; }

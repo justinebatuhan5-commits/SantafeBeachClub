@@ -604,7 +604,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
 
     <!-- â”€â”€ Tab Navigation â”€â”€ -->
     <!-- â”€â”€ Main Content + Sidebar â”€â”€ -->
-    <div class="rooms-layout">
+    <div class="rooms-layout" id="room-choice">
 
         <!-- â•â• Rooms Main Column â•â• -->
         <main class="rooms-main">

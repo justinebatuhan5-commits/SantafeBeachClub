@@ -17,7 +17,7 @@ $active_nav = $active_nav ?? '';
             <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
         </a>
     </div>
-    <nav class="nav-menu" aria-label="Main navigation">
+    <nav class="nav-menu" id="siteNavigation" aria-label="Main navigation">
         <ul>
             <li<?php echo $active_nav === 'home'       ? ' class="active"' : ''; ?>><a href="index">Home</a></li>
             <li<?php echo $active_nav === 'rooms'      ? ' class="active"' : ''; ?>><a href="rooms">Rooms</a></li>
@@ -27,6 +27,12 @@ $active_nav = $active_nav ?? '';
         </ul>
     </nav>
     <div class="navbar-actions">
-        <a href="rooms" class="navbar-book">Book your stay <span aria-hidden="true">&rarr;</span></a>
+        <a href="rooms#room-choice" class="navbar-book">Book your stay <span aria-hidden="true">&rarr;</span></a>
+        <button class="navbar-toggle" type="button" aria-expanded="false" aria-controls="siteNavigation" aria-label="Open navigation menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </div>
 </header>
+<script src="assets/js/navbar.js?v=<?php echo (int) filemtime(__DIR__ . '/../assets/js/navbar.js'); ?>" defer></script>

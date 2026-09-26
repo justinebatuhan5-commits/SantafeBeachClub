@@ -123,6 +123,34 @@
 }
 .navbar-book:focus-visible { outline: 3px solid #8a5a3a; outline-offset: 3px; }
 
+.navbar-toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(126, 91, 67, 0.18);
+    border-radius: 50%;
+    background: #fffaf4;
+    color: #5c3d2b;
+    box-shadow: 0 5px 14px rgba(77, 47, 30, 0.1);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+}
+.navbar-toggle span {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transition: transform 180ms ease, opacity 180ms ease;
+}
+.navbar-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.navbar-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.navbar-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.navbar-toggle:focus-visible { outline: 3px solid #8a5a3a; outline-offset: 3px; }
+
 /* On the Home page the navbar floats over the hero instead of creating a
    cream-colored row above the background image. */
 .home-page .site-navbar {
@@ -146,27 +174,49 @@
 }
 
 @media (max-width: 900px) {
-    .site-navbar { flex-wrap: wrap; padding-left: 22px; }
+    .site-navbar { padding-left: 22px; }
     .home-page .site-navbar { padding-left: 22px; }
     .site-navbar .brand-logo { min-width: 90px; }
     .site-navbar .brand-logo::after { right: -18px; }
     .site-navbar .brand-logo .logo-mark { width: 46px; height: 46px; }
     .navbar-actions { margin-left: auto; gap: 10px; }
-    .navbar-book { min-height: 44px; padding: 0 18px; }
-    .site-navbar .nav-menu { order: 3; flex: 0 0 100%; width: 100%; margin-top: 8px; padding: 8px 0 0; border-top: 1px solid #e5d6c8; }
-    .site-navbar .nav-menu ul { flex-wrap: wrap; gap: 4px 18px; width: 100%; }
-    .site-navbar .nav-menu ul li a,
-    .site-navbar .nav-menu ul li a[style] { font-size: 14px; padding: 6px 0; }
 }
 
-@media (max-width: 600px) {
-    .site-navbar { border-radius: 34px; gap: 10px; }
-    .navbar-book { width: 48px; padding: 0; font-size: 0; }
-    .navbar-book span { font-size: 22px; }
+@media (max-width: 768px) {
+    .site-navbar {
+        position: relative;
+        flex-wrap: nowrap;
+        min-height: 64px;
+        padding: 8px 12px 8px 20px;
+        border-radius: 34px;
+        gap: 10px;
+    }
+    .home-page .site-navbar { padding: 8px 12px 8px 20px; }
+    .site-navbar .brand-logo { min-width: 64px; }
+    .site-navbar .brand-logo::after { left: -21px; right: -12px; top: -9px; bottom: -9px; }
+    .navbar-book { display: none; }
+    .navbar-toggle { display: inline-flex; }
+    .site-navbar .nav-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: calc(100vh - 110px);
+        margin: 0;
+        padding: 10px;
+        border: 1px solid rgba(138, 90, 58, 0.16);
+        border-radius: 20px;
+        background: rgba(252, 248, 241, 0.99);
+        box-shadow: 0 18px 38px rgba(62, 40, 26, 0.18);
+        overflow-y: auto;
+    }
+    .site-navbar .nav-menu.is-open { display: block; }
     .site-navbar .nav-menu ul {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
         width: 100%;
     }
     .site-navbar .nav-menu ul li { min-width: 0; }
@@ -175,13 +225,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 44px;
-        padding: 8px 4px;
-        border-radius: 8px;
+        justify-content: flex-start;
+        min-height: 42px;
+        padding: 10px 14px;
+        border-radius: 10px;
         font-size: 14px;
         line-height: 1.25;
         white-space: normal;
-        text-align: center;
+        text-align: left;
     }
     .site-navbar .nav-menu ul li.active a {
         background: #f0e8dd;
@@ -195,5 +246,4 @@
     .site-navbar .brand-logo { min-width: 64px; }
     .site-navbar .brand-logo::after { left: -11px; right: -10px; top: -9px; bottom: -9px; }
     .site-navbar .brand-logo .logo-mark { width: 46px; height: 46px; }
-    .navbar-book { width: 44px; height: 44px; min-height: 44px; flex-basis: 44px; }
 }
