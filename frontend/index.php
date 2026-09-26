@@ -45,6 +45,7 @@ if ($price_q) {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Santa Fe Beach Club - Escape to Paradise</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
+    <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <script src="assets/js/dark-mode-toggle.js" defer></script>
     <style>
         .mobile-menu-btn {
@@ -69,24 +70,8 @@ if ($price_q) {
 </head>
 <body class="home-page">
 
-    <!-- Header Navigation -->
-    <header class="main-header">
-        <div class="brand-logo">
-            <a href="index" class="logo-link">
-                <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
-            </a>
-        </div>
-        <nav class="header-navigation" aria-label="Main navigation">
-            <a href="index" aria-current="page"><?php echo __t('home'); ?></a>
-            <a href="rooms"><?php echo __t('rooms'); ?></a>
-            <a href="gallery"><?php echo __t('gallery'); ?></a>
-            <a href="contact"><?php echo __t('contact'); ?></a>
-            <a href="my_booking"><?php echo __t('my_booking'); ?></a>
-        </nav>
-        <div class="header-action" style="display:flex; align-items:center; gap:10px;">
-            <a href="rooms" class="btn-book-header"><?php echo __t('book_now'); ?></a>
-        </div>
-    </header>
+    <!-- Shared Header Navigation -->
+    <?php $active_nav = 'home'; require __DIR__ . '/partials/_navbar.php'; ?>
 
 <!-- Hero Banner Section -->
     <section class="hero-section">
