@@ -101,8 +101,8 @@ $bookings_query = $conn->query("SELECT id, guest_name, guest_email, guest_type, 
     <main class="main-content">
         <!-- Top Bar (shared component, same as Dashboard) -->
         <?php
-        $page_title = 'Check-out';
-        $page_subtitle = 'Process departing guests';
+        $page_title = 'Check-in / Check-out';
+        $page_subtitle = 'Manage guest arrivals and departures';
         $header_extra_html = '
             <div class="search-wrapper">
                 <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -111,6 +111,10 @@ $bookings_query = $conn->query("SELECT id, guest_name, guest_email, guest_type, 
         ';
         include __DIR__ . '/partials/_page_header.php';
         ?>
+
+        <div class="stay-operations-tabs-wrap">
+            <?php $stay_operations_active = 'checkout'; include __DIR__ . '/partials/_stay_operations_tabs.php'; ?>
+        </div>
 
         <section class="dashboard-grid" style="grid-template-columns: 1fr;">
             

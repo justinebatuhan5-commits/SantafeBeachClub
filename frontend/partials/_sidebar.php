@@ -182,13 +182,9 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Reservations
             </a></li>
-            <li><a href="admin_checkin" class="sidebar-link <?php echo _sb_active('checkin',$_page); ?>" title="Check-in">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                Check-in
-            </a></li>
-            <li><a href="admin_checkout" class="sidebar-link <?php echo _sb_active('checkout',$_page); ?>" title="Check-out">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Check-out
+            <li><a href="admin_checkin" class="sidebar-link <?php echo in_array($_page, ['checkin', 'checkout'], true) ? 'active' : ''; ?>" title="Check-in / Check-out">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11"/><polyline points="15 4 18 7 15 10"/><path d="M17 17H6"/><polyline points="9 14 6 17 9 20"/></svg>
+                Check-in / Check-out
             </a></li>
             <li><a href="javascript:void(0)" onclick="launchDesktopScanner()" class="sidebar-link" title="Launch QR Scanner" style="color:#0284c7; font-weight:600;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
@@ -321,13 +317,9 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 Reservations
             </a></li>
-            <li><a href="admin_checkin" class="nav-item <?php echo _sb_active('checkin',$_page); ?>" title="Check-in">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-                Express Check-in
-            </a></li>
-            <li><a href="checkout" class="nav-item <?php echo _sb_active('checkout',$_page); ?>" title="Check-out">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Check-out
+            <li><a href="admin_checkin" class="nav-item <?php echo in_array($_page, ['checkin', 'checkout'], true) ? 'active' : ''; ?>" title="Check-in / Check-out">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11"></path><polyline points="15 4 18 7 15 10"></polyline><path d="M17 17H6"></path><polyline points="9 14 6 17 9 20"></polyline></svg>
+                Check-in / Check-out
             </a></li>
             <li><a href="javascript:void(0)" onclick="launchDesktopScanner()" class="nav-item" title="Launch QR Scanner" style="color:#0284c7; font-weight:600;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
