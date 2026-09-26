@@ -28,7 +28,7 @@ $_checkout_target_url = $_is_admin_user ? 'admin_checkout' : 'checkout';
 
 // Calculate live dashboard metrics
 $checkins_today = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(check_in) = CURDATE() AND status != 'Cancelled'")->fetch_assoc()['count'] ?? 0;
-$checkouts_today = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(check_out) = CURDATE() AND status != 'Cancelled'")->fetch_assoc()['count'] ?? 0;
+$checkouts_today = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(check_out) = CURDATE() AND status = 'Checked In'")->fetch_assoc()['count'] ?? 0;
 $pending_rsvps = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE status = 'Pending'")->fetch_assoc()['count'] ?? 0;
 $total_guests = $conn->query("SELECT SUM(guests_count) as count FROM bookings WHERE status = 'Checked In'")->fetch_assoc()['count'] ?? 0;
 $total_guests = (int)($total_guests ?? 0);
