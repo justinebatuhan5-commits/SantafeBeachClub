@@ -1249,31 +1249,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     </div>
 
     <!-- â”€â”€ Footer â”€â”€ -->
-    <footer class="main-footer">
-        <div class="footer-container">
-            <div class="footer-brand-col">
-                <h3>Santa Fe Beach Club</h3>
-                <p>Experience the ultimate coastal sophistication. A serene blend of boutique hospitality and tropical elegance.</p>
-            </div>
-            <div class="footer-links-col">
-                <h4>LEGAL</h4>
-                <ul>
-                    <li><a href="#privacy">Privacy Policy</a></li>
-                    <li><a href="#terms">Terms of Service</a></li>
-                </ul>
-            </div>
-            <div class="footer-links-col">
-                <h4>COMPANY</h4>
-                <ul>
-                    <li><a href="#careers">Careers</a></li>
-                    <li><a href="#sustainability">Sustainability</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved. &bull; Developed by <strong>Justine Batuhan</strong></p>
-        </div>
-    </footer>
+    <?php require __DIR__ . '/partials/_footer.php'; ?>
 
 <script>
 /* â”€â”€ Tab switching â”€â”€ */

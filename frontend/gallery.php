@@ -109,32 +109,7 @@ $photos = $conn->query("SELECT * FROM gallery ORDER BY created_at DESC");
         <?php endif; ?>
     </div>
 
-    <!-- Footer Section -->
-    <footer class="main-footer">
-        <div class="footer-container">
-            <div class="footer-brand-col">
-                <h3>Santa Fe Beach Club</h3>
-                <p>Experience the ultimate coastal sophistication. A serene blend of boutique hospitality and tropical elegance.</p>
-            </div>
-            <div class="footer-links-col">
-                <h4>LEGAL</h4>
-                <ul>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                </ul>
-            </div>
-            <div class="footer-links-col">
-                <h4>COMPANY</h4>
-                <ul>
-                    <li><a href="#">Careers</a></li>
-                    <li><a href="#">Sustainability</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved. &bull; Developed by <strong>Justine Batuhan</strong></p>
-        </div>
-    </footer>
+    <?php require __DIR__ . '/partials/_footer.php'; ?>
 <dialog class="gallery-lightbox" aria-labelledby="lightbox-title">
     <div class="lightbox-toolbar">
         <h2 id="lightbox-title">Santa Fe Beach Club</h2>
