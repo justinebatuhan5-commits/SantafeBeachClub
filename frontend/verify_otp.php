@@ -441,15 +441,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
         const resendBtn = document.getElementById('resendBtn');
         const countdownText = document.getElementById('countdownText');
         const timerSpan = document.getElementById('timer');
+        let otpVerificationPending = false;
 
         // Auto tab across inputs and handle paste
         digits.forEach((input, index) => {
             input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(-1);
                 const val = e.target.value;
                 if (val.length === 1 && index < digits.length - 1) {
                     digits[index + 1].focus();
                 }
                 updateFullOtp();
+                maybeAutoSubmitOtp();
             });
 
             input.addEventListener('keydown', (e) => {
@@ -467,6 +470,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                     });
                     updateFullOtp();
                     digits[digits.length - 1].focus();
+                    maybeAutoSubmitOtp();
                 }
             });
         });
@@ -475,6 +479,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
             let combined = '';
             digits.forEach(d => combined += d.value);
             fullOtp.value = combined;
+        }
+
+        function maybeAutoSubmitOtp() {
+            if (fullOtp.value.length === 6 && !otpVerificationPending) {
+                otpForm.requestSubmit();
+            }
         }
 
         function showMessage(msg, isSuccess = false) {
@@ -490,6 +500,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                 showMessage('Please enter all 6 digits.');
                 return;
             }
+
+            if (otpVerificationPending) return;
+            otpVerificationPending = true;
 
             authLoader.classList.add('active');
             verifyBtn.disabled = true;
@@ -507,6 +520,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                 if (data.success) {
                     window.location.href = data.redirect;
                 } else {
+                    otpVerificationPending = false;
                     authLoader.classList.remove('active');
                     verifyBtn.disabled = false;
                     showMessage(data.message || 'Verification failed.');
@@ -515,6 +529,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                     }
                 }
             } catch (err) {
+                otpVerificationPending = false;
                 authLoader.classList.remove('active');
                 verifyBtn.disabled = false;
                 showMessage('Network error occurred. Please try again.');

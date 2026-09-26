@@ -1215,6 +1215,7 @@ const guestResendBtn  = document.getElementById('guestResendBtn');
 const guestResendTimer = document.getElementById('guestResendTimer');
 const guestSeconds    = document.getElementById('guestSeconds');
 const guestBackBtn    = document.getElementById('guestBackBtn');
+let guestOtpVerificationPending = false;
 
 function showError(msg) {
     errorMsg.textContent = msg;
@@ -1300,6 +1301,7 @@ guestOtpDigits.forEach((input, idx) => {
             guestOtpDigits[idx + 1].focus();
         }
         updateGuestFullOtp();
+        maybeAutoSubmitGuestOtp();
     });
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Backspace' && !input.value && idx > 0) {
@@ -1318,6 +1320,7 @@ guestOtpDigits.forEach((input, idx) => {
             });
             updateGuestFullOtp();
             guestOtpDigits[guestOtpDigits.length - 1].focus();
+            maybeAutoSubmitGuestOtp();
         }
     });
 });
@@ -1337,6 +1340,12 @@ function updateGuestFullOtp() {
     guestFullOtp.value = combined;
 }
 
+function maybeAutoSubmitGuestOtp() {
+    if (guestFullOtp.value.length === 6 && !guestOtpVerificationPending) {
+        guestOtpForm.requestSubmit();
+    }
+}
+
 // Handle OTP Verification Form Submit
 guestOtpForm.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -1347,6 +1356,9 @@ guestOtpForm.addEventListener('submit', async function(e) {
         showError('Please enter all 6 digits.');
         return;
     }
+
+    if (guestOtpVerificationPending) return;
+    guestOtpVerificationPending = true;
 
     guestVerifyBtn.disabled = true;
     guestVerifyText.textContent = 'Verifying...';
@@ -1365,6 +1377,7 @@ guestOtpForm.addEventListener('submit', async function(e) {
         if (data.success) {
             window.location.reload();
         } else {
+            guestOtpVerificationPending = false;
             showError(data.error || 'Verification failed.');
             guestVerifyBtn.disabled = false;
             guestVerifyText.textContent = 'Verify & View Booking';
@@ -1381,6 +1394,7 @@ guestOtpForm.addEventListener('submit', async function(e) {
             }
         }
     } catch (err) {
+        guestOtpVerificationPending = false;
         showError('A network error occurred. Please try again.');
         guestVerifyBtn.disabled = false;
         guestVerifyText.textContent = 'Verify & View Booking';
