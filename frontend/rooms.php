@@ -456,21 +456,27 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     </div>
 
     <!-- â”€â”€ Interactive Guest Availability Calendar â”€â”€ -->
-    <div class="rooms-cal-wrapper" style="max-width: 1200px; margin: 0 auto 30px; padding: 0 20px;">
-        <div style="background: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; padding: 24px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+    <div class="rooms-cal-wrapper">
+        <div class="rooms-cal-card">
+            <div class="rooms-cal-header">
                 <div>
                     <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0; display: flex; align-items: center; gap: 8px;">
                         <span>&#128197;</span> Live Availability & Rates Calendar
                     </h3>
                     <p style="font-size: 13px; color: #64748B; margin: 4px 0 0;">Green dates indicate open availability; red dates are sold out. Click any date to set your check-in!</p>
                 </div>
-                <div class="rooms-calendar-nav" style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="rooms-cal-toggle" id="rooms-cal-toggle" aria-expanded="false" aria-controls="rooms-calendar-body">
+                    <span>View availability calendar</span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+            </div>
+
+            <div class="rooms-calendar-body" id="rooms-calendar-body" hidden>
+                <div class="rooms-calendar-nav">
                     <button type="button" id="cal-prev-month" class="btn-secondary" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; cursor: pointer;">&larr; Prev</button>
                     <span id="cal-month-title" style="font-weight: 800; font-size: 15px; color: #0F172A; min-width: 140px; text-align: center;">...</span>
                     <button type="button" id="cal-next-month" class="btn-secondary" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; cursor: pointer;">Next &rarr;</button>
                 </div>
-            </div>
 
             <!-- Calendar Legend -->
             <div style="display: flex; gap: 16px; align-items: center; font-size: 12px; margin-bottom: 14px; flex-wrap: wrap;">
@@ -496,6 +502,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                 <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">SAT</div>
             </div>
             <div id="guest-cal-days" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 6px;"></div>
+            </div>
         </div>
     </div>
 
@@ -504,6 +511,9 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
         var currentCalYear = <?php echo (int)date('Y', strtotime($filter_checkin)); ?>;
         var currentCalMonth = <?php echo (int)date('n', strtotime($filter_checkin)); ?>;
         var currentRoomType = <?php echo xss_json($filter_type); ?>;
+        var selectedCheckin = <?php echo xss_json($filter_checkin); ?>;
+        var selectedCheckout = <?php echo xss_json($filter_checkout); ?>;
+        var calendarLoaded = false;
 
         var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -549,6 +559,12 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                             bg = '#FFFBEB'; border = '#FDE68A'; textColor = '#92400E'; badgeText = dayItem.available + ' left';
                         }
 
+                        if (dateKey === selectedCheckin) {
+                            bg = '#E0F2FE'; border = '#0284C7'; textColor = '#075985'; badgeText = 'Check-in';
+                        } else if (dateKey === selectedCheckout) {
+                            bg = '#EDE9FE'; border = '#7C3AED'; textColor = '#5B21B6'; badgeText = 'Check-out';
+                        }
+
                         cell.style.cssText = 'height: 48px; background:' + bg + '; border: 1px solid ' + border + '; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: transform 0.15s;';
                         cell.innerHTML = '<strong style="color:' + textColor + '; font-size:13px;">' + dayItem.day + '</strong>' +
                             '<span style="font-size: 9px; color:' + textColor + '; font-weight: 700;">' + badgeText + '</span>';
@@ -580,6 +596,8 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
         document.addEventListener('DOMContentLoaded', function() {
             var prevBtn = document.getElementById('cal-prev-month');
             var nextBtn = document.getElementById('cal-next-month');
+            var toggleBtn = document.getElementById('rooms-cal-toggle');
+            var calendarBody = document.getElementById('rooms-calendar-body');
 
             if (prevBtn) {
                 prevBtn.addEventListener('click', function() {
@@ -597,7 +615,18 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                 });
             }
 
-            loadGuestCalendar(currentCalYear, currentCalMonth);
+            if (toggleBtn && calendarBody) {
+                toggleBtn.addEventListener('click', function() {
+                    var opening = calendarBody.hidden;
+                    calendarBody.hidden = !opening;
+                    toggleBtn.setAttribute('aria-expanded', String(opening));
+                    toggleBtn.querySelector('span').textContent = opening ? 'Hide availability calendar' : 'View availability calendar';
+                    if (opening && !calendarLoaded) {
+                        calendarLoaded = true;
+                        loadGuestCalendar(currentCalYear, currentCalMonth);
+                    }
+                });
+            }
         });
     })();
     </script>

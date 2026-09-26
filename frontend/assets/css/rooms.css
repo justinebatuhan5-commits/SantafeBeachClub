@@ -28,6 +28,64 @@ body.rooms-page {
     font-family: 'Outfit', sans-serif;
 }
 
+/* Collapsible guest availability calendar */
+.rooms-cal-wrapper {
+    width: min(1200px, calc(100% - 40px));
+    margin: 0 auto 24px;
+}
+.rooms-cal-card {
+    padding: 18px 22px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+.rooms-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+.rooms-cal-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 9px 16px;
+    border: 1px solid #d9c8b9;
+    border-radius: 999px;
+    background: #fffaf4;
+    color: var(--rooms-primary-dark);
+    font: 600 13px 'Outfit', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.rooms-cal-toggle svg { width: 16px; height: 16px; transition: transform 180ms ease; }
+.rooms-cal-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.rooms-cal-toggle:hover { background: #f5ede4; }
+.rooms-cal-toggle:focus-visible { outline: 3px solid rgba(18, 118, 110, 0.28); outline-offset: 3px; }
+.rooms-calendar-body { padding-top: 18px; margin-top: 18px; border-top: 1px solid #eee7df; }
+.rooms-calendar-body[hidden] { display: none; }
+.rooms-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+@media (max-width: 640px) {
+    .rooms-cal-wrapper { width: calc(100% - 24px); margin-bottom: 18px; }
+    .rooms-cal-card { padding: 16px; }
+    .rooms-cal-header { align-items: stretch; flex-direction: column; }
+    .rooms-cal-toggle { width: 100%; white-space: normal; }
+    .rooms-calendar-body { overflow-x: auto; padding-bottom: 6px; }
+    .rooms-calendar-nav { position: sticky; left: 0; width: calc(100vw - 56px); }
+    #guest-cal-grid, #guest-cal-days { min-width: 520px; }
+    #guest-cal-days > div { height: 42px !important; }
+}
+
 /* ── Header ─────────────────────────────────────────── */
 .rooms-page .main-header {
     position: fixed;
