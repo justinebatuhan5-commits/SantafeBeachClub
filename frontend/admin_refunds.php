@@ -15,12 +15,13 @@ $manual_refund_ready = false;
 $schema_check = $conn->prepare("SELECT
     EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema=? AND table_name='manual_refund_details') AS has_table,
     (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name IN ('preferred_refund_method','approved_refund_method')) AS column_count,
-    (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='manual_refund_details' AND column_name IN ('confirmation_token_hash','confirmation_token_expires_at','guest_confirmed_at')) AS confirmation_column_count");
-$schema_check->bind_param('sss', $schema_name, $schema_name, $schema_name);
+    (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='manual_refund_details' AND column_name IN ('confirmation_token_hash','confirmation_token_expires_at','guest_confirmed_at')) AS confirmation_column_count,
+    (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='manual_refund_details' AND column_name IN ('verification_otp_hash','verification_otp_expires_at','verification_attempts','verification_send_count','verification_last_sent_at','phone_verified_at','verification_locked_at')) AS mfa_column_count");
+$schema_check->bind_param('ssss', $schema_name, $schema_name, $schema_name, $schema_name);
 $schema_check->execute();
 $schema_state = $schema_check->get_result()->fetch_assoc();
 $schema_check->close();
-$manual_refund_ready = ((int)($schema_state['has_table'] ?? 0) === 1 && (int)($schema_state['column_count'] ?? 0) === 2 && (int)($schema_state['confirmation_column_count'] ?? 0) === 3);
+$manual_refund_ready = ((int)($schema_state['has_table'] ?? 0) === 1 && (int)($schema_state['column_count'] ?? 0) === 2 && (int)($schema_state['confirmation_column_count'] ?? 0) === 3 && (int)($schema_state['mfa_column_count'] ?? 0) === 7);
 $refund_methods = sf_refund_method_settings($conn);
 $noshow_handoff = null;
 if (($_SESSION['admin_role'] ?? '') === 'receptionist' && isset($_GET['noshow_handoff'])) {
@@ -43,7 +44,7 @@ $query = "
            " . ($manual_refund_ready ? 'r.preferred_refund_method, r.approved_refund_method,' : "'original_source' AS preferred_refund_method, NULL AS approved_refund_method,") . "
            b.guest_name, b.guest_email, b.accommodation_name,
            b.check_in, b.check_out, p.amount as original_amount, p.payment_method,
-           " . ($manual_refund_ready ? 'd.gcash_account_name,d.gcash_mobile,d.transfer_reference,d.processed_at,d.guest_confirmed_at' : 'NULL AS gcash_account_name,NULL AS gcash_mobile,NULL AS transfer_reference,NULL AS processed_at,NULL AS guest_confirmed_at') . "
+           " . ($manual_refund_ready ? 'd.gcash_account_name,d.gcash_mobile,d.transfer_reference,d.processed_at,d.guest_confirmed_at,d.phone_verified_at,d.verification_locked_at,d.verification_last_sent_at' : 'NULL AS gcash_account_name,NULL AS gcash_mobile,NULL AS transfer_reference,NULL AS processed_at,NULL AS guest_confirmed_at,NULL AS phone_verified_at,NULL AS verification_locked_at,NULL AS verification_last_sent_at') . "
     FROM refund_requests r
     JOIN bookings b ON r.booking_id = b.id
     LEFT JOIN payments p ON r.payment_id = p.id
@@ -587,6 +588,9 @@ foreach ($valid_statuses as $s) {
                             <span class="info-value" style="color:<?php echo $refund['guest_confirmed_at'] ? '#047857' : '#92400e'; ?>;font-weight:700"><?php echo $refund['guest_confirmed_at'] ? 'Confirmed received' : 'Awaiting confirmation'; ?></span>
                         </div>
                         <?php endif; ?>
+                        <?php if (($refund['approved_refund_method'] ?? '') === 'manual_gcash' && $refund['status'] === 'awaiting_guest_details'): ?>
+                        <div class="info-item"><span class="info-label">Phone Verification</span><span class="info-value" style="font-weight:700"><?php echo $refund['phone_verified_at'] ? 'Phone verified' : ($refund['verification_locked_at'] ? 'Locked' : ($refund['verification_last_sent_at'] ? 'OTP sent' : 'Not started')); ?></span></div>
+                        <?php endif; ?>
                         <?php if ($refund['approved_by']): ?>
                         <div class="info-item">
                             <span class="info-label">Reviewed By</span>
@@ -674,6 +678,7 @@ foreach ($valid_statuses as $s) {
                             <?php if ($refund_methods['manual_gcash']): ?>
                             <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this)">Resend New Secure Link</button>
                             <?php else: ?><span style="font-size:12px;color:#92400e;font-weight:700">Manual GCash refunds are disabled.</span><?php endif; ?>
+                            <?php if (!empty($refund['verification_locked_at'])): ?><button class="btn-secondary-sm" type="button" onclick="resetRefundVerification(<?php echo (int)$refund['id']; ?>,this)">Reset Verification Lock</button><?php endif; ?>
                         <?php elseif ($is_admin_user && $filter_status === 'details_submitted'): ?>
                             <?php if ($refund_methods['manual_gcash']): ?>
                             <button class="btn-process" type="button" onclick="openManualRefundModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['gcash_account_name'] ?? ''); ?>, <?php echo xss_attr_json($refund['gcash_mobile'] ?? ''); ?>)">Record GCash Transfer</button>
@@ -1094,6 +1099,14 @@ foreach ($valid_statuses as $s) {
             const btn=document.getElementById('completeManualRefundBtn'), original=btn.textContent; btn.disabled=true; btn.textContent='Saving...';
             const fd=new FormData(); fd.append('request_id',currentRefundId); fd.append('transfer_reference',reference); fd.append('notes',notes); fd.append('receipt',receipt); fd.append('csrf_token',refundCsrfToken);
             try { const response=await fetch('../backend/api/manual_refund_api.php?action=complete',{method:'POST',body:fd}),data=await response.json(); if(!data.success)throw new Error(data.message||'Could not complete refund.'); showToast(data.message,'success'); setTimeout(()=>location.href='admin_refunds?status=completed',1000); }
+            catch(error){btn.disabled=false;btn.textContent=original;showToast(error.message||'Network error.','error');}
+        }
+
+        async function resetRefundVerification(refundId, btn) {
+            if (!await SiteDialog.confirm('Reset this guest verification lock and OTP limits?', {title:'Reset phone verification?',confirmText:'Reset verification'})) return;
+            const original=btn.textContent; btn.disabled=true; btn.textContent='Resetting...';
+            const fd=new FormData(); fd.append('request_id',refundId); fd.append('csrf_token',refundCsrfToken);
+            try { const response=await fetch('../backend/api/manual_refund_api.php?action=reset_verification',{method:'POST',body:fd}),data=await response.json(); if(!data.success)throw new Error(data.message||'Could not reset verification.'); showToast(data.message,'success'); setTimeout(()=>location.reload(),700); }
             catch(error){btn.disabled=false;btn.textContent=original;showToast(error.message||'Network error.','error');}
         }
 

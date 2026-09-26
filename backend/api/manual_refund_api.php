@@ -6,6 +6,9 @@ require_once __DIR__ . '/../helpers/csrf_helper.php';
 require_once __DIR__ . '/../helpers/private_storage_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
 require_once __DIR__ . '/../helpers/refund_method_helper.php';
+require_once __DIR__ . '/../helpers/sms_helper.php';
+require_once __DIR__ . '/../helpers/rate_limiter.php';
+require_once __DIR__ . '/../helpers/security_logger.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
@@ -55,7 +58,7 @@ try {
         $conn->begin_transaction();
         try {
             $upsert = $conn->prepare("INSERT INTO manual_refund_details (refund_request_id,token_hash,token_expires_at)
-                VALUES (?,?,?) ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash),token_expires_at=VALUES(token_expires_at),submitted_at=NULL,gcash_account_name=NULL,gcash_mobile=NULL,ownership_confirmed=0");
+                VALUES (?,?,?) ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash),token_expires_at=VALUES(token_expires_at),submitted_at=NULL,gcash_account_name=NULL,gcash_mobile=NULL,ownership_confirmed=0,verification_otp_hash=NULL,verification_otp_expires_at=NULL,verification_attempts=0,verification_send_count=0,verification_last_sent_at=NULL,phone_verified_at=NULL,verification_locked_at=NULL");
             $upsert->bind_param('iss', $requestId, $hash, $expires); $upsert->execute(); $upsert->close();
             $update = $conn->prepare("UPDATE refund_requests SET status='awaiting_guest_details',approved_refund_method='manual_gcash' WHERE id=? AND status IN ('approved','awaiting_guest_details')");
             $update->bind_param('i', $requestId); $update->execute(); $update->close();
@@ -73,6 +76,78 @@ try {
         log_activity($conn, (string)($_SESSION['admin_username'] ?? 'Admin'), 'Manual Refund Link Sent', 'Secure GCash details link sent for refund request #' . $requestId . '.' . $routeNote);
         $response = ['success' => true, 'message' => 'Secure GCash details link emailed to the guest.'];
 
+    } elseif ($action === 'send_otp') {
+        manual_refund_post();
+        sf_require_refund_method($conn, 'manual_gcash');
+        $token = trim((string)($_POST['token'] ?? ''));
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) throw new RuntimeException('Invalid refund link.');
+        $limit = RateLimiter::check($conn, 'refund_otp_send', 10, 3600);
+        if (!$limit['allowed']) throw new RuntimeException('Too many OTP requests. Please try again later.');
+        RateLimiter::hit($conn, 'refund_otp_send');
+        $hash = hash('sha256', $token);
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("SELECT d.refund_request_id,d.verification_send_count,d.verification_last_sent_at,d.verification_locked_at,b.guest_phone,b.guest_country,b.guest_name,r.booking_id FROM manual_refund_details d JOIN refund_requests r ON r.id=d.refund_request_id JOIN bookings b ON b.id=r.booking_id WHERE d.token_hash=? AND d.token_expires_at>NOW() AND d.submitted_at IS NULL AND d.phone_verified_at IS NULL AND r.status='awaiting_guest_details' LIMIT 1 FOR UPDATE");
+            $stmt->bind_param('s', $hash); $stmt->execute(); $refund = $stmt->get_result()->fetch_assoc(); $stmt->close();
+            if (!$refund) throw new RuntimeException('This refund link is expired, already used, or invalid.');
+            if (!empty($refund['verification_locked_at'])) throw new RuntimeException('Phone verification is locked. Please contact the resort.');
+            if ((int)$refund['verification_send_count'] >= 3) throw new RuntimeException('The OTP send limit has been reached. Please contact the resort.');
+            if (!empty($refund['verification_last_sent_at']) && strtotime($refund['verification_last_sent_at']) > time() - 60) throw new RuntimeException('Please wait 60 seconds before requesting another OTP.');
+            $defaultDialCode = strcasecmp(trim((string)($refund['guest_country'] ?? '')), 'Philippines') === 0 ? '+63' : '';
+            $phone = sf_normalize_e164((string)$refund['guest_phone'], $defaultDialCode);
+            if (!$phone) throw new RuntimeException('The booking does not have a valid saved phone number. Please contact the resort.');
+            if (!sf_sms_provider_configured()) throw new RuntimeException('Phone verification is temporarily unavailable. Please contact the resort.');
+            $otp = (string)random_int(100000, 999999);
+            $sent = sf_send_sms($phone, "Santa Fe Beach Club: Your refund verification code is {$otp}. It expires in 5 minutes. Never share this code.");
+            if (!$sent['success']) throw new RuntimeException('We could not send the verification code. Please contact the resort.');
+            $otpHash = password_hash($otp, PASSWORD_DEFAULT); $expires = date('Y-m-d H:i:s', time() + 300);
+            $update = $conn->prepare('UPDATE manual_refund_details SET verification_otp_hash=?,verification_otp_expires_at=?,verification_attempts=0,verification_send_count=verification_send_count+1,verification_last_sent_at=NOW() WHERE refund_request_id=?');
+            $update->bind_param('ssi', $otpHash, $expires, $refund['refund_request_id']); $update->execute(); $update->close();
+            $conn->commit();
+            SecurityLogger::log($conn, 'REFUND_OTP_SENT', 'Refund phone verification code sent for request #' . $refund['refund_request_id'] . '.', SecurityLogger::LEVEL_INFO, 'Guest');
+            $response = ['success' => true, 'message' => 'A verification code was sent to the saved phone number.'];
+        } catch (Throwable $e) { $conn->rollback(); throw $e; }
+
+    } elseif ($action === 'verify_otp') {
+        manual_refund_post();
+        $token = trim((string)($_POST['token'] ?? '')); $otp = trim((string)($_POST['otp'] ?? ''));
+        if (!preg_match('/^[a-f0-9]{64}$/', $token) || !preg_match('/^\d{6}$/', $otp)) throw new RuntimeException('Enter the six-digit verification code.');
+        $limit = RateLimiter::check($conn, 'refund_otp_verify', 20, 900);
+        if (!$limit['allowed']) throw new RuntimeException('Too many verification attempts. Please try again later.');
+        RateLimiter::hit($conn, 'refund_otp_verify');
+        $hash = hash('sha256', $token);
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("SELECT d.refund_request_id,d.verification_otp_hash,d.verification_otp_expires_at,d.verification_attempts,d.verification_locked_at FROM manual_refund_details d JOIN refund_requests r ON r.id=d.refund_request_id WHERE d.token_hash=? AND d.token_expires_at>NOW() AND d.submitted_at IS NULL AND d.phone_verified_at IS NULL AND r.status='awaiting_guest_details' LIMIT 1 FOR UPDATE");
+            $stmt->bind_param('s', $hash); $stmt->execute(); $refund = $stmt->get_result()->fetch_assoc(); $stmt->close();
+            if (!$refund) throw new RuntimeException('This refund link is expired, already used, or invalid.');
+            if (!empty($refund['verification_locked_at']) || (int)$refund['verification_attempts'] >= 5) throw new RuntimeException('Phone verification is locked. Please contact the resort.');
+            $valid = !empty($refund['verification_otp_hash']) && !empty($refund['verification_otp_expires_at']) && strtotime($refund['verification_otp_expires_at']) >= time() && password_verify($otp, $refund['verification_otp_hash']);
+            if (!$valid) {
+                $attempts = (int)$refund['verification_attempts'] + 1;
+                $failed = $conn->prepare('UPDATE manual_refund_details SET verification_attempts=?,verification_locked_at=IF(? >= 5,NOW(),verification_locked_at) WHERE refund_request_id=?');
+                $failed->bind_param('iii', $attempts, $attempts, $refund['refund_request_id']); $failed->execute(); $failed->close();
+                $conn->commit();
+                SecurityLogger::log($conn, $attempts >= 5 ? 'REFUND_OTP_LOCKED' : 'REFUND_OTP_FAILED', 'Failed refund OTP verification for request #' . $refund['refund_request_id'] . '.', $attempts >= 5 ? SecurityLogger::LEVEL_WARNING : SecurityLogger::LEVEL_INFO, 'Guest');
+                throw new RuntimeException($attempts >= 5 ? 'Phone verification is locked. Please contact the resort.' : 'The verification code is incorrect or expired.');
+            }
+            $verified = $conn->prepare('UPDATE manual_refund_details SET phone_verified_at=NOW(),verification_otp_hash=NULL,verification_otp_expires_at=NULL,verification_attempts=0 WHERE refund_request_id=?');
+            $verified->bind_param('i', $refund['refund_request_id']); $verified->execute(); $verified->close(); $conn->commit();
+            SecurityLogger::log($conn, 'REFUND_PHONE_VERIFIED', 'Saved booking phone verified for refund request #' . $refund['refund_request_id'] . '.', SecurityLogger::LEVEL_INFO, 'Guest');
+            $response = ['success' => true, 'message' => 'Phone verified. You can now enter your GCash details.'];
+        } catch (Throwable $e) { try { $conn->rollback(); } catch (Throwable $ignored) {} throw $e; }
+
+    } elseif ($action === 'reset_verification') {
+        manual_refund_admin(); manual_refund_post();
+        $requestId = (int)($_POST['request_id'] ?? 0);
+        $stmt = $conn->prepare('UPDATE manual_refund_details SET verification_otp_hash=NULL,verification_otp_expires_at=NULL,verification_attempts=0,verification_send_count=0,verification_last_sent_at=NULL,phone_verified_at=NULL,verification_locked_at=NULL WHERE refund_request_id=? AND submitted_at IS NULL');
+        $stmt->bind_param('i', $requestId); $stmt->execute();
+        if ($stmt->affected_rows !== 1) throw new RuntimeException('Verification could not be reset for this request.');
+        $stmt->close();
+        $actor = (string)($_SESSION['admin_username'] ?? 'Admin');
+        SecurityLogger::log($conn, 'REFUND_VERIFICATION_RESET', 'Refund phone verification reset for request #' . $requestId . '.', SecurityLogger::LEVEL_WARNING, $actor);
+        $response = ['success' => true, 'message' => 'Guest phone verification was reset.'];
+
     } elseif ($action === 'guest_submit') {
         manual_refund_post();
         sf_require_refund_method($conn, 'manual_gcash');
@@ -85,9 +160,9 @@ try {
         if (empty($_POST['ownership_confirmed'])) throw new RuntimeException('Confirm that you own or are authorized to use this GCash account.');
         $hash = hash('sha256', $token);
         $stmt = $conn->prepare("SELECT d.refund_request_id,r.booking_id FROM manual_refund_details d JOIN refund_requests r ON r.id=d.refund_request_id
-            WHERE d.token_hash=? AND d.token_expires_at>NOW() AND d.submitted_at IS NULL AND r.status='awaiting_guest_details' LIMIT 1");
+            WHERE d.token_hash=? AND d.token_expires_at>NOW() AND d.submitted_at IS NULL AND d.phone_verified_at IS NOT NULL AND r.status='awaiting_guest_details' LIMIT 1");
         $stmt->bind_param('s', $hash); $stmt->execute(); $refund = $stmt->get_result()->fetch_assoc(); $stmt->close();
-        if (!$refund) throw new RuntimeException('This refund link is expired, already used, or invalid.');
+        if (!$refund) throw new RuntimeException('Phone verification is required before submitting GCash details.');
         $conn->begin_transaction();
         try {
             $update = $conn->prepare("UPDATE manual_refund_details SET gcash_account_name=?,gcash_mobile=?,ownership_confirmed=1,submitted_at=NOW(),token_hash=NULL WHERE refund_request_id=? AND submitted_at IS NULL");

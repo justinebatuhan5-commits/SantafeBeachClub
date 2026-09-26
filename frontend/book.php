@@ -3,6 +3,7 @@ require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../backend/helpers/private_storage_helper.php';
+require_once __DIR__ . '/../backend/helpers/sms_helper.php';
 require_once __DIR__ . '/../backend/libs/phpqrcode/phpqrcode.php';
 require_once __DIR__ . '/../backend/services/booking_service.php';
 require_once __DIR__ . '/../backend/services/paymongo.php';
@@ -540,7 +541,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$skip_insert && empty($error)) {
                 try {
-                    $guest_phone           = $_SESSION['guest_phone'] ?? '';
+                    $guest_phone_raw       = (string)($_SESSION['guest_phone'] ?? '');
+                    $guest_phone           = sf_normalize_e164($guest_phone_raw, (string)($_SESSION['guest_phone_code'] ?? '+63')) ?? $guest_phone_raw;
                     $guest_country         = $_SESSION['guest_country'] ?? '';
                     $guest_special_requests = $_SESSION['guest_comments'] ?? '';
                     $eta                   = $_SESSION['guest_eta'] ?? '14:00';
