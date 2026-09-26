@@ -185,7 +185,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['standard_room']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms?room_type=standard_room#room-standard-room" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-standard-room" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
@@ -203,7 +203,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['beachview_duplex']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms?room_type=beachview_duplex#room-beachview-duplex" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-beachview-duplex" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
@@ -221,7 +221,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['seaview_duplex']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms?room_type=seaview_duplex#room-seaview-duplex" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-seaview-duplex" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
@@ -239,7 +239,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['beach_villa']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms?room_type=beach_villa#room-beach-villa" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-beach-villa" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
