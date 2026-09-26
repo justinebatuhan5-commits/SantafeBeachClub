@@ -250,6 +250,7 @@ $payments_query = $conn->query("
         p.payment_method,
         p.transaction_id,
         p.status as payment_status,
+        p.purpose as payment_purpose,
         p.receipt_url,
         p.paid_at,
         b.accommodation_name,
@@ -420,6 +421,22 @@ if ($bk_res) {
             text-decoration: none;
         }
         .payment-receipt-link:hover { text-decoration: underline; }
+        .payment-type-badge {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 7px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #edf4ff;
+            color: #315f91;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+        .payment-type-badge.balance {
+            background: #fff3df;
+            color: #9a5b0b;
+        }
         .payment-history-entry + .payment-history-entry {
             margin-top: 8px;
             padding-top: 8px;
@@ -479,7 +496,25 @@ if ($bk_res) {
         .status-paid { background: #E8F5E9; color: #2E7D32; }
         .status-pending { background: #FFF3E0; color: #E65100; }
         .status-rejected { background: #FFEBEE; color: #C62828; }
-        .status-refunded { background: #F3E5F5; color: #6A1B9A; }
+        .status-refunded { background: #FEE4E2; color: #B42318; }
+        .refund-action {
+            color: #B42318 !important;
+            border-color: #FDA29B !important;
+            background: #fff !important;
+        }
+        .refund-action:hover {
+            color: #912018 !important;
+            border-color: #F97066 !important;
+            background: #FFF1F0 !important;
+        }
+        .refunded-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #B42318;
+            font-size: 12px;
+            font-weight: 700;
+        }
         .alert-success {
             background-color: #E8F5E9;
             color: #2E7D32;
@@ -570,8 +605,8 @@ if ($bk_res) {
                 </div>
             <?php endif; ?>
             <?php if (isset($_GET['refunded'])): ?>
-                <div class="alert-success" style="background-color:#F3E5F5; color:#6A1B9A;">
-                    💜 Payment marked as refunded. Booking has been cancelled and activity logged.
+                <div class="alert-success" style="background-color:#FEE4E2; color:#B42318;">
+                    Payment marked as refunded. Booking has been cancelled and activity logged.
                 </div>
             <?php endif; ?>
 
@@ -615,6 +650,14 @@ if ($bk_res) {
                                 $amount = number_format($row['amount'], 2);
                                 $raw_amount = $row['amount'];
                                 $pay_status_display = strtolower($row['payment_status']);
+                                $payment_purpose = strtolower((string)($row['payment_purpose'] ?? 'deposit'));
+                                $payment_type_label = match ($payment_purpose) {
+                                    'balance' => 'Remaining Balance',
+                                    'full' => 'Full Payment',
+                                    'additional' => 'Additional Charge',
+                                    default => '50% Deposit',
+                                };
+                                $payment_type_class = $payment_purpose === 'balance' ? ' balance' : '';
                                 $receipt_url = $row['receipt_url'];
 
                                 $pay_class = 'status-pending';
@@ -643,7 +686,7 @@ if ($bk_res) {
                                 echo "<tr>";
                                 echo "<td><span class='payment-primary'>INV-100{$pay_id}</span><span class='payment-secondary'>{$name}</span></td>";
                                 echo "<td><span class='payment-primary'>{$room}</span></td>";
-                                echo "<td><span class='payment-primary'>{$method}</span><span class='payment-secondary payment-reference' title='{$txn}'>{$txn}</span>{$receipt_markup}</td>";
+                                echo "<td><span class='payment-primary'>{$method}</span><span class='payment-secondary payment-reference' title='{$txn}'>{$txn}</span><span class='payment-type-badge{$payment_type_class}'>{$payment_type_label}</span>{$receipt_markup}</td>";
                                 echo "<td><span class='payment-primary'>PHP {$amount}</span><span class='payment-secondary'><span class='status-badge {$pay_class}'>".ucfirst($pay_status_display)."</span></span></td>";
                                 echo "<td style='font-size:12px; color:#64748B; min-width:170px;'>";
                                 if (!empty($payment_history[(int)$row['pay_id']])) {
@@ -700,10 +743,10 @@ if ($bk_res) {
                                     $discount_category = in_array($row['discount_category'] ?? '', ['senior', 'pwd'], true) ? $row['discount_category'] : '';
                                     echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px;' onclick='openReceiptModal({$bid}, \"{$rcpt_num}\", \"INV-100{$pay_id}\", \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($room, ENT_QUOTES)) . "\", {$b_total}, {$guest_count}, {$extra_adults}, {$extra_children}, \"{$discount_category}\", {$discount_amount})'>Print Receipt</button>";
                                     echo "<a href='payments?send_booking_id={$bid}' class='btn-pay' style='padding:6px 12px; font-size:12px; text-decoration:none;'>Resend Confirmation</a>";
-                                    echo "<button class='btn-receipt' style='padding:6px 12px; font-size:12px; color:#6A1B9A; border-color:#6A1B9A;' onclick='openRefundModal({$pay_id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"PHP {$amount}\")'>Refund</button>";
+                                    echo "<button class='btn-receipt refund-action' style='padding:6px 12px; font-size:12px;' onclick='openRefundModal({$pay_id}, \"" . xss_attr_string(htmlspecialchars_decode($name, ENT_QUOTES)) . "\", \"PHP {$amount}\")'>Refund</button>";
                                     echo "</div>";
                                 } elseif ($pay_status_display === 'refunded') {
-                                    echo "<span style='font-size:12px; color:#6A1B9A; font-weight:600;'>💜 Refunded</span>";
+                                    echo "<span class='refunded-action'>↩ Refunded</span>";
                                 } else {
                                     echo "<span style='font-size:12px; color:#888;'>Rejected</span>";
                                 }

@@ -36,7 +36,8 @@ if ($rtResult) {
         align-items: center;
         gap: 12px;
         flex-wrap: wrap;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
+        padding: 4px 0;
     }
     .cal-toolbar .cal-nav-group {
         display: flex;
@@ -48,11 +49,12 @@ if ($rtResult) {
         align-items: center;
         justify-content: center;
         gap: 5px;
-        padding: 7px 14px;
+        min-height: 38px;
+        padding: 7px 13px;
         border: 1px solid var(--border);
         background: var(--card-bg);
         color: var(--text-main);
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         font-family: 'Outfit', sans-serif;
         font-size: 13px;
         font-weight: 500;
@@ -64,19 +66,20 @@ if ($rtResult) {
     .cal-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
     .cal-range-label {
-        font-size: 15px;
-        font-weight: 600;
+        font-size: 16px;
+        font-weight: 700;
         color: var(--text-main);
         min-width: 200px;
         text-align: center;
     }
 
     .cal-filter-select {
-        padding: 7px 12px;
+        min-height: 38px;
+        padding: 7px 34px 7px 12px;
         border: 1px solid var(--border);
         background: var(--card-bg);
         color: var(--text-main);
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         font-family: 'Outfit', sans-serif;
         font-size: 13px;
         cursor: pointer;
@@ -84,15 +87,18 @@ if ($rtResult) {
     }
 
     .cal-availability-search {
-        display: flex;
+        display: inline-flex;
         align-items: end;
         gap: 10px;
         flex-wrap: wrap;
-        padding: 14px;
+        width: fit-content;
+        max-width: 100%;
+        padding: 12px;
         margin-bottom: 16px;
         background: var(--card-bg);
         border: 1px solid var(--border);
-        border-radius: 10px;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-xs);
     }
     .cal-date-field {
         display: flex;
@@ -107,17 +113,19 @@ if ($rtResult) {
         letter-spacing: .4px;
     }
     .cal-date-field input {
+        min-height: 40px;
         padding: 8px 10px;
         border: 1px solid var(--border);
-        border-radius: 7px;
+        border-radius: var(--radius-sm);
         background: var(--input-bg, #fff);
         color: var(--text-main);
         font: 13px 'Outfit', sans-serif;
     }
     .cal-availability-btn {
-        padding: 9px 14px;
+        min-height: 40px;
+        padding: 9px 16px;
         border: 0;
-        border-radius: 7px;
+        border-radius: var(--radius-sm);
         background: var(--primary);
         color: #fff;
         font: 600 13px 'Outfit', sans-serif;
@@ -270,15 +278,20 @@ if ($rtResult) {
     .cal-legend {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 8px;
         margin-bottom: 16px;
         flex-wrap: wrap;
     }
     .cal-legend-item {
         display: flex;
         align-items: center;
-        gap: 5px;
-        font-size: 12px;
+        gap: 6px;
+        padding: 5px 9px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-full);
+        background: var(--card-bg);
+        font-size: 11px;
+        font-weight: 600;
         color: var(--text-muted);
     }
     .cal-legend-dot {
@@ -292,9 +305,9 @@ if ($rtResult) {
     .cal-container {
         background: var(--card-bg);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius-md);
         overflow: hidden;
-        box-shadow: var(--shadow);
+        box-shadow: var(--shadow-sm);
     }
 
     .cal-scroll-wrapper {
@@ -322,13 +335,13 @@ if ($rtResult) {
         background: var(--card-bg);
         border-bottom: 2px solid var(--border);
         border-right: 2px solid var(--border);
-        padding: 10px 14px;
+        padding: 10px 16px;
         font-size: 12px;
         font-weight: 600;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        min-width: 180px;
+        min-width: 224px;
         display: flex;
         align-items: center;
     }
@@ -339,9 +352,9 @@ if ($rtResult) {
         background: var(--card-bg);
         border-bottom: 2px solid var(--border);
         border-right: 1px solid rgba(0,0,0,0.04);
-        padding: 6px 0;
+        padding: 7px 0;
         text-align: center;
-        min-width: 48px;
+        min-width: 52px;
         font-size: 11px;
         color: var(--text-muted);
         line-height: 1.3;
@@ -375,21 +388,36 @@ if ($rtResult) {
         background: var(--card-bg);
         border-bottom: 1px solid var(--border);
         border-right: 2px solid var(--border);
-        padding: 8px 14px;
-        min-width: 180px;
+        padding: 9px 16px;
+        min-width: 224px;
+        min-height: 58px;
         display: flex;
         flex-direction: column;
         justify-content: center;
     }
     .cal-room-name {
+        display: flex;
+        align-items: center;
+        min-width: 0;
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 700;
         color: var(--text-main);
+        line-height: 1.25;
+    }
+    .cal-room-name-text {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
     .cal-room-type {
+        margin-top: 4px;
         font-size: 11px;
         color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
     }
     .cal-room-status {
         display: inline-block;
@@ -406,8 +434,8 @@ if ($rtResult) {
     .cal-cell {
         border-bottom: 1px solid var(--border);
         border-right: 1px solid rgba(0,0,0,0.04);
-        min-width: 48px;
-        min-height: 44px;
+        min-width: 52px;
+        min-height: 58px;
         position: relative;
     }
     .cal-cell.today {
@@ -431,13 +459,13 @@ if ($rtResult) {
     /* ── Booking Bars ─────────────────────────────────────────────────── */
     .cal-bar {
         position: absolute;
-        height: 28px;
+        height: 32px;
         top: 50%;
         transform: translateY(-50%);
-        border-radius: 6px;
+        border-radius: 7px;
         display: flex;
         align-items: center;
-        padding: 0 8px;
+        padding: 0 9px;
         font-size: 11px;
         font-weight: 600;
         color: #fff;
@@ -618,6 +646,9 @@ if ($rtResult) {
         .cal-toolbar { gap: 8px; }
         .cal-range-label { min-width: auto; font-size: 13px; }
         .cal-filter-select { margin-left: 0; }
+        .cal-availability-search { display: flex; width: 100%; }
+        .cal-date-field { flex: 1 1 140px; }
+        .cal-date-field input { width: 100%; }
     }
     </style>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
@@ -633,7 +664,7 @@ require_once 'partials/_sidebar.php';
 <div class="admin-main">
     <?php
     $page_title = 'Availability Calendar';
-    $page_subtitle = 'Interactive timeline showing real-time room occupancy across all accommodations';
+    $page_subtitle = 'Room occupancy and booking schedule across all accommodations';
     $header_extra_html = '
         <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -649,11 +680,11 @@ require_once 'partials/_sidebar.php';
         <!-- Toolbar -->
         <div class="cal-toolbar">
             <div class="cal-nav-group">
-                <button class="cal-btn" id="calPrev" title="Previous period">
+                <button class="cal-btn" id="calPrev" title="Previous period" aria-label="Previous period">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
                 <button class="cal-btn" id="calToday">Today</button>
-                <button class="cal-btn" id="calNext" title="Next period">
+                <button class="cal-btn" id="calNext" title="Next period" aria-label="Next period">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
             </div>
@@ -753,8 +784,10 @@ require_once 'partials/_sidebar.php';
 
     // ── Config ───────────────────────────────────────────────────────────
     const DAYS_TO_SHOW = 30;
-    const CELL_WIDTH   = 48;
-    const ROW_HEIGHT   = 44;
+    const LABEL_WIDTH  = 224;
+    const CELL_WIDTH   = 52;
+    const HEADER_HEIGHT = 56;
+    const ROW_HEIGHT   = 58;
 
     // ── State ────────────────────────────────────────────────────────────
     let viewStart   = new Date();
@@ -900,8 +933,8 @@ require_once 'partials/_sidebar.php';
         }
 
         const cols = DAYS_TO_SHOW + 1; // +1 for room label column
-        grid.style.gridTemplateColumns = '180px ' + 'repeat(' + DAYS_TO_SHOW + ', ' + CELL_WIDTH + 'px)';
-        grid.style.gridTemplateRows    = 'auto ' + 'repeat(' + filtered.length + ', ' + ROW_HEIGHT + 'px)';
+        grid.style.gridTemplateColumns = LABEL_WIDTH + 'px ' + 'repeat(' + DAYS_TO_SHOW + ', ' + CELL_WIDTH + 'px)';
+        grid.style.gridTemplateRows    = HEADER_HEIGHT + 'px ' + 'repeat(' + filtered.length + ', ' + ROW_HEIGHT + 'px)';
 
         let html = '';
         const today = dateStr(getTodayDate());
@@ -925,7 +958,7 @@ require_once 'partials/_sidebar.php';
             // Room label
             const statusDot = '<span class="cal-room-status ' + Security.escapeHTML(room.status) + '"></span>';
             html += '<div class="cal-room-label">' +
-                '<div class="cal-room-name">' + statusDot + Security.escapeHTML(room.name) + '</div>' +
+                '<div class="cal-room-name">' + statusDot + '<span class="cal-room-name-text">' + Security.escapeHTML(room.name) + '</span></div>' +
                 '<div class="cal-room-type">' + Security.escapeHTML(room.type_label) + ' · ₱' + room.price.toLocaleString() + '/night</div>' +
                 '</div>';
 
@@ -955,7 +988,7 @@ require_once 'partials/_sidebar.php';
         if (todayIdx >= 0 && todayIdx < DAYS_TO_SHOW) {
             // Snap the marker to the actual current day, not the current time.
             // This keeps the red line aligned with the calendar date instead of drifting to the next column.
-            const leftPx = 180 + (todayIdx + 0.5) * CELL_WIDTH;
+            const leftPx = LABEL_WIDTH + (todayIdx + 0.5) * CELL_WIDTH;
             const line = document.createElement('div');
             line.className = 'cal-today-line';
             line.style.left = leftPx + 'px';
@@ -976,9 +1009,9 @@ require_once 'partials/_sidebar.php';
         const visEnd   = Math.min(DAYS_TO_SHOW, endCol);
         if (visStart >= visEnd) return;
 
-        const leftPx  = 180 + visStart * CELL_WIDTH + 2;
+        const leftPx  = LABEL_WIDTH + visStart * CELL_WIDTH + 2;
         const widthPx = (visEnd - visStart) * CELL_WIDTH - 4;
-        const topPx   = ROW_HEIGHT + 1 + rowIdx * ROW_HEIGHT; // +1 for header row border
+        const topPx   = HEADER_HEIGHT + rowIdx * ROW_HEIGHT;
 
         const bar = document.createElement('div');
         bar.className = 'cal-bar ' + statusClass(booking.status);
