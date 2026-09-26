@@ -251,10 +251,11 @@ try {
         $stmt = $conn->prepare("
             SELECT r.*, b.guest_name, b.guest_email, b.accommodation_name,
                    b.check_in, b.check_out, p.amount as original_amount,
-                   p.payment_method
+                   p.payment_method, d.transfer_reference, d.processed_at, d.guest_confirmed_at
             FROM refund_requests r
             JOIN bookings b ON r.booking_id = b.id
             LEFT JOIN payments p ON r.payment_id = p.id
+            LEFT JOIN manual_refund_details d ON d.refund_request_id = r.id
             WHERE r.id = ?
               " . ($is_staff ? '' : 'AND b.cancellation_token = ?') . "
             LIMIT 1

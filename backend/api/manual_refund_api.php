@@ -118,13 +118,16 @@ try {
         if (!store_private_receipt($file['tmp_name'], $filename)) throw new RuntimeException('Could not store the receipt securely.');
         $receiptPath = 'storage/receipts/' . $filename;
         $actor = (string)($_SESSION['admin_username'] ?? 'Admin');
+        $confirmationToken = bin2hex(random_bytes(32));
+        $confirmationHash = hash('sha256', $confirmationToken);
+        $confirmationExpires = date('Y-m-d H:i:s', time() + 7 * 24 * 3600);
         try {
             $conn->begin_transaction();
             $stmt = $conn->prepare("SELECT r.booking_id,r.payment_id,r.net_refund,b.guest_name,b.guest_email FROM refund_requests r JOIN manual_refund_details d ON d.refund_request_id=r.id JOIN bookings b ON b.id=r.booking_id WHERE r.id=? AND r.status='details_submitted' AND d.submitted_at IS NOT NULL FOR UPDATE");
             $stmt->bind_param('i', $requestId); $stmt->execute(); $refund = $stmt->get_result()->fetch_assoc(); $stmt->close();
             if (!$refund) throw new RuntimeException('Submitted manual refund details were not found.');
-            $detail = $conn->prepare('UPDATE manual_refund_details SET transfer_reference=?,receipt_path=?,processed_by=?,processed_at=NOW(),notes=? WHERE refund_request_id=? AND processed_at IS NULL');
-            $detail->bind_param('ssssi', $reference, $receiptPath, $actor, $notes, $requestId); $detail->execute();
+            $detail = $conn->prepare('UPDATE manual_refund_details SET transfer_reference=?,receipt_path=?,processed_by=?,processed_at=NOW(),notes=?,confirmation_token_hash=?,confirmation_token_expires_at=?,guest_confirmed_at=NULL WHERE refund_request_id=? AND processed_at IS NULL');
+            $detail->bind_param('ssssssi', $reference, $receiptPath, $actor, $notes, $confirmationHash, $confirmationExpires, $requestId); $detail->execute();
             if ($detail->affected_rows !== 1) throw new RuntimeException('This refund was already processed.');
             $detail->close();
             $status = $conn->prepare("UPDATE refund_requests SET status='completed',completed_at=NOW() WHERE id=? AND status='details_submitted'");
@@ -142,10 +145,13 @@ try {
             throw $e;
         }
         log_activity($conn, $actor, 'Manual GCash Refund Completed', 'Refund request #' . $requestId . ' completed with reference ' . $reference . '.');
+        $base = rtrim((string)(getenv('PUBLIC_APP_URL') ?: 'http://localhost/SantaBeachClub-BookingSystem'), '/');
+        $frontendBase = str_ends_with($base, '/frontend') ? $base : $base . '/frontend';
+        $confirmationLink = $frontendBase . '/refund_confirmation.php?token=' . rawurlencode($confirmationToken);
         if (!empty($refund['guest_email'])) {
-            @sendRefundCompletedEmail($refund['guest_email'], $refund['guest_name'], 'REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT), (float)$refund['net_refund'], 'Manual GCash transfer reference ' . $reference);
+            @sendRefundCompletedEmail($refund['guest_email'], $refund['guest_name'], 'REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT), (float)$refund['net_refund'], 'Manual GCash transfer reference ' . $reference, $confirmationLink);
         }
-        $response = ['success' => true, 'message' => 'Manual GCash refund recorded and completed.'];
+        $response = ['success' => true, 'message' => 'Manual GCash refund completed. A confirmation link was emailed to the guest.'];
     }
 } catch (Throwable $e) {
     $response = ['success' => false, 'message' => $e->getMessage()];

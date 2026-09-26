@@ -14,12 +14,13 @@ $schema_name = $conn->query('SELECT DATABASE()')->fetch_row()[0];
 $manual_refund_ready = false;
 $schema_check = $conn->prepare("SELECT
     EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema=? AND table_name='manual_refund_details') AS has_table,
-    (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name IN ('preferred_refund_method','approved_refund_method')) AS column_count");
-$schema_check->bind_param('ss', $schema_name, $schema_name);
+    (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name IN ('preferred_refund_method','approved_refund_method')) AS column_count,
+    (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='manual_refund_details' AND column_name IN ('confirmation_token_hash','confirmation_token_expires_at','guest_confirmed_at')) AS confirmation_column_count");
+$schema_check->bind_param('sss', $schema_name, $schema_name, $schema_name);
 $schema_check->execute();
 $schema_state = $schema_check->get_result()->fetch_assoc();
 $schema_check->close();
-$manual_refund_ready = ((int)($schema_state['has_table'] ?? 0) === 1 && (int)($schema_state['column_count'] ?? 0) === 2);
+$manual_refund_ready = ((int)($schema_state['has_table'] ?? 0) === 1 && (int)($schema_state['column_count'] ?? 0) === 2 && (int)($schema_state['confirmation_column_count'] ?? 0) === 3);
 $refund_methods = sf_refund_method_settings($conn);
 $noshow_handoff = null;
 if (($_SESSION['admin_role'] ?? '') === 'receptionist' && isset($_GET['noshow_handoff'])) {
@@ -42,7 +43,7 @@ $query = "
            " . ($manual_refund_ready ? 'r.preferred_refund_method, r.approved_refund_method,' : "'original_source' AS preferred_refund_method, NULL AS approved_refund_method,") . "
            b.guest_name, b.guest_email, b.accommodation_name,
            b.check_in, b.check_out, p.amount as original_amount, p.payment_method,
-           " . ($manual_refund_ready ? 'd.gcash_account_name,d.gcash_mobile,d.transfer_reference,d.processed_at' : 'NULL AS gcash_account_name,NULL AS gcash_mobile,NULL AS transfer_reference,NULL AS processed_at') . "
+           " . ($manual_refund_ready ? 'd.gcash_account_name,d.gcash_mobile,d.transfer_reference,d.processed_at,d.guest_confirmed_at' : 'NULL AS gcash_account_name,NULL AS gcash_mobile,NULL AS transfer_reference,NULL AS processed_at,NULL AS guest_confirmed_at') . "
     FROM refund_requests r
     JOIN bookings b ON r.booking_id = b.id
     LEFT JOIN payments p ON r.payment_id = p.id
@@ -580,6 +581,12 @@ foreach ($valid_statuses as $s) {
                             <span class="info-label">Guest Preference</span>
                             <span class="info-value"><?php echo ($refund['preferred_refund_method'] ?? 'original_source') === 'manual_gcash' ? 'GCash' : 'Original source'; ?></span>
                         </div>
+                        <?php if (($refund['approved_refund_method'] ?? '') === 'manual_gcash' && $refund['status'] === 'completed'): ?>
+                        <div class="info-item">
+                            <span class="info-label">Guest Confirmation</span>
+                            <span class="info-value" style="color:<?php echo $refund['guest_confirmed_at'] ? '#047857' : '#92400e'; ?>;font-weight:700"><?php echo $refund['guest_confirmed_at'] ? 'Confirmed received' : 'Awaiting confirmation'; ?></span>
+                        </div>
+                        <?php endif; ?>
                         <?php if ($refund['approved_by']): ?>
                         <div class="info-item">
                             <span class="info-label">Reviewed By</span>
@@ -1133,6 +1140,7 @@ foreach ($valid_statuses as $s) {
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Original Paid</td><td>${fmtAmt(r.original_amount)}</td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Original Payment</td><td>${Security.escapeHTML(r.payment_method || '—')}</td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Refund System Used</td><td><strong>${Security.escapeHTML(refundSystem)}</strong></td></tr>
+                                ${r.approved_refund_method === 'manual_gcash' ? `<tr><td style="padding:7px 0; color:var(--text-muted);">GCash Reference</td><td><strong>${Security.escapeHTML(r.transfer_reference || '—')}</strong></td></tr><tr><td style="padding:7px 0; color:var(--text-muted);">Guest Confirmation</td><td><strong style="color:${r.guest_confirmed_at ? '#047857' : '#92400e'}">${r.guest_confirmed_at ? 'Confirmed received on ' + Security.escapeHTML(r.guest_confirmed_at) : 'Awaiting guest confirmation'}</strong></td></tr>` : ''}
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Status</td><td><strong style="text-transform:uppercase;">${Security.escapeHTML(r.status)}</strong></td></tr>
                                 <tr><td style="padding:7px 0; color:var(--text-muted);">Requested</td><td>${Security.escapeHTML(r.requested_at)}</td></tr>
                                 ${r.approved_by ? `<tr><td style="padding:7px 0; color:var(--text-muted);">Reviewed By</td><td>${Security.escapeHTML(r.approved_by)} on ${Security.escapeHTML(r.approved_at)}</td></tr>` : ''}

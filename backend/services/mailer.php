@@ -350,7 +350,8 @@ function sendPaymentRejectedEmail(
     string $room_name,
     string $check_in,
     string $check_out,
-    string $reason = ''
+    string $reason = '',
+    string $confirmation_link = ''
 ): array {
     if (empty($to_email)) {
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
@@ -369,6 +370,8 @@ function sendPaymentRejectedEmail(
 
         $mail->isHTML(true);
         $mail->Subject = "Payment Not Accepted \u2013 {$booking_ref} \u2013 Santa Fe Beach Club";
+        $safe_confirmation_link = htmlspecialchars($confirmation_link, ENT_QUOTES, 'UTF-8');
+        $confirmation_html = $confirmation_link !== '' ? "<div style='background:#eff6ff;border:1px solid #bfdbfe;padding:18px;margin:20px 0;border-radius:8px;text-align:center;'><p style='margin:0 0 13px;color:#1e3a8a;font-size:14px;'><strong>Please confirm after the GCash transfer appears in your account.</strong></p><a href='{$safe_confirmation_link}' style='display:inline-block;background:#047857;color:#fff;text-decoration:none;padding:12px 20px;border-radius:7px;font-weight:700;'>Confirm Refund Received</a><p style='margin:12px 0 0;color:#64748b;font-size:12px;word-break:break-all;'>If the button does not open, copy this link: {$safe_confirmation_link}</p></div>" : '';
         $mail->Body    = "
             <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;'>
                 <div style='background:#dc2626;padding:28px 32px;border-radius:12px 12px 0 0;'>
@@ -396,6 +399,8 @@ function sendPaymentRejectedEmail(
                             <td style='padding:8px 0;text-align:right;'>{$checkout_fmt}</td>
                         </tr>
                     </table>
+
+                    {$confirmation_html}
                     {$reason_html}
                     <p>If you believe this is a mistake or would like to make a new reservation, please contact our front desk:</p>
                     <p style='margin:0;'>\ud83d\udcde <strong>Front Desk:</strong> Contact us directly</p>
@@ -473,6 +478,7 @@ function sendRefundCompletedEmail(
                                 <span style='display:inline-block;background:#ecfdf5;color:#065f46;padding:4px 8px;border-radius:4px;font-weight:600;font-size:12px;'>Completed</span>
                             </td>
                         </tr>
+                        " . ($reason !== '' ? "<tr style='border-top:1px solid #f0f0f0;'><td style='padding:8px 0;color:#6b7280;'>Refund Details</td><td style='padding:8px 0;text-align:right;font-weight:600;'>" . htmlspecialchars($reason, ENT_QUOTES, 'UTF-8') . "</td></tr>" : '') . "
                     </table>
 
                     <p style='color:#4b5563;font-size:13px;margin:20px 0 0;line-height:1.6;'>
@@ -491,6 +497,7 @@ function sendRefundCompletedEmail(
             . "The amount was sent through the approved refund method. Allow the relevant provider's normal processing time. "
             . "Reference: {$booking_ref}. "
             . ($reason ? "Reason: {$reason}." : "")
+            . ($confirmation_link !== '' ? " Confirm receipt after checking your account: {$confirmation_link}." : '')
             . " Thank you!";
 
         $mail->send();
