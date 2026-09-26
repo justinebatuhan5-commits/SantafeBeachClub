@@ -587,6 +587,28 @@ function sendManualRefundDetailsEmail(
     }
 }
 
+/** Send the six-digit refund verification code through the existing Gmail SMTP account. */
+function sendRefundVerificationOtpEmail(string $guest_email, string $guest_name, string $booking_ref, string $otp): array
+{
+    if (!filter_var($guest_email, FILTER_VALIDATE_EMAIL) || !preg_match('/^\d{6}$/', $otp)) return ['success' => false, 'error' => 'Invalid OTP email data.'];
+    try {
+        $mail = createMailer();
+        $mail->addAddress($guest_email, $guest_name);
+        $mail->isHTML(true);
+        $mail->Subject = "Refund verification code – {$booking_ref}";
+        $safeName = htmlspecialchars($guest_name, ENT_QUOTES, 'UTF-8');
+        $safeRef = htmlspecialchars($booking_ref, ENT_QUOTES, 'UTF-8');
+        $safeOtp = htmlspecialchars($otp, ENT_QUOTES, 'UTF-8');
+        $mail->Body = "<div style='font-family:Arial,sans-serif;max-width:520px;margin:auto'><h2>Refund verification code</h2><p>Hi {$safeName},</p><p>Enter this code on the secure refund page for <strong>{$safeRef}</strong>:</p><div style='font-size:32px;letter-spacing:8px;font-weight:800;background:#eff6ff;border:1px solid #bfdbfe;padding:18px;text-align:center;border-radius:9px'>{$safeOtp}</div><p>This code expires in <strong>5 minutes</strong>. Do not forward or share it. Santa Fe Beach Club will never ask for your password, GCash MPIN, or another service's OTP.</p></div>";
+        $mail->AltBody = "Hi {$guest_name}, your Santa Fe Beach Club refund verification code for {$booking_ref} is {$otp}. It expires in 5 minutes. Do not share this code.";
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Throwable $e) {
+        error_log('Refund OTP email failed: ' . $e->getMessage());
+        return ['success' => false, 'error' => 'Email delivery failed.'];
+    }
+}
+
 function sendBalanceDeadlineEmail(string $to_email, string $guest_name, string $booking_ref, float $amount, string $deadline, string $payment_url, string $stage): array
 {
     if (!filter_var($to_email, FILTER_VALIDATE_EMAIL)) return ['success'=>false,'error'=>'No valid guest email address.'];
