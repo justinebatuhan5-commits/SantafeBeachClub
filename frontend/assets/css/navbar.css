@@ -66,6 +66,17 @@
     box-shadow: 0 10px 24px rgba(138, 90, 58, 0.22);
 }
 
+/* On the Home page the navbar floats over the hero instead of creating a
+   cream-colored row above the background image. */
+.home-page .site-navbar {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    z-index: 100;
+    margin: 0;
+    transform: translateX(-50%);
+}
+
 @media (max-width: 900px) {
     .site-navbar { flex-wrap: wrap; }
     .site-navbar .nav-menu { order: 3; flex: 0 0 100%; width: 100%; margin-top: 8px; padding: 8px 0 0; border-top: 1px solid #e5d6c8; }
@@ -109,4 +120,5 @@
 @media (max-width: 480px) {
     .site-navbar { width: calc(100% - 20px); padding: 8px 10px; }
     .site-navbar .btn-book-header { padding: 10px 14px; }
+    .home-page .site-navbar { top: 8px; margin: 0; }
 }
