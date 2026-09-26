@@ -607,7 +607,7 @@ img.logo-circle {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 5px;
     max-width: 480px;
-    margin: 0 0 24px;
+    margin: 24px 0;
     padding: 5px;
     background: #f1ebe6;
     border: 1px solid rgba(124, 83, 60, 0.13);
@@ -620,7 +620,7 @@ img.logo-circle {
 }
 
 .stay-operations-tabs-wrap .stay-operations-tabs {
-    margin-bottom: 0;
+    margin: 0;
 }
 
 .stay-operations-tab {
