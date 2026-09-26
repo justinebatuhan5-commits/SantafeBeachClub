@@ -315,9 +315,10 @@ if ($bk_res) {
         }
         .reservations-table {
             width: 100%;
-            min-width: 1000px;
+            min-width: 980px;
             table-layout: fixed;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0 8px;
         }
         .payments-page .page-header {
             flex-wrap: wrap;
@@ -348,7 +349,8 @@ if ($bk_res) {
             width: 100%;
         }
         .reservations-table td {
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
+            vertical-align: middle;
         }
         .reservations-table td:last-child > div,
         .reservations-table td:last-child form {
@@ -365,15 +367,84 @@ if ($bk_res) {
             white-space: normal;
         }
         .reservations-table th, .reservations-table td {
-            padding: 15px;
+            padding: 14px 16px;
             text-align: left;
-            border-bottom: 1px solid #eee;
         }
         .reservations-table th {
-            color: #888;
-            font-weight: 600;
+            color: #7c716b;
+            font-weight: 700;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 11px;
+            letter-spacing: .05em;
+            border-bottom: 1px solid #e8e0da;
+        }
+        .reservations-table tbody td {
+            background: #fbfaf9;
+            border-top: 1px solid #eee7e2;
+            border-bottom: 1px solid #eee7e2;
+        }
+        .reservations-table tbody td:first-child {
+            border-left: 1px solid #eee7e2;
+            border-radius: 12px 0 0 12px;
+        }
+        .reservations-table tbody td:last-child {
+            border-right: 1px solid #eee7e2;
+            border-radius: 0 12px 12px 0;
+        }
+        .payment-primary {
+            color: #1f2937;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+        .payment-secondary {
+            display: block;
+            margin-top: 4px;
+            color: #7c8798;
+            font-size: 11.5px;
+            line-height: 1.4;
+        }
+        .payment-reference {
+            display: block;
+            max-width: 170px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .payment-receipt-link {
+            display: inline-flex;
+            margin-top: 7px;
+            color: #7c533c;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .payment-receipt-link:hover { text-decoration: underline; }
+        .payment-history-entry + .payment-history-entry {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #ece5e0;
+        }
+        .payment-actions {
+            display: grid !important;
+            grid-template-columns: 1fr;
+            gap: 6px !important;
+            align-items: stretch !important;
+        }
+        .payment-actions > * {
+            width: 100%;
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 8px !important;
+            box-sizing: border-box;
+        }
+        .payment-actions form {
+            display: grid !important;
+            grid-template-columns: 1fr;
+            gap: 6px !important;
         }
         .btn-pay {
             background-color: #2E7D32;
@@ -515,27 +586,21 @@ if ($bk_res) {
                 <div class="table-responsive">
                 <table class="reservations-table">
                     <colgroup>
-                        <col style="width:7%">
-                        <col style="width:9%">
-                        <col style="width:12%">
-                        <col style="width:15%">
-                        <col style="width:9%">
-                        <col style="width:7%">
-                        <col style="width:9%">
-                        <col style="width:15%">
                         <col style="width:17%">
+                        <col style="width:15%">
+                        <col style="width:21%">
+                        <col style="width:13%">
+                        <col style="width:20%">
+                        <col style="width:14%">
                     </colgroup>
                     <thead>
                         <tr>
-                            <th>Invoice #</th>
-                            <th>Guest Name</th>
+                            <th>Invoice &amp; Guest</th>
                             <th>Accommodation</th>
-                            <th>Payment Channel</th>
-                            <th>Total Amount</th>
-                            <th>Receipt</th>
-                            <th>Status</th>
+                            <th>Payment Details</th>
+                            <th>Amount &amp; Status</th>
                             <th>Payment History</th>
-                            <th>Action</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -557,16 +622,7 @@ if ($bk_res) {
                                 if ($pay_status_display === 'rejected') $pay_class = 'status-rejected';
                                 if ($pay_status_display === 'refunded') $pay_class = 'status-refunded';
 
-                                echo "<tr>";
-                                echo "<td><strong>INV-100{$pay_id}</strong></td>";
-                                echo "<td>{$name}</td>";
-                                echo "<td>{$room}</td>";
-                                echo "<td>
-                                        <div style='font-weight:600; font-size:13px;'>{$method}</div>
-                                        <div style='font-size:11px; color:#888;'>{$txn}</div>
-                                      </td>";
-                                echo "<td><strong>PHP {$amount}</strong></td>";
-                                
+                                $receipt_markup = "<span class='payment-secondary'>No receipt attached</span>";
                                 if (!empty($receipt_url)) {
                                     $receipt_available = true;
                                     if (preg_match('~^(?:storage|uploads)/receipts/([^/]+)$~', $receipt_url, $receipt_match)) {
@@ -578,22 +634,24 @@ if ($bk_res) {
                                     }
                                     if ($receipt_available) {
                                         $safe_url = htmlspecialchars($receipt_url);
-                                        echo "<td><a href='javascript:void(0)' onclick='openProofImageModal(\"" . xss_attr_string(htmlspecialchars_decode($safe_url, ENT_QUOTES)) . "\")' style='color:#007AFF; font-size:12px; font-weight:600; text-decoration:underline;'>View Receipt</a></td>";
+                                        $receipt_markup = "<a href='javascript:void(0)' class='payment-receipt-link' onclick='openProofImageModal(\"" . xss_attr_string(htmlspecialchars_decode($safe_url, ENT_QUOTES)) . "\")'>View receipt →</a>";
                                     } else {
-                                        echo "<td><span style='color:#B91C1C; font-size:12px; font-weight:600;' title='The database record exists, but the receipt file is missing from private storage.'>Receipt unavailable</span></td>";
+                                        $receipt_markup = "<span class='payment-secondary' style='color:#B91C1C;font-weight:700' title='The database record exists, but the receipt file is missing from private storage.'>Receipt unavailable</span>";
                                     }
-                                } else {
-                                    echo "<td><span style='color:#999; font-size:12px;'>No Receipt</span></td>";
                                 }
-                                
-                                echo "<td><span class='status-badge {$pay_class}'>".ucfirst($pay_status_display)."</span></td>";
+
+                                echo "<tr>";
+                                echo "<td><span class='payment-primary'>INV-100{$pay_id}</span><span class='payment-secondary'>{$name}</span></td>";
+                                echo "<td><span class='payment-primary'>{$room}</span></td>";
+                                echo "<td><span class='payment-primary'>{$method}</span><span class='payment-secondary payment-reference' title='{$txn}'>{$txn}</span>{$receipt_markup}</td>";
+                                echo "<td><span class='payment-primary'>PHP {$amount}</span><span class='payment-secondary'><span class='status-badge {$pay_class}'>".ucfirst($pay_status_display)."</span></span></td>";
                                 echo "<td style='font-size:12px; color:#64748B; min-width:170px;'>";
                                 if (!empty($payment_history[(int)$row['pay_id']])) {
                                     foreach ($payment_history[(int)$row['pay_id']] as $history) {
                                         $history_action = ucfirst(htmlspecialchars($history['action']));
                                         $history_by = htmlspecialchars($history['performed_by']);
                                         $history_time = date('M j, Y g:i A', strtotime($history['performed_at']));
-                                        echo "<div style='margin-bottom:5px;'><strong style='color:#334155;'>{$history_action}</strong><br><span>by {$history_by} · {$history_time}</span></div>";
+                                        echo "<div class='payment-history-entry'><strong style='color:#334155;'>{$history_action}</strong><span class='payment-secondary'>by {$history_by}<br>{$history_time}</span></div>";
                                     }
                                 } else {
                                     echo "<span style='color:#94A3B8;'>No actions recorded</span>";
@@ -604,7 +662,7 @@ if ($bk_res) {
                                 if ($pay_status_display === 'pending') {
                                     $csrf = htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8');
                                     echo "
-                                    <div style='display:flex; gap:6px; align-items:center; flex-wrap:wrap;'>
+                                    <div class='payment-actions'>
                                         <form method='POST' action='payments' style='margin:0; display:flex; gap:6px; align-items:center;'>
                                             <input type='hidden' name='csrf_token' value='{$csrf}'>
                                             <input type='hidden' name='action' value='verify_payment'>
@@ -635,7 +693,7 @@ if ($bk_res) {
                                     if ($b_total < $raw_amount) $b_total = $raw_amount;
                                     $b_paid = $raw_amount;
                                     $bid = $row['booking_id'];
-                                    echo "<div style='display:flex; gap:6px; align-items:center; flex-wrap:wrap;'>";
+                                    echo "<div class='payment-actions'>";
                                     $guest_count = max(0, (int)($row['guests_count'] ?? 0));
                                     $extra_adults = max(0, (int)($row['extra_adults'] ?? 0));
                                     $extra_children = max(0, (int)($row['extra_children'] ?? 0));
@@ -654,7 +712,7 @@ if ($bk_res) {
                                 echo "</tr>";
                             }
                         } else {
-                            echo "<tr><td colspan='9' style='text-align: center; color: #888; padding: 20px;'>No payment records found</td></tr>";
+                            echo "<tr><td colspan='6' style='text-align: center; color: #888; padding: 28px;'>No payment records found</td></tr>";
                         }
                         ?>
                     </tbody>
