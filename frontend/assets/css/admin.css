@@ -669,6 +669,64 @@ img.logo-circle {
     opacity: 0.78;
 }
 
+/* Administrator workspace for guest feedback and contact messages */
+.guest-communications-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    max-width: 620px;
+    margin: 0 0 24px;
+    padding: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-xs);
+}
+
+.guest-communications-tab {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    padding: 11px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guest-communications-tab:hover {
+    color: var(--primary);
+    background: var(--sidebar-hover);
+}
+
+.guest-communications-tab.active {
+    color: #fff;
+    background: var(--primary);
+    box-shadow: 0 6px 16px rgba(124, 83, 60, 0.22);
+}
+
+.guest-communications-tab svg { flex: 0 0 auto; }
+
+.guest-communications-tab span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.guest-communications-tab strong {
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.guest-communications-tab small {
+    margin-top: 2px;
+    font-size: 11px;
+    color: inherit;
+    opacity: 0.78;
+}
+
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -1949,6 +2007,17 @@ img.logo-circle {
         padding: 10px 8px;
     }
     .stay-operations-tab small {
+        display: none;
+    }
+    .guest-communications-tabs {
+        width: 100%;
+        margin-bottom: 18px;
+    }
+    .guest-communications-tab {
+        justify-content: center;
+        padding: 10px 8px;
+    }
+    .guest-communications-tab small {
         display: none;
     }
     .page-header {

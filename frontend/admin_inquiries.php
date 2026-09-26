@@ -144,8 +144,11 @@ $inquiriesResult = $conn->query("SELECT * FROM inquiries ORDER BY created_at DES
     ?>
     <div class="admin-main">
         <?php
-        $page_title = 'Guest Inquiries';
-        $page_subtitle = 'Review and manage guest questions and message submissions';
+        $is_admin_communications = ($_SESSION['admin_role'] ?? '') === 'admin';
+        $page_title = $is_admin_communications ? 'Reviews & Inquiries' : 'Guest Inquiries';
+        $page_subtitle = $is_admin_communications
+            ? 'Manage guest feedback and messages in one place.'
+            : 'Review and manage guest questions and message submissions';
         $header_extra_html = '
             <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -156,6 +159,9 @@ $inquiriesResult = $conn->query("SELECT * FROM inquiries ORDER BY created_at DES
         ?>
 
         <div class="admin-body">
+        <?php if ($is_admin_communications): ?>
+            <?php $guest_communications_active = 'inquiries'; include __DIR__ . '/partials/_guest_communications_tabs.php'; ?>
+        <?php endif; ?>
         <div class="inquiries-container">
             <?php if ($inquiriesResult && $inquiriesResult->num_rows > 0): ?>
                 <?php while ($inq = $inquiriesResult->fetch_assoc()): 

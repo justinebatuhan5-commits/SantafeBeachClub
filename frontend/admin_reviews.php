@@ -54,8 +54,9 @@ $reviews = $conn->query('SELECT id, guest_name, guest_location, rating, review_t
 </head><body>
 <?php include __DIR__ . '/partials/_sidebar.php'; ?>
 <main class="admin-main">
-<?php $page_title = 'Guest Reviews'; $page_subtitle = 'Review guest feedback and control what appears on your website.'; include __DIR__ . '/partials/_page_header.php'; ?>
+<?php $page_title = 'Reviews & Inquiries'; $page_subtitle = 'Manage guest feedback and messages in one place.'; include __DIR__ . '/partials/_page_header.php'; ?>
 <div class="admin-body">
+<?php $guest_communications_active = 'reviews'; include __DIR__ . '/partials/_guest_communications_tabs.php'; ?>
 <nav class="review-tabs" aria-label="Guest review status">
 <a class="review-tab" href="admin_reviews?tab=unpublished" <?= $tab === 'unpublished' ? 'aria-current="page"' : '' ?>>
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>

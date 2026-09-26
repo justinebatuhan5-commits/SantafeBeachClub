@@ -466,12 +466,6 @@ foreach ($valid_statuses as $s) {
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
-    <?php if ($is_admin_user && !admin_password_recent()): ?>
-    <div style="position:fixed;right:24px;top:18px;z-index:1200;background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:10px 14px;box-shadow:0 8px 22px rgba(0,0,0,.12);font-size:13px">
-        Sensitive refund actions are locked. <a href="admin_reauth.php?return=admin_refunds" style="color:#9a3412;font-weight:700">Confirm administrator password</a>
-    </div>
-    <?php endif; ?>
-
     <?php $active_page = 'admin_refunds'; include __DIR__ . '/partials/_sidebar.php'; ?>
 
     <main class="admin-main">
@@ -823,18 +817,6 @@ foreach ($valid_statuses as $s) {
     <script>
         let currentRefundId = null;
         const refundCsrfToken = <?php echo json_encode($csrf_token, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-        const nativeRefundFetch = window.fetch.bind(window);
-        window.fetch = async (...args) => {
-            const response = await nativeRefundFetch(...args);
-            try {
-                const data = await response.clone().json();
-                if (data && data.reauth_required && data.redirect) {
-                    window.location.assign(data.redirect);
-                }
-            } catch (_) {}
-            return response;
-        };
-
         function openReceptionRefundModal(handoff = null) {
             const modal = document.getElementById('receptionRefundModal');
             if (!modal) return;

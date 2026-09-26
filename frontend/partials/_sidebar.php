@@ -250,13 +250,9 @@ function _sb_badge($count, $type = '') {
                 Active Sessions
             </a></li>
 
-            <li><a href="admin_reviews" class="sidebar-link <?php echo _sb_active('reviews',$_page); ?>" title="Guest Reviews">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>
-                Guest Reviews
-            </a></li>
-            <li><a href="admin_inquiries" class="sidebar-link <?php echo _sb_active('inquiries',$_page); ?>" title="Inquiries">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                Inquiries
+            <li><a href="admin_reviews" class="sidebar-link <?php echo in_array($_page, ['reviews', 'inquiries'], true) ? 'active' : ''; ?>" title="Reviews &amp; Inquiries">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="m8.5 11 2.2 1.2-.4 2.5 1.7-1.8 2.3 1.1-1.1-2.3 1.7-1.8-2.5.3L11.2 8l-.5 2.5z"/></svg>
+                Reviews &amp; Inquiries
                 <?php echo _sb_badge($_unread_inquiries, 'inquiries'); ?>
             </a></li>
         </ul>

@@ -63,7 +63,6 @@ if (in_array($action, ['submit_request', 'approve', 'reject', 'cancel_approval',
 
 if (in_array($action, ['approve', 'reject', 'cancel_approval', 'process_paymongo', 'sync_paymongo', 'send_refund_link'], true)) {
     require_admin_access();
-    require_recent_admin_password_json();
 }
 
 try {

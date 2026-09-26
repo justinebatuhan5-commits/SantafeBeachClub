@@ -43,7 +43,6 @@ try {
     $action = trim((string)($_GET['action'] ?? ''));
     if (in_array($action, ['generate_link', 'reset_verification', 'complete'], true)) {
         manual_refund_admin();
-        require_recent_admin_password_json();
     }
     if ($action === 'generate_link') {
         manual_refund_admin(); manual_refund_post();
