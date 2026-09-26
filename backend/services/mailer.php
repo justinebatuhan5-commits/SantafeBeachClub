@@ -455,7 +455,7 @@ function sendRefundCompletedEmail(
                 </div>
                 <div style='background:#fff;padding:28px 32px;border:1px solid #f3f4f6;border-top:none;border-radius:0 0 12px 12px;'>
                     <p>Hi " . htmlspecialchars($guest_name) . ",</p>
-                    <p>Your refund has been successfully processed! The following amount has been credited back to your original payment method:</p>
+                    <p>Your refund has been successfully processed through the approved refund method:</p>
                     
                     <div style='background:#ecfdf5;border-left:4px solid #10b981;padding:16px;margin:20px 0;border-radius:6px;'>
                         <p style='margin:0 0 8px;color:#047857;font-weight:600;'>Refund Amount</p>
@@ -488,7 +488,7 @@ function sendRefundCompletedEmail(
             </div>
         ";
         $mail->AltBody = "Hi {$guest_name}, your refund of PHP {$amount_fmt} for booking {$booking_ref} has been successfully processed. "
-            . "The amount will be credited back to your original payment method within 3-5 business days. "
+            . "The amount was sent through the approved refund method. Allow the relevant provider's normal processing time. "
             . "Reference: {$booking_ref}. "
             . ($reason ? "Reason: {$reason}." : "")
             . " Thank you!";
@@ -545,6 +545,38 @@ function sendPayMongoRefundLinkEmail(
         return ['success' => true, 'error' => null];
     } catch (Exception $e) {
         return ['success' => false, 'error' => $mail->ErrorInfo ?: $e->getMessage()];
+    }
+}
+
+/** Send the guest a short-lived link for submitting manual GCash refund details. */
+function sendManualRefundDetailsEmail(
+    string $guest_email,
+    string $guest_name,
+    string $booking_ref,
+    float $refund_amount,
+    string $details_link
+): array {
+    if (!filter_var($guest_email, FILTER_VALIDATE_EMAIL)) return ['success' => false, 'error' => 'Invalid guest email.'];
+    $parts = parse_url($details_link);
+    if (!in_array(strtolower((string)($parts['scheme'] ?? '')), ['http', 'https'], true) || empty($parts['host'])) {
+        return ['success' => false, 'error' => 'Invalid refund details link.'];
+    }
+    try {
+        $mail = createMailer();
+        $mail->addAddress($guest_email, $guest_name);
+        $mail->isHTML(true);
+        $mail->Subject = "GCash refund details for {$booking_ref}";
+        $safeName = htmlspecialchars($guest_name, ENT_QUOTES, 'UTF-8');
+        $safeRef = htmlspecialchars($booking_ref, ENT_QUOTES, 'UTF-8');
+        $safeLink = htmlspecialchars($details_link, ENT_QUOTES, 'UTF-8');
+        $amount = number_format($refund_amount, 2);
+        $mail->Body = "<div style='font-family:Arial,sans-serif;max-width:560px;margin:auto'><h2>Provide your GCash refund details</h2><p>Hi {$safeName},</p><p>Your refund of <strong>PHP {$amount}</strong> for <strong>{$safeRef}</strong> has been approved for manual GCash processing.</p><p><a href='{$safeLink}' style='display:inline-block;background:#007aff;color:#fff;padding:12px 18px;border-radius:7px;text-decoration:none;font-weight:bold'>Enter GCash details securely</a></p><p>This single-use link expires in 48 hours. We will ask only for the account name and mobile number. Never share your MPIN, password, or OTP.</p></div>";
+        $mail->AltBody = "Hi {$guest_name}, your PHP {$amount} refund for {$booking_ref} was approved. Submit your GCash account name and number within 48 hours: {$details_link}. Never share your MPIN, password, or OTP.";
+        $mail->send();
+        return ['success' => true];
+    } catch (Throwable $e) {
+        error_log('Manual refund details email failed: ' . $e->getMessage());
+        return ['success' => false, 'error' => 'Email delivery failed.'];
     }
 }
 

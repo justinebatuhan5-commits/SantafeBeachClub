@@ -17,7 +17,7 @@ if (($_SESSION['admin_role'] ?? '') === 'receptionist' && isset($_GET['noshow_ha
 
 // Get filter status
 $filter_status = trim($_GET['status'] ?? 'requested');
-$valid_statuses = ['requested', 'approved', 'processing', 'completed', 'rejected'];
+$valid_statuses = ['requested', 'approved', 'awaiting_guest_details', 'details_submitted', 'processing', 'completed', 'rejected'];
 if (!in_array($filter_status, $valid_statuses)) {
     $filter_status = 'requested';
 }
@@ -27,11 +27,14 @@ $query = "
     SELECT r.id, r.booking_id, r.requested_by, r.status, r.reason,
            r.refund_amount, r.refund_fee, r.net_refund,
            r.approved_by, r.approved_at, r.rejection_reason, r.requested_at,
+           r.preferred_refund_method, r.approved_refund_method,
            b.guest_name, b.guest_email, b.accommodation_name,
-           b.check_in, b.check_out, p.amount as original_amount
+           b.check_in, b.check_out, p.amount as original_amount, p.payment_method,
+           d.gcash_account_name,d.gcash_mobile,d.transfer_reference,d.processed_at
     FROM refund_requests r
     JOIN bookings b ON r.booking_id = b.id
     LEFT JOIN payments p ON r.payment_id = p.id
+    LEFT JOIN manual_refund_details d ON d.refund_request_id = r.id
     WHERE r.status = ?
     ORDER BY
         CASE WHEN r.status = 'requested' THEN 1 ELSE 2 END,
@@ -477,6 +480,8 @@ foreach ($valid_statuses as $s) {
                 $tab_labels = [
                     'requested'  => ['Pending', 'Awaiting approval'],
                     'approved'   => ['Approved', 'Awaiting refund processing'],
+                    'awaiting_guest_details' => ['Awaiting Details', 'Secure link sent'],
+                    'details_submitted' => ['Details Ready', 'GCash details submitted'],
                     'processing' => ['Processing', 'PayMongo verification pending'],
                     'completed'  => ['Completed', 'Refund sent'],
                     'rejected'   => ['Rejected', 'Denied'],
@@ -549,6 +554,14 @@ foreach ($valid_statuses as $s) {
                             <span class="info-label">Requested On</span>
                             <span class="info-value"><?php echo date('M j, Y g:i A', strtotime($refund['requested_at'])); ?></span>
                         </div>
+                        <div class="info-item">
+                            <span class="info-label">Original Payment</span>
+                            <span class="info-value"><?php echo htmlspecialchars($refund['payment_method'] ?? 'Unknown'); ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Guest Preference</span>
+                            <span class="info-value"><?php echo ($refund['preferred_refund_method'] ?? 'original_source') === 'manual_gcash' ? 'GCash' : 'Original source'; ?></span>
+                        </div>
                         <?php if ($refund['approved_by']): ?>
                         <div class="info-item">
                             <span class="info-label">Reviewed By</span>
@@ -587,6 +600,7 @@ foreach ($valid_statuses as $s) {
                             </button>
                         <?php elseif ($is_admin_user && $filter_status === 'approved'): ?>
                             <?php if ((float)$refund['net_refund'] > 0): ?>
+                            <?php if (stripos((string)($refund['payment_method'] ?? ''), 'PayMongo') !== false): ?>
                             <button class="btn-approve" type="button" onclick="openRefundLinkModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['guest_name']); ?>, <?php echo xss_attr_json($refund['guest_email']); ?>)">
                                 Email Refund Link
                             </button>
@@ -597,6 +611,11 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
                                 Open PayMongo Dashboard
                             </a>
+                            <?php else: ?>
+                            <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this)">
+                                Email GCash Details Link
+                            </button>
+                            <?php endif; ?>
                             <?php else: ?>
                             <span style="font-size:12px;color:#991b1b;font-weight:700;">₱0.00 refund — PayMongo actions disabled</span>
                             <?php endif; ?>
@@ -611,6 +630,10 @@ foreach ($valid_statuses as $s) {
                             <button class="btn-process" type="button" onclick="syncPayMongoRefund(<?php echo $refund['id']; ?>, this)">
                                 Verify PayMongo Status
                             </button>
+                        <?php elseif ($is_admin_user && $filter_status === 'awaiting_guest_details'): ?>
+                            <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this)">Resend New Secure Link</button>
+                        <?php elseif ($is_admin_user && $filter_status === 'details_submitted'): ?>
+                            <button class="btn-process" type="button" onclick="openManualRefundModal(<?php echo (int)$refund['id']; ?>, <?php echo xss_attr_json($refund['gcash_account_name'] ?? ''); ?>, <?php echo xss_attr_json($refund['gcash_mobile'] ?? ''); ?>)">Record GCash Transfer</button>
                         <?php endif; ?>
                         <button class="btn-secondary-sm" onclick="viewDetails(<?php echo $refund['id']; ?>)">
                             View Details
@@ -710,6 +733,19 @@ foreach ($valid_statuses as $s) {
                 <button class="btn-secondary-sm" type="button" onclick="closeRefundLinkModal()">Cancel</button>
                 <button class="btn-approve" type="button" id="sendRefundLinkBtn" onclick="sendRefundLinkEmail()">Send to Guest Email</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Complete Manual GCash Refund Modal -->
+    <div id="manualRefundModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="manualRefundTitle">
+        <div class="modal-box">
+            <div class="modal-title" id="manualRefundTitle">Record Manual GCash Refund</div>
+            <div class="modal-help">Transfer the exact approved amount first. Then record the unique GCash reference and upload the genuine transfer receipt. This action completes the refund.</div>
+            <div class="modal-field"><label>Recipient</label><div id="manualRefundRecipient" style="padding:10px 12px;background:var(--bg-alt,#f8fafc);border-radius:7px"></div></div>
+            <div class="modal-field"><label for="manualTransferReference">GCash reference number</label><input id="manualTransferReference" maxlength="100" autocomplete="off" placeholder="e.g. 1234 567 890123"></div>
+            <div class="modal-field"><label for="manualReceipt">Transfer receipt (JPG/PNG, max 2 MB)</label><input id="manualReceipt" type="file" accept="image/jpeg,image/png"></div>
+            <div class="modal-field"><label for="manualRefundNotes">Internal notes (optional)</label><textarea id="manualRefundNotes" maxlength="1000"></textarea></div>
+            <div class="modal-footer"><button class="btn-secondary-sm" type="button" onclick="closeModal('manualRefundModal')">Cancel</button><button class="btn-process" id="completeManualRefundBtn" type="button" onclick="completeManualRefund()">Confirm Money Sent</button></div>
         </div>
     </div>
 
@@ -957,6 +993,36 @@ foreach ($valid_statuses as $s) {
 
         async function syncPayMongoRefund(refundId, btn) {
             await runRefundAction('sync_paymongo', refundId, btn, 'Verifying...', 'PayMongo refund status verified.');
+        }
+
+        async function sendManualRefundLink(refundId, btn) {
+            if (!await SiteDialog.confirm('Email a secure, single-use GCash details link to this guest? The link expires after 48 hours.', { title: 'Send GCash details link?', confirmText: 'Send link' })) return;
+            const original = btn.innerHTML; btn.disabled = true; btn.textContent = 'Sending...';
+            const fd = new FormData(); fd.append('request_id', refundId); fd.append('csrf_token', refundCsrfToken);
+            try {
+                const response = await fetch('../backend/api/manual_refund_api.php?action=generate_link', {method:'POST',body:fd});
+                const data = await response.json(); if (!data.success) throw new Error(data.message || 'Could not send the link.');
+                showToast(data.message, 'success'); setTimeout(() => location.reload(), 1000);
+            } catch (error) { btn.disabled=false; btn.innerHTML=original; showToast(error.message || 'Network error.', 'error'); }
+        }
+
+        function openManualRefundModal(refundId, accountName, mobile) {
+            currentRefundId = refundId;
+            const masked = mobile ? mobile.slice(0,2) + '•• •••• ' + mobile.slice(-3) : 'No mobile number';
+            document.getElementById('manualRefundRecipient').textContent = accountName + ' — ' + masked;
+            document.getElementById('manualTransferReference').value=''; document.getElementById('manualReceipt').value=''; document.getElementById('manualRefundNotes').value='';
+            document.getElementById('manualRefundModal').classList.add('show');
+        }
+
+        async function completeManualRefund() {
+            const reference=document.getElementById('manualTransferReference').value.trim(), receipt=document.getElementById('manualReceipt').files[0], notes=document.getElementById('manualRefundNotes').value.trim();
+            if (reference.length < 6) { showToast('Enter the GCash transfer reference.', 'warning'); return; }
+            if (!receipt) { showToast('Upload the GCash transfer receipt.', 'warning'); return; }
+            if (!await SiteDialog.confirm('Confirm that the money was actually sent to the displayed GCash account. This will mark the payment refunded.', {title:'Complete manual refund?',confirmText:'Confirm completed'})) return;
+            const btn=document.getElementById('completeManualRefundBtn'), original=btn.textContent; btn.disabled=true; btn.textContent='Saving...';
+            const fd=new FormData(); fd.append('request_id',currentRefundId); fd.append('transfer_reference',reference); fd.append('notes',notes); fd.append('receipt',receipt); fd.append('csrf_token',refundCsrfToken);
+            try { const response=await fetch('../backend/api/manual_refund_api.php?action=complete',{method:'POST',body:fd}),data=await response.json(); if(!data.success)throw new Error(data.message||'Could not complete refund.'); showToast(data.message,'success'); setTimeout(()=>location.href='admin_refunds?status=completed',1000); }
+            catch(error){btn.disabled=false;btn.textContent=original;showToast(error.message||'Network error.','error');}
         }
 
         async function runRefundAction(action, refundId, btn, busyText, fallbackMessage, extraFields = {}) {

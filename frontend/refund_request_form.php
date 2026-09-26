@@ -22,9 +22,13 @@ if ($token) {
     $stmt = $conn->prepare("
         SELECT b.id, b.guest_name, b.guest_email, b.accommodation_name, 
                b.check_in, b.check_out, b.status, b.cancellation_token,
-               p.id as payment_id, p.amount
+               p.id as payment_id, p.amount, p.payment_method
         FROM bookings b
-        LEFT JOIN payments p ON b.id = p.booking_id
+        LEFT JOIN payments p ON p.id = (
+            SELECT p2.id FROM payments p2
+            WHERE p2.booking_id = b.id AND p2.status = 'verified'
+            ORDER BY p2.paid_at DESC, p2.id DESC LIMIT 1
+        )
         WHERE b.cancellation_token = ?
         LIMIT 1
     ");
@@ -43,6 +47,8 @@ if ($token) {
 // Handle refund request submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request']) && $booking && !$error_message) {
     $reason = trim($_POST['reason'] ?? '');
+    $preferred_method = in_array(($_POST['preferred_refund_method'] ?? ''), ['original_source','manual_gcash'], true)
+        ? $_POST['preferred_refund_method'] : 'original_source';
     $requested_by = $booking['guest_name'];
 
     if (empty($reason)) {
@@ -52,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
             // Check for existing pending request
             $check_stmt = $conn->prepare("
                 SELECT id, status FROM refund_requests
-                WHERE booking_id = ? AND status IN ('requested','approved','processing')
+                WHERE booking_id = ? AND status IN ('requested','approved','awaiting_guest_details','details_submitted','processing')
                 LIMIT 1
             ");
             $check_stmt->bind_param("i", $booking['id']);
@@ -85,13 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                 $req_stmt = $conn->prepare("
                     INSERT INTO refund_requests
                         (booking_id, payment_id, requested_by, request_type, status, reason,
-                         refund_amount, refund_fee, net_refund)
-                    VALUES (?, ?, ?, ?, 'requested', ?, ?, ?, ?)
+                         refund_amount, refund_fee, net_refund, preferred_refund_method)
+                    VALUES (?, ?, ?, ?, 'requested', ?, ?, ?, ?, ?)
                 ");
-                $req_stmt->bind_param("iisssddd",
+                $req_stmt->bind_param("iisssddds",
                     $booking['id'], $payment_id, $requested_by,
                     $request_type, $reason,
-                    $refund_amount, $refund_fee, $net_refund
+                    $refund_amount, $refund_fee, $net_refund, $preferred_method
                 );
                 $req_stmt->execute();
                 $refund_request_id = $conn->insert_id;
@@ -496,6 +502,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                             <div class="char-count">
                                 <span id="charCount">0</span> / 500 characters
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="preferredRefundMethod">Preferred refund method</label>
+                            <select id="preferredRefundMethod" name="preferred_refund_method" style="width:100%;padding:12px;border:1px solid #d7dde7;border-radius:8px;font-size:14px;background:#fff">
+                                <option value="original_source">Return to original payment method</option>
+                                <?php if (stripos((string)($booking['payment_method'] ?? ''), 'PayMongo') === false): ?>
+                                <option value="manual_gcash">Receive through GCash</option>
+                                <?php endif; ?>
+                            </select>
+                            <small style="display:block;margin-top:6px;color:#64748b">Your selection is a preference. Management makes the final choice based on the original payment channel.</small>
                         </div>
 
                         <!-- Buttons -->

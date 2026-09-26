@@ -25,8 +25,8 @@ if (str_contains($source, "intval(\$_POST['payment_id']")) {
 if (str_contains($source, "trim(\$_POST['requested_by']") || str_contains($source, "trim(\$_POST['request_type']")) {
     throw new RuntimeException('Refund API still trusts client-supplied identity fields.');
 }
-if (!str_contains($source, '"iisssddd"')) {
-    throw new RuntimeException('Refund insert parameter types do not cover all eight bound values.');
+if (!str_contains($source, '"iisssddds"')) {
+    throw new RuntimeException('Refund insert parameter types do not cover all nine bound values.');
 }
 
 $auth = file_get_contents(__DIR__ . '/../backend/helpers/api_auth_helper.php');

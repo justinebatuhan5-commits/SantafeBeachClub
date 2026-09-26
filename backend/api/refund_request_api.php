@@ -68,6 +68,8 @@ try {
         $booking_id = $is_staff ? intval($_POST['booking_id'] ?? 0) : 0;
         $booking_token = refund_request_token();
         $reason = trim($_POST['reason'] ?? '');
+        $preferred_method = in_array(($_POST['preferred_refund_method'] ?? ''), ['original_source', 'manual_gcash'], true)
+            ? $_POST['preferred_refund_method'] : 'original_source';
 
         if ($reason === '') {
             throw new Exception('A refund reason is required.');
@@ -141,7 +143,7 @@ try {
         // Check if refund request already exists and is pending
         $check_stmt = $conn->prepare("
             SELECT id, status FROM refund_requests 
-            WHERE booking_id = ? AND status IN ('requested', 'approved', 'processing')
+            WHERE booking_id = ? AND status IN ('requested', 'approved', 'awaiting_guest_details', 'details_submitted', 'processing')
             LIMIT 1
         ");
         $check_stmt->bind_param("i", $booking_id);
@@ -157,12 +159,12 @@ try {
         $req_stmt = $conn->prepare("
             INSERT INTO refund_requests (
                 booking_id, payment_id, requested_by, request_type, status, reason,
-                refund_amount, refund_fee, net_refund
-            ) VALUES (?, ?, ?, ?, 'requested', ?, ?, ?, ?)
+                refund_amount, refund_fee, net_refund, preferred_refund_method
+            ) VALUES (?, ?, ?, ?, 'requested', ?, ?, ?, ?, ?)
         ");
         $net_refund = $refund_amount;
         $req_stmt->bind_param(
-            "iisssddd",
+            "iisssddds",
             $booking_id,
             $payment_id,
             $requested_by,
@@ -170,7 +172,8 @@ try {
             $reason,
             $refund_amount,
             $refund_fee,
-            $net_refund
+            $net_refund,
+            $preferred_method
         );
         $req_stmt->execute();
         $refund_request_id = $conn->insert_id;
