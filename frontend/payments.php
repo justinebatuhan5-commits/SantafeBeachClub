@@ -1143,6 +1143,13 @@ if ($bk_res) {
 
             if(searchInput) searchInput.addEventListener("input", filterTable);
             if(statusFilter) statusFilter.addEventListener("change", filterTable);
+
+            const requestedSearch = new URLSearchParams(window.location.search).get('search');
+            if (searchInput && requestedSearch) {
+                searchInput.value = requestedSearch;
+                filterTable();
+                searchInput.focus();
+            }
         });
 
         function openRefundModal(payId, guestName, amount) {

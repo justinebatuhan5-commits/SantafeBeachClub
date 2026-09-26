@@ -709,7 +709,7 @@ if (isset($conn)) {
         </div>
         <div style="padding:14px 24px;background:var(--bg-surface, #F8FAFC);border-top:1px solid var(--border, #F3F4F6);display:flex;justify-content:flex-end;gap:10px;">
             <button type="button" onclick="closeGlobalNotifModal()" style="padding:9px 18px;border:1.5px solid var(--border, #E2E8F0);border-radius:8px;background:var(--bg-surface-elev, #fff);font-size:13px;font-weight:600;color:var(--text-main, #475569);cursor:pointer;">Close</button>
-            <button type="button" id="modalNotifActionBtn" style="display:none;padding:9px 18px;border:none;border-radius:8px;background:var(--primary, #84563C);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">View Booking</button>
+            <button type="button" id="modalNotifActionBtn" style="display:none;padding:9px 18px;border:none;border-radius:8px;background:var(--primary, #84563C);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">Open</button>
         </div>
     </div>
 </div>
@@ -729,6 +729,42 @@ function toggleUserDropdown(e) {
     var userMenu = document.getElementById('pageHeaderUserMenu');
     if (notifMenu) notifMenu.classList.remove('open');
     if (userMenu) userMenu.classList.toggle('open');
+}
+
+function resolveNotificationAction(data) {
+    var title = String(data.title || '').toLowerCase();
+    var message = String(data.message || '').toLowerCase();
+    var type = String(data.type || '').toLowerCase();
+    var context = title + ' ' + message + ' ' + type;
+    var bookingId = parseInt(data.booking_id, 10) || 0;
+    var bookingRef = bookingId > 0 ? 'REF-' + String(bookingId).padStart(3, '0') : '';
+    var query = bookingId > 0 ? encodeURIComponent(bookingRef) : '';
+    var adminReservations = <?php echo json_encode($_ph_is_admin ? 'admin_reservations' : 'reservations'); ?>;
+    var checkinPage = <?php echo json_encode($_ph_is_admin ? 'admin_checkin' : 'checkin'); ?>;
+    var checkoutPage = <?php echo json_encode($_ph_is_admin ? 'admin_checkout' : 'checkout'); ?>;
+
+    if (context.includes('discount')) {
+        return { label: 'Review Discount', url: 'discount_requests.php' + (bookingId ? '?booking=' + bookingId : '') };
+    }
+    if (context.includes('refund')) {
+        return { label: 'View Refund', url: 'admin_refunds' + (bookingId ? '?booking=' + bookingId : '') };
+    }
+    if (context.includes('payment') || context.includes('gcash') || context.includes('balance collected')) {
+        return { label: 'Review Payment', url: 'payments' + (query ? '?search=' + query : '') };
+    }
+    if (context.includes('check-out') || context.includes('checkout') || context.includes('departure')) {
+        return { label: 'Open Check-out', url: checkoutPage + (query ? '?search=' + query : '') };
+    }
+    if (context.includes('check-in') || context.includes('checkin') || context.includes('walk-in') || context.includes('arrival')) {
+        return { label: 'Open Check-in', url: checkinPage + (query ? '?search=' + query : '') };
+    }
+    if (context.includes('maintenance') || context.includes('room unavailable')) {
+        return { label: 'View Rooms', url: 'accommodations' };
+    }
+    if (bookingId > 0) {
+        return { label: 'View Reservation', url: adminReservations + '?search=' + query };
+    }
+    return null;
 }
 
 function showNotificationDetailModal(data) {
@@ -752,16 +788,21 @@ function showNotificationDetailModal(data) {
     
     var bookingWrap = document.getElementById('modalNotifBookingWrap');
     var actionBtn = document.getElementById('modalNotifActionBtn');
+    var action = resolveNotificationAction(data);
     if (data.booking_id && parseInt(data.booking_id) > 0) {
         bookingWrap.style.display = 'block';
         document.getElementById('modalNotifBookingText').textContent = 'Booking #' + data.booking_id;
-        actionBtn.style.display = 'inline-block';
-        actionBtn.onclick = function() {
-            window.location.href = '<?php echo $_ph_is_admin ? "admin_reservations" : "reservations"; ?>?search=' + data.booking_id;
-        };
     } else {
         bookingWrap.style.display = 'none';
+    }
+
+    if (action) {
+        actionBtn.textContent = action.label;
+        actionBtn.style.display = 'inline-block';
+        actionBtn.onclick = function() { window.location.href = action.url; };
+    } else {
         actionBtn.style.display = 'none';
+        actionBtn.onclick = null;
     }
 
     modal.style.display = 'flex';
