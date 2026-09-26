@@ -46,7 +46,6 @@ if ($price_q) {
     <title>Santa Fe Beach Club - Escape to Paradise</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
-    <link rel="stylesheet" href="assets/css/home-content.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/home-content.css'); ?>">
     <script src="assets/js/dark-mode-toggle.js" defer></script>
     <style>
         .mobile-menu-btn {
@@ -262,22 +261,22 @@ if ($price_q) {
     ?>
     <section class="testimonials-section" id="guest-reviews">
         <div class="testimonials-inner">
-            <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+            <div class="testimonials-heading-row">
                 <div>
                     <p class="section-kicker testimonials-kicker">Guest Reviews</p>
-                    <h2 class="testimonials-heading" style="margin-bottom:0;">What Our Guests Say</h2>
+                    <h2 class="testimonials-heading">What Our Guests Say</h2>
                 </div>
-                <button type="button" class="btn btn-primary" onclick="openReviewModal()" style="padding:10px 22px; font-size:14px; font-weight:600; border-radius:30px; cursor:pointer;">
+                <button type="button" class="btn btn-primary btn-review" onclick="openReviewModal()">
                     &#9733; Leave a Review
                 </button>
             </div>
 
             <?php if (empty($reviews_list)): ?>
-                <div style="text-align:center; padding:48px 20px; background:rgba(255,255,255,0.7); border:1px dashed #D1D5DB; border-radius:16px; margin-top:20px;">
-                    <div aria-hidden="true" style="font-size:36px; margin-bottom:12px;">&#127775;</div>
-                    <h3 style="font-size:18px; color:#4B5563; margin-bottom:6px;">No Guest Reviews Yet</h3>
-                    <p style="font-size:14px; color:#6B7280; max-width:440px; margin:0 auto 20px;">Be the first to share your experience staying at Santa Fe Beach Club!</p>
-                    <button type="button" class="btn btn-primary" onclick="openReviewModal()" style="padding:10px 24px; font-size:14px; border-radius:30px; cursor:pointer;">
+                <div class="testimonials-empty">
+                    <div class="testimonials-empty-icon" aria-hidden="true">&#127775;</div>
+                    <h3>No Guest Reviews Yet</h3>
+                    <p>Be the first to share your experience staying at Santa Fe Beach Club!</p>
+                    <button type="button" class="btn btn-primary btn-review" onclick="openReviewModal()">
                         Write the First Review
                     </button>
                 </div>
@@ -328,15 +327,16 @@ if ($price_q) {
             <div class="footer-links-col">
                 <h4>LEGAL</h4>
                 <ul>
-                    <li><a href="#privacy">Privacy Policy</a></li>
-                    <li><a href="#terms">Terms of Service</a></li>
+                    <li><a href="../terms.php#privacy">Privacy Policy</a></li>
+                    <li><a href="../terms.php#terms">Terms of Service</a></li>
                 </ul>
             </div>
             <div class="footer-links-col">
-                <h4>COMPANY</h4>
+                <h4>EXPLORE</h4>
                 <ul>
-                    <li><a href="#careers">Careers</a></li>
-                    <li><a href="#sustainability">Sustainability</a></li>
+                    <li><a href="rooms">Rooms</a></li>
+                    <li><a href="gallery">Gallery</a></li>
+                    <li><a href="contact">Contact</a></li>
                 </ul>
             </div>
         </div>

@@ -13,7 +13,7 @@ require_once 'frontend/partials/_page_header.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy & Terms - Santa Fe Beach Club</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="frontend/assets/css/style.css">
+    <link rel="stylesheet" href="frontend/assets/css/styles.css">
     <style>
         .terms-container {
             max-width: 900px;
@@ -31,6 +31,7 @@ require_once 'frontend/partials/_page_header.php';
         .terms-container p { margin-bottom: 16px; font-size: 15px; }
         .terms-container ul { margin-bottom: 16px; padding-left: 20px; }
         .terms-container li { margin-bottom: 8px; font-size: 15px; }
+        .terms-container h2[id] { scroll-margin-top: 24px; }
     </style>
 </head>
 <body>
@@ -40,7 +41,7 @@ require_once 'frontend/partials/_page_header.php';
         <h1>Privacy Policy & Terms of Service</h1>
         <p>Last Updated: <?php echo date('F j, Y'); ?></p>
 
-        <h2>1. Data Collection & Compliance (Philippine Data Privacy Act of 2012 - RA 10173)</h2>
+        <h2 id="privacy">1. Data Collection & Compliance (Philippine Data Privacy Act of 2012 - RA 10173)</h2>
         <p>Santa Fe Beach Club complies with the <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong> of the Philippines and its Implementing Rules and Regulations (IRR). In accordance with the principles of transparency, legitimate purpose, and proportionality (data minimization), we only collect the minimum personal information required to process, confirm, and manage your reservation:</p>
         <ul>
             <li>Full Name</li>
@@ -63,7 +64,7 @@ require_once 'frontend/partials/_page_header.php';
         <h2>3. Access Control & Security Safeguards</h2>
         <p>Your personal data is strictly protected by organizational, physical, and technical security measures pursuant to RA 10173. Access to guest profiles, contact information, and payment receipts is restricted exclusively to authorized Management and Reception staff using Role-Based Access Control (RBAC), multi-factor authentication, and encrypted sessions. Your data is never sold, leased, or disclosed to unauthorized third parties.</p>
 
-        <h2>4. Cancellation & Refund Policy</h2>
+        <h2 id="terms">4. Cancellation & Refund Policy</h2>
         <p>You may cancel your booking using the unique secure link provided in your confirmation email. Cancellations must be made prior to the payment deadline. Refunds for paid reservations are subject to resort management terms and policy approval.</p>
         
         <h2>5. Your Data Subject Rights (RA 10173)</h2>

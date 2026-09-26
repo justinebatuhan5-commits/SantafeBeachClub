@@ -420,6 +420,26 @@ body.rooms-page {
     transform: translateY(-2px);
 }
 
+.room-type-section:target {
+    border-color: #b77a4b;
+    animation: room-target-highlight 2.2s ease-out;
+}
+
+@keyframes room-target-highlight {
+    0%, 24% {
+        box-shadow: 0 0 0 5px rgba(183, 122, 75, 0.2), var(--rooms-shadow-lg);
+        transform: translateY(-3px);
+    }
+    100% {
+        box-shadow: var(--rooms-shadow-md);
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .room-type-section:target { animation: none; box-shadow: 0 0 0 3px rgba(183, 122, 75, 0.18); }
+}
+
 .room-type-section--unavailable {
     opacity: 0.8;
 }
@@ -2151,4 +2171,21 @@ body.rooms-page {
     .room-tabs-inner { gap: 20px; }
     .room-tab { font-size: 13px; gap: 6px; white-space: normal; }
     .room-tab-count { flex-shrink: 0; }
+}
+
+@media (max-width: 390px) {
+    .rooms-hero { padding-inline: 16px; }
+    .be-bar-wrapper { margin-inline: 10px; padding-inline: 12px; }
+    .rooms-layout { padding-inline: 12px; }
+    .rooms-main .room-tabs-bar { margin-bottom: 22px; overflow-x: auto; }
+    .room-tabs-inner { min-width: max-content; gap: 18px; }
+    .rts-header, .rate-info, .rate-card-right { padding: 16px; }
+    .rate-comparison > div { grid-template-columns: 1fr; gap: 3px; }
+    .rate-amenity-chip { font-size: 10px; }
+    .rate-extra-panel { margin: 0 12px 14px; padding: 12px; }
+    .rate-extra-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rate-extra-room-label { grid-column: 1 / -1; }
+    .rate-extra-select { width: 100%; }
+    .rooms-calendar-nav { justify-content: space-between; gap: 6px; }
+    .rooms-calendar-nav .btn-secondary { padding-inline: 10px !important; }
 }

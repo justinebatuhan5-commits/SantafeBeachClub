@@ -247,3 +247,11 @@
     .site-navbar .brand-logo::after { left: -11px; right: -10px; top: -9px; bottom: -9px; }
     .site-navbar .brand-logo .logo-mark { width: 46px; height: 46px; }
 }
+
+@media (max-width: 390px) {
+    .site-navbar,
+    .home-page .site-navbar { width: calc(100% - 16px); padding-inline: 9px; }
+    .site-navbar .nav-menu { border-radius: 16px; }
+    .site-navbar .nav-menu ul li a,
+    .site-navbar .nav-menu ul li a[style] { min-height: 44px; padding-inline: 12px; }
+}

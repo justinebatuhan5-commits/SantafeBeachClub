@@ -1865,6 +1865,35 @@ body.home-page {
     background: rgba(255, 251, 246, 0.96);
     box-shadow: 0 8px 28px rgba(91, 61, 43, 0.1);
 }
+
+.testimonials-heading-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+.testimonials-heading-row .testimonials-heading { margin-bottom: 0; }
+.btn-review {
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.testimonials-empty {
+    margin-top: 20px;
+    padding: 48px 20px;
+    border: 1px dashed #d1d5db;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    text-align: center;
+}
+.testimonials-empty-icon { margin-bottom: 12px; font-size: 36px; }
+.testimonials-empty h3 { margin-bottom: 6px; color: #4b5563; font-size: 18px; }
+.testimonials-empty p { max-width: 440px; margin: 0 auto 20px; color: #6b7280; font-size: 14px; }
 .home-page .brand-logo .logo-link { display: flex; }
 .home-page .mobile-menu-btn {
     display: inline-flex;
