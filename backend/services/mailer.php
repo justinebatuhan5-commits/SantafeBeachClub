@@ -981,7 +981,7 @@ function sendPreArrivalReminderEmail(
                         <p style='color:#9ca3af;font-size:12px;line-height:1.5;margin:0;'>
                             This is an automated reminder from Santa Fe Beach Club.<br>
                             If you have questions, please contact our Front Desk.<br>
-                            📞 Phone: (032) 401-xxxx &nbsp;|&nbsp; 📧 Email: info@santafebeachclub.com
+                            📞 Phone: 0950 522 3146 &nbsp;|&nbsp; 📧 Email: Justinebatuhan017@gmail.com
                         </p>
                     </div>
                 </div>

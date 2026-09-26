@@ -239,7 +239,7 @@ function inquiry_value(string $field): string {
                     </div>
                     <div class="contact-info-text">
                         <h4>Phone Number</h4>
-                        <p><a href="tel:+639688788960">+63 968 878 8960</a><br><a href="tel:+63324217527">(032) 421 7527</a></p>
+                        <p><a href="tel:+639505223146">0950 522 3146</a></p>
                     </div>
                 </div>
                 
@@ -249,7 +249,7 @@ function inquiry_value(string $field): string {
                     </div>
                     <div class="contact-info-text">
                         <h4>Email Address</h4>
-                        <p><a href="mailto:info@santafebeachclub.com">info@santafebeachclub.com</a><br><a href="mailto:bookings@santafebeachclub.com">bookings@santafebeachclub.com</a></p>
+                        <p><a href="mailto:Justinebatuhan017@gmail.com">Justinebatuhan017@gmail.com</a></p>
                     </div>
                 </div>
 

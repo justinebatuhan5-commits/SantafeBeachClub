@@ -75,7 +75,7 @@ require_once 'frontend/partials/_page_header.php';
             <li><strong>Right to Erasure or Blocking:</strong> To request the deletion or removal of your personal data upon completion of purpose or expiration of retention periods.</li>
             <li><strong>Right to Damages and to Lodge a Complaint:</strong> To lodge a complaint with the National Privacy Commission (NPC) if your privacy rights have been infringed.</li>
         </ul>
-        <p>To exercise any of these rights or for privacy-related inquiries, contact our Data Protection Officer / Resort Administration at <a href="mailto:info@santafebeachclub.com">info@santafebeachclub.com</a>.</p>
+        <p>To exercise any of these rights or for privacy-related inquiries, contact our Data Protection Officer / Resort Administration at <a href="mailto:Justinebatuhan017@gmail.com">Justinebatuhan017@gmail.com</a>.</p>
     </div>
 </body>
 </html>

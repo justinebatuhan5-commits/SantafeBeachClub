@@ -71,7 +71,7 @@ return static function (mysqli $db): void {
     $db->query("UPDATE bookings b JOIN rooms r ON b.room_id=r.id JOIN room_types rt ON rt.name=r.type
         SET b.room_type_id=rt.id WHERE b.room_type_id IS NULL");
 
-    $defaults = ['property_name'=>'Santa Fe Beach Club','property_address'=>'Barangay Poblacion, Santa Fe, Cebu','property_phone'=>'+63 32 123 4567','property_email'=>'info@santafebeachclub.com','checkin_time'=>'14:00','checkout_time'=>'12:00','property_timezone'=>SF_DEFAULT_PROPERTY_TIMEZONE,'currency'=>'PHP','gcash_number'=>'0950 522 3146','gcash_name'=>'Justine B'];
+    $defaults = ['property_name'=>'Santa Fe Beach Club','property_address'=>'Barangay Poblacion, Santa Fe, Cebu','property_phone'=>'09505223146','property_email'=>'Justinebatuhan017@gmail.com','checkin_time'=>'14:00','checkout_time'=>'12:00','property_timezone'=>SF_DEFAULT_PROPERTY_TIMEZONE,'currency'=>'PHP','gcash_number'=>'0950 522 3146','gcash_name'=>'Justine B'];
     $setting = $db->prepare('INSERT IGNORE INTO settings (setting_key,setting_value) VALUES (?,?)');
     foreach ($defaults as $key=>$value) { $setting->bind_param('ss',$key,$value); $setting->execute(); }
 };
