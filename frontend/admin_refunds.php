@@ -764,7 +764,13 @@ foreach ($valid_statuses as $s) {
         <div class="modal-box">
             <div class="modal-title" id="manualRefundTitle">Record Manual GCash Refund</div>
             <div class="modal-help">Transfer the exact approved amount first. Then record the unique GCash reference and upload the genuine transfer receipt. This action completes the refund.</div>
-            <div class="modal-field"><label>Recipient</label><div id="manualRefundRecipient" style="padding:10px 12px;background:var(--bg-alt,#f8fafc);border-radius:7px"></div></div>
+            <div class="modal-field">
+                <label>Recipient</label>
+                <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-alt,#f8fafc);border-radius:7px">
+                    <div id="manualRefundRecipient" style="flex:1"></div>
+                    <button id="toggleManualRefundMobile" class="btn-secondary-sm" type="button" onclick="toggleManualRefundMobile()" aria-pressed="false">Show full number</button>
+                </div>
+            </div>
             <div class="modal-field"><label for="manualTransferReference">GCash reference number</label><input id="manualTransferReference" maxlength="100" autocomplete="off" placeholder="e.g. 1234 567 890123"></div>
             <div class="modal-field"><label for="manualReceipt">Transfer receipt (JPG/PNG, max 2 MB)</label><input id="manualReceipt" type="file" accept="image/jpeg,image/png"></div>
             <div class="modal-field"><label for="manualRefundNotes">Internal notes (optional)</label><textarea id="manualRefundNotes" maxlength="1000"></textarea></div>
@@ -1032,10 +1038,29 @@ foreach ($valid_statuses as $s) {
             } catch (error) { btn.disabled=false; btn.innerHTML=original; showToast(error.message || 'Network error.', 'error'); }
         }
 
+        let manualRefundRecipient = { accountName: '', mobile: '', revealed: false };
+
+        function renderManualRefundRecipient() {
+            const recipient = manualRefundRecipient;
+            const shownMobile = recipient.revealed
+                ? recipient.mobile
+                : (recipient.mobile ? recipient.mobile.slice(0,2) + '•• •••• ' + recipient.mobile.slice(-3) : 'No mobile number');
+            document.getElementById('manualRefundRecipient').textContent = recipient.accountName + ' — ' + shownMobile;
+            const toggle = document.getElementById('toggleManualRefundMobile');
+            toggle.hidden = !recipient.mobile;
+            toggle.textContent = recipient.revealed ? 'Hide number' : 'Show full number';
+            toggle.setAttribute('aria-pressed', recipient.revealed ? 'true' : 'false');
+        }
+
+        function toggleManualRefundMobile() {
+            manualRefundRecipient.revealed = !manualRefundRecipient.revealed;
+            renderManualRefundRecipient();
+        }
+
         function openManualRefundModal(refundId, accountName, mobile) {
             currentRefundId = refundId;
-            const masked = mobile ? mobile.slice(0,2) + '•• •••• ' + mobile.slice(-3) : 'No mobile number';
-            document.getElementById('manualRefundRecipient').textContent = accountName + ' — ' + masked;
+            manualRefundRecipient = { accountName, mobile, revealed: false };
+            renderManualRefundRecipient();
             document.getElementById('manualTransferReference').value=''; document.getElementById('manualReceipt').value=''; document.getElementById('manualRefundNotes').value='';
             document.getElementById('manualRefundModal').classList.add('show');
         }
