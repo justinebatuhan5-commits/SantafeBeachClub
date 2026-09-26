@@ -113,7 +113,7 @@ try {
         // Never accept payment_id or amount from the client. Select a verified
         // payment that belongs to the authorized booking.
         $pstmt = $conn->prepare("
-            SELECT id, amount
+            SELECT id, amount, payment_method
             FROM payments
             WHERE booking_id = ? AND status = 'verified'
             ORDER BY paid_at DESC, id DESC
@@ -128,6 +128,16 @@ try {
             throw new Exception('No verified payment found for this booking.');
         }
         $payment_id = (int)$payment['id'];
+        $paymentMethod = (string)($payment['payment_method'] ?? '');
+        $isPayMongoPayment = stripos($paymentMethod, 'PayMongo') !== false;
+        $manualGcashAllowed = !$isPayMongoPayment || stripos($paymentMethod, 'GCash') !== false;
+        $availableMethods = sf_refund_method_settings($conn);
+        if ($preferred_method === 'original_source' && $isPayMongoPayment && !$availableMethods['paymongo']) {
+            throw new Exception('PayMongo refunds are temporarily unavailable. Select another available refund method.');
+        }
+        if ($preferred_method === 'manual_gcash' && (!$availableMethods['manual_gcash'] || !$manualGcashAllowed)) {
+            throw new Exception('Manual GCash refunds are temporarily unavailable for this payment.');
+        }
 
         // Calculate refund amount based on cancellation policy
         $policy = sf_get_cancellation_policy($booking['check_in'], $booking['check_out']);

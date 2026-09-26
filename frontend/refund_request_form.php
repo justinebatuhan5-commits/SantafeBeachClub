@@ -50,6 +50,13 @@ if ($token) {
     }
 }
 
+$requestPaymentMethod = (string)($booking['payment_method'] ?? '');
+$originalUsesPayMongo = stripos($requestPaymentMethod, 'PayMongo') !== false;
+$originalRefundAvailable = !$originalUsesPayMongo || $refund_methods['paymongo'];
+$manualGcashAllowed = !$originalUsesPayMongo || stripos($requestPaymentMethod, 'GCash') !== false;
+$manualRefundAvailable = $refund_preference_ready && $refund_methods['manual_gcash'] && $manualGcashAllowed;
+$hasAvailableRefundMethod = $originalRefundAvailable || $manualRefundAvailable;
+
 // Handle refund request submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request']) && $booking && !$error_message) {
     $reason = trim($_POST['reason'] ?? '');
@@ -59,6 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
 
     if (empty($reason)) {
         $error_message = 'Please provide a reason for your refund request.';
+    } elseif ($preferred_method === 'original_source' && !$originalRefundAvailable) {
+        $error_message = 'PayMongo refunds are temporarily unavailable. Please select an available refund method.';
+    } elseif ($preferred_method === 'manual_gcash' && !$manualRefundAvailable) {
+        $error_message = 'Manual GCash refunds are temporarily unavailable for this payment.';
+    } elseif (!$hasAvailableRefundMethod) {
+        $error_message = 'Refund requests are temporarily unavailable because all eligible refund methods are disabled.';
     } else {
         try {
             // Check for existing pending request
@@ -508,22 +521,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
 
                         <div class="form-group">
                             <label for="preferredRefundMethod">Preferred refund method</label>
-                            <select id="preferredRefundMethod" name="preferred_refund_method" style="width:100%;padding:12px;border:1px solid #d7dde7;border-radius:8px;font-size:14px;background:#fff">
-                                <option value="original_source">Return to original payment method</option>
-                                <?php
-                                $requestPaymentMethod = (string)($booking['payment_method'] ?? '');
-                                $manualGcashAllowed = stripos($requestPaymentMethod, 'PayMongo') === false || stripos($requestPaymentMethod, 'GCash') !== false;
-                                if ($refund_preference_ready && $refund_methods['manual_gcash'] && $manualGcashAllowed): ?>
-                                <option value="manual_gcash">Receive through GCash</option>
+                            <select id="preferredRefundMethod" name="preferred_refund_method" style="width:100%;padding:12px;border:1px solid #d7dde7;border-radius:8px;font-size:14px;background:#fff" <?php echo !$hasAvailableRefundMethod ? 'disabled' : ''; ?>>
+                                <option value="original_source" <?php echo !$originalRefundAvailable ? 'disabled' : ''; ?>>Return to original payment method<?php echo !$originalRefundAvailable ? ' (temporarily unavailable)' : ''; ?></option>
+                                <?php if ($refund_preference_ready && $manualGcashAllowed): ?>
+                                <option value="manual_gcash" <?php echo !$manualRefundAvailable ? 'disabled' : ''; ?> <?php echo !$originalRefundAvailable && $manualRefundAvailable ? 'selected' : ''; ?>>Receive through GCash<?php echo !$manualRefundAvailable ? ' (temporarily unavailable)' : ''; ?></option>
                                 <?php endif; ?>
                             </select>
-                            <small style="display:block;margin-top:6px;color:#64748b">Your selection is a preference. Management makes the final choice based on the original payment channel.</small>
+                            <small style="display:block;margin-top:6px;color:<?php echo $hasAvailableRefundMethod ? '#64748b' : '#991b1b'; ?>"><?php echo $hasAvailableRefundMethod ? 'Your selection is a preference. Management makes the final choice based on the original payment channel.' : 'No eligible refund method is currently available. Please contact the resort.'; ?></small>
                         </div>
 
                         <!-- Buttons -->
                         <div class="button-group">
                             <a href="/" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" name="submit_refund_request" class="btn btn-primary">
+                            <button type="submit" name="submit_refund_request" class="btn btn-primary" <?php echo !$hasAvailableRefundMethod ? 'disabled title="Refund requests are temporarily unavailable"' : ''; ?>>
                                 Submit Request
                             </button>
                         </div>
