@@ -13,8 +13,36 @@
     <title>Privacy & Terms - Santa Fe Beach Club</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="frontend/assets/css/styles.css">
-    <link rel="stylesheet" href="frontend/assets/css/navbar.css">
     <style>
+        .terms-back-bar {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 28px 24px 0;
+        }
+        .terms-back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            min-height: 46px;
+            padding: 0 18px;
+            border: 1px solid rgba(124, 83, 60, 0.28);
+            border-radius: 999px;
+            background: #fff;
+            color: #5f3f2f;
+            font: 600 14px/1 'Outfit', sans-serif;
+            text-decoration: none;
+            box-shadow: 0 8px 22px rgba(76, 49, 34, 0.08);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .terms-back-button:hover {
+            transform: translateX(-2px);
+            border-color: #9c6a48;
+            box-shadow: 0 10px 24px rgba(76, 49, 34, 0.13);
+        }
+        .terms-back-button:focus-visible {
+            outline: 3px solid rgba(156, 106, 72, 0.3);
+            outline-offset: 3px;
+        }
         .terms-container {
             max-width: 900px;
             margin: 60px auto;
@@ -33,19 +61,22 @@
         .terms-container li { margin-bottom: 8px; font-size: 15px; }
         .terms-container h2[id] { scroll-margin-top: 24px; }
         .terms-page { background: #f7f2eb; }
-        .terms-page .terms-container { margin-top: 34px; }
+        .terms-page .terms-container { margin-top: 28px; }
         @media (max-width: 640px) {
+            .terms-back-bar { padding: 18px 12px 0; }
+            .terms-back-button { min-height: 42px; padding: 0 15px; }
             .terms-container { margin: 20px 12px 40px; padding: 26px 20px; }
             .terms-container h1 { font-size: 24px; }
         }
     </style>
 </head>
 <body class="terms-page">
-    <?php
-    $active_nav = '';
-    $nav_base = 'frontend/';
-    require __DIR__ . '/frontend/partials/_navbar.php';
-    ?>
+    <div class="terms-back-bar">
+        <a class="terms-back-button" href="frontend/index" id="termsBackButton" aria-label="Go back to the previous page">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+            <span>Back</span>
+        </a>
+    </div>
 
     <div class="terms-container">
         <h1>Privacy Policy & Terms of Service</h1>
@@ -88,5 +119,19 @@
         </ul>
         <p>To exercise any of these rights or for privacy-related inquiries, contact our Data Protection Officer / Resort Administration at <a href="mailto:Justinebatuhan017@gmail.com">Justinebatuhan017@gmail.com</a>.</p>
     </div>
+    <script>
+        document.getElementById('termsBackButton').addEventListener('click', function (event) {
+            if (document.referrer) {
+                try {
+                    if (new URL(document.referrer).origin === window.location.origin) {
+                        event.preventDefault();
+                        window.history.back();
+                    }
+                } catch (error) {
+                    // Keep the Home fallback if the referrer cannot be parsed.
+                }
+            }
+        });
+    </script>
 </body>
 </html>
