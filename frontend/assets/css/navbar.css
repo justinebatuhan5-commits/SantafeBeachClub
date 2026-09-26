@@ -37,9 +37,9 @@
     transform: skewX(10deg);
     box-shadow: 10px 0 18px rgba(91, 61, 43, 0.05);
 }
-.site-navbar .logo-mark {
-    width: 58px;
-    height: 58px;
+.site-navbar .brand-logo .logo-mark {
+    width: 46px;
+    height: 46px;
     object-fit: cover;
     border: 0;
     box-shadow: 0 5px 16px rgba(130, 81, 47, 0.16);
@@ -150,7 +150,7 @@
     .home-page .site-navbar { padding-left: 22px; }
     .site-navbar .brand-logo { min-width: 90px; }
     .site-navbar .brand-logo::after { right: -18px; }
-    .site-navbar .logo-mark { width: 52px; height: 52px; }
+    .site-navbar .brand-logo .logo-mark { width: 46px; height: 46px; }
     .navbar-actions { margin-left: auto; gap: 10px; }
     .navbar-book { min-height: 44px; padding: 0 18px; }
     .site-navbar .nav-menu { order: 3; flex: 0 0 100%; width: 100%; margin-top: 8px; padding: 8px 0 0; border-top: 1px solid #e5d6c8; }
@@ -194,6 +194,6 @@
     .home-page .site-navbar { top: 8px; width: calc(100% - 20px); margin: 0; padding: 8px 10px; }
     .site-navbar .brand-logo { min-width: 64px; }
     .site-navbar .brand-logo::after { left: -11px; right: -10px; top: -9px; bottom: -9px; }
-    .site-navbar .logo-mark { width: 52px; height: 52px; }
+    .site-navbar .brand-logo .logo-mark { width: 46px; height: 46px; }
     .navbar-book { width: 44px; height: 44px; min-height: 44px; flex-basis: 44px; }
 }

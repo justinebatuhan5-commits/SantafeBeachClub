@@ -1453,6 +1453,14 @@ function toggleExtraPersons(btn) {
     var panel = document.getElementById('extra-panel-' + type);
     var isOpen = panel.classList.contains('rate-extra-panel--open');
 
+    // The panel starts beside the room selector, but once expanded it belongs
+    // on its own full-width grid row. This prevents the pricing column from
+    // stretching the room-details column and creating a large blank area.
+    var rateCard = btn.closest('.rate-card');
+    if (rateCard && panel.parentElement !== rateCard) {
+        rateCard.appendChild(panel);
+    }
+
     document.querySelectorAll('.rate-extra-panel').forEach(function(item) {
         item.classList.remove('rate-extra-panel--open');
     });

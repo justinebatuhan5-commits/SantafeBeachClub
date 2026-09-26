@@ -763,10 +763,12 @@ body.rooms-page {
 
 .rate-extra-panel {
     display: none;
+    grid-column: 1 / -1;
+    margin: 0 26px 26px;
     border-radius: var(--rooms-radius-sm);
     background: #F8F5F0;
     border: 1px solid var(--rooms-border);
-    padding: 14px;
+    padding: 18px;
 }
 
 .rate-extra-panel--open { display: block; }
@@ -1974,6 +1976,7 @@ body.rooms-page {
 @media (max-width: 1100px) and (min-width: 901px) {
     .rate-card { grid-template-columns: minmax(0, 1fr); }
     .rate-card-right { border-left: 0; border-top: 1px solid var(--rooms-border); }
+    .rate-extra-panel { margin: 0 20px 20px; padding: 14px; }
 }
 @media (max-width: 640px) {
     .rate-card { grid-template-columns: minmax(0, 1fr); }
@@ -1984,6 +1987,7 @@ body.rooms-page {
     .rts-header, .rate-info, .rate-card-right { padding: 20px; }
     .rts-title { font-size: 20px; }
     .rate-card-right { border-left: 0; border-top: 1px solid var(--rooms-border); }
+    .rate-extra-panel { margin: 0 20px 20px; padding: 14px; }
 }
 
 /* Keep room navigation and the summary clear of the fixed header. */

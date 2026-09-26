@@ -1865,7 +1865,6 @@ body.home-page {
     background: rgba(255, 251, 246, 0.96);
     box-shadow: 0 8px 28px rgba(91, 61, 43, 0.1);
 }
-.home-page .brand-logo .logo-mark { width: 46px; height: 46px; }
 .home-page .brand-logo .logo-link { display: flex; }
 .home-page .mobile-menu-btn {
     display: inline-flex;
