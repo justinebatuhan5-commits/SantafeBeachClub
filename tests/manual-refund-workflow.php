@@ -31,6 +31,9 @@ foreach (['guest_confirmed_at=NOW()','confirmation_token_hash=NULL','verify_csrf
 foreach (['confirmation_token_hash','refund_confirmation.php?token=','Confirm Refund Received'] as $fragment) {
     if (!str_contains($api . $mailer, $fragment)) throw new RuntimeException('Missing confirmation email workflow: ' . $fragment);
 }
+foreach (['private_storage_file($receipt_key)', 'addAttachment($receipt_path', 'GCash-Refund-Receipt-', "'receipts/' . \$filename", 'REFUND_COMPLETION_EMAIL_FAILED'] as $fragment) {
+    if (!str_contains($api . $mailer, $fragment)) throw new RuntimeException('Missing private refund receipt email attachment: ' . $fragment);
+}
 foreach (['Email GCash Details Link','Record GCash Transfer','Confirm Money Sent','Refund System Used','Manual GCash Transfer','PayMongo Refund','refundCsrfToken','Show full number','toggleManualRefundMobile'] as $fragment) {
     if (!str_contains($admin, $fragment)) throw new RuntimeException('Missing manual refund admin control: ' . $fragment);
 }

@@ -16,6 +16,7 @@
 require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/../helpers/private_storage_helper.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -257,8 +258,8 @@ function sendBookingStatusEmail(
 
         $mail->send();
         return ['success' => true, 'error' => null];
-    } catch (Exception $e) {
-        return ['success' => false, 'error' => $mail->ErrorInfo];
+    } catch (Throwable $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo ?: $e->getMessage()];
     }
 }
 
@@ -350,8 +351,7 @@ function sendPaymentRejectedEmail(
     string $room_name,
     string $check_in,
     string $check_out,
-    string $reason = '',
-    string $confirmation_link = ''
+    string $reason = ''
 ): array {
     if (empty($to_email)) {
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
@@ -370,8 +370,6 @@ function sendPaymentRejectedEmail(
 
         $mail->isHTML(true);
         $mail->Subject = "Payment Not Accepted \u2013 {$booking_ref} \u2013 Santa Fe Beach Club";
-        $safe_confirmation_link = htmlspecialchars($confirmation_link, ENT_QUOTES, 'UTF-8');
-        $confirmation_html = $confirmation_link !== '' ? "<div style='background:#eff6ff;border:1px solid #bfdbfe;padding:18px;margin:20px 0;border-radius:8px;text-align:center;'><p style='margin:0 0 13px;color:#1e3a8a;font-size:14px;'><strong>Please confirm after the GCash transfer appears in your account.</strong></p><a href='{$safe_confirmation_link}' style='display:inline-block;background:#047857;color:#fff;text-decoration:none;padding:12px 20px;border-radius:7px;font-weight:700;'>Confirm Refund Received</a><p style='margin:12px 0 0;color:#64748b;font-size:12px;word-break:break-all;'>If the button does not open, copy this link: {$safe_confirmation_link}</p></div>" : '';
         $mail->Body    = "
             <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;'>
                 <div style='background:#dc2626;padding:28px 32px;border-radius:12px 12px 0 0;'>
@@ -400,7 +398,6 @@ function sendPaymentRejectedEmail(
                         </tr>
                     </table>
 
-                    {$confirmation_html}
                     {$reason_html}
                     <p>If you believe this is a mistake or would like to make a new reservation, please contact our front desk:</p>
                     <p style='margin:0;'>\ud83d\udcde <strong>Front Desk:</strong> Contact us directly</p>
@@ -437,7 +434,9 @@ function sendRefundCompletedEmail(
     string $guest_name,
     string $booking_ref,
     float $refund_amount,
-    string $reason = ''
+    string $reason = '',
+    string $confirmation_link = '',
+    string $receipt_key = ''
 ): array {
     if (empty($to_email)) {
         return ['success' => false, 'error' => 'No email address provided for this guest.'];
@@ -449,6 +448,15 @@ function sendRefundCompletedEmail(
         $mail->addAddress($to_email, $guest_name);
 
         $amount_fmt = number_format($refund_amount, 2);
+
+        $safe_confirmation_link = htmlspecialchars($confirmation_link, ENT_QUOTES, 'UTF-8');
+        $confirmation_html = $confirmation_link !== '' ? "<div style='background:#eff6ff;border:1px solid #bfdbfe;padding:18px;margin:20px 0;border-radius:8px;text-align:center;'><p style='margin:0 0 13px;color:#1e3a8a;font-size:14px;'><strong>Please confirm after the GCash transfer appears in your account.</strong></p><a href='{$safe_confirmation_link}' style='display:inline-block;background:#047857;color:#fff;text-decoration:none;padding:12px 20px;border-radius:7px;font-weight:700;'>Confirm Refund Received</a><p style='margin:12px 0 0;color:#64748b;font-size:12px;word-break:break-all;'>If the button does not open, copy this link: {$safe_confirmation_link}</p></div>" : '';
+        if ($receipt_key !== '') {
+            $receipt_path = private_storage_file($receipt_key);
+            if ($receipt_path === null) return ['success' => false, 'error' => 'The private refund receipt could not be found.'];
+            $extension = strtolower((string)pathinfo($receipt_path, PATHINFO_EXTENSION));
+            $mail->addAttachment($receipt_path, 'GCash-Refund-Receipt-' . preg_replace('/[^A-Za-z0-9_-]/', '-', $booking_ref) . '.' . $extension);
+        }
 
         $mail->isHTML(true);
         $mail->Subject = "Refund Processed – {$booking_ref} – Santa Fe Beach Club";
@@ -481,6 +489,9 @@ function sendRefundCompletedEmail(
                         " . ($reason !== '' ? "<tr style='border-top:1px solid #f0f0f0;'><td style='padding:8px 0;color:#6b7280;'>Refund Details</td><td style='padding:8px 0;text-align:right;font-weight:600;'>" . htmlspecialchars($reason, ENT_QUOTES, 'UTF-8') . "</td></tr>" : '') . "
                     </table>
 
+                    " . ($receipt_key !== '' ? "<p style='background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:7px;font-size:13px;color:#475569;'><strong>Transfer receipt attached:</strong> See the GCash refund receipt included with this email.</p>" : '') . "
+                    {$confirmation_html}
+
                     <p style='color:#4b5563;font-size:13px;margin:20px 0 0;line-height:1.6;'>
                         <strong>Processing Time:</strong> Refunds typically appear in your account within 3-5 business days, depending on your bank or payment provider.
                     </p>
@@ -502,8 +513,8 @@ function sendRefundCompletedEmail(
 
         $mail->send();
         return ['success' => true, 'error' => null];
-    } catch (Exception $e) {
-        return ['success' => false, 'error' => $mail->ErrorInfo];
+    } catch (Throwable $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo ?: $e->getMessage()];
     }
 }
 

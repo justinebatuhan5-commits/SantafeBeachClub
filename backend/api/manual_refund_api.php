@@ -221,7 +221,10 @@ try {
         $frontendBase = str_ends_with($base, '/frontend') ? $base : $base . '/frontend';
         $confirmationLink = $frontendBase . '/refund_confirmation.php?token=' . rawurlencode($confirmationToken);
         if (!empty($refund['guest_email'])) {
-            @sendRefundCompletedEmail($refund['guest_email'], $refund['guest_name'], 'REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT), (float)$refund['net_refund'], 'Manual GCash transfer reference ' . $reference, $confirmationLink);
+            $completionMail = sendRefundCompletedEmail($refund['guest_email'], $refund['guest_name'], 'REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT), (float)$refund['net_refund'], 'Manual GCash transfer reference ' . $reference, $confirmationLink, 'receipts/' . $filename);
+            if (!$completionMail['success']) {
+                SecurityLogger::log($conn, 'REFUND_COMPLETION_EMAIL_FAILED', 'Refund request #' . $requestId . ' was completed, but the receipt email failed: ' . ($completionMail['error'] ?? 'unknown error'), SecurityLogger::LEVEL_WARNING, $actor);
+            }
         }
         $response = ['success' => true, 'message' => 'Manual GCash refund completed. A confirmation link was emailed to the guest.'];
     }
