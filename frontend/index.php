@@ -46,6 +46,7 @@ if ($price_q) {
     <title>Santa Fe Beach Club - Escape to Paradise</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
+    <link rel="stylesheet" href="assets/css/home-content.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/home-content.css'); ?>">
     <script src="assets/js/dark-mode-toggle.js" defer></script>
     <style>
         .mobile-menu-btn {

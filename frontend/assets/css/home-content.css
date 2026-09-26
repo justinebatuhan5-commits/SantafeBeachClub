@@ -1,0 +1,77 @@
+/* Homepage content cards kept separate from the global and navbar stylesheets. */
+.stays-section { padding: 80px 5%; background: #faf4ed; }
+.stays-inner, .testimonials-inner { max-width: 1120px; margin: 0 auto; }
+.stays-header, .testimonials-inner { text-align: center; }
+.stays-header { margin-bottom: 52px; }
+.stays-kicker, .testimonials-kicker {
+    display: block;
+    margin-bottom: 14px;
+    color: #c58f5f;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+.stays-heading, .testimonials-heading {
+    color: #2b2420;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(34px, 4vw, 50px);
+    font-weight: 600;
+}
+.stays-heading { margin-bottom: 14px; }
+.stays-subtitle { max-width: 540px; margin: 0 auto; color: #7a6a60; font-size: 16px; line-height: 1.65; }
+.stays-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.stay-card {
+    overflow: hidden;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(52, 34, 22, 0.08);
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+.stay-card:hover { transform: translateY(-6px); box-shadow: 0 24px 52px rgba(52, 34, 22, 0.15); }
+.stay-card-image-wrap { height: 240px; overflow: hidden; }
+.stay-card-image { width: 100%; height: 100%; background-position: center; background-size: cover; transition: transform .5s ease; }
+.stay-card:hover .stay-card-image { transform: scale(1.06); }
+.stay-card-body { padding: 24px; }
+.stay-card-body h3 { margin-bottom: 10px; color: #2b2420; font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; }
+.stay-card-body > p { margin-bottom: 20px; color: #6b5e54; font-size: 14px; line-height: 1.68; }
+.stay-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid #f0e8e0; gap: 16px; }
+.stay-price-from { display: block; margin-bottom: 2px; color: #9a8070; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+.stay-price strong { color: #8a5a3a; font-size: 20px; line-height: 1; }
+.stay-price strong span { color: #9a8a80; font-size: 13px; font-weight: 500; }
+.btn-stay-book {
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #c58f5f, #8a5a3a);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.stays-cta-row { margin-top: 36px; text-align: center; }
+.btn-see-all-rooms { display: inline-block; padding-bottom: 3px; border-bottom: 2px solid rgba(138, 90, 58, .35); color: #8a5a3a; font-size: 15px; font-weight: 600; text-decoration: none; }
+.testimonials-section { padding: 96px 5%; background: linear-gradient(180deg, #faf4ed, #fff); }
+.testimonials-heading { margin-bottom: 48px; font-size: clamp(32px, 3.5vw, 46px); }
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.testimonial-card { padding: 28px; border: 1px solid rgba(138, 90, 58, .1); border-radius: 20px; background: #fff; box-shadow: 0 8px 24px rgba(52, 34, 22, .06); text-align: left; }
+.testimonial-stars { margin-bottom: 16px; color: #f59e0b; font-size: 16px; letter-spacing: 2px; }
+.testimonial-text { margin-bottom: 22px; color: #5a5148; font-size: 14px; font-style: italic; line-height: 1.78; }
+.testimonial-author { display: flex; align-items: center; gap: 12px; }
+.testimonial-avatar { display: flex; flex: 0 0 42px; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #c58f5f, #8a5a3a); color: #fff; font-size: 12px; font-weight: 700; }
+.testimonial-author strong { display: block; margin-bottom: 2px; color: #2b2420; font-size: 14px; }
+.testimonial-author span { color: #9a8070; font-size: 12px; }
+
+@media (max-width: 992px) {
+    .stays-grid { gap: 20px; }
+    .testimonials-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+    .stays-section, .testimonials-section { padding: 64px 5%; }
+    .stays-grid, .testimonials-grid { grid-template-columns: 1fr; }
+    .stay-card-image-wrap { height: 220px; }
+}
+@media (max-width: 480px) {
+    .stay-card-footer { align-items: flex-start; flex-direction: column; }
+    .btn-stay-book { width: 100%; text-align: center; }
+}
