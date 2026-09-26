@@ -7,7 +7,7 @@ foreach ([$api,$admin,$guest,$migration] as $source) if ($source === false) thro
 foreach (['token_hash','token_expires_at','gcash_account_name','transfer_reference','receipt_path'] as $fragment) {
     if (!str_contains($migration, $fragment)) throw new RuntimeException('Missing manual refund schema: ' . $fragment);
 }
-foreach (["\$action === 'generate_link'", "\$action === 'guest_submit'", "\$action === 'complete'", "stripos((string)\$refund['payment_method'], 'PayMongo')", 'store_private_receipt', "status='details_submitted'", "status='completed'"] as $fragment) {
+foreach (["\$action === 'generate_link'", "\$action === 'guest_submit'", "\$action === 'complete'", "stripos(\$paymentMethod, 'PayMongo')", "stripos(\$paymentMethod, 'GCash')", 'store_private_receipt', "status='details_submitted'", "status='completed'"] as $fragment) {
     if (!str_contains($api, $fragment)) throw new RuntimeException('Missing protected manual refund behavior: ' . $fragment);
 }
 foreach (['Email GCash Details Link','Record GCash Transfer','Confirm Money Sent','refundCsrfToken'] as $fragment) {

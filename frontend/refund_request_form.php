@@ -508,7 +508,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                             <label for="preferredRefundMethod">Preferred refund method</label>
                             <select id="preferredRefundMethod" name="preferred_refund_method" style="width:100%;padding:12px;border:1px solid #d7dde7;border-radius:8px;font-size:14px;background:#fff">
                                 <option value="original_source">Return to original payment method</option>
-                                <?php if ($refund_preference_ready && stripos((string)($booking['payment_method'] ?? ''), 'PayMongo') === false): ?>
+                                <?php
+                                $requestPaymentMethod = (string)($booking['payment_method'] ?? '');
+                                $manualGcashAllowed = stripos($requestPaymentMethod, 'PayMongo') === false || stripos($requestPaymentMethod, 'GCash') !== false;
+                                if ($refund_preference_ready && $manualGcashAllowed): ?>
                                 <option value="manual_gcash">Receive through GCash</option>
                                 <?php endif; ?>
                             </select>

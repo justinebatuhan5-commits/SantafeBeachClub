@@ -627,6 +627,11 @@ foreach ($valid_statuses as $s) {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
                                 Open PayMongo Dashboard
                             </a>
+                            <?php if ($manual_refund_ready && stripos((string)($refund['payment_method'] ?? ''), 'GCash') !== false): ?>
+                            <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this, true)">
+                                Manual GCash Fallback
+                            </button>
+                            <?php endif; ?>
                             <?php elseif ($manual_refund_ready): ?>
                             <button class="btn-approve" type="button" onclick="sendManualRefundLink(<?php echo (int)$refund['id']; ?>, this)">
                                 Email GCash Details Link
@@ -1013,8 +1018,11 @@ foreach ($valid_statuses as $s) {
             await runRefundAction('sync_paymongo', refundId, btn, 'Verifying...', 'PayMongo refund status verified.');
         }
 
-        async function sendManualRefundLink(refundId, btn) {
-            if (!await SiteDialog.confirm('Email a secure, single-use GCash details link to this guest? The link expires after 48 hours.', { title: 'Send GCash details link?', confirmText: 'Send link' })) return;
+        async function sendManualRefundLink(refundId, btn, paymongoFallback = false) {
+            const warning = paymongoFallback
+                ? 'This payment originated from GCash through PayMongo. Use this manual fallback only if you will NOT also create a PayMongo refund, or the guest could be refunded twice. Email the secure GCash details link?'
+                : 'Email a secure, single-use GCash details link to this guest? The link expires after 48 hours.';
+            if (!await SiteDialog.confirm(warning, { title: paymongoFallback ? 'Use manual GCash fallback?' : 'Send GCash details link?', confirmText: 'Send link' })) return;
             const original = btn.innerHTML; btn.disabled = true; btn.textContent = 'Sending...';
             const fd = new FormData(); fd.append('request_id', refundId); fd.append('csrf_token', refundCsrfToken);
             try {

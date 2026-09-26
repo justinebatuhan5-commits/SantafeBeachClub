@@ -40,8 +40,11 @@ try {
         $refund = $stmt->get_result()->fetch_assoc(); $stmt->close();
         if (!$refund) throw new RuntimeException('Approved refund request not found.');
         if (!filter_var($refund['guest_email'], FILTER_VALIDATE_EMAIL)) throw new RuntimeException('The guest email is invalid.');
-        if (stripos((string)$refund['payment_method'], 'PayMongo') !== false) {
-            throw new RuntimeException('PayMongo payments must normally be refunded to their original source.');
+        $paymentMethod = (string)$refund['payment_method'];
+        $isPayMongo = stripos($paymentMethod, 'PayMongo') !== false;
+        $isGcashOrigin = stripos($paymentMethod, 'GCash') !== false;
+        if ($isPayMongo && !$isGcashOrigin) {
+            throw new RuntimeException('PayMongo card and non-GCash payments must be refunded to their original source.');
         }
 
         $token = bin2hex(random_bytes(32));
@@ -64,7 +67,8 @@ try {
         $link = $frontendBase . '/refund_details.php?token=' . rawurlencode($token);
         $mail = sendManualRefundDetailsEmail($refund['guest_email'], $refund['guest_name'], 'REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT), (float)$refund['net_refund'], $link);
         if (!$mail['success']) throw new RuntimeException('The link was created, but email delivery failed. Generate a new link after checking SMTP.');
-        log_activity($conn, (string)($_SESSION['admin_username'] ?? 'Admin'), 'Manual Refund Link Sent', 'Secure GCash details link sent for refund request #' . $requestId . '.');
+        $routeNote = $isPayMongo ? ' Manual fallback selected for a PayMongo GCash payment; no PayMongo refund may also be processed.' : '';
+        log_activity($conn, (string)($_SESSION['admin_username'] ?? 'Admin'), 'Manual Refund Link Sent', 'Secure GCash details link sent for refund request #' . $requestId . '.' . $routeNote);
         $response = ['success' => true, 'message' => 'Secure GCash details link emailed to the guest.'];
 
     } elseif ($action === 'guest_submit') {
