@@ -103,8 +103,7 @@ if ($price_q) {
                 <?php endforeach; ?>
             </div>
             <div class="hero-buttons">
-                <a href="rooms" class="btn-hero-primary"><?php echo __t('book_now'); ?></a>
-                <a href="rooms" class="btn-hero-secondary"><?php echo __t('view_all_rooms'); ?></a>
+                <a href="rooms" class="btn-hero-primary">Explore Rooms</a>
             </div>
         </div>
 
@@ -164,7 +163,7 @@ if ($price_q) {
 
 
     <!-- Stays / Rooms Section -->
-    <section class="stays-section" id="gallery">
+    <section class="stays-section" id="stays">
         <div class="stays-inner">
             <div class="stays-header">
                 <p class="section-kicker stays-kicker">Signature Stays</p>
@@ -186,7 +185,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['standard_room']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms" class="btn-stay-book">Book Now</a>
+                            <a href="rooms?room_type=standard_room" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
@@ -204,7 +203,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['beachview_duplex']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms" class="btn-stay-book">Book Now</a>
+                            <a href="rooms?room_type=beachview_duplex" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
@@ -222,7 +221,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['seaview_duplex']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms" class="btn-stay-book">Book Now</a>
+                            <a href="rooms?room_type=seaview_duplex" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
@@ -240,7 +239,7 @@ if ($price_q) {
                                 <strong>&#8369;<?php echo number_format($db_prices['beach_villa']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms" class="btn-stay-book">Book Now</a>
+                            <a href="rooms?room_type=beach_villa" class="btn-stay-book">View Room</a>
                         </div>
                     </div>
                 </div>
@@ -310,23 +309,6 @@ if ($price_q) {
             <?php endif; ?>
         </div>
     </section>
-
-    <!-- Gallery Strip -->
-    <section class="gallery-strip" aria-label="Property photo gallery">
-        <div class="gallery-grid">
-            <div class="gallery-item" style="background-image: url('assets/hero-slide-1.jpg');">
-                <div class="gallery-item-overlay"><span>Shoreline View</span></div>
-            </div>
-            <div class="gallery-item" style="background-image: url('assets/hero-slide-3.jpg');">
-                <div class="gallery-item-overlay"><span>Tropical Gardens</span></div>
-            </div>
-            <div class="gallery-item" style="background-image: url('assets/hero-slide-4-hd.png');">
-                <div class="gallery-item-overlay"><span>Sunset Serenity</span></div>
-            </div>
-        </div>
-    </section>
-
-
 
     <!-- Footer Section matching reference image -->
     <footer class="main-footer">

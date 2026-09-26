@@ -198,23 +198,6 @@ body {
     box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
 
-.btn-hero-secondary {
-    background-color: rgba(255, 255, 255, 0.9);
-    color: var(--color-dark);
-    text-decoration: none;
-    padding: 12px 28px;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-hero-secondary:hover {
-    background-color: var(--color-white);
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-
 /* Floating Search Card */
 .search-card-container {
     position: absolute;
@@ -641,8 +624,7 @@ body.home-page {
     color: rgba(255, 247, 240, 0.72);
 }
 
-.home-page .btn-hero-primary,
-.home-page .btn-hero-secondary {
+.home-page .btn-hero-primary {
     border-radius: 999px;
     padding: 13px 30px;
 }
@@ -654,11 +636,6 @@ body.home-page {
 .home-page .btn-hero-primary {
     background: linear-gradient(135deg, #c58f5f 0%, #8a5a3a 100%);
     box-shadow: 0 16px 28px rgba(138, 90, 58, 0.28);
-}
-
-.home-page .btn-hero-secondary {
-    background: rgba(255, 251, 246, 0.92);
-    color: #4b3a2f;
 }
 
 .home-page .search-card-container {
@@ -944,8 +921,7 @@ body.home-page {
         align-items: center;
         justify-content: center;
     }
-    .home-page .btn-hero-primary,
-    .home-page .btn-hero-secondary {
+    .home-page .btn-hero-primary {
         width: 100%;
     }
     .home-page .property-about,
@@ -1459,56 +1435,6 @@ body.home-page {
 }
 
 /* ============================================================
-   GALLERY STRIP
-   ============================================================ */
-.gallery-strip {
-    line-height: 0;
-}
-
-.gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    height: 360px;
-}
-
-.gallery-item {
-    background-size: cover;
-    background-position: center;
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.gallery-item::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    transition: background 0.35s ease;
-}
-
-.gallery-item:hover::before {
-    background: rgba(0, 0, 0, 0.08);
-}
-
-.gallery-item-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 22px;
-}
-
-.gallery-item-overlay span {
-    color: rgba(255, 248, 240, 0.92);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-/* ============================================================
    LOCATION / CONTACT SECTION
    ============================================================ */
 .location-section {
@@ -1845,15 +1771,6 @@ body.home-page {
 
     .testimonials-grid {
         grid-template-columns: 1fr;
-    }
-
-    .gallery-grid {
-        grid-template-columns: 1fr;
-        height: auto;
-    }
-
-    .gallery-item {
-        height: 180px;
     }
 
     .location-section {

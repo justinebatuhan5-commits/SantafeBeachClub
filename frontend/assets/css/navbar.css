@@ -93,24 +93,12 @@
     gap: 14px;
     flex: 0 0 auto;
 }
-.navbar-search,
 .navbar-book {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
 }
-.navbar-search {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
-    color: #4f2f20;
-    background: #fffdf9;
-    border: 1px solid rgba(126, 91, 67, 0.12);
-    border-radius: 50%;
-    box-shadow: 0 5px 14px rgba(77, 47, 30, 0.12);
-}
-.navbar-search svg { width: 19px; height: 19px; }
 .navbar-book {
     min-height: 46px;
     padding: 0 24px;
@@ -127,14 +115,12 @@
     transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 .navbar-book span { font-family: Arial, sans-serif; font-size: 20px; line-height: 1; }
-.navbar-search:hover { color: #a56639; transform: translateY(-1px); }
 .navbar-book:hover {
     color: #fff;
     background: #ae7040;
     transform: translateY(-2px);
     box-shadow: 0 9px 18px rgba(139, 84, 42, 0.3);
 }
-.navbar-search:focus-visible,
 .navbar-book:focus-visible { outline: 3px solid #8a5a3a; outline-offset: 3px; }
 
 /* On the Home page the navbar floats over the hero instead of creating a
@@ -166,7 +152,6 @@
     .site-navbar .brand-logo::after { right: -18px; }
     .site-navbar .logo-mark { width: 52px; height: 52px; }
     .navbar-actions { margin-left: auto; gap: 10px; }
-    .navbar-search { width: 44px; height: 44px; flex-basis: 44px; }
     .navbar-book { min-height: 44px; padding: 0 18px; }
     .site-navbar .nav-menu { order: 3; flex: 0 0 100%; width: 100%; margin-top: 8px; padding: 8px 0 0; border-top: 1px solid #e5d6c8; }
     .site-navbar .nav-menu ul { flex-wrap: wrap; gap: 4px 18px; width: 100%; }
@@ -210,5 +195,5 @@
     .site-navbar .brand-logo { min-width: 64px; }
     .site-navbar .brand-logo::after { left: -11px; right: -10px; top: -9px; bottom: -9px; }
     .site-navbar .logo-mark { width: 52px; height: 52px; }
-    .navbar-search, .navbar-book { width: 44px; height: 44px; min-height: 44px; flex-basis: 44px; }
+    .navbar-book { width: 44px; height: 44px; min-height: 44px; flex-basis: 44px; }
 }
