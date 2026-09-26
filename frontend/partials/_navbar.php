@@ -10,24 +10,25 @@
  * before including this file to highlight the current page link.
  */
 $active_nav = $active_nav ?? '';
+$nav_base = $nav_base ?? '';
 ?>
 <header class="main-header site-navbar">
     <div class="brand-logo">
-        <a href="index" class="logo-link">
-            <img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
+        <a href="<?php echo htmlspecialchars($nav_base . 'index', ENT_QUOTES, 'UTF-8'); ?>" class="logo-link">
+            <img src="<?php echo htmlspecialchars($nav_base . 'assets/logo.jpg', ENT_QUOTES, 'UTF-8'); ?>" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
         </a>
     </div>
     <nav class="nav-menu" id="siteNavigation" aria-label="Main navigation">
         <ul>
-            <li<?php echo $active_nav === 'home'       ? ' class="active"' : ''; ?>><a href="index">Home</a></li>
-            <li<?php echo $active_nav === 'rooms'      ? ' class="active"' : ''; ?>><a href="rooms">Rooms</a></li>
-            <li<?php echo $active_nav === 'gallery'    ? ' class="active"' : ''; ?>><a href="gallery">Gallery</a></li>
-            <li<?php echo $active_nav === 'contact'    ? ' class="active"' : ''; ?>><a href="contact">Contact</a></li>
-            <li<?php echo $active_nav === 'my_booking' ? ' class="active"' : ''; ?>><a href="my_booking">My Booking</a></li>
+            <li<?php echo $active_nav === 'home'       ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'index', ENT_QUOTES, 'UTF-8'); ?>">Home</a></li>
+            <li<?php echo $active_nav === 'rooms'      ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'rooms', ENT_QUOTES, 'UTF-8'); ?>">Rooms</a></li>
+            <li<?php echo $active_nav === 'gallery'    ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'gallery', ENT_QUOTES, 'UTF-8'); ?>">Gallery</a></li>
+            <li<?php echo $active_nav === 'contact'    ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'contact', ENT_QUOTES, 'UTF-8'); ?>">Contact</a></li>
+            <li<?php echo $active_nav === 'my_booking' ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'my_booking', ENT_QUOTES, 'UTF-8'); ?>">My Booking</a></li>
         </ul>
     </nav>
     <div class="navbar-actions">
-        <a href="rooms#room-choice" class="navbar-book">Book your stay <span aria-hidden="true">&rarr;</span></a>
+        <a href="<?php echo htmlspecialchars($nav_base . 'rooms#room-choice', ENT_QUOTES, 'UTF-8'); ?>" class="navbar-book">Book your stay <span aria-hidden="true">&rarr;</span></a>
         <button class="navbar-toggle" type="button" aria-expanded="false" aria-controls="siteNavigation" aria-label="Open navigation menu">
             <span></span>
             <span></span>
@@ -35,4 +36,4 @@ $active_nav = $active_nav ?? '';
         </button>
     </div>
 </header>
-<script src="assets/js/navbar.js?v=<?php echo (int) filemtime(__DIR__ . '/../assets/js/navbar.js'); ?>" defer></script>
+<script src="<?php echo htmlspecialchars($nav_base . 'assets/js/navbar.js', ENT_QUOTES, 'UTF-8'); ?>?v=<?php echo (int) filemtime(__DIR__ . '/../assets/js/navbar.js'); ?>" defer></script>

@@ -2,7 +2,6 @@
 /**
  * terms.php - Privacy Policy and Terms & Conditions
  */
-require_once 'frontend/partials/_page_header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,6 +13,7 @@ require_once 'frontend/partials/_page_header.php';
     <title>Privacy & Terms - Santa Fe Beach Club</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="frontend/assets/css/styles.css">
+    <link rel="stylesheet" href="frontend/assets/css/navbar.css">
     <style>
         .terms-container {
             max-width: 900px;
@@ -32,10 +32,20 @@ require_once 'frontend/partials/_page_header.php';
         .terms-container ul { margin-bottom: 16px; padding-left: 20px; }
         .terms-container li { margin-bottom: 8px; font-size: 15px; }
         .terms-container h2[id] { scroll-margin-top: 24px; }
+        .terms-page { background: #f7f2eb; }
+        .terms-page .terms-container { margin-top: 34px; }
+        @media (max-width: 640px) {
+            .terms-container { margin: 20px 12px 40px; padding: 26px 20px; }
+            .terms-container h1 { font-size: 24px; }
+        }
     </style>
 </head>
-<body>
-    <?php render_header("Privacy & Terms", "Santa Fe Beach Club"); ?>
+<body class="terms-page">
+    <?php
+    $active_nav = '';
+    $nav_base = 'frontend/';
+    require __DIR__ . '/frontend/partials/_navbar.php';
+    ?>
 
     <div class="terms-container">
         <h1>Privacy Policy & Terms of Service</h1>
