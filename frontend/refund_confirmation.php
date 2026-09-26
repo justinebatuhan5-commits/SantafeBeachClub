@@ -28,7 +28,16 @@ if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
                 $update = $conn->prepare('UPDATE manual_refund_details SET guest_confirmed_at=NOW(),confirmation_token_hash=NULL WHERE refund_request_id=? AND guest_confirmed_at IS NULL');
                 $update->bind_param('i', $refund['refund_request_id']); $update->execute();
                 if ($update->affected_rows !== 1) throw new RuntimeException('This refund was already confirmed.');
-                $update->close(); $conn->commit(); $confirmed = true;
+                $update->close();
+                $notificationTitle = 'Guest Confirmed Refund Receipt';
+                $notificationMessage = $refund['guest_name'] . ' confirmed receiving the PHP ' . number_format((float)$refund['net_refund'], 2)
+                    . ' GCash refund for REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT)
+                    . ' (reference ' . $refund['transfer_reference'] . ').';
+                $notificationType = 'success';
+                $notification = $conn->prepare('INSERT INTO notifications (title,message,type,booking_id) VALUES (?,?,?,?)');
+                $notification->bind_param('sssi', $notificationTitle, $notificationMessage, $notificationType, $refund['booking_id']);
+                $notification->execute(); $notification->close();
+                $conn->commit(); $confirmed = true;
                 unset($_SESSION['refund_confirmation_token']);
                 log_activity($conn, 'Guest', 'Manual Refund Receipt Confirmed', 'Guest confirmed receipt for refund request #' . $refund['refund_request_id'] . '.');
             } catch (Throwable $e) { $conn->rollback(); $error = $e->getMessage(); }

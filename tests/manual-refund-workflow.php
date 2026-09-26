@@ -28,6 +28,9 @@ foreach (["\$action === 'send_otp'", "\$action === 'verify_otp'", "\$action === 
 foreach (['guest_confirmed_at=NOW()','confirmation_token_hash=NULL','verify_csrf_token()','Manual Refund Receipt Confirmed'] as $fragment) {
     if (!str_contains($confirmationPage, $fragment)) throw new RuntimeException('Missing secure guest confirmation behavior: ' . $fragment);
 }
+foreach (['Guest Confirmed Refund Receipt', 'INSERT INTO notifications (title,message,type,booking_id)', "\$notificationType = 'success'"] as $fragment) {
+    if (!str_contains($confirmationPage, $fragment)) throw new RuntimeException('Missing guest refund confirmation notification: ' . $fragment);
+}
 foreach (['confirmation_token_hash','refund_confirmation.php?token=','Confirm Refund Received'] as $fragment) {
     if (!str_contains($api . $mailer, $fragment)) throw new RuntimeException('Missing confirmation email workflow: ' . $fragment);
 }
