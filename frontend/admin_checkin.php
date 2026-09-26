@@ -335,17 +335,130 @@ $bookings_query = $conn->query("
         .reservations-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .reservations-table th, .reservations-table td {
-            padding: 15px;
+            padding: 18px 16px;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #E5E7EB;
+            vertical-align: middle;
         }
         .reservations-table th {
-            color: #888;
-            font-weight: 600;
+            color: #64748B;
+            font-weight: 700;
             text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            background: #F8FAFC;
+        }
+        .reservations-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        .reservations-table tbody tr:hover {
+            background: #FAFAF9;
+        }
+        .reservations-table th:nth-child(1) { width: 31%; }
+        .reservations-table th:nth-child(2) { width: 29%; }
+        .reservations-table th:nth-child(3) { width: 22%; }
+        .reservations-table th:nth-child(4) { width: 18%; }
+        .arrival-guest-name {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 5px;
+            color: #172033;
+            font-size: 15px;
+        }
+        .arrival-booking-id {
+            color: #94A3B8;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .arrival-email {
+            display: block;
+            max-width: 100%;
+            color: #64748B;
             font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+        .arrival-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .arrival-meta-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #F1F5F9;
+            color: #475569;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .arrival-meta-pill.discount {
+            background: #F3E8FF;
+            color: #7E22CE;
+        }
+        .arrival-room {
+            margin-bottom: 7px;
+            color: #172033;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .arrival-date {
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .arrival-time {
+            margin-top: 3px;
+            color: #64748B;
+            font-size: 11px;
+        }
+        .arrival-balance {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+            padding: 9px 11px;
+            border-radius: 9px;
+            background: #FFF7ED;
+            border: 1px solid #FED7AA;
+        }
+        .arrival-balance.paid {
+            background: #F0FDF4;
+            border-color: #BBF7D0;
+        }
+        .arrival-balance-amount {
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .arrival-balance-state {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .arrival-balance-deadline {
+            color: #64748B;
+            font-size: 10px;
+        }
+        .arrival-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 7px;
+            max-width: 132px;
+        }
+        .arrival-actions form {
+            display: block !important;
+        }
+        .arrival-actions .btn-checkin,
+        .arrival-actions .btn-noshow {
+            width: 100%;
+            justify-content: center;
         }
         .btn-checkin {
             background-color: #2E7D32;
@@ -381,6 +494,13 @@ $bookings_query = $conn->query("
             background-color: #FFE4E6;
             color: #9F1239;
             border-color: #FDA4AF;
+        }
+        @media (max-width: 1050px) {
+            .reservations-table { table-layout: auto; }
+            .reservations-table th:nth-child(1),
+            .reservations-table th:nth-child(2),
+            .reservations-table th:nth-child(3),
+            .reservations-table th:nth-child(4) { width: auto; }
         }
         .badge-overdue {
             display: inline-flex;
@@ -696,14 +816,10 @@ $bookings_query = $conn->query("
                 <table class="reservations-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Guest Name</th>
-                            <th>Email</th>
-                            <th>Type</th>
-                            <th>Accommodation</th>
-                            <th>Check-in Date &amp; Time</th>
-                            <th>Balance Status</th>
-                            <th>Action</th>
+                            <th>Guest</th>
+                            <th>Stay Details</th>
+                            <th>Balance</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -724,16 +840,15 @@ $bookings_query = $conn->query("
                                     : '';
 
                                 echo "<tr>";
-                                echo "<td>#$id</td>";
-                                echo "<td><strong>{$name}</strong></td>";
-                                echo "<td>{$email}</td>";
-                                echo "<td>{$type}";
+                                echo "<td>";
+                                echo "<div class='arrival-guest-name'><strong>{$name}</strong><span class='arrival-booking-id'>#{$id}</span></div>";
+                                echo "<span class='arrival-email'>{$email}</span>";
+                                echo "<div class='arrival-meta-row'><span class='arrival-meta-pill'>{$type}</span>";
                                 if ($discount_category) {
                                     $discount_label = $discount_category === 'senior' ? 'SENIOR · 20%' : 'PWD · 20%';
-                                    echo "<div style='margin-top:5px;'><span style='display:inline-block; background:#F3E8FF; color:#7E22CE; padding:3px 7px; border-radius:999px; font-weight:800; font-size:10px;'>{$discount_label}</span></div>";
+                                    echo "<span class='arrival-meta-pill discount'>{$discount_label}</span>";
                                 }
-                                echo "</td>";
-                                echo "<td>{$accommodation}</td>";
+                                echo "</div></td>";
                                 
                                 // Check-in date with Overdue / Due Today badge
                                 $today_date = date('Y-m-d');
@@ -742,12 +857,13 @@ $bookings_query = $conn->query("
                                 $is_today = ($checkin_date_only === $today_date);
                                 
                                 echo "<td>";
-                                echo "<div>" . date('M j, Y', strtotime($row['check_in'])) . "</div>";
+                                echo "<div class='arrival-room'>{$accommodation}</div>";
+                                echo "<div class='arrival-date'>" . date('M j, Y', strtotime($row['check_in'])) . "</div>";
                                 if (!empty($row['eta']) && preg_match('/^([01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/', $row['eta'])) {
                                     $arrival_time = date('g:i A', strtotime($row['eta']));
-                                    echo "<div style='margin-top:3px; color:#64748B; font-size:12px; font-weight:600;'>🕐 Expected {$arrival_time}</div>";
+                                    echo "<div class='arrival-time'>Expected arrival: {$arrival_time}</div>";
                                 } else {
-                                    echo "<div style='margin-top:3px; color:#94A3B8; font-size:12px;'>Time not provided</div>";
+                                    echo "<div class='arrival-time'>Arrival time not provided</div>";
                                 }
                                 if ($is_overdue) {
                                     $days_late = (int)ceil((strtotime($today_date) - strtotime($checkin_date_only)) / 86400);
@@ -762,13 +878,13 @@ $bookings_query = $conn->query("
                                     $balanceState = htmlspecialchars((string)($row['balance_status'] ?? 'balance_pending'));
                                     $deadlineText = !empty($row['balance_due_at']) ? date('M j, g:i A', strtotime($row['balance_due_at'])) : 'Not set';
                                     $stateColor = $balanceState === 'cancellation_review' ? '#991B1B' : ($balanceState === 'overdue' ? '#B45309' : '#E65100');
-                                    echo "<td><span style='background:#FFF3E0;color:{$stateColor};padding:4px 8px;border-radius:4px;font-weight:700;font-size:12px;'>₱" . number_format($balance_due, 2) . " Due</span><div style='font-size:10px;margin-top:4px;color:{$stateColor};text-transform:uppercase;font-weight:700;'>" . str_replace('_',' ',$balanceState) . "</div><div style='font-size:10px;color:#64748B;'>Deadline: {$deadlineText}</div></td>";
+                                    echo "<td><div class='arrival-balance'><span class='arrival-balance-amount' style='color:{$stateColor};'>₱" . number_format($balance_due, 2) . " due</span><span class='arrival-balance-state' style='color:{$stateColor};'>" . str_replace('_',' ',$balanceState) . "</span><span class='arrival-balance-deadline'>Deadline: {$deadlineText}</span></div></td>";
                                 } else {
-                                    echo "<td><span style='background: #E8F5E9; color: #2E7D32; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;'>Paid In Full</span></td>";
+                                    echo "<td><div class='arrival-balance paid'><span class='arrival-balance-amount' style='color:#166534;'>Paid in full</span><span class='arrival-balance-state' style='color:#15803D;'>Ready for check-in</span></div></td>";
                                 }
                                 
                                 echo "<td>
-                                    <div style='display:flex; align-items:center; gap:8px; flex-wrap:wrap;'>
+                                    <div class='arrival-actions'>
                                         <form method='POST' action='admin_checkin' style='display:inline; margin:0;'>
                                             <input type='hidden' name='action' value='checkin'>
                                             <input type='hidden' name='booking_id' value='{$id}'>
@@ -786,7 +902,7 @@ $bookings_query = $conn->query("
                                 echo "</tr>";
                             }
                         } else {
-                            echo "<tr><td colspan='8' style='text-align: center; color: #888; padding: 30px 20px;'>No pending arrivals</td></tr>";
+                            echo "<tr><td colspan='4' style='text-align: center; color: #888; padding: 30px 20px;'>No pending arrivals</td></tr>";
                         }
                         ?>
                     </tbody>
