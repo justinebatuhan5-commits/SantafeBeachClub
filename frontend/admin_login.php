@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id'], 'administrators');
                 if ($lockStatus['locked']) {
                     if (!empty($lockStatus['is_permanent'])) {
-                        $error = "Access Denied: This administrator account has been locked / suspended. Please contact executive administration.";
+                        $error = "Access denied: This administrator account has been locked or suspended. Please contact the system administrator.";
                     } else {
                         $mins = (int)ceil($lockStatus['seconds_remaining'] / 60);
                         $error = "Account Temporarily Locked: Exceeded maximum allowed login attempts. Please wait {$mins} minute(s) before trying again.";
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['login_source']               = 'admin';
 
                     RateLimiter::clearFailedLogins($conn, (int)$row['id'], 'administrators');
-                    SecurityLogger::log($conn, 'MFA_OTP_SENT', "OTP dispatched for Executive Admin MFA", SecurityLogger::LEVEL_INFO, $username);
+                    SecurityLogger::log($conn, 'MFA_OTP_SENT', "OTP dispatched for administrator MFA", SecurityLogger::LEVEL_INFO, $username);
 
                     if ($is_ajax) {
                         header('Content-Type: application/json');
@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive Admin Portal - Santa Fe Beach Club</title>
+    <title>Administrator Login - Santa Fe Beach Club</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -862,10 +862,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="hero-centerpiece">
                 <div class="hero-badge-tag">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    High-Security Terminal
+                    Administrator Portal
                 </div>
-                <h1 class="hero-title" id="greetingTitle">Executive <span>Command</span></h1>
-                <p class="hero-subtitle">Centralized administrative orchestration for resort operations, VIP reservations, accounting, and system audit logs.</p>
+                <h1 class="hero-title" id="greetingTitle">Welcome, <span>Administrator</span></h1>
+                <p class="hero-subtitle">Manage resort operations, reservations, payments, reports, and staff activity.</p>
 
                 <div class="hero-clock-box">
                     <div class="clock-time" id="liveClock">--:--:--</div>
@@ -880,7 +880,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="hero-footer">
                 <div class="system-pill">
                     <span class="pulse-dot"></span>
-                    SFBC Sentinel Core Active &bull; 256-Bit SSL
+                    Secure administrator access
                 </div>
                 <div>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club</div>
             </div>
@@ -892,10 +892,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card-header">
                     <span class="card-badge">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        Admin Level Access
+                        Administrator Access
                     </span>
                     <h2 class="card-title">Sign In</h2>
-                    <p class="card-desc">Enter your administrator credentials to access executive controls.</p>
+                    <p class="card-desc">Enter your administrator email and password to continue.</p>
                 </div>
 
                 <?php if (isset($_GET['timeout']) && $_GET['timeout'] == '1'): ?>
@@ -946,7 +946,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <button type="submit" id="submitBtn" class="btn-submit">
-                        <span>Access Console</span>
+                        <span>Sign In</span>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </button>
                 </form>
@@ -1015,13 +1015,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const manilaHour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: 'numeric', hour12: false }).format(now), 10);
             const greetingEl = document.getElementById('greetingTitle');
             if (greetingEl) {
-                if (manilaHour >= 5 && manilaHour < 12) {
-                    greetingEl.innerHTML = 'Executive <span>Morning</span>';
-                } else if (manilaHour >= 12 && manilaHour < 18) {
-                    greetingEl.innerHTML = 'Executive <span>Afternoon</span>';
-                } else {
-                    greetingEl.innerHTML = 'Executive <span>Command</span>';
-                }
+                greetingEl.innerHTML = 'Welcome, <span>Administrator</span>';
             }
         }
         setInterval(updateClock, 1000);

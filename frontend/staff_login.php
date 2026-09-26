@@ -1040,7 +1040,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="hero-footer">
                 <div class="terminal-pill">
                     <span class="pulse-dot"></span>
-                    Terminal Ready &bull; Front Desk Portal
+                    Secure receptionist access
                 </div>
                 <div>&copy; <?php echo date('Y'); ?> Santa Fe Beach Club &bull; Developed by <span style="color:#FAF7F2; font-weight:600;">Justine Batuhan</span></div>
             </div>
@@ -1106,7 +1106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <button type="submit" id="submitBtn" class="btn-submit" <?php echo $isStaffPortalLocked ? 'disabled style="opacity:0.6;cursor:not-allowed;"' : ''; ?>>
-                        <span><?php echo $isStaffPortalLocked ? 'Portal Locked (Maintenance)' : 'Sign In to Terminal'; ?></span>
+                        <span><?php echo $isStaffPortalLocked ? 'Portal Locked (Maintenance)' : 'Sign In'; ?></span>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </button>
                 </form>
@@ -1149,7 +1149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="portal-lock-actions">
                 <a href="admin_login" class="btn-portal-admin">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                    Go to Executive Admin Login
+                    Go to Administrator Login
                 </a>
                 <button type="button" class="btn-portal-dismiss" onclick="document.getElementById('portalLockOverlay').style.display='none'">
                     Dismiss & View Screen

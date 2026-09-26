@@ -662,8 +662,8 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                 const badge = document.getElementById(id);
                 if (!badge) return;
                 if (value === null || typeof value === 'undefined') {
-                    badge.textContent = 'New';
-                    badge.style.color = '#2563EB';
+                    badge.textContent = 'No prior data';
+                    badge.style.color = '#64748B';
                     return;
                 }
                 const numeric = Number(value) || 0;

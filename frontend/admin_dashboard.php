@@ -31,7 +31,7 @@ try {
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Command Dashboard — Santa Fe Beach Club</title>
+    <title>Admin Dashboard — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -180,8 +180,8 @@ include __DIR__ . '/partials/_sidebar.php';
 
 <div class="admin-main executive-dashboard">
     <?php
-    $page_title = 'Executive Dashboard';
-    $page_subtitle = "Welcome back, " . htmlspecialchars($admin) . " • Live operations and financial overview";
+    $page_title = 'Admin Dashboard';
+    $page_subtitle = "Welcome back, " . htmlspecialchars($admin) . " • Resort operations and financial summary";
     $header_extra_html = '
         <div class="admin-search-wrapper">
             <svg class="admin-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -292,8 +292,8 @@ include __DIR__ . '/partials/_sidebar.php';
             </div>
         </div>
 
-        <!-- ═══ RESERVATION COUNTERS ═══ -->
-        <div class="stats-grid" style="margin-top:0;">
+        <!-- Actionable counters not already represented above or in Daily Activity -->
+        <div class="operations-snapshot">
             <div class="stat-card">
                 <div>
                     <div class="stat-card-label">Reserved Rooms</div>
@@ -302,17 +302,6 @@ include __DIR__ . '/partials/_sidebar.php';
                 </div>
                 <div class="stat-icon blue">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div>
-                    <div class="stat-card-label">Occupied Rooms</div>
-                    <div class="stat-card-value" id="kpi-dashboard-occupied">...</div>
-                    <div class="stat-card-sub">Currently checked-in guests</div>
-                </div>
-                <div class="stat-icon green">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                 </div>
             </div>
 
@@ -327,27 +316,6 @@ include __DIR__ . '/partials/_sidebar.php';
                 </div>
             </div>
 
-            <div class="stat-card">
-                <div>
-                    <div class="stat-card-label">Today's Check-ins</div>
-                    <div class="stat-card-value" id="kpi-checkins-today">...</div>
-                    <div class="stat-card-sub">Arrivals scheduled today</div>
-                </div>
-                <div class="stat-icon brown">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div>
-                    <div class="stat-card-label">Today's Check-outs</div>
-                    <div class="stat-card-value" id="kpi-checkouts-today">...</div>
-                    <div class="stat-card-sub">Departures scheduled today</div>
-                </div>
-                <div class="stat-icon" style="background:rgba(100,116,139,.12);">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                </div>
-            </div>
         </div>
 
         <!-- ═══ VISUAL ANALYTICS CHARTS ═══ -->
@@ -501,7 +469,7 @@ include __DIR__ . '/partials/_sidebar.php';
                 <div class="admin-card-header">
                     <div>
                         <h3>Live Audit Feed</h3>
-                        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Real-time administrator & staff actions</p>
+                        <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Recent administrator and staff activity</p>
                     </div>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <button type="button" onclick="refreshAuditFeed(this)" title="Refresh Live Feed" style="background:none; border:1px solid var(--border); border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; color:var(--text-muted); display:inline-flex; align-items:center; gap:4px;">
@@ -588,18 +556,20 @@ async function loadDashboardData() {
         document.getElementById('kpi-total-bookings').innerText = Number(stats.total_bookings).toLocaleString();
         document.getElementById('kpi-pending-bookings').innerText = stats.pending_bookings;
         document.getElementById('link-total-bookings').innerText = stats.total_bookings;
-        // Reservation counters row
+        // Actionable operations counters
         document.getElementById('kpi-reserved-rooms').innerText    = stats.reserved_rooms  ?? '—';
-        document.getElementById('kpi-dashboard-occupied').innerText = stats.occupied_rooms;
         document.getElementById('kpi-pending-payments').innerText  = stats.pending_payments ?? '—';
-        document.getElementById('kpi-checkins-today').innerText    = stats.checkins_today;
-        document.getElementById('kpi-checkouts-today').innerText   = stats.checkouts_today  ?? '—';
 
-        // Initialize Sparkline Trendlines for Top 4 Cards
-        createSparkline('sparkline-dash-daily', [5, 8, 12, 9, 14, 18, 16, 22, 25, 24, 30], '#059669', 'rgba(5, 150, 105, 0.08)');
-        createSparkline('sparkline-dash-weekly', [14, 18, 15, 24, 22, 30, 28, 36, 42, 40, 48], '#84563C', 'rgba(132, 86, 60, 0.08)');
-        createSparkline('sparkline-dash-occ', [40, 48, 45, 55, 52, 60, 58, 68, 72, 70, 78], '#1A73E8', 'rgba(26, 115, 232, 0.08)');
-        createSparkline('sparkline-dash-bk', [4, 6, 5, 9, 8, 12, 11, 15, 18, 16, 20], '#7C3AED', 'rgba(124, 58, 237, 0.08)');
+        // Database-backed 14-day histories for the KPI sparklines.
+        const trendStats = await fetchAPI('/api/dashboard-stats');
+        const dailyRevenue = trendStats.sparklines?.revenue || [0];
+        const rollingRevenue = dailyRevenue.map((_, index, values) =>
+            values.slice(Math.max(0, index - 6), index + 1).reduce((sum, value) => sum + Number(value || 0), 0)
+        );
+        createSparkline('sparkline-dash-daily', dailyRevenue, '#059669', 'rgba(5, 150, 105, 0.08)');
+        createSparkline('sparkline-dash-weekly', rollingRevenue, '#84563C', 'rgba(132, 86, 60, 0.08)');
+        createSparkline('sparkline-dash-occ', trendStats.sparklines?.occupancy || [0], '#1A73E8', 'rgba(26, 115, 232, 0.08)');
+        createSparkline('sparkline-dash-bk', trendStats.sparklines?.bookings || [0], '#7C3AED', 'rgba(124, 58, 237, 0.08)');
 
         // 2. Revenue Trajectory Line Chart
         const revData = await fetchAPI('/api/weekly-revenue-trajectory');
