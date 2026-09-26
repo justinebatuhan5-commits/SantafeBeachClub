@@ -26,4 +26,13 @@ $active_nav = $active_nav ?? '';
             <li<?php echo $active_nav === 'my_booking' ? ' class="active"' : ''; ?>><a href="my_booking">My Booking</a></li>
         </ul>
     </nav>
+    <div class="navbar-actions">
+        <a href="rooms" class="navbar-search" aria-label="Search available rooms">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m20 20-3.5-3.5"></path>
+            </svg>
+        </a>
+        <a href="rooms" class="navbar-book">Book your stay <span aria-hidden="true">&rarr;</span></a>
+    </div>
 </header>
