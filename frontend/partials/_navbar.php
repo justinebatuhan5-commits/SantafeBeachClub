@@ -26,7 +26,4 @@ $active_nav = $active_nav ?? '';
             <li<?php echo $active_nav === 'my_booking' ? ' class="active"' : ''; ?>><a href="my_booking">My Booking</a></li>
         </ul>
     </nav>
-    <div class="header-action">
-        <a href="rooms" class="btn-book-header">Book Now</a>
-    </div>
 </header>
