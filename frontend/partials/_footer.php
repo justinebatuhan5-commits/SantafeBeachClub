@@ -18,6 +18,7 @@
             <ul>
                 <li><a href="rooms">Rooms</a></li>
                 <li><a href="gallery">Gallery</a></li>
+                <li><a href="location">Location</a></li>
                 <li><a href="contact">Contact</a></li>
             </ul>
         </div>
@@ -34,7 +35,7 @@
         <div class="footer-links-col footer-resort-info">
             <h4>RESORT INFORMATION</h4>
             <ul>
-                <li><a href="contact#resort-map">Pantalan, Santa Fe, Cebu</a></li>
+                <li><a href="location#resort-map">Pantalan, Santa Fe, Cebu</a></li>
                 <li><a href="tel:+639505223146">0950 522 3146</a></li>
                 <li><a href="mailto:Justinebatuhan017@gmail.com">Email the Resort</a></li>
             </ul>

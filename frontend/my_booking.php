@@ -144,7 +144,7 @@ $csrf_token = get_csrf_token();
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Booking — Santa Fe Beach Club</title>
+    <title>Manage Booking — Santa Fe Beach Club</title>
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <style>
@@ -797,8 +797,8 @@ $csrf_token = get_csrf_token();
     </div>
     <div class="lookup-card">
         <div class="lookup-card-header">
-            <span class="booking-eyebrow">Your stay, made simple</span>
-            <h1>My Booking</h1>
+            <span class="booking-eyebrow">Manage Your Booking</span>
+            <h1>Find Your Reservation</h1>
             <p>Enter your email and booking reference to view your reservation</p>
         </div>
         <div class="lookup-card-body">
@@ -826,7 +826,7 @@ $csrf_token = get_csrf_token();
                 </div>
 
                 <button type="submit" class="btn-lookup" id="lookupBtn">
-                    <span id="lookupBtnText">Find My Booking</span>
+                    <span id="lookupBtnText">Find Reservation</span>
                     <span class="btn-spinner" id="lookupSpinner"></span>
                 </button>
             </form>
@@ -1280,13 +1280,13 @@ lookupForm.addEventListener('submit', async function(e) {
         } else {
             showError(data.error || 'Booking not found. Please check your details and try again.');
             lookupBtn.disabled = false;
-            lookupText.textContent = 'Find My Booking';
+            lookupText.textContent = 'Find Reservation';
             lookupSpin.style.display = 'none';
         }
     } catch (err) {
         showError('A network error occurred. Please check your connection and try again.');
         lookupBtn.disabled = false;
-        lookupText.textContent = 'Find My Booking';
+        lookupText.textContent = 'Find Reservation';
         lookupSpin.style.display = 'none';
     }
 });
@@ -1389,7 +1389,7 @@ guestOtpForm.addEventListener('submit', async function(e) {
                     otpContainer.style.display = 'none';
                     lookupForm.style.display = 'block';
                     lookupBtn.disabled = false;
-                    lookupText.textContent = 'Find My Booking';
+                    lookupText.textContent = 'Find Reservation';
                     lookupSpin.style.display = 'none';
                 }, 2000);
             }
@@ -1454,7 +1454,7 @@ guestBackBtn.addEventListener('click', () => {
     otpContainer.style.display = 'none';
     lookupForm.style.display = 'block';
     lookupBtn.disabled = false;
-    lookupText.textContent = 'Find My Booking';
+    lookupText.textContent = 'Find Reservation';
     lookupSpin.style.display = 'none';
 });
 

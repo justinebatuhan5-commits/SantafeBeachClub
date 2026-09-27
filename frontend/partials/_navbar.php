@@ -6,7 +6,7 @@
  * Usage:
  *   <?php $active_nav = 'home'; require __DIR__ . '/partials/_navbar.php'; ?>
  *
- * Set $active_nav to one of: 'home' | 'rooms' | 'gallery' | 'contact' | 'my_booking'
+ * Set $active_nav to one of: 'home' | 'rooms' | 'gallery' | 'location' | 'contact' | 'my_booking'
  * before including this file to highlight the current page link.
  */
 $active_nav = $active_nav ?? '';
@@ -23,8 +23,9 @@ $nav_base = $nav_base ?? '';
             <li<?php echo $active_nav === 'home'       ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'index', ENT_QUOTES, 'UTF-8'); ?>">Home</a></li>
             <li<?php echo $active_nav === 'rooms'      ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'rooms', ENT_QUOTES, 'UTF-8'); ?>">Rooms</a></li>
             <li<?php echo $active_nav === 'gallery'    ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'gallery', ENT_QUOTES, 'UTF-8'); ?>">Gallery</a></li>
+            <li<?php echo $active_nav === 'location'   ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'location', ENT_QUOTES, 'UTF-8'); ?>">Location</a></li>
             <li<?php echo $active_nav === 'contact'    ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'contact', ENT_QUOTES, 'UTF-8'); ?>">Contact</a></li>
-            <li<?php echo $active_nav === 'my_booking' ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'my_booking', ENT_QUOTES, 'UTF-8'); ?>">My Booking</a></li>
+            <li<?php echo $active_nav === 'my_booking' ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'my_booking', ENT_QUOTES, 'UTF-8'); ?>">Manage Booking</a></li>
         </ul>
     </nav>
     <div class="navbar-actions">

@@ -261,6 +261,7 @@ function inquiry_value(string $field): string {
                     <div class="contact-info-text">
                         <h4>Property Address</h4>
                         <p>R54R+R5W Pantalan, Santa Fe<br>6047 Cebu, Philippines</p>
+                        <a class="contact-location-link" href="location">View Location &amp; Directions <span aria-hidden="true">&rarr;</span></a>
                     </div>
                 </div>
             </div>
@@ -313,55 +314,6 @@ function inquiry_value(string $field): string {
             <?php endif; ?>
         </div>
     </div>
-
-    <!-- Map Section -->
-    <div class="contact-map-section">
-        <div class="contact-map-heading">
-            <div><span class="contact-eyebrow">Find your way to the shore</span><h2>Meet us in Santa Fe</h2></div>
-            <p>Pantalan, Santa Fe · Cebu, Philippines</p>
-        </div>
-        <div class="contact-map-controls">
-            <div role="group" aria-label="Map view">
-                <button type="button" data-map-type="m" aria-pressed="false" aria-controls="resort-map">Map</button>
-                <button type="button" data-map-type="k" aria-pressed="true" aria-controls="resort-map">Satellite</button>
-            </div>
-            <a href="https://www.google.com/maps/dir/?api=1&amp;destination=11.1671086%2C123.8054383" target="_blank" rel="noopener noreferrer">Get Directions ↗</a>
-        </div>
-        <div class="contact-map-frame">
-            <iframe 
-                id="resort-map" title="Santa Fe Beach Club satellite map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1960.9161759603097!2d123.8054383!3d11.1671086!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a87d5228e5fbdd%3A0x4038cf5331855e76!2sSanta%20Fe%20Beach%20Club!5e1!3m2!1sen!2sph!4v1700000000000!5m2!1sen!2sph"
-                width="100%" 
-                height="100%" 
-                style="border:0;" 
-                allowfullscreen="" 
-                loading="lazy" 
-                referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
-        </div>
-    </div>
-
-    <style>
-        .contact-map-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
-        .contact-map-controls [role="group"] { display:flex; gap:8px; }
-        .contact-map-controls button, .contact-map-controls a { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 18px; border:1px solid #7c533c; border-radius:10px; background:#fffaf4; color:#5c3d2b; font:inherit; font-weight:600; cursor:pointer; text-decoration:none; }
-        .contact-map-controls button[aria-pressed="true"] { background:#7c533c; color:#fff; }
-        .contact-map-controls :focus-visible { outline:3px solid #0b6e8f; outline-offset:3px; }
-    </style>
-    <script>
-        (() => {
-            const frame = document.getElementById('resort-map');
-            const buttons = document.querySelectorAll('[data-map-type]');
-            buttons.forEach(button => button.addEventListener('click', () => {
-                if (button.getAttribute('aria-pressed') === 'true') return;
-                const url = new URL(frame.src);
-                url.searchParams.set('pb', url.searchParams.get('pb').replace(/!5e[01]!/, button.dataset.mapType === 'k' ? '!5e1!' : '!5e0!'));
-                frame.src = url.toString();
-                frame.title = 'Santa Fe Beach Club ' + (button.dataset.mapType === 'k' ? 'satellite' : 'road') + ' map';
-                buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-            }));
-        })();
-    </script>
 
     <?php require __DIR__ . '/partials/_footer.php'; ?>
 <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode(RECAPTCHA_SITE_KEY); ?>" defer></script>

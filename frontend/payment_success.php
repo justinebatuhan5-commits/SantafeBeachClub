@@ -269,10 +269,10 @@ $checkInDate = !empty($bookingData['check_in']) ? date('M j, Y', strtotime($book
 
     <?php else: ?>
     <h1 class="success-title">Payment not verified yet</h1>
-    <p class="success-desc">We could not verify this payment for your booking. Check My Booking or contact the front desk before making another payment.</p>
+    <p class="success-desc">We could not verify this payment for your booking. Check Manage Booking or contact the front desk before making another payment.</p>
     <?php endif; ?>
     <div class="btn-group">
-        <a href="my_booking" class="btn-primary">View My Booking</a>
+        <a href="my_booking" class="btn-primary">Manage Booking</a>
         <a href="index" class="btn-secondary">Return to Home</a>
     </div>
 </div>
