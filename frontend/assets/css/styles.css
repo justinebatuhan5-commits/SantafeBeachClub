@@ -216,7 +216,7 @@ body {
     padding: 20px;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
     display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
     gap: 15px;
     align-items: flex-end;
     border: 1px solid rgba(255, 255, 255, 0.25);
@@ -687,6 +687,32 @@ body.home-page {
     background: linear-gradient(135deg, #c58f5f 0%, #8a5a3a 100%);
     border-radius: 14px;
     box-shadow: 0 14px 24px rgba(138, 90, 58, 0.22);
+}
+
+.booking-policy-note {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 2px 0 0;
+    color: #6f5a4c;
+    font-size: 12px;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.booking-policy-note span {
+    display: inline-grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    border-radius: 50%;
+    background: #e7f6ec;
+    color: #23804a;
+    font-size: 11px;
+    font-weight: 800;
 }
 
 .home-page .property-overview-section {
@@ -1185,6 +1211,44 @@ body.home-page {
     letter-spacing: 1.5px;
     color: #9a8070;
     margin-top: 2px;
+}
+
+.experience-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.experience-primary-link,
+.experience-secondary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.experience-primary-link {
+    background: linear-gradient(135deg, #c58f5f, #8a5a3a);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(138, 90, 58, .2);
+}
+
+.experience-secondary-link {
+    border: 1px solid rgba(138, 90, 58, .25);
+    background: rgba(255, 255, 255, .65);
+    color: #704b36;
+}
+
+.experience-primary-link:hover,
+.experience-secondary-link:hover {
+    transform: translateY(-2px);
 }
 
 /* ============================================================
@@ -1781,6 +1845,20 @@ body.home-page {
         grid-column: span 1;
     }
 
+    .experience-section {
+        padding: 64px 6%;
+    }
+
+    .experience-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .experience-primary-link,
+    .experience-secondary-link {
+        width: 100%;
+    }
+
     .stays-grid {
         grid-template-columns: 1fr;
     }
@@ -1884,6 +1962,17 @@ body.home-page {
     border-radius: 24px;
     background: rgba(255, 251, 246, 0.96);
     box-shadow: 0 8px 28px rgba(91, 61, 43, 0.1);
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .footer-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 28px;
+    }
+
+    .footer-brand-col {
+        grid-column: 1 / -1;
+    }
 }
 
 .testimonials-heading-row {

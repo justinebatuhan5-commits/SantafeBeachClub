@@ -9,6 +9,14 @@ $highlight_rows = $conn->query("SELECT setting_key, setting_value FROM settings 
 while ($highlight_row = $highlight_rows->fetch_assoc()) {
     $hero_highlights[$highlight_row['setting_key']] = $highlight_row['setting_value'];
 }
+$hero_feature_cards = [];
+foreach (['stay', 'support'] as $highlight_type) {
+    $highlight_title = trim($hero_highlights['hero_' . $highlight_type . '_title'] ?? '');
+    $highlight_description = trim($hero_highlights['hero_' . $highlight_type . '_description'] ?? '');
+    if ($highlight_title !== '' && $highlight_description !== '') {
+        $hero_feature_cards[] = ['title' => $highlight_title, 'description' => $highlight_description];
+    }
+}
 
 // Fetch custom room type primary photos from room_types
 $db_photos = [];
@@ -85,24 +93,24 @@ if ($price_q) {
             <p class="hero-kicker">Luxury resort escape</p>
             <h1 class="hero-title"><?php echo __t('hero_title'); ?></h1>
             <p class="hero-subtitle"><?php echo __t('hero_sub'); ?></p>
+            <?php if ((int)$review_summary['total'] > 0 || $hero_feature_cards): ?>
             <div class="hero-stats" aria-label="Highlights">
+                <?php if ((int)$review_summary['total'] > 0): ?>
                 <div class="hero-stat">
-                    <span class="hero-stat-value"><?php echo (int)$review_summary['total'] > 0 ? number_format((float)$review_summary['average_rating'], 1) . '/5' : 'No reviews yet'; ?></span>
+                    <span class="hero-stat-value"><?php echo number_format((float)$review_summary['average_rating'], 1); ?>/5</span>
                     <span class="hero-stat-label"><?php echo __t('guest_reviews'); ?></span>
                 </div>
-                <?php foreach (['stay', 'support'] as $highlight_type):
-                    $highlight_title = trim($hero_highlights['hero_' . $highlight_type . '_title'] ?? '');
-                    $highlight_description = trim($hero_highlights['hero_' . $highlight_type . '_description'] ?? '');
-                    if ($highlight_title === '' || $highlight_description === '') continue;
-                ?>
+                <?php endif; ?>
+                <?php foreach ($hero_feature_cards as $highlight): ?>
                 <div class="hero-stat">
-                    <span class="hero-stat-value"><?php echo htmlspecialchars($highlight_title, ENT_QUOTES, 'UTF-8'); ?></span>
-                    <span class="hero-stat-label"><?php echo htmlspecialchars($highlight_description, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="hero-stat-value"><?php echo htmlspecialchars($highlight['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="hero-stat-label"><?php echo htmlspecialchars($highlight['description'], ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <?php endforeach; ?>
             </div>
+            <?php endif; ?>
             <div class="hero-buttons">
-                <a href="rooms" class="btn-hero-primary">Explore Rooms</a>
+                <a href="rooms" class="btn-hero-primary">Browse Rooms</a>
             </div>
         </div>
 
@@ -153,14 +161,37 @@ if ($price_q) {
                     <svg class="search-btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     Search
                 </button>
+                <p class="booking-policy-note">
+                    <span aria-hidden="true">&#10003;</span>
+                    Reserve with a 50% deposit. The remaining balance is due 24 hours before arrival.
+                </p>
             </form>
         </div>
     </section>
 
-
-
-
-
+    <section class="amenities-strip" aria-label="Why stay with us">
+        <div class="amenities-inner">
+            <div class="amenity-item">
+                <span class="amenity-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 18c3-3 6-3 9 0s6 3 9 0"/><path d="M3 13c3-3 6-3 9 0s6 3 9 0"/><path d="M12 3v6"/><path d="m9 6 3-3 3 3"/></svg></span>
+                <span class="amenity-text"><strong>Beachfront Setting</strong><span>Stay close to the Santa Fe shoreline</span></span>
+            </div>
+            <span class="amenity-divider" aria-hidden="true"></span>
+            <div class="amenity-item">
+                <span class="amenity-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.5 16a6 6 0 0 1 7 0"/><path d="M12 20h.01"/></svg></span>
+                <span class="amenity-text"><strong>Comfort Essentials</strong><span>Air-conditioned rooms and Wi-Fi access</span></span>
+            </div>
+            <span class="amenity-divider" aria-hidden="true"></span>
+            <div class="amenity-item">
+                <span class="amenity-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg></span>
+                <span class="amenity-text"><strong>Secure Booking</strong><span>Protected checkout and verified payments</span></span>
+            </div>
+            <span class="amenity-divider" aria-hidden="true"></span>
+            <div class="amenity-item">
+                <span class="amenity-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg></span>
+                <span class="amenity-text"><strong>Front-Desk Support</strong><span>Assistance before and during your stay</span></span>
+            </div>
+        </div>
+    </section>
     <!-- Stays / Rooms Section -->
     <section class="stays-section" id="stays">
         <div class="stays-inner">
@@ -249,6 +280,24 @@ if ($price_q) {
         </div>
     </section>
 
+    <section class="experience-section" aria-labelledby="resort-story-title">
+        <div class="experience-inner">
+            <div class="experience-copy">
+                <span class="experience-kicker">Discover Santa Fe</span>
+                <h2 class="experience-heading" id="resort-story-title">A relaxed island stay near the shore.</h2>
+                <p class="experience-lead">Santa Fe Beach Club brings together comfortable rooms, warm front-desk service, and an easy coastal setting in Pantalan, Santa Fe. Settle in, slow down, and keep the best of Bantayan Island within reach.</p>
+                <div class="experience-actions">
+                    <a href="location" class="experience-primary-link">View Location <span aria-hidden="true">&rarr;</span></a>
+                    <a href="contact" class="experience-secondary-link">Contact Reception</a>
+                </div>
+            </div>
+            <div class="experience-image-wrap">
+                <img class="experience-image" src="assets/hero-slide-4-hd.png" alt="Coastal scenery near Santa Fe Beach Club" loading="lazy">
+                <div class="experience-badge"><span class="experience-badge-value">Santa Fe</span><span class="experience-badge-label">Bantayan Island</span></div>
+            </div>
+        </div>
+    </section>
+
             <!-- Testimonials Section (100% Dynamic from Database) -->
     <?php
     $reviews_query = $conn->query("SELECT guest_name, guest_location, rating, review_text, created_at FROM reviews WHERE is_approved = 1 ORDER BY id DESC LIMIT 9");
@@ -313,6 +362,30 @@ if ($price_q) {
 
     <script>
     (function () {
+        var checkinInput = document.getElementById('checkin');
+        var checkoutInput = document.getElementById('checkout');
+        var today = <?php echo json_encode(date('Y-m-d')); ?>;
+
+        function nextDate(dateValue) {
+            var parts = dateValue.split('-').map(Number);
+            var date = new Date(parts[0], parts[1] - 1, parts[2]);
+            date.setDate(date.getDate() + 1);
+            return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+        }
+
+        function syncBookingDates() {
+            if (!checkinInput || !checkoutInput) return;
+            checkinInput.min = today;
+            var earliestCheckout = nextDate(checkinInput.value || today);
+            checkoutInput.min = earliestCheckout;
+            if (!checkoutInput.value || checkoutInput.value < earliestCheckout) checkoutInput.value = earliestCheckout;
+        }
+
+        if (checkinInput && checkoutInput) {
+            syncBookingDates();
+            checkinInput.addEventListener('change', syncBookingDates);
+        }
+
         var heroSlides = document.querySelectorAll('.hero-bg-slide');
         if (heroSlides.length > 1) {
             var activeSlideIndex = 0;
