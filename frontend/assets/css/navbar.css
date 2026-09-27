@@ -1,10 +1,13 @@
 /* Shared resort navigation inspired by the soft, sculpted reference header. */
 .site-navbar {
+    position: fixed !important;
     top: 16px !important;
+    left: 50% !important;
+    z-index: 1000;
     width: calc(100% - 32px);
     max-width: 1420px;
     min-height: 72px;
-    margin: 10px auto;
+    margin: 0;
     padding: 7px 10px 7px 28px;
     flex-wrap: nowrap;
     gap: 20px;
@@ -14,6 +17,7 @@
     box-shadow: 0 14px 38px rgba(62, 40, 26, 0.18);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
+    transform: translateX(-50%) !important;
 }
 
 .site-navbar .brand-logo {
@@ -184,7 +188,6 @@
 
 @media (max-width: 768px) {
     .site-navbar {
-        position: relative;
         flex-wrap: nowrap;
         min-height: 64px;
         padding: 8px 12px 8px 20px;
@@ -241,7 +244,7 @@
 }
 
 @media (max-width: 480px) {
-    .site-navbar { width: calc(100% - 20px); padding: 8px 10px; }
+    .site-navbar { top: 8px !important; width: calc(100% - 20px); padding: 8px 10px; }
     .home-page .site-navbar { top: 8px; width: calc(100% - 20px); margin: 0; padding: 8px 10px; }
     .site-navbar .brand-logo { min-width: 64px; }
     .site-navbar .brand-logo::after { left: -11px; right: -10px; top: -9px; bottom: -9px; }

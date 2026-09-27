@@ -113,10 +113,10 @@
     :is(.modal-footer, .modal-actions, .form-actions, .btn-row, .button-group) { flex-wrap: wrap; gap: 10px; }
     :is(.modal-footer, .modal-actions, .form-actions) > button { flex: 1 1 140px; white-space: normal; }
 
-    /* Guest pages: keep navigation in document flow as its links wrap. */
+    /* Guest navigation remains reachable while the page scrolls. */
     .home-page .main-header, .site-navbar {
-        position: relative !important; top: auto !important; left: auto !important;
-        transform: none !important; margin: 10px auto; height: auto;
+        position: fixed !important; top: 8px !important; left: 50% !important;
+        transform: translateX(-50%) !important; margin: 0; height: auto;
     }
     .home-page .hero-section { padding-top: 60px; min-height: 70svh; }
     .booking-lookup-page .lookup-section { padding-top: 40px; }
