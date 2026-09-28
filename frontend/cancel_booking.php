@@ -584,7 +584,7 @@ $checkout_fmt = $booking ? date('D, d M Y', strtotime($booking['check_out'])) : 
                             </div>
                         <?php endif; ?>
 
-                        <form method="POST" action="cancel_booking.php" id="cancelForm" data-site-title="Cancel reservation?" data-site-button="Cancel reservation" data-site-confirm="Are you sure you want to cancel this reservation? This cannot be undone.">
+                        <form method="POST" action="cancel_booking" id="cancelForm" data-site-title="Cancel reservation?" data-site-button="Cancel reservation" data-site-confirm="Are you sure you want to cancel this reservation? This cannot be undone.">
                             <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
                             <input type="hidden" name="confirm_cancel" value="1">
 
