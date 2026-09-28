@@ -1215,6 +1215,16 @@ document.addEventListener('DOMContentLoaded', function() {
         flashEl.classList.remove('show');
         statusEl.textContent = 'Starting camera…';
         camSelect.style.display = 'none';
+
+        if (typeof window.jsQR !== 'function') {
+            statusEl.textContent = '⚠️ QR scanner library unavailable. Check the internet connection and reload.';
+            return;
+        }
+
+        if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+            statusEl.textContent = '⚠️ Camera access is unavailable. Use HTTPS or localhost and allow camera permission.';
+            return;
+        }
         
         // Populate camera list first if we have permissions
         if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
@@ -1245,6 +1255,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     camSelect.addEventListener('change', function() {
         if (this.value) {
+            this.dataset.userSelected = '1';
             stopCamera();
             statusEl.textContent = 'Switching camera...';
             tryConstraints([{ video: { deviceId: { exact: this.value } } }], 0);
@@ -1254,15 +1265,15 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ── Camera ── */
     function startCamera() {
         // If we have a populated dropdown, use the selected one
-        if (camSelect.value) {
+        if (camSelect.value && camSelect.dataset.userSelected === '1') {
             tryConstraints([{ video: { deviceId: { exact: camSelect.value } } }], 0);
             return;
         }
 
         // Fallback generic constraints
         const constraints = [
+            { video: { facingMode: { ideal: 'environment' } } },
             { video: true },
-            { video: { facingMode: 'environment' } },
             { video: { facingMode: 'user' } }
         ];
 
@@ -1283,12 +1294,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         navigator.mediaDevices.getUserMedia(list[idx])
             .then(function (s) {
+                if (!scannerOpen) {
+                    s.getTracks().forEach(t => t.stop());
+                    return;
+                }
                 stream = s;
                 video.srcObject = s;
+                const videoTrack = s.getVideoTracks()[0];
+                const facingMode = videoTrack && typeof videoTrack.getSettings === 'function'
+                    ? videoTrack.getSettings().facingMode
+                    : '';
+                const activeDeviceId = videoTrack && typeof videoTrack.getSettings === 'function'
+                    ? videoTrack.getSettings().deviceId
+                    : '';
+                if (activeDeviceId && Array.from(camSelect.options).some(opt => opt.value === activeDeviceId)) {
+                    camSelect.value = activeDeviceId;
+                }
+                video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none';
                 video.onloadedmetadata = function () {
-                    video.play();
-                    statusEl.textContent = '✓ Camera live — align QR code to frame';
-                    scanLoop();
+                    if (!scannerOpen) return;
+                    video.play().then(function () {
+                        if (!scannerOpen) return;
+                        statusEl.textContent = '✓ Camera live — align QR code to frame';
+                        scanLoop();
+                    }).catch(function () {
+                        statusEl.textContent = '⚠️ Camera preview could not start. Close and retry.';
+                    });
                 };
             })
             .catch(function (err) {
@@ -1336,33 +1367,38 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function () {
             try {
                 let ref = null, token = null;
+                const scannedText = String(text || '').trim();
 
-                // Try as full URL
+                // Accept a booking URL (absolute or relative) or the legacy REF|token format.
+                // Never navigate directly to the scanned value.
                 try {
-                    const u = new URL(text);
+                    const u = new URL(scannedText, window.location.href);
                     ref   = u.searchParams.get('ref');
                     token = u.searchParams.get('token');
-                } catch (_) {
-                    // Try pipe-separated fallback
-                    const parts = text.split('|');
+                } catch (_) {}
+
+                if (!ref || !token) {
+                    const parts = scannedText.split('|');
                     if (parts.length === 2) { ref = parts[0]; token = parts[1]; }
                 }
 
-                if (ref && token) {
-                    window.location.href = CHECKIN_URL + '?ref=' + encodeURIComponent(ref) +
-                                           '&token=' + encodeURIComponent(token);
-                } else if (text.includes('ref=') && text.includes('token=')) {
-                    window.location.href = text;
+                ref = String(ref || '').trim().toUpperCase();
+                token = String(token || '').trim().toLowerCase();
+
+                if (/^REF-\d+$/.test(ref) && /^[a-f0-9]{32}$/.test(token)) {
+                    window.location.assign(CHECKIN_URL + '?ref=' + encodeURIComponent(ref) +
+                                             '&token=' + encodeURIComponent(token));
                 } else {
                     statusEl.textContent = '⚠️ Invalid QR — not a booking code.';
                     flashEl.classList.remove('show');
                     done = false;
                     startCamera();
-                    scanLoop();
                 }
             } catch (e) {
                 statusEl.textContent = '⚠️ Could not read QR data.';
+                flashEl.classList.remove('show');
                 done = false;
+                startCamera();
             }
         }, 700);
     }

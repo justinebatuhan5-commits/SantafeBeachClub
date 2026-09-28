@@ -261,11 +261,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-$ref = isset($_GET['ref']) ? $_GET['ref'] : '';
-$token = isset($_GET['token']) ? $_GET['token'] : '';
+$ref = strtoupper(trim((string)($_GET['ref'] ?? '')));
+$token = strtolower(trim((string)($_GET['token'] ?? '')));
 $specific_booking = null;
 
-if (!empty($ref) && !empty($token)) {
+if (preg_match('/\AREF-(\d+)\z/', $ref, $ref_match) && preg_match('/\A[a-f0-9]{32}\z/', $token)) {
+    $scanned_booking_id = (int)$ref_match[1];
     // Validate token and compute cost details
     $stmt = $conn->prepare("
         SELECT 
@@ -278,9 +279,9 @@ if (!empty($ref) && !empty($token)) {
         FROM bookings b
         LEFT JOIN rooms r ON b.room_id = r.id
         LEFT JOIN room_types rt ON b.room_type_id = rt.id
-        WHERE b.checkin_token = ? AND b.status IN ('Pending', 'Confirmed')
+        WHERE b.id = ? AND b.checkin_token = ? AND b.status IN ('Pending', 'Confirmed')
     ");
-    $stmt->bind_param("s", $token);
+    $stmt->bind_param("is", $scanned_booking_id, $token);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
