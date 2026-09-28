@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: fixed;
             inset: 0;
             background: linear-gradient(135deg, rgba(11, 15, 23, 0.94), rgba(20, 27, 45, 0.96)),
-                        url('assets/beach_day.jpg') center/cover no-repeat;
+                        url('assets/hero-slide-1-hd.png') center/cover no-repeat;
             z-index: 0;
         }
 
