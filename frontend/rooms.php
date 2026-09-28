@@ -850,13 +850,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                     <p>There are more rooms available for your stay</p>
                 </div>
 
-                <?php if (empty($other_available_by_type)): ?>
-                <div class="rooms-empty">
-                    <div class="empty-icon">âœ¨</div>
-                    <h3>No additional rooms right now</h3>
-                    <p>Your top room recommendations are already shown above.</p>
-                </div>
-                <?php else: ?>
+                <?php if (!empty($other_available_by_type)): ?>
                 <?php foreach ($other_available_by_type as $type_key => $type_rooms):
                     $label      = $type_labels[$type_key]      ?? ucfirst(str_replace('_', ' ', $type_key));
                     $gradient   = $type_gradients[$type_key]   ?? 'linear-gradient(135deg,#374151,#6b7280)';
