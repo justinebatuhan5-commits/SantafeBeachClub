@@ -778,26 +778,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             gap: 10px;
         }
 
-        .btn-portal-admin {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 13px 20px;
-            background: #5C4033;
-            color: #FFFFFF;
-            border-radius: 12px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn-portal-admin:hover {
-            background: #3F2B22;
-            color: #FFFFFF;
-        }
-
         .btn-portal-dismiss {
             background: none;
             border: 1px solid #CBD5E1;
@@ -1147,10 +1127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="portal-lock-actions">
-                <a href="admin_login" class="btn-portal-admin">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                    Go to Administrator Login
-                </a>
                 <button type="button" class="btn-portal-dismiss" onclick="document.getElementById('portalLockOverlay').style.display='none'">
                     Dismiss & View Screen
                 </button>
