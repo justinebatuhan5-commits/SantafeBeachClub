@@ -582,21 +582,23 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                 <div class="admin-card-header">
                     <div>
                         <h3>Guest Origin & Nationality Leaderboard</h3>
-                        <p>Top 10 shown first; scroll for all other guest origins, booking volume, and verified revenue contribution</p>
+                        <p>Top 10 shown first; cancelled bookings are excluded and revenue includes verified payments only</p>
                     </div>
                 </div>
-                <div class="table-responsive country-leaderboard-scroll">
+                <div class="table-responsive country-leaderboard-scroll" id="country-leaderboard-scroll">
                     <table class="admin-table">
                         <thead>
                             <tr>
                                 <th>Country / Nationality</th>
                                 <th>Bookings</th>
-                                <th>Share (%)</th>
-                                <th style="text-align:right;">Total Revenue</th>
+                                <th>Unique Customers</th>
+                                <th>Booked Guests</th>
+                                <th>Booking Share (%)</th>
+                                <th style="text-align:right;">Verified Revenue</th>
                             </tr>
                         </thead>
                         <tbody id="country-leaderboard-tbody">
-                            <tr><td colspan="4" class="loading">Fetching country data...</td></tr>
+                            <tr><td colspan="6" class="loading">Fetching country data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -915,8 +917,10 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <span>${Security.escapeHTML(c.country)}</span>
                         </td>
                         <td style="color:var(--text-muted); font-weight:600;">
-                            ${Security.escapeHTML(c.bookings)} <span style="font-size:11.5px; font-weight:400;">(${Security.escapeHTML(c.guests)} guest${c.guests !== 1 ? 's' : ''})</span>
+                            ${Security.escapeHTML(c.bookings)}
                         </td>
+                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(c.unique_customers ?? 0)}</td>
+                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(c.booked_guests ?? 0)}</td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div class="progress-bar-bg">
@@ -929,8 +933,30 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                     </tr>
                     `;
                 }).join('');
+
+                // Size the viewport from the rendered rows so exactly the top 10
+                // remain visible regardless of font scaling or responsive spacing.
+                requestAnimationFrame(() => {
+                    const scrollBox = document.getElementById('country-leaderboard-scroll');
+                    const table = scrollBox?.querySelector('table');
+                    const rows = Array.from(cTbody.querySelectorAll('tr'));
+                    if (!scrollBox || !table) return;
+
+                    if (rows.length > 10) {
+                        const headerHeight = table.tHead?.getBoundingClientRect().height || 0;
+                        const topTenHeight = rows.slice(0, 10).reduce(
+                            (height, row) => height + row.getBoundingClientRect().height,
+                            0
+                        );
+                        scrollBox.style.maxHeight = `${Math.ceil(headerHeight + topTenHeight + 1)}px`;
+                        scrollBox.style.overflowY = 'auto';
+                    } else {
+                        scrollBox.style.maxHeight = 'none';
+                        scrollBox.style.overflowY = 'visible';
+                    }
+                });
             } else {
-                cTbody.innerHTML = '<tr><td colspan="4" class="loading">No guest country data recorded yet.</td></tr>';
+                cTbody.innerHTML = '<tr><td colspan="6" class="loading">No guest country data recorded yet.</td></tr>';
             }
 
         } catch (e) {

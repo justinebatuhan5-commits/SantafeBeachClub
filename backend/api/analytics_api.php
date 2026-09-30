@@ -428,12 +428,19 @@ switch ($action) {
     case 'country-demographics':
         $sql = "
             SELECT 
-                COALESCE(NULLIF(TRIM(b.guest_country), ''), 'Philippines') AS country,
+                COALESCE(NULLIF(TRIM(b.guest_country), ''), 'Unknown / Not provided') AS country,
                 COUNT(DISTINCT b.id) AS total_bookings,
-                COUNT(DISTINCT b.guest_email) AS unique_guests,
-                COALESCE(SUM(CASE WHEN p.status = 'verified' THEN p.amount ELSE 0 END), 0) AS total_revenue
+                COUNT(DISTINCT NULLIF(LOWER(TRIM(b.guest_email)), '')) AS unique_customers,
+                COALESCE(SUM(b.guests_count), 0) AS booked_guests,
+                COALESCE(SUM(p.verified_revenue), 0) AS total_revenue
             FROM bookings b
-            LEFT JOIN payments p ON b.id = p.booking_id
+            LEFT JOIN (
+                SELECT booking_id, SUM(amount) AS verified_revenue
+                FROM payments
+                WHERE status = 'verified'
+                GROUP BY booking_id
+            ) p ON b.id = p.booking_id
+            WHERE LOWER(TRIM(COALESCE(b.status, ''))) NOT IN ('cancelled', 'canceled')
             GROUP BY country
             ORDER BY total_bookings DESC, total_revenue DESC
         ";
@@ -451,7 +458,8 @@ switch ($action) {
                 $countries[] = [
                     'country'       => $row['country'],
                     'bookings'      => $bCount,
-                    'guests'        => (int)$row['unique_guests'],
+                    'unique_customers' => (int)$row['unique_customers'],
+                    'booked_guests' => (int)$row['booked_guests'],
                     'revenue'       => $rSum,
                 ];
             }

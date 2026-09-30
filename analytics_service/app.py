@@ -353,12 +353,19 @@ def country_demographics():
     cursor = conn.cursor(dictionary=True)
     sql = """
         SELECT 
-            COALESCE(NULLIF(TRIM(b.guest_country), ''), 'Philippines') AS country,
+            COALESCE(NULLIF(TRIM(b.guest_country), ''), 'Unknown / Not provided') AS country,
             COUNT(DISTINCT b.id) AS bookings,
-            COUNT(DISTINCT b.guest_email) AS guests,
-            COALESCE(SUM(CASE WHEN p.status = 'verified' THEN p.amount ELSE 0 END), 0) AS revenue
+            COUNT(DISTINCT NULLIF(LOWER(TRIM(b.guest_email)), '')) AS unique_customers,
+            COALESCE(SUM(b.guests_count), 0) AS booked_guests,
+            COALESCE(SUM(p.verified_revenue), 0) AS revenue
         FROM bookings b
-        LEFT JOIN payments p ON b.id = p.booking_id
+        LEFT JOIN (
+            SELECT booking_id, SUM(amount) AS verified_revenue
+            FROM payments
+            WHERE status = 'verified'
+            GROUP BY booking_id
+        ) p ON b.id = p.booking_id
+        WHERE LOWER(TRIM(COALESCE(b.status, ''))) NOT IN ('cancelled', 'canceled')
         GROUP BY country
         ORDER BY bookings DESC, revenue DESC
     """
@@ -375,7 +382,8 @@ def country_demographics():
         countries.append({
             'country': r['country'],
             'bookings': b_cnt,
-            'guests': int(r['guests']),
+            'unique_customers': int(r['unique_customers']),
+            'booked_guests': int(r['booked_guests']),
             'revenue': float(r['revenue']),
             'share_pct': round((b_cnt / total_bookings) * 100, 1) if total_bookings > 0 else 0
         })
