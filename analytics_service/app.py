@@ -365,7 +365,6 @@ def country_demographics():
             WHERE status = 'verified'
             GROUP BY booking_id
         ) p ON b.id = p.booking_id
-        WHERE LOWER(TRIM(COALESCE(b.status, ''))) NOT IN ('cancelled', 'canceled')
         GROUP BY country
         ORDER BY bookings DESC, revenue DESC
     """

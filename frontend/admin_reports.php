@@ -148,6 +148,21 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             margin: 3px 0 0;
         }
 
+        /* Reports toolbar: actions stay left; account controls sit at the far right. */
+        .page-header-actions {
+            flex: 1 1 100%;
+            min-width: 0;
+        }
+        .page-header-actions .header-notif-menu {
+            margin-left: auto;
+        }
+
+        @media (max-width: 768px) {
+            .page-header-actions .header-notif-menu {
+                margin-left: 0;
+            }
+        }
+
         /* Keep the ten highest-ranked origins visible and scroll through the rest. */
         .country-leaderboard-scroll {
             max-height: 714px;
@@ -582,7 +597,7 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                 <div class="admin-card-header">
                     <div>
                         <h3>Guest Origin & Nationality Leaderboard</h3>
-                        <p>Top 10 shown first; cancelled bookings are excluded and revenue includes verified payments only</p>
+                        <p>All recorded origins included; top 10 shown first and additional countries are scrollable</p>
                     </div>
                 </div>
                 <div class="table-responsive country-leaderboard-scroll" id="country-leaderboard-scroll">
