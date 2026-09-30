@@ -147,6 +147,20 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             color: var(--text-muted);
             margin: 3px 0 0;
         }
+
+        /* Keep the ten highest-ranked origins visible and scroll through the rest. */
+        .country-leaderboard-scroll {
+            max-height: 714px;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+        .country-leaderboard-scroll .admin-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--card-bg, #FFFFFF);
+            box-shadow: 0 1px 0 var(--border, #E2E8F0);
+        }
         
         .chart-box {
             position: relative;
@@ -568,10 +582,10 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                 <div class="admin-card-header">
                     <div>
                         <h3>Guest Origin & Nationality Leaderboard</h3>
-                        <p>Complete breakdown of guest source countries, booking volume, and verified revenue contribution</p>
+                        <p>Top 10 shown first; scroll for all other guest origins, booking volume, and verified revenue contribution</p>
                     </div>
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive country-leaderboard-scroll">
                     <table class="admin-table">
                         <thead>
                             <tr>
