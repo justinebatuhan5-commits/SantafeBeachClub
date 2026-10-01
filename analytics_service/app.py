@@ -139,14 +139,16 @@ def status_breakdown():
 def room_type_occupancy():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT name, total_rooms FROM room_types ORDER BY id ASC")
+    cursor.execute("SELECT id, name FROM room_types ORDER BY id ASC")
     room_types = cursor.fetchall()
     labels, data = [], []
-    for (type_name, total) in room_types:
-        occ = fetchone(cursor,
-            "SELECT COUNT(*) FROM bookings b JOIN rooms r ON b.room_id=r.id WHERE b.status='Checked In' AND r.type=%s",
-            (type_name,))[0]
-        pct = round((occ / total) * 100) if total > 0 else 0
+    for (_type_id, type_name) in room_types:
+        total, occ = fetchone(cursor,
+            "SELECT COUNT(DISTINCT CASE WHEN r.status <> 'maintenance' THEN r.id END), "
+            "COUNT(DISTINCT CASE WHEN r.status <> 'maintenance' AND b.status='Checked In' THEN r.id END) "
+            "FROM rooms r LEFT JOIN bookings b ON b.room_id=r.id WHERE r.type=%s",
+            (type_name,))
+        pct = min(100, round((occ / total) * 100)) if total > 0 else 0
         labels.append(type_name.replace('_', ' ').title())
         data.append(pct)
     cursor.close(); conn.close()

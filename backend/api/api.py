@@ -345,8 +345,8 @@ def room_type_occupancy():
         cursor.execute("""
             SELECT 
                 r.type,
-                COUNT(DISTINCT r.id) AS total_rooms,
-                COUNT(DISTINCT CASE WHEN b.status = 'Checked In' THEN r.id END) AS occupied_rooms
+                COUNT(DISTINCT CASE WHEN r.status <> 'maintenance' THEN r.id END) AS total_rooms,
+                COUNT(DISTINCT CASE WHEN r.status <> 'maintenance' AND b.status = 'Checked In' THEN r.id END) AS occupied_rooms
             FROM rooms r
             LEFT JOIN bookings b ON r.id = b.room_id
             GROUP BY r.type
@@ -363,7 +363,7 @@ def room_type_occupancy():
             labels.append(room_type)
             total = int(row['total_rooms'])
             used = int(row['occupied_rooms'])
-            rate = round((used / total) * 100) if total > 0 else 0
+            rate = min(100, round((used / total) * 100)) if total > 0 else 0
             occupancy_data.append(rate)
             
         cursor.close()

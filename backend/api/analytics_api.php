@@ -142,26 +142,29 @@ switch ($action) {
         $labels = [];
         $data = [];
 
-        $rt_res = $conn->query("SELECT name, total_rooms FROM room_types ORDER BY id ASC");
+        $rt_res = $conn->query("SELECT id, name FROM room_types ORDER BY id ASC");
         if ($rt_res) {
             while ($rt = $rt_res->fetch_assoc()) {
                 $typeName = $rt['name'];
                 $cleanName = ucwords(str_replace('_', ' ', $typeName));
-                $totalForType = (int)$rt['total_rooms'];
-
-                // Count occupied rooms of this type
+                // Use live, non-maintenance inventory as the denominator and
+                // distinct room ids for occupancy to avoid duplicate bookings.
                 $occ_stmt = $conn->prepare("
-                    SELECT COUNT(*) AS occ
-                    FROM bookings b
-                    JOIN rooms r ON b.room_id = r.id
-                    WHERE b.status = 'Checked In' AND r.type = ?
+                    SELECT
+                        COUNT(DISTINCT CASE WHEN r.status <> 'maintenance' THEN r.id END) AS total_rooms,
+                        COUNT(DISTINCT CASE WHEN r.status <> 'maintenance' AND b.status = 'Checked In' THEN r.id END) AS occupied_rooms
+                    FROM rooms r
+                    LEFT JOIN bookings b ON b.room_id = r.id
+                    WHERE r.type = ?
                 ");
                 $occ_stmt->bind_param("s", $typeName);
                 $occ_stmt->execute();
-                $occCount = (int)($occ_stmt->get_result()->fetch_assoc()['occ'] ?? 0);
+                $roomCounts = $occ_stmt->get_result()->fetch_assoc() ?: [];
+                $totalForType = (int)($roomCounts['total_rooms'] ?? 0);
+                $occCount = (int)($roomCounts['occupied_rooms'] ?? 0);
                 $occ_stmt->close();
 
-                $pct = ($totalForType > 0) ? round(($occCount / $totalForType) * 100) : 0;
+                $pct = ($totalForType > 0) ? min(100, round(($occCount / $totalForType) * 100)) : 0;
 
                 $labels[] = $cleanName;
                 $data[] = $pct;
