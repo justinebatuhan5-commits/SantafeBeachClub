@@ -350,21 +350,6 @@ include __DIR__ . '/partials/_sidebar.php';
             </div>
         </div>
 
-        <!-- Occupancy Bar Chart -->
-        <div class="admin-card" style="margin-bottom:28px;">
-            <div class="admin-card-header">
-                <div>
-                    <h3>Room Type Occupancy Breakdown</h3>
-                    <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Live utilization by accommodation category</p>
-                </div>
-                <a href="accommodations">Manage Units &rarr;</a>
-            </div>
-            <div class="chart-container" style="height:190px;">
-                <div class="loading" id="loading-occ">Loading chart data...</div>
-                <canvas id="occupancyChart" style="display:none;"></canvas>
-            </div>
-        </div>
-
         <!-- ═══ DAILY ACTIVITY SUMMARY ═══ -->
         <div class="daily-summary-card">
             <div class="daily-summary-header">
@@ -657,40 +642,7 @@ async function loadDashboardData() {
             }
         });
 
-        // 4. Room Type Occupancy Bar Chart
-        const occData = await fetchAPI('/api/room-type-occupancy');
-        document.getElementById('loading-occ').style.display = 'none';
-        const oCanvas = document.getElementById('occupancyChart');
-        oCanvas.style.display = 'block';
-        new Chart(oCanvas.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: occData.labels,
-                datasets: [{
-                    label: 'Occupancy Rate (%)',
-                    data: occData.data,
-                    backgroundColor: 'rgba(132, 86, 60, 0.85)',
-                    hoverBackgroundColor: primaryColor,
-                    borderRadius: 6,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: c => ' ' + c.parsed.x + '% Occupied' } }
-                },
-                scales: {
-                    x: { max: 100, grid: { color: gridColor }, ticks: { callback: v => v + '%', font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor } },
-                    y: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' }, color: tickColor } }
-                }
-            }
-        });
-
-        // 5. Recent Bookings Table
+        // 4. Recent Bookings Table
         const bookings = await fetchAPI('/api/recent-bookings');
         const bTbody = document.getElementById('recent-bookings-tbody');
         if (bookings.length > 0) {
