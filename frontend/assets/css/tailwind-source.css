@@ -1,0 +1,174 @@
+/* ===================================================================
+   Santa Beach Club — Tailwind v4 CSS Configuration
+   All config is done here via @theme and @source directives.
+   =================================================================== */
+
+@import "tailwindcss";
+
+/* --- Source content paths --- */
+@source "../../frontend/**/*.php";
+@source "../../frontend/assets/js/**/*.js";
+
+/* --- Custom Theme (your brand design tokens) --- */
+@theme {
+  /* Colors */
+  --color-bronze:        #7C533C;
+  --color-bronze-dark:   #5C3D2B;
+  --color-bronze-light:  #A07860;
+  --color-cream:         #FAF4ED;
+  --color-cream-dark:    #F0E8DD;
+  --color-warm-gray:     #F0E8DD;
+  --color-resort-dark:   #222222;
+
+  /* Fonts */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body:    'Outfit', sans-serif;
+  --font-serif:   'Playfair Display', serif;
+
+  /* Border Radius */
+  --radius-luxury: 12px;
+
+  /* Shadows */
+  --shadow-card:  0 4px 24px rgba(124, 83, 60, 0.08);
+  --shadow-hover: 0 8px 32px rgba(124, 83, 60, 0.15);
+}
+
+/* ===================================================================
+   Reusable Component Classes
+   =================================================================== */
+
+@layer components {
+
+  /* ---------- Buttons ---------- */
+  .btn-primary {
+    @apply bg-bronze text-cream px-6 py-3 rounded-luxury font-heading
+           font-semibold tracking-wide transition-all duration-300
+           hover:bg-bronze-dark hover:shadow-hover
+           focus:outline-none focus:ring-2 focus:ring-bronze/40;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-bronze text-bronze px-6 py-3 rounded-luxury
+           font-heading font-semibold transition-all duration-300
+           hover:bg-bronze hover:text-cream
+           focus:outline-none focus:ring-2 focus:ring-bronze/40;
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white px-6 py-3 rounded-luxury font-heading
+           font-semibold transition-all duration-300
+           hover:bg-red-700 hover:shadow-hover
+           focus:outline-none focus:ring-2 focus:ring-red-400/40;
+  }
+
+  /* ---------- Cards ---------- */
+  .card-luxury {
+    @apply bg-white rounded-luxury shadow-card p-6
+           transition-shadow duration-300 hover:shadow-hover;
+  }
+
+  .card-flat {
+    @apply bg-cream rounded-luxury border border-warm-gray p-6;
+  }
+
+  /* ---------- Typography ---------- */
+  .section-heading {
+    @apply font-serif text-3xl md:text-4xl text-resort-dark mb-4;
+  }
+
+  .section-subheading {
+    @apply font-body text-lg text-bronze/80 mb-8;
+  }
+
+  .text-luxury {
+    @apply font-heading tracking-wide;
+  }
+
+  /* ---------- Form Elements ---------- */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-luxury border border-warm-gray
+           font-body text-resort-dark bg-white
+           placeholder:text-bronze/50
+           focus:outline-none focus:ring-2 focus:ring-bronze/30
+           focus:border-bronze transition-all duration-200;
+  }
+
+  .input-label {
+    @apply block text-sm font-heading font-semibold text-resort-dark mb-1.5;
+  }
+
+  .select-field {
+    @apply w-full px-4 py-3 rounded-luxury border border-warm-gray
+           font-body text-resort-dark bg-white appearance-none
+           focus:outline-none focus:ring-2 focus:ring-bronze/30
+           focus:border-bronze transition-all duration-200;
+  }
+
+  /* ---------- Badges / Status ---------- */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full
+           text-xs font-heading font-semibold tracking-wide;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-heading font-semibold tracking-wide;
+  }
+
+  .badge-warning {
+    @apply bg-amber-100 text-amber-800 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-heading font-semibold tracking-wide;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-heading font-semibold tracking-wide;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-heading font-semibold tracking-wide;
+  }
+
+  /* ---------- Tables (Admin) ---------- */
+  .table-luxury {
+    @apply w-full text-sm text-left border-collapse;
+  }
+
+  .table-luxury thead {
+    @apply bg-cream-dark;
+  }
+
+  .table-luxury th {
+    @apply px-4 py-3 font-heading font-semibold text-resort-dark
+           text-xs uppercase tracking-wider border-b border-warm-gray;
+  }
+
+  .table-luxury td {
+    @apply px-4 py-3 border-b border-warm-gray/50 text-resort-dark;
+  }
+
+  .table-luxury tbody tr {
+    @apply hover:bg-cream/50 transition-colors duration-150;
+  }
+
+  /* ---------- Layout ---------- */
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-spacing {
+    @apply py-16 md:py-24;
+  }
+
+  /* ---------- Navbar ---------- */
+  .nav-link {
+    @apply font-body text-sm font-medium text-gray-600
+           transition-colors duration-300 hover:text-bronze;
+  }
+
+  .nav-link-active {
+    @apply font-body text-sm font-semibold text-bronze
+           transition-colors duration-300 hover:text-bronze;
+  }
+}

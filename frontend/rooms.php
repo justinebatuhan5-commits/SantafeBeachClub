@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
+require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../backend/config/db.php';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -15,7 +16,7 @@ $filter_checkout = isset($_GET['checkout'])  ? $_GET['checkout']       : date('Y
    rooms already booked in the date range)
 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 $where_clauses = [];
-$where_clauses[] = "r.type IN ('beachview_duplex','seaview_duplex','beach_villa','standard_room','standard_king')";
+$where_clauses[] = "r.type IN ('beachview_duplex','seaview_duplex','beach_villa','standard_room','standard_king','cottage','villa')";
 if ($filter_type !== 'any') {
     $safe_type = $conn->real_escape_string($filter_type);
     $where_clauses[] = "r.type = '$safe_type'";
@@ -91,6 +92,8 @@ $extra_person_limits = [
     'beach_villa'      => ['adults' => 3, 'children' => 2],
     'standard_room'    => ['adults' => 2, 'children' => 0],
     'standard_king'    => ['adults' => 1, 'children' => 0],
+    'cottage'          => ['adults' => 2, 'children' => 1],
+    'villa'            => ['adults' => 4, 'children' => 2],
 ];
 try {
     $limitResult = $conn->query('SELECT room_type, max_extra_adults, max_extra_children FROM room_extra_person_limits');
@@ -227,6 +230,26 @@ $type_amenities = [
         'Internet WiFi access in room',
         'Toiletries',
     ],
+    'cottage' => [
+        'Air conditioning',
+        'Private veranda',
+        'Hot and cold shower',
+        'Toiletries',
+        'Towels provided',
+        'WiFi access',
+        'Daily Mineral Water',
+    ],
+    'villa' => [
+        'Air conditioning',
+        'High ceiling lounge',
+        'Dual vanity bathroom',
+        'Mini Refrigerator',
+        'Pocket garden',
+        'WiFi access',
+        'Daily Mineral Water',
+        'Toiletries',
+        'Towels provided',
+    ],
     'standard_king' => [
         'Air conditioning',
         'Bathroom with shower',
@@ -275,7 +298,7 @@ $unavail_by_type = [];
 
 foreach ($rooms_by_type as $type => $type_rooms) {
     $avail_units = array_values(array_filter($type_rooms, function($r) {
-        return (int)$r['active_bookings'] === 0 && $r['status'] === 'ready';
+        return (int)$r['active_bookings'] === 0 && in_array(strtolower((string)$r['status']), ['ready', 'available'], true);
     }));
 
     if (!empty($avail_units)) {
@@ -358,10 +381,119 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rooms & Accommodations â€“ Santa Fe Beach Club</title>
+    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <link rel="stylesheet" href="assets/css/rooms.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/rooms.css'); ?>">
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
+    <style>
+        /* Modern Luxury Rooms Layout & Card Polish */
+        .rooms-layout {
+            width: 100% !important;
+            max-width: 1280px !important;
+            margin: 0 auto !important;
+            padding: 32px 24px 64px !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) 360px !important;
+            gap: 32px !important;
+            align-items: start !important;
+            box-sizing: border-box;
+        }
+        .rooms-main {
+            min-width: 0;
+            width: 100%;
+        }
+        .room-type-section {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 18px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+            overflow: hidden;
+            margin-bottom: 24px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .room-type-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        }
+        /* Landscape Room Card on Web (> 768px) */
+        @media (min-width: 769px) {
+            .room-type-section .rts-header {
+                background: #faf7f2 !important;
+                border-bottom: 1px solid #ede6dc !important;
+                padding: 12px 22px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+            }
+            .room-type-section .rate-card {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) 260px !important;
+                align-items: stretch !important;
+            }
+            .room-type-section .rate-card-left {
+                display: grid !important;
+                grid-template-columns: 280px minmax(0, 1fr) !important;
+                align-items: stretch !important;
+                border-right: none !important;
+            }
+            .room-type-section .rate-photo {
+                grid-column: auto !important;
+                grid-row: auto !important;
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 290px !important;
+                max-height: none !important;
+                aspect-ratio: auto !important;
+                border-radius: 0 !important;
+            }
+            .room-type-section .rate-info {
+                grid-column: auto !important;
+                padding: 20px 22px !important;
+                min-width: 0;
+            }
+            .room-type-section .rate-card-right {
+                grid-column: auto !important;
+                border-left: 1px solid #ede6dc !important;
+                padding: 20px 22px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+            }
+        }
+        /* Portrait Room Card on Phone (<= 768px) */
+        @media (max-width: 768px) {
+            .room-type-section .rate-card,
+            .room-type-section .rate-card-left {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            .room-type-section .rate-photo {
+                grid-column: auto !important;
+                width: 100% !important;
+                height: 220px !important;
+                min-height: 220px !important;
+            }
+        }
+        .booking-sidebar {
+            position: sticky;
+            top: 96px;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            padding: 24px;
+        }
+        @media (max-width: 1024px) {
+            .rooms-layout {
+                grid-template-columns: 1fr !important;
+                padding: 24px 16px 48px !important;
+            }
+            .booking-sidebar {
+                position: static;
+            }
+        }
+    </style>
 </head>
 <body class="rooms-page">
 
@@ -441,6 +573,8 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                         <option value="beach_villa"      <?php if($filter_type=='beach_villa')      echo 'selected'; ?>>Beach Villa</option>
                         <option value="standard_room"    <?php if($filter_type=='standard_room')    echo 'selected'; ?>>Standard Room</option>
                         <option value="standard_king"    <?php if($filter_type=='standard_king')    echo 'selected'; ?>>Standard Family Room</option>
+                        <option value="cottage"          <?php if($filter_type=='cottage')          echo 'selected'; ?>>Beach Cottage</option>
+                        <option value="villa"            <?php if($filter_type=='villa')            echo 'selected'; ?>>Luxury Villa</option>
                     </select>
                 </div>
                 <!-- Search button -->
@@ -449,191 +583,14 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                 </button>
             </div>
         </form>
-        <div class="be-currency">
-            <span>Display currency</span>
-            <strong>PHP <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></strong>
-        </div>
     </div>
 
     <!-- â”€â”€ Interactive Guest Availability Calendar â”€â”€ -->
-    <div class="rooms-cal-wrapper">
-        <div class="rooms-cal-card">
-            <div class="rooms-cal-header">
-                <div>
-                    <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0; display: flex; align-items: center; gap: 8px;">
-                        <span>&#128197;</span> Live Availability & Rates Calendar
-                    </h3>
-                    <p style="font-size: 13px; color: #64748B; margin: 4px 0 0;">Green dates indicate open availability; red dates are sold out. Click any date to set your check-in!</p>
-                </div>
-                <button type="button" class="rooms-cal-toggle" id="rooms-cal-toggle" aria-expanded="false" aria-controls="rooms-calendar-body">
-                    <span>View availability calendar</span>
-                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-            </div>
-
-            <div class="rooms-calendar-body" id="rooms-calendar-body" hidden>
-                <div class="rooms-calendar-nav">
-                    <button type="button" id="cal-prev-month" class="btn-secondary" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; cursor: pointer;">&larr; Prev</button>
-                    <span id="cal-month-title" style="font-weight: 800; font-size: 15px; color: #0F172A; min-width: 140px; text-align: center;">...</span>
-                    <button type="button" id="cal-next-month" class="btn-secondary" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; border: 1px solid #E2E8F0; background: #F8FAFC; cursor: pointer;">Next &rarr;</button>
-                </div>
-
-            <!-- Calendar Legend -->
-            <div style="display: flex; gap: 16px; align-items: center; font-size: 12px; margin-bottom: 14px; flex-wrap: wrap;">
-                <span style="display: flex; align-items: center; gap: 6px; color: #15803D; font-weight: 600;">
-                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #22C55E; display: inline-block;"></span> Available
-                </span>
-                <span style="display: flex; align-items: center; gap: 6px; color: #B45309; font-weight: 600;">
-                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span> Low Availability (1-2 rooms)
-                </span>
-                <span style="display: flex; align-items: center; gap: 6px; color: #B91C1C; font-weight: 600;">
-                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #EF4444; display: inline-block;"></span> Sold Out
-                </span>
-            </div>
-
-            <!-- Calendar Grid -->
-            <div id="guest-cal-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;">
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">SUN</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">MON</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">TUE</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">WED</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">THU</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">FRI</div>
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; padding: 6px 0;">SAT</div>
-            </div>
-            <div id="guest-cal-days" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 6px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-    (function() {
-        var currentCalYear = <?php echo (int)date('Y', strtotime($filter_checkin)); ?>;
-        var currentCalMonth = <?php echo (int)date('n', strtotime($filter_checkin)); ?>;
-        var currentRoomType = <?php echo xss_json($filter_type); ?>;
-        var selectedCheckin = <?php echo xss_json($filter_checkin); ?>;
-        var selectedCheckout = <?php echo xss_json($filter_checkout); ?>;
-        var calendarLoaded = false;
-
-        var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-        function loadGuestCalendar(year, month) {
-            var titleEl = document.getElementById('cal-month-title');
-            var container = document.getElementById('guest-cal-days');
-            if (!titleEl || !container) return;
-
-            titleEl.textContent = monthNames[month - 1] + ' ' + year;
-            var apiUrl = (typeof SF_BASE_URL !== 'undefined' && SF_BASE_URL ? SF_BASE_URL : '..') + '/backend/api/availability.php?action=get_month_matrix&year=' + year + '&month=' + month + '&room_type=' + encodeURIComponent(currentRoomType);
-            fetch(apiUrl)
-                .then(function(res) {
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    return res.json();
-                })
-                .then(function(data) {
-                    if (!data || !data.success) {
-                        container.innerHTML = '<div style="grid-column: span 7; color: #EF4444; font-size: 13px;">Unable to load calendar data.</div>';
-                        return;
-                    }
-
-                    container.innerHTML = '';
-                    var firstDayIndex = new Date(year, month - 1, 1).getDay(); // 0 = Sun
-                    for (var pad = 0; pad < firstDayIndex; pad++) {
-                        var emptyCell = document.createElement('div');
-                        emptyCell.style.cssText = 'height: 48px;';
-                        container.appendChild(emptyCell);
-                    }
-
-                    Object.keys(data.days).forEach(function(dateKey) {
-                        var dayItem = data.days[dateKey];
-                        var cell = document.createElement('div');
-                        var bg = '#ECFDF5';
-                        var border = '#A7F3D0';
-                        var textColor = '#065F46';
-                        var badgeText = dayItem.available + ' left';
-
-                        if (dayItem.is_past) {
-                            bg = '#F8FAFC'; border = '#E2E8F0'; textColor = '#94A3B8'; badgeText = 'Past';
-                        } else if (dayItem.status === 'sold_out') {
-                            bg = '#FEF2F2'; border = '#FECACA'; textColor = '#991B1B'; badgeText = 'Sold Out';
-                        } else if (dayItem.status === 'low_stock') {
-                            bg = '#FFFBEB'; border = '#FDE68A'; textColor = '#92400E'; badgeText = dayItem.available + ' left';
-                        }
-
-                        if (dateKey === selectedCheckin) {
-                            bg = '#E0F2FE'; border = '#0284C7'; textColor = '#075985'; badgeText = 'Check-in';
-                        } else if (dateKey === selectedCheckout) {
-                            bg = '#EDE9FE'; border = '#7C3AED'; textColor = '#5B21B6'; badgeText = 'Check-out';
-                        }
-
-                        cell.style.cssText = 'height: 48px; background:' + bg + '; border: 1px solid ' + border + '; border-radius: 8px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: transform 0.15s;';
-                        cell.innerHTML = '<strong style="color:' + textColor + '; font-size:13px;">' + dayItem.day + '</strong>' +
-                            '<span style="font-size: 9px; color:' + textColor + '; font-weight: 700;">' + badgeText + '</span>';
-
-                        if (!dayItem.is_past && dayItem.status !== 'sold_out') {
-                            cell.onmouseover = function() { this.style.transform = 'scale(1.05)'; };
-                            cell.onmouseout = function() { this.style.transform = 'scale(1)'; };
-                            cell.onclick = function() {
-                                var cinInput = document.getElementById('be-checkin');
-                                var coutInput = document.getElementById('be-checkout');
-                                if (cinInput && coutInput) {
-                                    cinInput.value = dateKey;
-                                    var nextDay = new Date(dateKey);
-                                    nextDay.setDate(nextDay.getDate() + 1);
-                                    coutInput.value = nextDay.toISOString().split('T')[0];
-                                    document.querySelector('.be-bar-form').submit();
-                                }
-                            };
-                        }
-
-                        container.appendChild(cell);
-                    });
-                })
-                .catch(function() {
-                    container.innerHTML = '<div style="grid-column: span 7; color: #EF4444; font-size: 13px;">Failed to connect to availability API.</div>';
-                });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            var prevBtn = document.getElementById('cal-prev-month');
-            var nextBtn = document.getElementById('cal-next-month');
-            var toggleBtn = document.getElementById('rooms-cal-toggle');
-            var calendarBody = document.getElementById('rooms-calendar-body');
-
-            if (prevBtn) {
-                prevBtn.addEventListener('click', function() {
-                    currentCalMonth--;
-                    if (currentCalMonth < 1) { currentCalMonth = 12; currentCalYear--; }
-                    loadGuestCalendar(currentCalYear, currentCalMonth);
-                });
-            }
-
-            if (nextBtn) {
-                nextBtn.addEventListener('click', function() {
-                    currentCalMonth++;
-                    if (currentCalMonth > 12) { currentCalMonth = 1; currentCalYear++; }
-                    loadGuestCalendar(currentCalYear, currentCalMonth);
-                });
-            }
-
-            if (toggleBtn && calendarBody) {
-                toggleBtn.addEventListener('click', function() {
-                    var opening = calendarBody.hidden;
-                    calendarBody.hidden = !opening;
-                    toggleBtn.setAttribute('aria-expanded', String(opening));
-                    toggleBtn.querySelector('span').textContent = opening ? 'Hide availability calendar' : 'View availability calendar';
-                    if (opening && !calendarLoaded) {
-                        calendarLoaded = true;
-                        loadGuestCalendar(currentCalYear, currentCalMonth);
-                    }
-                });
-            }
-        });
-    })();
-    </script>
+<?php require __DIR__ . '/partials/_rooms_calendar.php'; ?>
 
     <!-- â”€â”€ Tab Navigation â”€â”€ -->
     <!-- â”€â”€ Main Content + Sidebar â”€â”€ -->
-    <div class="rooms-layout" id="room-choice">
+    <div class="rooms-layout max-w-[1400px] mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8" id="room-choice">
 
         <!-- â•â• Rooms Main Column â•â• -->
         <main class="rooms-main">
@@ -799,7 +756,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                                             onchange="roomSelectChanged(this)">
                                         <option value="">Choose a room</option>
                                         <?php foreach ($rooms_by_type[$type_key] as $room_unit):
-                                            $unit_avail = (int)$room_unit['active_bookings'] === 0 && $room_unit['status'] === 'ready';
+                                            $unit_avail = (int)$room_unit['active_bookings'] === 0 && in_array(strtolower((string)$room_unit['status']), ['ready', 'available'], true);
                                             $unit_label = 'Room ' . $room_unit['room_number'];
                                             if ($room_unit['status'] === 'maintenance') {
                                                 $unit_label .= ' - Under Maintenance';
@@ -978,7 +935,7 @@ $SF_BASE_URL = $_sf_scheme . "://" . $_sf_host . $_sf_dir;
                                             onchange="roomSelectChanged(this)">
                                         <option value="">Choose a room</option>
                                         <?php foreach ($rooms_by_type[$type_key] as $room_unit):
-                                            $unit_avail = (int)$room_unit['active_bookings'] === 0 && $room_unit['status'] === 'ready';
+                                            $unit_avail = (int)$room_unit['active_bookings'] === 0 && in_array(strtolower((string)$room_unit['status']), ['ready', 'available'], true);
                                             $unit_label = 'Room ' . $room_unit['room_number'];
                                             if ($room_unit['status'] === 'maintenance') {
                                                 $unit_label .= ' - Under Maintenance';

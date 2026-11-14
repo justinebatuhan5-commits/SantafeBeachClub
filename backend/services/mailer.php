@@ -400,8 +400,8 @@ function sendPaymentRejectedEmail(
 
                     {$reason_html}
                     <p>If you believe this is a mistake or would like to make a new reservation, please contact our front desk:</p>
-                    <p style='margin:0;'>\ud83d\udcde <strong>Front Desk:</strong> Contact us directly</p>
-                    <p style='margin:6px 0 0;'>\ud83d\udce7 <strong>Email:</strong> " . GMAIL_USER . "</p>
+                    <p style='margin:0;'><strong>Front Desk:</strong> Contact us directly</p>
+                    <p style='margin:6px 0 0;'><strong>Email:</strong> " . GMAIL_USER . "</p>
                     <p style='color:#9ca3af;font-size:12px;margin-top:28px;'>We apologise for the inconvenience. We hope to welcome you at Santa Fe Beach Club soon.</p>
                 </div>
             </div>
@@ -463,7 +463,7 @@ function sendRefundCompletedEmail(
         $mail->Body    = "
             <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;'>
                 <div style='background:linear-gradient(135deg, #10b981 0%, #059669 100%);padding:28px 32px;border-radius:12px 12px 0 0;'>
-                    <h2 style='color:#fff;margin:0;font-size:22px;'>✓ Refund Processed</h2>
+                    <h2 style='color:#fff;margin:0;font-size:22px;'>Refund Processed</h2>
                     <p style='color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;'>Santa Fe Beach Club — Your money is on its way</p>
                 </div>
                 <div style='background:#fff;padding:28px 32px;border:1px solid #f3f4f6;border-top:none;border-radius:0 0 12px 12px;'>
@@ -497,7 +497,7 @@ function sendRefundCompletedEmail(
                     </p>
 
                     <div style='background:#fef3c7;border-left:4px solid #f59e0b;padding:16px;margin:20px 0;border-radius:6px;font-size:13px;'>
-                        <p style='margin:0 0 8px;color:#92400e;'><strong>💡 Tip:</strong> If you don't see the refund within 5-7 business days, please contact your bank or payment provider first, as delays can occur on their end.</p>
+                        <p style='margin:0 0 8px;color:#92400e;'><strong>Tip:</strong> If you don't see the refund within 5-7 business days, please contact your bank or payment provider first, as delays can occur on their end.</p>
                     </div>
 
                     <p style='color:#9ca3af;font-size:12px;margin-top:28px;'>We hope to welcome you back to Santa Fe Beach Club again in the future!</p>
@@ -895,19 +895,19 @@ function sendPreArrivalReminderEmail(
             $safe_balance_url = htmlspecialchars($balance_url, ENT_QUOTES, 'UTF-8');
             $balance_section = "
                 <div style='background:#fef3c7;border-left:4px solid #f59e0b;padding:14px 18px;margin:18px 0;border-radius:6px;'>
-                    <p style='margin:0;color:#92400e;font-weight:600;font-size:14px;'>💰 Balance Due: ₱" . number_format($balance_due, 2) . "</p>
+                    <p style='margin:0;color:#92400e;font-weight:600;font-size:14px;'>Balance Due: ₱" . number_format($balance_due, 2) . "</p>
                     <p style='margin:4px 0 12px;color:#a16207;font-size:13px;'>Please pay by <strong>{$deadline_text}</strong> to keep your reservation active.</p>" .
                     ($safe_balance_url !== '' ? "<a href='{$safe_balance_url}' style='display:inline-block;background:#b45309;color:#fff;padding:10px 18px;border-radius:7px;text-decoration:none;font-weight:700;font-size:13px;'>Pay Remaining Balance</a>" : '') . "
                 </div>";
         }
 
         $mail->isHTML(true);
-        $mail->Subject = "🏖️ Your Check-in is Coming Up! – {$booking_ref} – Santa Fe Beach Club";
+        $mail->Subject = "Your Check-in is Coming Up! – {$booking_ref} – Santa Fe Beach Club";
         $mail->Body = "
             <div style='font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;background:#f9fafb;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);'>
                 <!-- Header -->
                 <div style='background:linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);padding:32px;text-align:center;'>
-                    <p style='font-size:40px;margin:0;'>🏖️</p>
+                    <p style='font-size:40px;margin:0;'></p>
                     <h2 style='color:#fff;margin:10px 0 4px;font-size:22px;'>Your Check-in is Almost Here!</h2>
                     <p style='color:rgba(255,255,255,0.9);margin:0;font-size:14px;'>Santa Fe Beach Club — Booking {$safe_ref}</p>
                 </div>
@@ -925,23 +925,23 @@ function sendPreArrivalReminderEmail(
                     <div style='background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:20px;margin:20px 0;'>
                         <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
                             <tr>
-                                <td style='padding:6px 0;font-weight:600;width:130px;color:#0369a1;'>📋 Reference</td>
+                                <td style='padding:6px 0;font-weight:600;width:130px;color:#0369a1;'>Reference</td>
                                 <td style='padding:6px 0;'>{$safe_ref}</td>
                             </tr>
                             <tr>
-                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>🏨 Accommodation</td>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>Accommodation</td>
                                 <td style='padding:6px 0;'>{$safe_room}</td>
                             </tr>
                             <tr>
-                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>📅 Check-in</td>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>Check-in</td>
                                 <td style='padding:6px 0;'>{$check_in_fmt} — <em>2:00 PM</em></td>
                             </tr>
                             <tr>
-                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>📅 Check-out</td>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>Check-out</td>
                                 <td style='padding:6px 0;'>{$check_out_fmt} — <em>12:00 PM</em></td>
                             </tr>
                             <tr>
-                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>🌙 Duration</td>
+                                <td style='padding:6px 0;font-weight:600;color:#0369a1;'>Duration</td>
                                 <td style='padding:6px 0;'>{$nights} night" . ($nights > 1 ? 's' : '') . "</td>
                             </tr>
                         </table>
@@ -952,7 +952,7 @@ function sendPreArrivalReminderEmail(
                     <!-- CTA Buttons -->
                     <div style='text-align:center;margin:28px 0 12px;'>
                         <a href='{$checkin_url}' style='display:inline-block;background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(14,165,233,0.35);'>
-                            ✅ View My Check-in Pass
+                            View My Check-in Pass
                         </a>
                     </div>
 
@@ -966,13 +966,13 @@ function sendPreArrivalReminderEmail(
                     <!-- Can't make it section -->
                     <div style='background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;'>
                         <p style='margin:0 0 8px;color:#991b1b;font-weight:600;font-size:15px;'>
-                            ❌ Can't make it?
+                            Can't make it?
                         </p>
                         <p style='margin:0 0 16px;color:#7f1d1d;font-size:13px;line-height:1.5;'>
                             If you won't be able to come on your scheduled date, please let us know as soon as possible. You can request a reschedule, cancellation, or send us an explanation.
                         </p>
                         <a href='{$explanation_url}' style='display:inline-block;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(239,68,68,0.3);'>
-                            📝 Send Explanation / Cancel Booking
+                            Send Explanation / Cancel Booking
                         </a>
                     </div>
 
@@ -981,7 +981,7 @@ function sendPreArrivalReminderEmail(
                         <p style='color:#9ca3af;font-size:12px;line-height:1.5;margin:0;'>
                             This is an automated reminder from Santa Fe Beach Club.<br>
                             If you have questions, please contact our Front Desk.<br>
-                            📞 Phone: 0950 522 3146 &nbsp;|&nbsp; 📧 Email: Justinebatuhan017@gmail.com
+                            Phone: 0950 522 3146 &nbsp;|&nbsp; Email: Justinebatuhan017@gmail.com
                         </p>
                     </div>
                 </div>
@@ -998,6 +998,116 @@ function sendPreArrivalReminderEmail(
         return ['success' => true, 'error' => null];
     } catch (Exception $e) {
         return ['success' => false, 'error' => $mail->ErrorInfo];
+    }
+}
+
+/**
+ * Checks whether a guest email address is real and deliverable (excluding RFC 2606 / placeholder emails).
+ */
+function sf_mailer_is_deliverable_email(?string $email): bool
+{
+    $clean = strtolower(trim((string)$email));
+    if ($clean === '' || !filter_var($clean, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    foreach ([
+        'pending-contact@santafebeachclub.com',
+        '.example',
+        '@example.com',
+        '@example.org',
+        '@example.net',
+        'not-provided',
+        'guest-widget',
+        'no-reply@',
+        'noreply@',
+    ] as $placeholderToken) {
+        if (strpos($clean, $placeholderToken) !== false) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Sends a direct staff reply to a guest inquiry or AI Concierge handoff ticket via Gmail SMTP.
+ *
+ * @param string|null $to_email         Guest email address
+ * @param string      $guest_name       Guest full name
+ * @param string      $original_subject Subject of the guest inquiry / handoff ticket
+ * @param string      $reply_message    Staff reply content (plain text)
+ * @param string      $staff_name       Staff member or department name
+ * @return array ['success' => bool, 'error' => string|null]
+ */
+function sendInquiryReplyEmail(
+    ?string $to_email,
+    string $guest_name,
+    string $original_subject,
+    string $reply_message,
+    string $staff_name = 'Reception Desk'
+): array {
+    $to_email = trim((string)$to_email);
+    if (!sf_mailer_is_deliverable_email($to_email)) {
+        return ['success' => false, 'error' => 'No deliverable guest email address is available for this ticket.'];
+    }
+
+    $reply_message = trim($reply_message);
+    if ($reply_message === '') {
+        return ['success' => false, 'error' => 'Reply message cannot be empty.'];
+    }
+
+    $safe_name = htmlspecialchars($guest_name !== '' ? $guest_name : 'Guest', ENT_QUOTES, 'UTF-8');
+    $safe_subject_ref = htmlspecialchars($original_subject !== '' ? $original_subject : 'Guest Inquiry', ENT_QUOTES, 'UTF-8');
+    $safe_staff = htmlspecialchars($staff_name !== '' ? $staff_name : 'Reception Desk', ENT_QUOTES, 'UTF-8');
+    $safe_reply_html = nl2br(htmlspecialchars($reply_message, ENT_QUOTES, 'UTF-8'));
+
+    $cleanSubject = preg_replace('/[\r\n]+/', ' ', $original_subject);
+    $cleanSubject = preg_replace('/^Re:\s*/i', '', trim((string)$cleanSubject));
+    if ($cleanSubject === '') {
+        $cleanSubject = 'Your Inquiry';
+    }
+
+    $mail = createMailer();
+    // Respect short timeout on interactive staff send so dashboard never stalls long if SMTP is offline
+    $mail->Timeout = 6;
+
+    try {
+        $mail->addAddress($to_email, $guest_name);
+        $mail->isHTML(true);
+        $mail->Subject = "Re: {$cleanSubject} - Santa Fe Beach Club";
+        $mail->Body = "
+            <div style='font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;background:#FAF7F2;border-radius:14px;overflow:hidden;border:1px solid #E2D5C8;'>
+                <div style='background:linear-gradient(135deg, #84563C 0%, #5C3824 100%);padding:26px 30px;'>
+                    <p style='margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#F3DEC6;'>Santa Fe Beach Club</p>
+                    <h2 style='color:#FFFFFF;margin:0;font-size:20px;line-height:1.3;'>Response from Reception Desk</h2>
+                </div>
+                <div style='padding:26px 30px;background:#FFFFFF;'>
+                    <p style='color:#2D1F17;font-size:15px;margin:0 0 14px;'>Hi <strong>{$safe_name}</strong>,</p>
+                    <div style='background:#FAF7F2;border-left:4px solid #84563C;padding:16px 18px;border-radius:8px;color:#1E293B;font-size:14px;line-height:1.6;margin:0 0 18px;'>
+                        {$safe_reply_html}
+                    </div>
+                    <p style='color:#64748B;font-size:12.5px;line-height:1.5;margin:0 0 8px;'>
+                        <strong>Sent by:</strong> {$safe_staff}<br>
+                        <strong>Reference:</strong> {$safe_subject_ref}
+                    </p>
+                    <hr style='border:none;border-top:1px solid #E2E8F0;margin:18px 0;' />
+                    <p style='color:#64748B;font-size:12px;line-height:1.5;margin:0;'>
+                        You can reply directly to this email or continue messaging us in the chat window on our website.<br>
+                        Phone: 0950 522 3146 &nbsp;|&nbsp; Email: " . htmlspecialchars(GMAIL_USER, ENT_QUOTES, 'UTF-8') . "
+                    </p>
+                </div>
+            </div>
+        ";
+        $mail->AltBody = "Hi {$guest_name},\n\n"
+            . "{$reply_message}\n\n"
+            . "--\n"
+            . "Sent by: {$staff_name}\n"
+            . "Reference: {$original_subject}\n"
+            . "Santa Fe Beach Club | Phone: 0950 522 3146 | Email: " . GMAIL_USER;
+
+        $mail->send();
+        return ['success' => true, 'error' => null];
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => $mail->ErrorInfo !== '' ? $mail->ErrorInfo : $e->getMessage()];
     }
 }
 ?>

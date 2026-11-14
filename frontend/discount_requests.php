@@ -69,8 +69,8 @@ $active_page = 'discount_requests';
             </div>
             <?php endif; ?>
 
-<?php if($message): ?><div class="discount-note" role="status"><span>ℹ️</span> <div><?= dh($message) ?></div></div><?php endif ?>
-<?php if($error): ?><div class="discount-note discount-error" role="alert"><span>⚠️</span> <div><?= dh($error) ?></div></div><?php endif ?>
+<?php if($message): ?><div class="discount-note" role="status"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span> <div><?= dh($message) ?></div></div><?php endif ?>
+<?php if($error): ?><div class="discount-note discount-error" role="alert"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> <div><?= dh($error) ?></div></div><?php endif ?>
 
 <?php if($d): 
     $state_class = 'status-pending';
@@ -87,7 +87,7 @@ $active_page = 'discount_requests';
         <div>
             <?php if($d['id_file']): ?>
                 <button type="button" class="discount-button js-preview-doc" data-url="../backend/api/discount_document.php?booking=<?= $id ?>" data-title="Private ID · <?= dh($d['guest_name']) ?> (<?= dh(strtoupper($d['category'])) ?>)">
-                    <span>🪪</span> Review Private ID
+                    <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><line x1="15" y1="9" x2="19" y2="9"/><line x1="15" y1="13" x2="19" y2="13"/><path d="M6 16c.6-1.5 2-2 3-2s2.4.5 3 2"/></svg></span> Review Private ID
                 </button>
             <?php else: ?>
                 <span class="discount-status" style="background:#F1F5F9; color:var(--text-muted);">ID Archived</span>
@@ -141,7 +141,7 @@ $active_page = 'discount_requests';
             <textarea name="note" maxlength="2000" rows="3" placeholder="Add any special notes or required documents..."></textarea>
         </label>
         <div class="actions-cluster">
-            <button name="action" value="approve" class="discount-button success">✓ Approve 20% & Send Link</button>
+            <button name="action" value="approve" class="discount-button success">Approve 20% & Send Link</button>
             <button name="action" value="information" class="discount-button secondary">Request Information</button>
             <button name="action" value="decline" class="discount-button danger">Decline Discount</button>
         </div>
@@ -168,7 +168,7 @@ $active_page = 'discount_requests';
         <?= csrf_field() ?>
         <input type="hidden" name="booking_id" value="<?= $id ?>">
         <div class="actions-cluster">
-            <button name="action" value="email" class="discount-button secondary">✉️ Resend Guest Email</button>
+            <button name="action" value="email" class="discount-button secondary">Resend Guest Email</button>
             <?php if(in_array($d['state'],['Awaiting Deposit','Confirmed'],true) && discount_due($conn,$d)>0): ?>
                 <button name="action" value="checkout" class="discount-button">Create PayMongo Checkout & Email</button>
             <?php endif ?>
@@ -210,7 +210,7 @@ $active_page = 'discount_requests';
 
                 <?php if($p['receipt_url']): ?>
                     <button type="button" class="discount-button secondary js-preview-doc" data-url="../backend/api/discount_document.php?booking=<?= $id ?>&payment=<?= (int)$p['id'] ?>" data-title="Payment Receipt · <?= dh(ucfirst($p['purpose'])) ?> · ₱ <?= number_format($p['amount'],2) ?>">
-                        <span>📄</span> View Uploaded Receipt
+                        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> View Uploaded Receipt
                     </button>
                 <?php endif ?>
 
@@ -227,7 +227,7 @@ $active_page = 'discount_requests';
                         <textarea name="note" maxlength="2000" rows="2" placeholder="Optional notes..."></textarea>
                     </label>
                     <div class="actions-cluster">
-                        <button name="action" value="verify" class="discount-button success">✓ Confirm Payment</button>
+                        <button name="action" value="verify" class="discount-button success">Confirm Payment</button>
                         <button name="action" value="reject" class="discount-button danger">Reject Receipt</button>
                     </div>
                 </form>
@@ -236,7 +236,7 @@ $active_page = 'discount_requests';
         </details>
     <?php endwhile; endif; ?>
     <?php if(in_array($d['state'],['Expired','Cancelled'],true)): ?>
-        <p style="color:var(--red-text); font-weight:500; margin-top:14px;">⚠️ This hold has ended. Investigate any received payment and arrange a refund or a new booking; do not confirm an expired room hold.</p>
+        <p style="color:var(--red-text); font-weight:500; margin-top:14px;">This hold has ended. Investigate any received payment and arrange a refund or a new booking; do not confirm an expired room hold.</p>
     <?php endif ?>
 </section>
 
@@ -334,7 +334,7 @@ $active_page = 'discount_requests';
             <img id="imageModalImage" alt="Document preview" hidden>
             <iframe id="imageModalPdf" title="PDF document preview" hidden></iframe>
             <div id="imageModalError" class="document-modal-message" role="alert" hidden>
-                <div class="document-modal-icon" aria-hidden="true">&#128196;</div>
+                <div class="document-modal-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
                 <strong>Document unavailable</strong>
                 <p id="imageModalErrorDetail">The file could not be loaded.</p>
             </div>

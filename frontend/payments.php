@@ -586,22 +586,22 @@ if ($bk_res) {
             
             <?php if (isset($_GET['success'])): ?>
                 <div class="alert-success">
-                    ✅ Payment verified successfully! Booking has been confirmed.
+                    Payment verified successfully! Booking has been confirmed.
                 </div>
             <?php endif; ?>
             <?php if (isset($_GET['email_sent'])): ?>
                 <div class="alert-success">
-                    ✅ Confirmation email sent to the guest successfully.
+                    Confirmation email sent to the guest successfully.
                 </div>
             <?php endif; ?>
             <?php if (isset($_GET['email_error'])): ?>
                 <div class="alert-success" style="background-color:#FFEBEE; color:#C62828;">
-                    ❌ Confirmation email was not sent: <?php echo htmlspecialchars($_GET['email_error']); ?>
+                    Confirmation email was not sent: <?php echo htmlspecialchars($_GET['email_error']); ?>
                 </div>
             <?php endif; ?>
             <?php if (isset($_GET['rejected'])): ?>
                 <div class="alert-success" style="background-color:#FFEBEE; color:#C62828;">
-                    ❌ Payment rejected. Booking has been cancelled.
+                    Payment rejected. Booking has been cancelled.
                 </div>
             <?php endif; ?>
             <?php if (isset($_GET['refunded'])): ?>
@@ -677,7 +677,7 @@ if ($bk_res) {
                                     }
                                     if ($receipt_available) {
                                         $safe_url = htmlspecialchars($receipt_url);
-                                        $receipt_markup = "<a href='javascript:void(0)' class='payment-receipt-link' onclick='openProofImageModal(\"" . xss_attr_string(htmlspecialchars_decode($safe_url, ENT_QUOTES)) . "\")'>View receipt →</a>";
+                                        $receipt_markup = "<a href='javascript:void(0)' class='payment-receipt-link' onclick='openProofImageModal(\"" . xss_attr_string(htmlspecialchars_decode($safe_url, ENT_QUOTES)) . "\", \"" . xss_attr_string(htmlspecialchars_decode($txn, ENT_QUOTES)) . "\")'>View receipt →</a>";
                                     } else {
                                         $receipt_markup = "<span class='payment-secondary' style='color:#B91C1C;font-weight:700' title='The database record exists, but the receipt file is missing from private storage.'>Receipt unavailable</span>";
                                     }
@@ -686,7 +686,12 @@ if ($bk_res) {
                                 echo "<tr>";
                                 echo "<td><span class='payment-primary'>INV-100{$pay_id}</span><span class='payment-secondary'>{$name}</span></td>";
                                 echo "<td><span class='payment-primary'>{$room}</span></td>";
-                                echo "<td><span class='payment-primary'>{$method}</span><span class='payment-secondary payment-reference' title='{$txn}'>{$txn}</span><span class='payment-type-badge{$payment_type_class}'>{$payment_type_label}</span>{$receipt_markup}</td>";
+                                                                // Build reference display - highlight GCash references
+                                $ref_display = "<span class='payment-secondary payment-reference' title='{$txn}'>{$txn}</span>";
+                                if (($method === 'GCash QR' || $method === 'GCash (Manual QR)') && !str_starts_with($txn, 'TXN-')) {
+                                    $ref_display = "<span style='display:inline-block; background:#F0F7FF; border:1px solid #BAE6FD; border-radius:6px; padding:2px 8px; margin-top:3px; font-size:11px;'><span style='color:#0369A1; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; font-size:9px;'>GCash Ref:</span> <span style='color:#005CE6; font-weight:800; font-family:Courier New,monospace; letter-spacing:0.5px;'>{$txn}</span></span>";
+                                }
+                                echo "<td><span class='payment-primary'>{$method}</span>{$ref_display}<span class='payment-type-badge{$payment_type_class}'>{$payment_type_label}</span>{$receipt_markup}</td>";
                                 echo "<td><span class='payment-primary'>PHP {$amount}</span><span class='payment-secondary'><span class='status-badge {$pay_class}'>".ucfirst($pay_status_display)."</span></span></td>";
                                 echo "<td style='font-size:12px; color:#64748B; min-width:170px;'>";
                                 if (!empty($payment_history[(int)$row['pay_id']])) {
@@ -836,6 +841,11 @@ if ($bk_res) {
                 <h3 style="font-size:16px; font-weight:700; margin:0;">Guest Payment Proof</h3>
                 <button type="button" onclick="closeProofModal()" style="background:none; border:none; font-size:22px; color:#888; cursor:pointer;">&times;</button>
             </div>
+            <div id="proofRefBadge" style="display:none; background:#F0F7FF; border:1.5px solid #BAE6FD; border-radius:10px; padding:10px 14px; margin-bottom:12px; text-align:center;">
+                <div style="font-size:10px; color:#0369A1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Guest-Entered Reference Number</div>
+                <div id="proofRefNumber" style="font-size:16px; font-weight:800; color:#005CE6; letter-spacing:1px; font-family:'Courier New',monospace;"></div>
+                <div style="font-size:10px; color:#64748B; margin-top:4px;">Compare this with the reference on the receipt screenshot below</div>
+            </div>
             <div style="max-height:70vh; overflow-y:auto; border-radius:8px; background:#f5f5f5; padding:8px;">
                 <img id="proofModalImg" src="" alt="Proof of Payment" style="max-width:100%; border-radius:6px; display:block; margin:0 auto;">
             </div>
@@ -907,7 +917,7 @@ if ($bk_res) {
                     <img src="assets/logo.png" alt="Santa Fe Beach Club" style="height:38px; width:auto; border-radius:8px; object-fit:contain;" onerror="this.src='assets/logo.jpg';">
                     <div>
                         <h3 style="font-size:17px; font-weight:800; margin:0; color:#1E293B; letter-spacing:-0.3px; display:flex; align-items:center; gap:6px;">
-                            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#FEE2E2; color:#DC2626; font-size:12px;">✕</span>
+                            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#FEE2E2; color:#DC2626; font-size:12px;">&times;</span>
                             Reject Payment
                         </h3>
                         <div style="font-size:12px; color:#64748B; margin-top:2px;">Santa Fe Beach Club • Payment Desk</div>
@@ -977,9 +987,19 @@ if ($bk_res) {
     <script>
         const PAYMENTS_BREAKDOWN = <?php echo xss_json($breakdown_map); ?>;
         // ── Proof Image Modal ──
-        function openProofImageModal(url) {
+        function openProofImageModal(url, refNumber) {
             const img = document.getElementById('proofModalImg');
             
+            // Show reference number badge if available
+            const refBadge = document.getElementById('proofRefBadge');
+            const refNumEl = document.getElementById('proofRefNumber');
+            if (refNumber && refNumber !== '' && !refNumber.startsWith('TXN-')) {
+                refNumEl.textContent = refNumber;
+                refBadge.style.display = 'block';
+            } else {
+                refBadge.style.display = 'none';
+            }
+
             // Format URL safely whether accessed via /frontend/ or clean root path
             let finalUrl = url;
             if (!url.startsWith('http') && !url.startsWith('/')) {
@@ -1192,7 +1212,7 @@ if ($bk_res) {
         }
     </script>
     <script>
-        function openProofImageModal(url) {
+        function openProofImageModal(url, refNumber) {
             var img = document.getElementById("proofModalImg");
             if (img) {
                 // Both historical and current database paths identify private receipts.

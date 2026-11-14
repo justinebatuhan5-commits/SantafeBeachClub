@@ -70,9 +70,19 @@
                 // Phone validation
                 else if (type === 'tel' || patternType === 'phone') {
                     const cleanPhone = value.replace(/[\s-]/g, '');
-                    if (!this.config.patterns.phone.test(cleanPhone)) {
-                        isValid = false;
-                        errorMessage = 'Please enter a valid mobile number (e.g. 09171234567 or +639171234567).';
+                    const phoneCodeEl = input.form ? input.form.querySelector('select[name="phone_code"]') : document.querySelector('select[name="phone_code"]');
+                    const dialCode = phoneCodeEl ? phoneCodeEl.value : '+63';
+
+                    if (dialCode === '+63') {
+                        if (!this.config.patterns.phone.test(cleanPhone)) {
+                            isValid = false;
+                            errorMessage = 'Please enter a valid mobile number (e.g. 09171234567 or +639171234567).';
+                        }
+                    } else {
+                        if (!/^\+?\d{5,15}$/.test(cleanPhone)) {
+                            isValid = false;
+                            errorMessage = 'Please enter a valid phone number (5 to 15 digits).';
+                        }
                     }
                 }
                 // Name validation

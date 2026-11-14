@@ -2,6 +2,15 @@
     var navbar = document.querySelector('.site-navbar');
     if (!navbar) return;
 
+    function syncScrolledState() {
+        var scrolled = window.scrollY > 24 || document.body.classList.contains('booking-account-page');
+        navbar.classList.toggle('is-scrolled', scrolled);
+    }
+
+    syncScrolledState();
+    window.addEventListener('scroll', syncScrolledState, { passive: true });
+    window.addEventListener('resize', syncScrolledState);
+
     var toggle = navbar.querySelector('.navbar-toggle');
     var menu = navbar.querySelector('.nav-menu');
     if (!toggle || !menu) return;

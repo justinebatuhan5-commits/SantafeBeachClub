@@ -11,13 +11,24 @@
     padding: 7px 10px 7px 28px;
     flex-wrap: nowrap;
     gap: 20px;
-    background: rgba(252, 248, 241, 0.97);
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    border-radius: 52px;
-    box-shadow: 0 14px 38px rgba(62, 40, 26, 0.18);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     transform: translateX(-50%) !important;
+    transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease, border-radius 220ms ease, backdrop-filter 220ms ease;
+}
+
+.site-navbar.is-scrolled,
+.booking-account-page .site-navbar {
+    background: rgba(255, 252, 247, 0.96) !important;
+    border: 1px solid rgba(138, 90, 58, 0.18) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 12px 32px rgba(43, 36, 32, 0.12) !important;
+    backdrop-filter: blur(18px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
 }
 
 .site-navbar .brand-logo {
@@ -29,17 +40,7 @@
     min-width: 126px;
 }
 .site-navbar .brand-logo::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    top: -8px;
-    right: -26px;
-    bottom: -8px;
-    left: -29px;
-    background: #fbf8f2;
-    border-radius: 48px 0 52px 48px;
-    transform: skewX(10deg);
-    box-shadow: 10px 0 18px rgba(91, 61, 43, 0.05);
+    display: none;
 }
 .site-navbar .brand-logo .logo-mark {
     width: 46px;
@@ -73,7 +74,8 @@
 .site-navbar .nav-menu ul li a,
 .site-navbar .nav-menu ul li a[style] {
     padding: 11px 2px 8px;
-    color: #4f2f20 !important;
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
     background: transparent;
     border: 0;
     border-bottom: 2px solid transparent;
@@ -86,9 +88,25 @@
 
 .site-navbar .nav-menu ul li a:hover,
 .site-navbar .nav-menu ul li.active a {
-    color: #8d5734 !important;
+    color: #FFFFFF !important;
     background: transparent;
-    border-bottom-color: #b87543;
+    border-bottom-color: #FFFFFF;
+}
+
+.site-navbar.is-scrolled .nav-menu ul li a,
+.site-navbar.is-scrolled .nav-menu ul li a[style],
+.booking-account-page .site-navbar .nav-menu ul li a,
+.booking-account-page .site-navbar .nav-menu ul li a[style] {
+    color: #2E231C !important;
+    text-shadow: none;
+}
+
+.site-navbar.is-scrolled .nav-menu ul li a:hover,
+.site-navbar.is-scrolled .nav-menu ul li.active a,
+.booking-account-page .site-navbar .nav-menu ul li a:hover,
+.booking-account-page .site-navbar .nav-menu ul li.active a {
+    color: #7C533C !important;
+    border-bottom-color: #7C533C !important;
 }
 
 .navbar-actions {
@@ -236,9 +254,14 @@
         line-height: 1.25;
         white-space: normal;
         text-align: left;
+        color: #4f2f20 !important;
+        text-shadow: none;
     }
-    .site-navbar .nav-menu ul li.active a {
+    .site-navbar .nav-menu ul li.active a,
+    .site-navbar.is-scrolled .nav-menu ul li.active a {
         background: #f0e8dd;
+        color: #8d5734 !important;
+        border-bottom-color: transparent !important;
         font-weight: 700;
     }
 }

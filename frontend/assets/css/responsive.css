@@ -159,10 +159,6 @@
     .be-field--dates { flex-direction: column; align-items: stretch; gap: 8px; }
     .be-date-segment { padding: 0; }
     .be-date-arrow { display: none; }
-    .rooms-cal-wrapper > div { padding: 18px 12px !important; }
-    .rooms-calendar-nav { width: 100%; gap: 6px !important; }
-    .rooms-calendar-nav button { padding-inline: 8px !important; }
-    .rooms-calendar-nav #cal-month-title { min-width: 0 !important; flex: 1; font-size: 13px !important; }
 }
 
 @media screen and (prefers-reduced-motion: reduce) {

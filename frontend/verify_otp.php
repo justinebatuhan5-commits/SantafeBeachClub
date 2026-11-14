@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../backend/helpers/session_init.php';
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
@@ -7,6 +7,7 @@ require_once __DIR__ . '/../backend/helpers/rate_limiter.php';
 require_once __DIR__ . '/../backend/helpers/security_logger.php';
 require_once __DIR__ . '/../backend/helpers/otp_helper.php';
 require_once __DIR__ . '/../backend/helpers/admin_session_helper.php';
+require_once __DIR__ . '/../backend/helpers/device_trust_helper.php';
 
 // If already fully logged in, redirect
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
@@ -103,6 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                 $_SESSION['session_start_time'] = time(); // Absolute session expiry anchor
                 $_SESSION['last_activity']       = time();
                 admin_session_register($conn, $adminId, $userType, $username);
+                
+                // Remember this device for 24 hours (skip MFA on next login within 24h)
+                remember_trusted_device($adminId, $userType, $conn);
                 
                 // Clear MFA pending state
                 unset($_SESSION['mfa_pending_admin_id']);

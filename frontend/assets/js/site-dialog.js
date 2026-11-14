@@ -8,7 +8,7 @@
                 const style = document.createElement('style');
                 style.id = 'site-dialog-style';
                 style.textContent = `
-                    .site-dialog{box-sizing:border-box;width:calc(100% - 32px);max-width:440px;max-height:90vh;overflow:auto;margin:auto;padding:30px;border:1px solid #e8ded5;border-radius:22px;background:#fffdf9;color:#30261f;box-shadow:0 24px 80px #24180d40;font-family:Arial,sans-serif;text-align:left}
+                    .site-dialog{position:fixed;inset:0;box-sizing:border-box;width:calc(100% - 32px);max-width:440px;max-height:90vh;overflow:auto;margin:auto;padding:30px;border:1px solid #e8ded5;border-radius:22px;background:#fffdf9;color:#30261f;box-shadow:0 24px 80px #24180d40;font-family:Arial,sans-serif;text-align:left;z-index:999999}
                     .site-dialog::backdrop{background:#18120e99;backdrop-filter:blur(5px)}
                     .site-dialog-brand{font-size:11px;font-weight:700;letter-spacing:2px;color:#916445;text-transform:uppercase;margin-bottom:22px}
                     .site-dialog-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:#f4e8dc;color:#916445;font-size:24px;margin-bottom:18px}

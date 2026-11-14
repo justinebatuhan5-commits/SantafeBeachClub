@@ -168,7 +168,7 @@ Published Reviews</a>
 <div class="review-top"><div class="review-person"><h2><?= review_html($review['guest_name']) ?></h2>
 <p class="review-meta"><?= review_html($review['guest_location'] ?: 'Location not provided') ?> &middot; <?= review_html(date('M j, Y · g:i A', strtotime($review['created_at']))) ?></p></div>
 <span class="review-status <?= $published ? 'published' : 'pending' ?>"><?= $published ? 'Published' : 'Awaiting approval' ?></span></div>
-<div class="review-stars" aria-label="<?= $rating ?> out of 5 stars"><span><?= str_repeat('&#9733;', $rating) . str_repeat('&#9734;', 5 - $rating) ?></span><span class="review-rating-label"><?= $rating ?>/5</span></div>
+<div class="review-stars" aria-label="<?= $rating ?> out of 5 stars"><span style="display:inline-flex;align-items:center;gap:2px;vertical-align:-2px;"><?= str_repeat('<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', $rating) . str_repeat('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" style="opacity:.45;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', 5 - $rating) ?></span><span class="review-rating-label"><?= $rating ?>/5</span></div>
 <p class="review-content"><?= review_html($review['review_text']) ?></p>
 <div class="review-actions">
 <form method="post" action="admin_reviews?tab=<?= review_html($tab) ?>"><?= csrf_field() ?>

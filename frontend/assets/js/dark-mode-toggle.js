@@ -51,7 +51,7 @@
 })();
 
 /**
- * 📲 Progressive Web App (PWA) — Service Worker Registration & Install Banner
+ * Progressive Web App (PWA) — Service Worker Registration & Install Banner
  */
 (function() {
     if ('serviceWorker' in navigator) {

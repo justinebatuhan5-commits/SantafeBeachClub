@@ -68,7 +68,7 @@
             // Try to register Service Worker from /frontend/sw.js
             navigator.serviceWorker.register('/frontend/sw.js', { scope: '/frontend/' })
                 .then((registration) => {
-                    console.log('✓ Service Worker registered successfully', registration);
+                    console.log('Service Worker registered successfully', registration);
                     
                     // Check for updates every hour
                     setInterval(() => {
@@ -76,12 +76,12 @@
                     }, 3600000);
                 })
                 .catch((error) => {
-                    console.warn('✗ Service Worker registration failed:', error.message);
+                    console.warn('Service Worker registration failed:', error.message);
                     
                     // Fallback: try alternative registration path
                     navigator.serviceWorker.register('sw.js', { scope: './' })
-                        .then(() => console.log('✓ Fallback Service Worker registered'))
-                        .catch((err) => console.warn('✗ Fallback also failed:', err.message));
+                        .then(() => console.log('Fallback Service Worker registered'))
+                        .catch((err) => console.warn('Fallback also failed:', err.message));
                 });
         });
     } else {

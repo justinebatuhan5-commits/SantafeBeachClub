@@ -32,8 +32,11 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard — Santa Fe Beach Club</title>
+    <link rel="stylesheet" href="assets/css/tailwind.css?v=1794418047058">
     <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
+    <link rel="stylesheet" href="assets/css/admin_calendar.css?v=<?php echo (int) @filemtime(__DIR__ . '/assets/css/admin_calendar.css'); ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="assets/js/occupancy_kpi.js?v=<?php echo (int) @filemtime(__DIR__ . '/assets/js/occupancy_kpi.js'); ?>"></script>
     <style>
         .loading { text-align: center; padding: 20px; color: var(--text-muted); font-size: 14px; }
         .error { color: #EF4444; text-align: center; padding: 20px; }
@@ -160,7 +163,7 @@ try {
             .ds-tile:nth-child(4) { border-top: 1px solid var(--border); }
             .ds-tile:nth-child(5) { border-top: 1px solid var(--border); border-right: none; }
         }
-    </style>
+</style>
     <!-- PWA Configuration -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff6b6b">
@@ -221,17 +224,11 @@ include __DIR__ . '/partials/_sidebar.php';
                     <div>
                         <div class="stat-card-label">Daily Revenue</div>
                         <div class="stat-card-value" id="kpi-daily-rev">...</div>
-                        <div class="stat-card-sub up">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                            Today's verified sales
-                        </div>
+                        
                     </div>
                     <div class="stat-icon green">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                     </div>
-                </div>
-                <div style="width:100%; height:38px; margin-top:8px; position:relative;">
-                    <canvas id="sparkline-dash-daily"></canvas>
                 </div>
             </div>
 
@@ -240,7 +237,7 @@ include __DIR__ . '/partials/_sidebar.php';
                     <div>
                         <div class="stat-card-label">Weekly Revenue</div>
                         <div class="stat-card-value" id="kpi-weekly-rev">...</div>
-                        <div class="stat-card-sub">Last 7 rolling days</div>
+                        
                     </div>
                     <div class="stat-icon brown">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -250,9 +247,6 @@ include __DIR__ . '/partials/_sidebar.php';
                         </svg>
                     </div>
                 </div>
-                <div style="width:100%; height:38px; margin-top:8px; position:relative;">
-                    <canvas id="sparkline-dash-weekly"></canvas>
-                </div>
             </div>
 
             <div class="stat-card" style="flex-direction:column; padding-bottom:12px;">
@@ -260,16 +254,11 @@ include __DIR__ . '/partials/_sidebar.php';
                     <div>
                         <div class="stat-card-label">Occupancy Rate</div>
                         <div class="stat-card-value"><span id="kpi-occupancy-rate">...</span></div>
-                        <div class="stat-card-sub">
-                            <span id="kpi-occupied-rooms">...</span> of <span id="kpi-total-rooms">...</span> rooms occupied
-                        </div>
+                        
                     </div>
                     <div class="stat-icon blue">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     </div>
-                </div>
-                <div style="width:100%; height:38px; margin-top:8px; position:relative;">
-                    <canvas id="sparkline-dash-occ"></canvas>
                 </div>
             </div>
 
@@ -278,19 +267,17 @@ include __DIR__ . '/partials/_sidebar.php';
                     <div>
                         <div class="stat-card-label">Total Bookings</div>
                         <div class="stat-card-value" id="kpi-total-bookings">...</div>
-                        <div class="stat-card-sub">
-                            <span style="color:var(--orange); font-weight:700;" id="kpi-pending-bookings">...</span> pending confirmation
-                        </div>
+                        
                     </div>
                     <div class="stat-icon purple">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     </div>
                 </div>
-                <div style="width:100%; height:38px; margin-top:8px; position:relative;">
-                    <canvas id="sparkline-dash-bk"></canvas>
-                </div>
             </div>
         </div>
+
+        <!-- ═══ TODAY'S LIVE ROOM & FRONT DESK OCCUPANCY STRIP ═══ -->
+        <?php $kpi_extra_class = 'cal-kpi-grid--dashboard'; include __DIR__ . '/partials/_occupancy_kpi_cards.php'; ?>
 
         <!-- Actionable counters not already represented above or in Daily Activity -->
         <div class="operations-snapshot">
@@ -319,7 +306,7 @@ include __DIR__ . '/partials/_sidebar.php';
         </div>
 
         <!-- ═══ VISUAL ANALYTICS CHARTS ═══ -->
-        <div class="charts-grid">
+        <div class="charts-grid" style="grid-template-columns: 1fr;">
             <!-- Revenue Line Chart -->
             <div class="chart-card">
                 <div class="chart-card-header">
@@ -335,19 +322,7 @@ include __DIR__ . '/partials/_sidebar.php';
                 </div>
             </div>
 
-            <!-- Booking Status Doughnut -->
-            <div class="chart-card">
-                <div class="chart-card-header">
-                    <div>
-                        <h3>Booking Distribution</h3>
-                        <p>All-time status proportions</p>
-                    </div>
-                </div>
-                <div class="chart-container" style="height:230px; display:flex; align-items:center; justify-content:center;">
-                    <div class="loading" id="loading-status">Loading chart data...</div>
-                    <canvas id="statusChart" style="display:none;"></canvas>
-                </div>
-            </div>
+            
         </div>
 
         <!-- ═══ DAILY ACTIVITY SUMMARY ═══ -->
@@ -530,156 +505,164 @@ async function fetchAPI(endpoint) {
 }
 
 async function loadDashboardData() {
+    // 1. KPI Metrics
     try {
-        // 1. KPI Metrics
         const stats = await fetchAPI('/api/executive-stats');
-        document.getElementById('kpi-daily-rev').innerText = '₱' + Number(stats.daily_revenue).toLocaleString();
-        document.getElementById('kpi-weekly-rev').innerText = '₱' + Number(stats.weekly_revenue).toLocaleString();
-        document.getElementById('kpi-occupancy-rate').innerText = stats.occupancy_rate;
-        document.getElementById('kpi-occupied-rooms').innerText = stats.occupied_rooms;
-        document.getElementById('kpi-total-rooms').innerText = stats.total_rooms;
-        document.getElementById('kpi-total-bookings').innerText = Number(stats.total_bookings).toLocaleString();
-        document.getElementById('kpi-pending-bookings').innerText = stats.pending_bookings;
-        document.getElementById('link-total-bookings').innerText = stats.total_bookings;
-        // Actionable operations counters
+        document.getElementById('kpi-daily-rev').innerText = '₱' + Number(stats.daily_revenue || 0).toLocaleString();
+        document.getElementById('kpi-weekly-rev').innerText = '₱' + Number(stats.weekly_revenue || 0).toLocaleString();
+        document.getElementById('kpi-occupancy-rate').innerText = stats.occupancy_rate || '0%';
+        const occEl = document.getElementById('kpi-occupied-rooms'); if (occEl) occEl.innerText = stats.occupied_rooms ?? 0;
+        const totRoomsEl = document.getElementById('kpi-total-rooms'); if (totRoomsEl) totRoomsEl.innerText = stats.total_rooms ?? 0;
+        document.getElementById('kpi-total-bookings').innerText = Number(stats.total_bookings || 0).toLocaleString();
+        const pbEl = document.getElementById('kpi-pending-bookings'); if (pbEl) pbEl.innerText = stats.pending_bookings ?? 0;
+        document.getElementById('link-total-bookings').innerText = stats.total_bookings ?? 0;
         document.getElementById('kpi-reserved-rooms').innerText    = stats.reserved_rooms  ?? '—';
         document.getElementById('kpi-pending-payments').innerText  = stats.pending_payments ?? '—';
+    } catch (e) {
+        console.error("KPI Metrics error:", e);
+    }
 
-        // Database-backed 14-day histories for the KPI sparklines.
-        const trendStats = await fetchAPI('/api/dashboard-stats');
-        const dailyRevenue = trendStats.sparklines?.revenue || [0];
-        const rollingRevenue = dailyRevenue.map((_, index, values) =>
-            values.slice(Math.max(0, index - 6), index + 1).reduce((sum, value) => sum + Number(value || 0), 0)
-        );
-        createSparkline('sparkline-dash-daily', dailyRevenue, '#059669', 'rgba(5, 150, 105, 0.08)');
-        createSparkline('sparkline-dash-weekly', rollingRevenue, '#84563C', 'rgba(132, 86, 60, 0.08)');
-        createSparkline('sparkline-dash-occ', trendStats.sparklines?.occupancy || [0], '#1A73E8', 'rgba(26, 115, 232, 0.08)');
-        createSparkline('sparkline-dash-bk', trendStats.sparklines?.bookings || [0], '#7C3AED', 'rgba(124, 58, 237, 0.08)');
+    // 1b. Live Room Occupancy & Front Desk Strip (shared with Availability Calendar)
+    if (window.SantaFeOccupancyKPI) {
+        window.SantaFeOccupancyKPI.fetchAndRenderToday();
+    }
 
-        // 2. Revenue Trajectory Line Chart
+    // 2. Revenue Trajectory Line Chart
+    try {
         const revData = await fetchAPI('/api/weekly-revenue-trajectory');
-        document.getElementById('loading-rev').style.display = 'none';
+        const loadingRev = document.getElementById('loading-rev');
+        if (loadingRev) loadingRev.style.display = 'none';
         const rCanvas = document.getElementById('revenueChart');
-        rCanvas.style.display = 'block';
-        new Chart(rCanvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: revData.labels,
-                datasets: [{
-                    label: 'Verified Revenue (₱)',
-                    data: revData.data,
-                    borderColor: primaryColor,
-                    backgroundColor: primaryGradColor,
-                    borderWidth: 3,
-                    tension: 0.35,
-                    fill: true,
-                    pointBackgroundColor: primaryColor,
-                    pointBorderColor: '#FFFFFF',
-                    pointBorderWidth: 2,
-                    pointRadius: 4.5,
-                    pointHoverRadius: 6.5,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                        titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
-                        bodyFont: { family: 'Plus Jakarta Sans', size: 13, weight: '700' },
-                        padding: 10,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: context => ' ₱' + Number(context.parsed.y).toLocaleString()
-                        }
-                    }
+        if (rCanvas && typeof Chart !== 'undefined') {
+            rCanvas.style.display = 'block';
+            new Chart(rCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: revData.labels || [],
+                    datasets: [{
+                        label: 'Verified Revenue (₱)',
+                        data: revData.data || [],
+                        borderColor: primaryColor,
+                        backgroundColor: primaryGradColor,
+                        borderWidth: 3,
+                        tension: 0.35,
+                        fill: true,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 4.5,
+                        pointHoverRadius: 6.5,
+                    }]
                 },
-                scales: {
-                    x: { grid: { color: gridColor }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor } },
-                    y: { grid: { color: gridColor }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor, callback: v => '₱' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, beginAtZero: true }
-                }
-            }
-        });
-
-        // 3. Status Doughnut Chart
-        const statusData = await fetchAPI('/api/status-breakdown');
-        document.getElementById('loading-status').style.display = 'none';
-        const sCanvas = document.getElementById('statusChart');
-        sCanvas.style.display = 'block';
-        
-        const statusLabels = ['Checked In', 'Checked Out', 'Pending', 'Cancelled'];
-        const statusValues = statusLabels.map(l => statusData[l] || 0);
-        
-        new Chart(sCanvas.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: statusLabels,
-                datasets: [{
-                    data: statusValues,
-                    backgroundColor: ['#10B981', '#64748B', '#F59E0B', '#EF4444'],
-                    borderWidth: 0,
-                    hoverOffset: 6,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '72%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            font: { family: 'Plus Jakarta Sans', size: 11.5, weight: '600' },
-                            color: tickColor,
-                            padding: 14,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
+                            bodyFont: { family: 'Plus Jakarta Sans', size: 13, weight: '700' },
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: context => ' ₱' + Number(context.parsed.y).toLocaleString()
+                            }
                         }
+                    },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor } },
+                        y: { grid: { color: gridColor }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor, callback: v => '₱' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, beginAtZero: true }
                     }
                 }
-            }
-        });
+            });
+        }
+    } catch (e) {
+        console.error("Revenue trajectory error:", e);
+        const loadingRev = document.getElementById('loading-rev');
+        if (loadingRev) loadingRev.innerHTML = '<span class="error">Failed to load revenue trajectory.</span>';
+    }
 
-        // 4. Recent Bookings Table
+    // 3. Daily Activity Summary
+    try {
+        const ds = await fetchAPI('/api/daily-summary');
+        const fmt = ds.date ? new Date(ds.date + 'T00:00:00').toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        }) : 'Today';
+        const dsDate = document.getElementById('ds-date');
+        if (dsDate) dsDate.textContent = fmt;
+        const dsBk = document.getElementById('ds-bookings');
+        if (dsBk) dsBk.textContent = ds.bookings_today ?? 0;
+        const dsPc = document.getElementById('ds-payments-count');
+        if (dsPc) dsPc.textContent = ds.payments_today_count ?? 0;
+        const dsPa = document.getElementById('ds-payments-amount');
+        if (dsPa) dsPa.textContent = '₱' + Number(ds.payments_today_amount || 0).toLocaleString();
+        const dsCi = document.getElementById('ds-checkins');
+        if (dsCi) dsCi.textContent = ds.checkins_today ?? 0;
+        const dsCo = document.getElementById('ds-checkouts');
+        if (dsCo) dsCo.textContent = ds.checkouts_today ?? 0;
+        const dsCn = document.getElementById('ds-cancellations');
+        if (dsCn) dsCn.textContent = ds.cancellations_today ?? 0;
+        const dsRef = document.getElementById('ds-refreshed');
+        if (dsRef) dsRef.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch (e) {
+        console.error("Daily summary error:", e);
+        const dsDate = document.getElementById('ds-date');
+        if (dsDate) dsDate.textContent = 'Unavailable';
+    }
+
+    // 4. Recent Bookings Table
+    try {
         const bookings = await fetchAPI('/api/recent-bookings');
         const bTbody = document.getElementById('recent-bookings-tbody');
-        if (bookings.length > 0) {
-            bTbody.innerHTML = bookings.map(b => {
-                const sc = { 'Pending': 'badge-pending', 'Checked In': 'badge-checkedin', 'Checked Out': 'badge-checkedout', 'Cancelled': 'badge-cancelled' };
-                const cls = sc[b.status] || 'badge-pending';
-                const initial = b.guest_name ? b.guest_name.charAt(0).toUpperCase() : '?';
-                
-                return `
-                <tr>
-                    <td style="color:var(--text-muted); font-weight:600;">#${Security.escapeHTML(b.id)}</td>
-                    <td>
-                        <div class="guest-profile">
-                            <div class="avatar-letter">${Security.escapeHTML(initial)}</div>
-                            <div class="guest-info">
-                                <h4>${Security.escapeHTML(b.guest_name)}</h4>
+        if (bTbody) {
+            if (bookings && bookings.length > 0) {
+                bTbody.innerHTML = bookings.map(b => {
+                    const sc = { 'Pending': 'badge-pending', 'Checked In': 'badge-checkedin', 'Checked Out': 'badge-checkedout', 'Cancelled': 'badge-cancelled' };
+                    const cls = sc[b.status] || 'badge-pending';
+                    const initial = b.guest_name ? b.guest_name.charAt(0).toUpperCase() : '?';
+                    
+                    return `
+                    <tr>
+                        <td style="color:var(--text-muted); font-weight:600;">#${Security.escapeHTML(b.id)}</td>
+                        <td>
+                            <div class="guest-profile">
+                                <div class="avatar-letter">${Security.escapeHTML(initial)}</div>
+                                <div class="guest-info">
+                                    <h4>${Security.escapeHTML(b.guest_name)}</h4>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td style="color:var(--text-muted);">${Security.escapeHTML(b.accommodation_name)}</td>
-                    <td style="color:var(--text-muted); font-weight:500;">${Security.escapeHTML(b.check_in)}</td>
-                    <td><span class="badge ${cls}">${Security.escapeHTML(b.status)}</span></td>
-                </tr>
-                `;
-            }).join('');
-        } else {
-            bTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">No recent reservations found.</td></tr>';
+                        </td>
+                        <td style="color:var(--text-muted);">${Security.escapeHTML(b.accommodation_name)}</td>
+                        <td style="color:var(--text-muted); font-weight:500;">${Security.escapeHTML(b.check_in)}</td>
+                        <td><span class="badge ${cls}">${Security.escapeHTML(b.status)}</span></td>
+                    </tr>
+                    `;
+                }).join('');
+            } else {
+                bTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">No recent reservations found.</td></tr>';
+            }
         }
+    } catch (e) {
+        console.error("Recent bookings error:", e);
+        const bTbody = document.getElementById('recent-bookings-tbody');
+        if (bTbody) bTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);"><span class="error">Failed to load reservations.</span></td></tr>';
+    }
 
-        // 6. Recent Logs Feed
+    // 5. Recent Logs Feed
+    try {
         await renderAuditLogs();
+    } catch (e) {
+        console.error("Audit logs error:", e);
+        const lContainer = document.getElementById('recent-logs-container');
+        if (lContainer) lContainer.innerHTML = '<span class="error">Failed to load activity logs.</span>';
+    }
 
-        // 7. Security Threats / Warning Banner Check
-        fetchAPI('/api/security-threats-summary').then(threats => {
-            const banner = document.getElementById('security-alert-banner');
-            if (!banner) return;
-
+    // 6. Security Threats / Warning Banner Check
+    try {
+        const threats = await fetchAPI('/api/security-threats-summary');
+        const banner = document.getElementById('security-alert-banner');
+        if (banner) {
             if (threats.status === 'critical' || threats.status === 'warning') {
                 const isCrit = threats.status === 'critical';
                 banner.style.display = 'flex';
@@ -687,48 +670,37 @@ async function loadDashboardData() {
                 banner.style.border = isCrit ? '1px solid #FCA5A5' : '1px solid #FCD34D';
 
                 const iconBox = document.getElementById('sec-banner-icon-box');
-                iconBox.style.background = isCrit ? '#FEE2E2' : '#FEF3C7';
-                iconBox.style.color = isCrit ? '#DC2626' : '#D97706';
+                if (iconBox) {
+                    iconBox.style.background = isCrit ? '#FEE2E2' : '#FEF3C7';
+                    iconBox.style.color = isCrit ? '#DC2626' : '#D97706';
+                }
 
                 const title = document.getElementById('sec-banner-title');
-                title.style.color = isCrit ? '#991B1B' : '#92400E';
-                title.textContent = isCrit 
-                    ? `Security Alert: ${threats.critical_count} critical incident(s) detected in the last 24h`
-                    : `Security Warning: ${threats.warning_count} security warning(s) detected in the last 24h`;
+                if (title) {
+                    title.style.color = isCrit ? '#991B1B' : '#92400E';
+                    title.textContent = isCrit 
+                        ? `Security Alert: ${threats.critical_count} critical incident(s) detected in the last 24h`
+                        : `Security Warning: ${threats.warning_count} security warning(s) detected in the last 24h`;
+                }
 
                 const desc = document.getElementById('sec-banner-desc');
-                desc.style.color = isCrit ? '#B91C1C' : '#B45309';
-                const latestEvent = threats.recent_events && threats.recent_events[0] ? threats.recent_events[0].event_type : 'Suspicious activity';
-                desc.textContent = `Latest: ${latestEvent} from IP ${threats.recent_events[0]?.ip_address || 'unknown'}. Please review your security log.`;
+                if (desc) {
+                    desc.style.color = isCrit ? '#B91C1C' : '#B45309';
+                    const latestEvent = threats.recent_events && threats.recent_events[0] ? threats.recent_events[0].event_type : 'Suspicious activity';
+                    desc.textContent = `Latest: ${latestEvent} from IP ${threats.recent_events[0]?.ip_address || 'unknown'}. Please review your security log.`;
+                }
 
                 const link = document.getElementById('sec-banner-link');
-                link.style.background = isCrit ? '#DC2626' : '#D97706';
-                link.style.color = '#FFFFFF';
+                if (link) {
+                    link.style.background = isCrit ? '#DC2626' : '#D97706';
+                    link.style.color = '#FFFFFF';
+                }
             } else {
                 banner.style.display = 'none';
             }
-        }).catch(() => {});
-
-        // 8. Daily Activity Summary (non-blocking — won't break other widgets on failure)
-        fetchAPI('/api/daily-summary').then(ds => {
-            const fmt = new Date(ds.date + 'T00:00:00').toLocaleDateString('en-US', {
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-            });
-            document.getElementById('ds-date').textContent = fmt;
-            document.getElementById('ds-bookings').textContent        = ds.bookings_today;
-            document.getElementById('ds-payments-count').textContent  = ds.payments_today_count;
-            document.getElementById('ds-payments-amount').textContent = '₱' + Number(ds.payments_today_amount).toLocaleString();
-            document.getElementById('ds-checkins').textContent        = ds.checkins_today;
-            document.getElementById('ds-checkouts').textContent       = ds.checkouts_today;
-            document.getElementById('ds-cancellations').textContent   = ds.cancellations_today;
-            document.getElementById('ds-refreshed').textContent       = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }).catch(() => {
-            document.getElementById('ds-date').textContent = 'Unavailable';
-        });
-
+        }
     } catch (e) {
-        console.error("Failed to load dashboard data.", e);
-        document.querySelectorAll('.loading').forEach(el => el.innerHTML = '<span class="error">Failed to load data.</span>');
+        console.error("Security threats check error:", e);
     }
 }
 
@@ -879,6 +851,10 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
         display: none;
         position: fixed;
         inset: 0;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 100vw; height: 100vh; height: 100dvh;
+        margin: 0;
+        box-sizing: border-box;
         background: rgba(15, 23, 42, 0.72);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
@@ -892,6 +868,9 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
     .ocm-card {
         background: #FFFFFF;
         width: min(100%, 500px);
+        margin: auto;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
         border-radius: 20px;
         box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
         overflow: hidden;
@@ -1097,6 +1076,11 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
         box-shadow: 0 6px 18px rgba(217, 119, 6, 0.45);
         filter: brightness(1.05);
     }
+    [data-theme="dark"] .ocm-card { background: #131826 !important; border: 1px solid #1E293B !important; }
+    [data-theme="dark"] .ocm-body { background: #0F1422 !important; }
+    [data-theme="dark"] .ocm-guest-list li { background: #131826 !important; border-color: #1E293B !important; color: #F8FAFC !important; }
+    [data-theme="dark"] .ocm-footer { background: #131826 !important; border-color: #1E293B !important; }
+    [data-theme="dark"] .ocm-btn-dismiss { background: #1E293B !important; border-color: #334155 !important; color: #94A3B8 !important; }
 </style>
 
 <div id="overdueCheckoutModal" role="dialog" aria-modal="true" aria-labelledby="ocmTitle">
@@ -1107,7 +1091,7 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
             </div>
             <div class="ocm-header-text">
                 <div class="ocm-brand-badge">
-                    <span>★</span> Santa Fe Beach Club
+                    <span><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Santa Fe Beach Club
                 </div>
                 <h3 id="ocmTitle">Overdue Check-out Alert</h3>
                 <p>Action required &bull; Scheduled departure time has passed</p>
@@ -1116,7 +1100,7 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
         </div>
         <div class="ocm-body">
             <div class="ocm-banner">
-                <span class="ocm-banner-icon">⏰</span>
+                <span class="ocm-banner-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="ocm-banner-text">The following guest(s) have passed their scheduled check-out date and are still marked as <strong>Checked In</strong>. Please process their departure to free up accommodations.</span>
             </div>
             <div class="ocm-list-label">Overdue Guest(s)</div>
@@ -1144,7 +1128,7 @@ window.addEventListener('DOMContentLoaded', loadDashboardData);
     if (names.length > 0) {
         var list = document.getElementById('ocmGuestList');
         list.innerHTML = names.map(function(n){
-            return '<li><div class="ocm-guest-name"><span>👤</span> ' + n + '</div><span class="ocm-guest-badge">Overdue</span></li>';
+            return '<li><div class="ocm-guest-name"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> ' + n + '</div><span class="ocm-guest-badge">Overdue</span></li>';
         }).join('');
         document.getElementById('overdueCheckoutModal').style.display = 'flex';
     }

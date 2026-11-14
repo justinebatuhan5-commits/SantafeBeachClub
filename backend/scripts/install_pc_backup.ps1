@@ -25,9 +25,13 @@ $configPath = Join-Path $taskRoot 'config.json'
 @{last_success=$null;request_id=$null} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskRoot 'download-state.json') -Encoding UTF8
 $taskName = 'SantaBeachClub Agila PC Backups'
 $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-if ($existing -and ($existing.Actions.Arguments -join ' ') -notlike "*$runner*") { throw 'A different task already uses this name.' }
+if ($existing -and ($existing.Actions.Arguments -join ' ') -notlike "*$runner*" -and ($existing.Actions.Arguments -join ' ') -notlike ('*' + (Join-Path $taskRoot 'run_backup_hidden.vbs') + '*')) { throw 'A different task already uses this name.' }
 $powershell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-$action = New-ScheduledTaskAction -Execute $powershell -Argument ('-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $runner + '" -ConfigPath "' + $configPath + '"')
+# Launch with a GUI host so PowerShell never creates a visible console.
+$launcher = Join-Path $taskRoot 'run_backup_hidden.vbs'
+$command = '"' + $powershell + '" -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $runner + '" -ConfigPath "' + $configPath + '"'
+@('Option Explicit', 'Dim shell, result', 'Set shell = CreateObject("WScript.Shell")', ('result = shell.Run("' + $command.Replace('"', '""') + '", 0, True)'), 'WScript.Quit result') | Set-Content -LiteralPath $launcher -Encoding Unicode
+$action = New-ScheduledTaskAction -Execute (Join-Path $env:SystemRoot 'System32\wscript.exe') -Argument ('//B //NoLogo "' + $launcher + '"')
 # Check frequently so an interrupted or delayed run does not defer the next
 # backup by another six-hour cycle. The downloader enforces the six-hour interval.
 $triggers = @((New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15)), (New-ScheduledTaskTrigger -AtLogOn -User $identity.Name))

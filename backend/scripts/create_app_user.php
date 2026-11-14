@@ -43,12 +43,12 @@ while ($row = $result->fetch_row()) {
 // Test connection with new user
 $test = new mysqli($host, $app_user, $app_pass, $dbname, $port);
 if ($test->connect_error) {
-    die(PHP_EOL . "❌ Test connection FAILED: " . $test->connect_error . PHP_EOL);
+    die(PHP_EOL . "[FAIL] Test connection FAILED: " . $test->connect_error . PHP_EOL);
 }
 
-echo PHP_EOL . "✅ App user '{$app_user}' created and verified successfully." . PHP_EOL;
-echo "✅ Test connection to '{$dbname}' — OK" . PHP_EOL;
-echo PHP_EOL . "⚠️  DELETE this file immediately after running!" . PHP_EOL;
+echo PHP_EOL . "[OK] App user '{$app_user}' created and verified successfully." . PHP_EOL;
+echo "[OK] Test connection to '{$dbname}' — OK" . PHP_EOL;
+echo PHP_EOL . "[WARNING] DELETE this file immediately after running!" . PHP_EOL;
 
 $test->close();
 $conn->close();

@@ -120,7 +120,7 @@ try {
     ];
 
     if (php_sapi_name() === 'cli') {
-        echo "[" . date('Y-m-d H:i:s') . "] ✅ " . $logSummary . PHP_EOL;
+        echo "[" . date('Y-m-d H:i:s') . "] [OK] " . $logSummary . PHP_EOL;
     } else {
         header('Content-Type: application/json');
         echo json_encode($response);
@@ -130,7 +130,7 @@ try {
     $errMsg = "Data retention cleanup error: " . $e->getMessage();
     error_log($errMsg);
     if (php_sapi_name() === 'cli') {
-        echo "[" . date('Y-m-d H:i:s') . "] ❌ " . $errMsg . PHP_EOL;
+        echo "[" . date('Y-m-d H:i:s') . "] [ERROR] " . $errMsg . PHP_EOL;
         exit(1);
     } else {
         http_response_code(500);

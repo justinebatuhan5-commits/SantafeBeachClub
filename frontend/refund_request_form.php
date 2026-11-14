@@ -453,7 +453,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
     <div class="container">
         <div class="card">
             <div class="header">
-                <h1>🔄 Request Refund</h1>
+                <h1>Request Refund</h1>
                 <p>Submit a refund request for your booking</p>
             </div>
 
@@ -461,7 +461,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
                 <?php if ($success_message): ?>
                     <div class="alert success"><?php echo htmlspecialchars($success_message); ?></div>
                     <div class="success-message">
-                        <div class="success-icon">✓</div>
+                        <div class="success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
                         <h2>Request Submitted</h2>
                         <p>Thank you for submitting your refund request. Our management team will review your request and contact you within 24 hours with a decision.</p>
                         <div class="reference-box">
@@ -502,7 +502,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_refund_request
 
                         <!-- Policy Info -->
                         <div class="policy-info">
-                            <strong>📋 Refund Policy:</strong> Your refund amount is based on our cancellation policy and when the refund is requested relative to your check-in date.
+                            <strong>Refund Policy:</strong> Your refund amount is based on our cancellation policy and when the refund is requested relative to your check-in date.
                         </div>
 
                         <!-- Refund Reason -->

@@ -163,7 +163,7 @@ $overdue_guest_names = [];
     <?php $active_page = 'checkout'; include __DIR__ . '/partials/_sidebar.php'; ?>
 
     <main class="admin-main">
-        <div class="admin-body">
+
         <?php
         $page_title = 'Check-in / Check-out';
         $page_subtitle = 'Manage guest arrivals and departures';
@@ -175,6 +175,8 @@ $overdue_guest_names = [];
         ';
         include __DIR__ . '/partials/_page_header.php';
         ?>
+
+        <div class="admin-body">
 
         <?php $stay_operations_active = 'checkout'; include __DIR__ . '/partials/_stay_operations_tabs.php'; ?>
 

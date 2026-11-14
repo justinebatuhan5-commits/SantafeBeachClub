@@ -4,7 +4,7 @@ require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/pii_masker.php';
 
 // Optional status filter
-$allowed_statuses = ['Pending', 'Checked In', 'Checked Out', 'Cancelled'];
+$allowed_statuses = ['Pending', 'Confirmed', 'Checked In', 'Checked Out', 'Cancelled'];
 $selected_status = isset($_GET['status']) ? trim($_GET['status']) : '';
 if (!in_array($selected_status, $allowed_statuses, true)) {
     $selected_status = '';
@@ -14,13 +14,15 @@ if (!in_array($selected_status, $allowed_statuses, true)) {
 $sql = "SELECT id, guest_name, guest_email, guest_type, accommodation_name, check_in, check_out, status, cancellation_reason FROM bookings";
 if ($selected_status !== '') {
     $safe_status = $conn->real_escape_string($selected_status);
+    if ($selected_status === 'Pending') { $sql .= " WHERE status IN ('Pending', 'Pending Payment')"; } else
     $sql .= " WHERE status = '{$safe_status}'";
 }
 $sql .= " ORDER BY id DESC";
 $bookings_query = $conn->query($sql);
 
 $total_count = $conn->query("SELECT COUNT(*) as c FROM bookings")->fetch_assoc()['c'] ?? 0;
-$pending_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE status='Pending'")->fetch_assoc()['c'] ?? 0;
+$pending_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE status IN ('Pending', 'Pending Payment')")->fetch_assoc()['c'] ?? 0;
+$confirmed_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE status='Confirmed'")->fetch_assoc()['c'] ?? 0;
 $checked_in_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE status='Checked In'")->fetch_assoc()['c'] ?? 0;
 ?>
 <!DOCTYPE html>
@@ -68,6 +70,7 @@ $checked_in_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE statu
                         <span style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Filter Status:</span>
                         <select name="status" onchange="this.form.submit()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; background:var(--input-bg); color:var(--text-main);">
                             <option value="" <?php echo $selected_status === '' ? 'selected' : ''; ?>>All Statuses (<?php echo $total_count; ?>)</option>
+                            <option value="Confirmed" <?php echo $selected_status === 'Confirmed' ? 'selected' : ''; ?>>Confirmed (<?php echo $confirmed_count; ?>)</option>
                             <option value="Pending" <?php echo $selected_status === 'Pending' ? 'selected' : ''; ?>>Pending (<?php echo $pending_count; ?>)</option>
                             <option value="Checked In" <?php echo $selected_status === 'Checked In' ? 'selected' : ''; ?>>Checked In (<?php echo $checked_in_count; ?>)</option>
                             <option value="Checked Out" <?php echo $selected_status === 'Checked Out' ? 'selected' : ''; ?>>Checked Out</option>
@@ -106,16 +109,18 @@ $checked_in_count = $conn->query("SELECT COUNT(*) as c FROM bookings WHERE statu
                             <?php if ($bookings_query && $bookings_query->num_rows > 0): ?>
                                 <?php while ($row = $bookings_query->fetch_assoc()):
                                     $id = $row['id'];
-                                    $name = htmlspecialchars($row['guest_name']);
-                                    $email = htmlspecialchars($row['guest_email']);
-                                    $type = htmlspecialchars($row['guest_type']);
-                                    $acc = htmlspecialchars($row['accommodation_name']);
+                                    $name = htmlspecialchars($row['guest_name'] ?? '');
+                                    $email = htmlspecialchars($row['guest_email'] ?? '');
+                                    $type = htmlspecialchars($row['guest_type'] ?? '');
+                                    $acc = htmlspecialchars($row['accommodation_name'] ?? '');
                                     $cin = date('M j, Y', strtotime($row['check_in']));
                                     $cout = date('M j, Y', strtotime($row['check_out']));
-                                    $status = htmlspecialchars($row['status']);
+                                    $status = htmlspecialchars($row['status'] ?? '');
 
                                     $sc = [
-                                        'Pending'     => 'badge-pending',
+                                        'Pending'         => 'badge-pending',
+                                        'Pending Payment' => 'badge-pending',
+                                        'Confirmed'       => 'badge-confirmed',
                                         'Checked In'  => 'badge-checkedin',
                                         'Checked Out' => 'badge-checkedout',
                                         'Cancelled'   => 'badge-cancelled'

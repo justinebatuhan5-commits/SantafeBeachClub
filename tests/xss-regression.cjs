@@ -38,4 +38,20 @@ for (const payload of payloads) {
 for (const url of ['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'java\nscript:alert(1)']) assert.equal(security.safeURL(url), '#');
 assert.equal(security.safeURL('payments?id=1'), 'https://example.test/frontend/payments?id=1');
 assert.equal(security.safeURL('https://example.test/a'), 'https://example.test/a');
-console.log('XSS regression checks passed: HTML, script, event attributes, receipts, and URL schemes.');
+
+// Verify AI Concierge widget safe Markdown renderer strips XSS and unsafe links
+const widgetSrc = fs.readFileSync('frontend/partials/_chatbot_widget.php', 'utf8');
+const fnMatch = widgetSrc.match(/function sfbcEscapeHtml[\s\S]*?window\.sfbcFormatSafeReply\s*=\s*sfbcFormatSafeReply;/);
+assert(fnMatch, 'sfbcFormatSafeReply must be present in _chatbot_widget.php');
+const chatCtx = { window: {} };
+vm.runInNewContext(fnMatch[0], chatCtx);
+for (const payload of payloads) {
+  const rendered = chatCtx.window.sfbcFormatSafeReply(payload).replace(/<br>/g, '');
+  assert(!/[<>]/.test(rendered), 'No raw angle brackets may survive in escaped payload output');
+}
+assert(!/javascript:/i.test(chatCtx.window.sfbcFormatSafeReply('[Click](javascript:alert(1))')));
+assert(/href="book\?room_type=beach_villa&amp;checkin=2026-12-20&amp;checkout=2026-12-22"/.test(
+  chatCtx.window.sfbcFormatSafeReply('[Book Villa](book?room_type=beach_villa&checkin=2026-12-20&checkout=2026-12-22)')
+));
+
+console.log('XSS regression checks passed: HTML, script, event attributes, receipts, URL schemes, and AI Concierge markdown.');

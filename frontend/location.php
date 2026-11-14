@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
+require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 header('Cache-Control: no-store');
 ?>
 <!DOCTYPE html>
@@ -11,6 +12,7 @@ header('Cache-Control: no-store');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Find Santa Fe Beach Club in Pantalan, Santa Fe, Cebu and get practical arrival information for your stay.">
     <title>Location &amp; Directions - Santa Fe Beach Club</title>
+    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <link rel="stylesheet" href="assets/css/location.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/location.css'); ?>">

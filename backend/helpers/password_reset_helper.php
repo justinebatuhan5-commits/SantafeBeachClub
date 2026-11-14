@@ -309,7 +309,7 @@ function pwd_reset_send_change_notification(string $toEmail, string $name): arra
     $htmlBody = "
         <div style='font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;'>
             <div style='background:#644B39;padding:28px 32px;text-align:center;border-radius:12px 12px 0 0;'>
-                <h2 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>&#128274; Password Changed</h2>
+                <h2 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>Password Changed</h2>
                 <p style='color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:13px;'>Santa Fe Beach Club - Security Alert</p>
             </div>
             <div style='padding:32px;'>

@@ -8,6 +8,10 @@
 # Dependencies
 /vendor/
 /node_modules/
+frontend/node_modules/
+
+# Tailwind CSS compiled output (regenerate with: cd frontend && npm run tw:build)
+frontend/assets/css/tailwind.css
 
 # Database dumps / sensitive scratch
 *.sql

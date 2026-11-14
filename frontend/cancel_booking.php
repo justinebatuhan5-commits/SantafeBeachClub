@@ -541,7 +541,7 @@ $checkout_fmt = $booking ? date('D, d M Y', strtotime($booking['check_out'])) : 
                         </div>
 
                     <?php elseif ($is_past_deadline): ?>
-                        <!-- ⚠️ Past Deadline View -->
+                        <!-- Past Deadline View -->
                         <div class="notice warning">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             <div>
@@ -558,8 +558,8 @@ $checkout_fmt = $booking ? date('D, d M Y', strtotime($booking['check_out'])) : 
                                 Because your arrival date is coming up soon, please contact our Front Desk team directly. We are happy to assist you with special requests or date changes.
                             </p>
                             <div class="contact-links">
-                                <a href="tel:+639505223146" class="contact-btn">📞 Call Front Desk (+63 950 522 3146)</a>
-                                <a href="mailto:Justinebatuhan017@gmail.com?subject=Cancellation%20Request%20<?php echo urlencode($booking_ref); ?>" class="contact-btn">📧 Email Front Desk</a>
+                                <a href="tel:+639505223146" class="contact-btn">Call Front Desk (+63 950 522 3146)</a>
+                                <a href="mailto:Justinebatuhan017@gmail.com?subject=Cancellation%20Request%20<?php echo urlencode($booking_ref); ?>" class="contact-btn">Email Front Desk</a>
                             </div>
                         </div>
 
@@ -568,9 +568,9 @@ $checkout_fmt = $booking ? date('D, d M Y', strtotime($booking['check_out'])) : 
                         </div>
 
                     <?php else: ?>
-                        <!-- ✅ Within Cancellation Window: Form -->
+                        <!-- Within Cancellation Window: Form -->
                         <div class="policy-badge-box">
-                            <div class="policy-badge-icon">⏰</div>
+                            <div class="policy-badge-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
                             <div class="policy-badge-text">
                                 <h4>Free Cancellation Open (<?php echo $hours_remaining >= 24 ? $days_remaining . ' days left' : $hours_remaining . ' hrs left'; ?>)</h4>
                                 <p>Self-service cancellation for your <?php echo (int)$policy_nights; ?>-night stay closes on <strong><?php echo htmlspecialchars($deadline_str); ?></strong> (<?php echo htmlspecialchars($policy_window_label); ?> before check-in).</p>

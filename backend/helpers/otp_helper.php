@@ -166,7 +166,7 @@ function otp_verify_admin(int $adminId, string $submittedCode, mysqli $conn, str
         return ['success' => false, 'reason' => 'invalid', 'remaining' => max(0, $remaining)];
     }
 
-    // ✓ Valid — mark as used immediately
+    // Valid — mark as used immediately
     $upd = $conn->prepare("UPDATE admin_otps SET used = 1 WHERE id = ?");
     $upd->bind_param('i', $row['id']);
     $upd->execute();
@@ -219,7 +219,7 @@ function otp_verify_guest(int $bookingId, string $submittedCode, mysqli $conn): 
         return ['success' => false, 'reason' => 'invalid', 'remaining' => max(0, $remaining)];
     }
 
-    // ✓ Valid — mark as used immediately
+    // Valid — mark as used immediately
     $upd = $conn->prepare("UPDATE guest_otps SET used = 1 WHERE id = ?");
     $upd->bind_param('i', $row['id']);
     $upd->execute();
@@ -256,7 +256,7 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
     $htmlBody = "
         <div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto;'>
             <div style='background:#644B39;padding:28px 32px;border-radius:12px 12px 0 0;'>
-                <h2 style='color:#fff;margin:0;font-size:20px;'>&#128272; Verification Code</h2>
+                <h2 style='color:#fff;margin:0;font-size:20px;'>Verification Code</h2>
                 <p style='color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;'>Santa Fe Beach Club - Secure Login</p>
             </div>
             <div style='background:#fff;padding:28px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;'>

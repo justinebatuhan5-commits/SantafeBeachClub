@@ -63,10 +63,21 @@ if (isset($conn) && $countStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM not
 
 // Unread inquiries count
 $_unread_inquiries = 0;
+$_unread_live_chats = 0;
 if (isset($conn)) {
     $tableCheck = $conn->query("SHOW TABLES LIKE 'inquiries'");
     if ($tableCheck && $tableCheck->num_rows > 0) {
-        if ($countInqStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM inquiries WHERE status = 'Unread'")) {
+        $hasChatTblCheck = @$conn->query("SHOW TABLES LIKE 'chatbot_conversations'");
+        $liveChatCond = ($hasChatTblCheck && $hasChatTblCheck->num_rows > 0)
+            ? "(i.subject LIKE '[AI Concierge Handoff]%' OR EXISTS (SELECT 1 FROM chatbot_conversations c WHERE c.inquiry_id = i.id))"
+            : "(i.subject LIKE '[AI Concierge Handoff]%')";
+        if ($countLiveStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM inquiries i WHERE i.status = 'Unread' AND {$liveChatCond}")) {
+            $countLiveStmt->execute();
+            $countLiveResult = $countLiveStmt->get_result()->fetch_assoc();
+            $_unread_live_chats = (int)($countLiveResult['cnt'] ?? 0);
+            $countLiveStmt->close();
+        }
+        if ($countInqStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM inquiries i WHERE i.status = 'Unread' AND NOT {$liveChatCond}")) {
             $countInqStmt->execute();
             $countInqResult = $countInqStmt->get_result()->fetch_assoc();
             $_unread_inquiries = (int)($countInqResult['cnt'] ?? 0);
@@ -141,7 +152,7 @@ function _sb_badge($count, $type = '') {
         <button type="button" class="sidebar-logo-toggle" aria-label="Hide sidebar" aria-controls="appSidebar" aria-expanded="true" title="Hide sidebar">
             <img src="assets/logo.jpg" alt="Logo" class="brand-circle">
             <div class="brand-text">
-                <h2>Santa Fe</h2>
+                <h2>Santa Fe.</h2>
                 <p>Admin Command</p>
             </div>
         </button>
@@ -186,7 +197,7 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11"/><polyline points="15 4 18 7 15 10"/><path d="M17 17H6"/><polyline points="9 14 6 17 9 20"/></svg>
                 Check-in / Check-out
             </a></li>
-            <li><a href="javascript:void(0)" onclick="launchDesktopScanner()" class="sidebar-link" title="Launch QR Scanner" style="color:#0284c7; font-weight:600;">
+            <li><a href="javascript:void(0)" onclick="launchDesktopScanner()" class="sidebar-link sidebar-link-action" title="Launch QR Scanner">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
                 Launch QR Scanner
             </a></li>
@@ -221,6 +232,10 @@ function _sb_badge($count, $type = '') {
 
         <p class="sidebar-section-label">Administration</p>
         <ul class="sidebar-nav">
+            <li><a href="admin_automation" class="sidebar-link <?php echo _sb_active('automation',$_page); ?>" title="Automation & Scheduler">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Automation & Scheduler
+            </a></li>
             <li><a href="admin_backups" class="sidebar-link <?php echo _sb_active('backups',$_page); ?>" title="Database Backups">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 4 18 4 18 0V5M3 12c0 4 18 4 18 0"/></svg>
                 Database Backups
@@ -255,6 +270,15 @@ function _sb_badge($count, $type = '') {
                 Reviews &amp; Inquiries
                 <?php echo _sb_badge($_unread_inquiries, 'inquiries'); ?>
             </a></li>
+            <li><a href="admin_live_support" class="sidebar-link <?php echo _sb_active('live_support', $_page); ?>" title="Live Support Chats">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2"/><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12" x2="13" y2="12"/></svg>
+                Live Support Chats
+                <?php echo _sb_badge($_unread_live_chats, 'live_chats'); ?>
+            </a></li>
+            <li><a href="admin_chatbot" class="sidebar-link <?php echo _sb_active('chatbot', $_page); ?>" title="AI Concierge &amp; Virtual Guest Assistant">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg>
+                AI Concierge
+            </a></li>
         </ul>
     </div>
 
@@ -280,7 +304,7 @@ function _sb_badge($count, $type = '') {
         <button type="button" class="sidebar-logo-toggle" aria-label="Hide sidebar" aria-controls="appSidebar" aria-expanded="true" title="Hide sidebar">
             <img src="assets/logo.jpg" alt="Logo" class="logo-circle">
             <div class="logo-text-group">
-                <h2>Santa Fe</h2>
+                <h2>Santa Fe.</h2>
                 <p>Reception Desk</p>
             </div>
         </button>
@@ -317,7 +341,7 @@ function _sb_badge($count, $type = '') {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11"></path><polyline points="15 4 18 7 15 10"></polyline><path d="M17 17H6"></path><polyline points="9 14 6 17 9 20"></polyline></svg>
                 Check-in / Check-out
             </a></li>
-            <li><a href="javascript:void(0)" onclick="launchDesktopScanner()" class="nav-item" title="Launch QR Scanner" style="color:#0284c7; font-weight:600;">
+            <li><a href="javascript:void(0)" onclick="launchDesktopScanner()" class="nav-item sidebar-link-action" title="Launch QR Scanner">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
                 Launch QR Scanner
             </a></li>
@@ -345,6 +369,11 @@ function _sb_badge($count, $type = '') {
                 <?php echo _sb_badge($_pending_refunds, 'refunds'); ?>
             </a></li>
 
+            <li><a href="admin_live_support" class="nav-item <?php echo _sb_active('live_support',$_page); ?>" title="Live Support Chats">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="8" y1="9" x2="16" y2="9"></line><line x1="8" y1="13" x2="13" y2="13"></line></svg>
+                Live Support Chats
+                <?php echo _sb_badge($_unread_live_chats, 'live_chats'); ?>
+            </a></li>
             <li><a href="admin_inquiries" class="nav-item <?php echo _sb_active('inquiries',$_page); ?>" title="Guest Inquiries">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                 Guest Inquiries
@@ -398,6 +427,24 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="assets/js/sidebar-workspace.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/sidebar-workspace.js'); ?>"></script>
 <script src="assets/js/sidebar-toggle.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/sidebar-toggle.js'); ?>"></script>
 <script src="assets/js/security.js?v=4"></script>
+<script id="sbc_scroll_restore_listener">
+(function() {
+    try {
+        var raw = sessionStorage.getItem("sbc_scroll_restore");
+        if (raw) {
+            sessionStorage.removeItem("sbc_scroll_restore");
+            var data = JSON.parse(raw);
+            if (data && data.path === window.location.pathname) {
+                window.addEventListener("DOMContentLoaded", function() {
+                    setTimeout(function() {
+                        window.scrollTo(data.x || 0, data.y || 0);
+                    }, 60);
+                });
+            }
+        }
+    } catch(e) {}
+})();
+</script>
 <script>
 // Sidebar search filter: filters nav links in real-time
 (function() {
@@ -443,7 +490,8 @@ document.addEventListener('DOMContentLoaded', function() {
 ══════════════════════════════════════════════════ -->
 <div id="sfbc-confirm-overlay" style="
     display: none;
-    position: fixed; inset: 0;
+
+    position: fixed; inset: 0; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; height: 100dvh; margin: 0; box-sizing: border-box;
     background: rgba(15, 23, 42, 0.72);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -459,6 +507,9 @@ document.addEventListener('DOMContentLoaded', function() {
         padding: 36px 32px 28px;
         max-width: 440px;
         width: 100%;
+        margin: auto;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
         box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
         text-align: center;
         animation: sfbcSlideUp 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -512,6 +563,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 @keyframes sfbcFadeIn { from { opacity:0; } to { opacity:1; } }
 @keyframes sfbcSlideUp { from { opacity:0; transform:translateY(16px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+[data-theme="dark"] #sfbc-confirm-overlay > div { background: #131826 !important; border: 1px solid #1E293B !important; color: #F8FAFC !important; }
+[data-theme="dark"] #sfbc-confirm-title { color: #F8FAFC !important; }
+[data-theme="dark"] #sfbc-confirm-message { background: #1A2234 !important; border-color: #1E293B !important; color: #94A3B8 !important; }
+[data-theme="dark"] #sfbc-confirm-cancel { background: #1E293B !important; border-color: #334155 !important; color: #94A3B8 !important; }
 </style>
 <script>
 /**
@@ -524,14 +579,18 @@ document.addEventListener('DOMContentLoaded', function() {
  * Options:
  *   title      {string}   — Bold heading
  *   message    {string}   — Body text
- *   icon       {string}   — Emoji icon (default: ⚠️)
+ *   icon       {string}   — SVG or text icon key
  *   iconBg     {string}   — Icon background color (default: #FEF3C7)
  *   confirmText{string}   — Confirm button label (default: 'Confirm')
  *   confirmColor{string}  — Confirm button color (default: #DC2626 red)
  *   onConfirm  {function} — Called when user clicks Confirm
  */
 function showConfirm(opts) {
+    var savedScrollX = window.scrollX || window.pageXOffset || 0;
+    var savedScrollY = window.scrollY || window.pageYOffset || 0;
     var overlay  = document.getElementById('sfbc-confirm-overlay');
+    // Ensure overlay is attached to document.body to avoid clipping by transformed ancestors
+    if (overlay && overlay.parentNode !== document.body) { document.body.appendChild(overlay); }
     var icon     = document.getElementById('sfbc-confirm-icon');
     var title    = document.getElementById('sfbc-confirm-title');
     var message  = document.getElementById('sfbc-confirm-message');
@@ -540,14 +599,14 @@ function showConfirm(opts) {
 
     var defaultWarningSvg = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
     var iconVal = opts.icon || defaultWarningSvg;
-    if (iconVal === '⚠️') iconVal = defaultWarningSvg;
-    if (iconVal === '👤' || iconVal === 'user') {
+    if (iconVal === 'warning') iconVal = defaultWarningSvg;
+    if (iconVal === 'user') {
         iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-    } else if (iconVal === '🔒' || iconVal === 'lock') {
+    } else if (iconVal === 'lock') {
         iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
-    } else if (iconVal === '🗑️' || iconVal === 'trash') {
+    } else if (iconVal === 'trash') {
         iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-    } else if (iconVal === '🖼️' || iconVal === 'image') {
+    } else if (iconVal === 'image') {
         iconVal = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
     }
 
@@ -575,17 +634,23 @@ function showConfirm(opts) {
     newOk.onmouseout  = function(){ this.style.background = opts.confirmColor || '#DC2626'; };
     newOk.addEventListener('click', function() {
         overlay.style.display = 'none';
+        try { sessionStorage.setItem('sbc_scroll_restore', JSON.stringify({ path: window.location.pathname, x: savedScrollX, y: savedScrollY })); } catch(e) {}
         if (typeof opts.onConfirm === 'function') opts.onConfirm();
     });
 
     var newCancel = cancelBtn.cloneNode(true);
     cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-    newCancel.addEventListener('click', function() {
+    newCancel.addEventListener('click', function(e) {
+        if (e && e.preventDefault) e.preventDefault();
         overlay.style.display = 'none';
+        window.scrollTo(savedScrollX, savedScrollY);
     });
 
     overlay.onclick = function(e) {
-        if (e.target === overlay) overlay.style.display = 'none';
+        if (e.target === overlay) {
+            overlay.style.display = 'none';
+            window.scrollTo(savedScrollX, savedScrollY);
+        }
     };
 }
 
@@ -612,7 +677,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showConfirm({
             title:        form.dataset.confirmTitle   || 'Are you sure?',
             message:      form.dataset.confirmMsg     || 'This action cannot be undone.',
-            icon:         form.dataset.confirmIcon    || '⚠️',
+            icon:         form.dataset.confirmIcon    || '',
             iconBg:       form.dataset.confirmIconBg  || '#FEF3C7',
             confirmText:  form.dataset.confirmText    || 'Confirm',
             confirmColor: form.dataset.confirmColor   || '#DC2626',
@@ -703,6 +768,8 @@ document.addEventListener('DOMContentLoaded', function() {
             'cursor: pointer;',
             '}',
             '.sbc-notif-toast-mute:hover { background: rgba(148, 163, 184, 0.16); }',
+            '.sbc-notif-toast-close { border: none; background: transparent; color: #94A3B8; font-size: 16px; line-height: 1; padding: 3px 6px; cursor: pointer; border-radius: 6px; margin-left: 6px; }',
+            '.sbc-notif-toast-close:hover { color: #FFFFFF; background: rgba(148, 163, 184, 0.2); }',
             '@media (max-width: 768px) { #sbc-notif-toast { left: 12px; right: 12px; bottom: 14px; max-width: none; } }'
         ].join('');
         document.head.appendChild(style);
@@ -716,7 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toast = document.createElement('div');
         toast.id = 'sbc-notif-toast';
         toast.innerHTML = '' +
-            '<div class="sbc-notif-toast-icon">🔔</div>' +
+            '<div class="sbc-notif-toast-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>' +
             '<div>' +
                 '<div class="sbc-notif-toast-title">New notification</div>' +
                 '<div class="sbc-notif-toast-msg">You have 1 new alert.</div>' +
@@ -726,6 +793,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<button type="button" class="sbc-notif-toast-mute" id="sbc-notif-toast-mute">' +
                 (soundMuted ? 'Unmute' : 'Mute') +
                 '</button>' +
+                '<button type="button" class="sbc-notif-toast-close" id="sbc-notif-toast-close" title="Dismiss">&times;</button>' +
             '</div>';
 
         document.body.appendChild(toast);
@@ -738,6 +806,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     localStorage.setItem('sbc_notif_sound_muted', soundMuted ? '1' : '0');
                 } catch (e) {}
+            });
+        }
+
+        var closeBtn = document.getElementById('sbc-notif-toast-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+                toast.classList.remove('show');
             });
         }
 
@@ -765,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         toast.onclick = function(e) {
-            if (e.target.closest('.sbc-notif-toast-mute')) return;
+            if (e.target.closest('.sbc-notif-toast-mute') || e.target.closest('.sbc-notif-toast-close')) return;
             openNotificationDestination(notification);
         };
 
@@ -853,6 +930,8 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = checkoutPage;
         } else if (title.indexOf('payment') !== -1 || message.indexOf('payment') !== -1) {
             window.location.href = 'payments';
+        } else if (title.indexOf('live chat') !== -1 || title.indexOf('escalation') !== -1 || title.indexOf('human support') !== -1 || title.indexOf('concierge') !== -1 || message.indexOf('live support') !== -1) {
+            window.location.href = 'admin_live_support';
         } else if (title.indexOf('inquir') !== -1 || message.indexOf('inquir') !== -1) {
             window.location.href = 'admin_inquiries';
         } else if (title.indexOf('room') !== -1 || title.indexOf('maintenance') !== -1 || message.indexOf('room') !== -1) {
@@ -1007,6 +1086,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 #qr-scanner-overlay {
     display: none;
+
     position: fixed;
     inset: 0;
     background: rgba(10, 15, 29, 0.75);
@@ -1122,7 +1202,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* Success flash */
 #qr-success-flash {
-    display: none; position: absolute; inset: 0;
+    display: none;
+ position: absolute; inset: 0;
     background: rgba(22, 101, 52, 0.85); backdrop-filter: blur(4px); border-radius: 18px;
     z-index: 4; align-items: center; justify-content: center;
     flex-direction: column; gap: 10px;
@@ -1157,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Modal HTML -->
 <div id="qr-scanner-overlay">
     <div id="qr-scanner-box">
-        <button id="qr-close-btn" onclick="closeQrScanner()">&times;</button>
+        <button id="qr-close-btn" type="button" onclick="closeQrScanner()">&#215;</button>
         <h3><img src="assets/logo.jpg" alt="Santa Fe Beach Club logo" class="qr-logo"> QR Code Scanner</h3>
         <p class="qr-sub">Align the guest's booking QR code within the frame</p>
 
@@ -1193,6 +1274,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let scannerOpen   = false;
     let done          = false;
     let camerasList   = [];
+    let savedScrollX  = 0;
+    let savedScrollY  = 0;
 
     const video       = document.getElementById('qr-video');
     const canvas      = document.getElementById('qr-canvas');
@@ -1217,12 +1300,12 @@ document.addEventListener('DOMContentLoaded', function() {
         camSelect.style.display = 'none';
 
         if (typeof window.jsQR !== 'function') {
-            statusEl.textContent = '⚠️ QR scanner library unavailable. Check the internet connection and reload.';
+            statusEl.textContent = 'QR scanner library unavailable. Check the internet connection and reload.';
             return;
         }
 
         if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-            statusEl.textContent = '⚠️ Camera access is unavailable. Use HTTPS or localhost and allow camera permission.';
+            statusEl.textContent = 'Camera access is unavailable. Use HTTPS or localhost and allow camera permission.';
             return;
         }
         
@@ -1251,6 +1334,7 @@ document.addEventListener('DOMContentLoaded', function() {
         scannerOpen = false;
         overlayEl.classList.remove('open');
         stopCamera();
+        window.scrollTo(savedScrollX, savedScrollY);
     };
 
     camSelect.addEventListener('change', function() {
@@ -1283,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function tryConstraints(list, idx) {
         if (idx >= list.length) {
             // All constraints failed — show a retry button
-            statusEl.innerHTML = '⚠️ Camera unavailable. &nbsp;<button id="qr-retry-btn" style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;padding:5px 14px;border:none;border-radius:20px;' +
+            statusEl.innerHTML = 'Camera unavailable. &nbsp;<button id="qr-retry-btn" style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;padding:5px 14px;border:none;border-radius:20px;' +
                 'background:linear-gradient(135deg,#C8996F,#B07D52);color:#fff;font-weight:700;font-size:12px;cursor:pointer;' +
                 'font-family:Outfit,sans-serif;box-shadow:0 2px 8px rgba(200,153,111,0.4);">↻ Retry</button>';
             document.getElementById('qr-retry-btn').addEventListener('click', function() {
@@ -1315,10 +1399,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!scannerOpen) return;
                     video.play().then(function () {
                         if (!scannerOpen) return;
-                        statusEl.textContent = '✓ Camera live — align QR code to frame';
+                        statusEl.textContent = 'Camera live — align QR code to frame';
                         scanLoop();
                     }).catch(function () {
-                        statusEl.textContent = '⚠️ Camera preview could not start. Close and retry.';
+                        statusEl.textContent = 'Camera preview could not start. Close and retry.';
                     });
                 };
             })
@@ -1361,7 +1445,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function onQrFound(text) {
         done = true;
         flashEl.classList.add('show');
-        statusEl.textContent = '✅ QR detected! Redirecting…';
+        statusEl.textContent = 'QR detected! Redirecting…';
         stopCamera();
 
         setTimeout(function () {
@@ -1389,13 +1473,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.assign(CHECKIN_URL + '?ref=' + encodeURIComponent(ref) +
                                              '&token=' + encodeURIComponent(token));
                 } else {
-                    statusEl.textContent = '⚠️ Invalid QR — not a booking code.';
+                    statusEl.textContent = 'Invalid QR — not a booking code.';
                     flashEl.classList.remove('show');
                     done = false;
                     startCamera();
                 }
             } catch (e) {
-                statusEl.textContent = '⚠️ Could not read QR data.';
+                statusEl.textContent = 'Could not read QR data.';
                 flashEl.classList.remove('show');
                 done = false;
                 startCamera();
@@ -1421,3 +1505,4 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+<?php include __DIR__ . '/_staff_assistant_widget.php'; ?>

@@ -499,7 +499,7 @@ if (empty($room_types)) {
                 badge.style.background = '#ECFDF5';
                 badge.style.color = '#059669';
                 body.innerHTML = `
-                    <div style="color:#059669; font-weight:700; margin-bottom:6px;">✓ Unit Cleaned & Available</div>
+                    <div style="color:#059669; font-weight:700; margin-bottom:6px;">Unit Cleaned & Available</div>
                     <p style="margin:0; color:var(--text-muted); font-size:12.5px;">This room is ready for immediate walk-in guest check-in or allocation.</p>
                 `;
                 btnSlot.innerHTML = `
@@ -908,7 +908,7 @@ if (empty($room_types)) {
             </div>
             <div class="ocm-header-text">
                 <div class="ocm-brand-badge">
-                    <span>★</span> Santa Fe Beach Club
+                    <span><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Santa Fe Beach Club
                 </div>
                 <h3 id="ocmTitle">Overdue Check-out Alert</h3>
                 <p>Action required &bull; Scheduled departure time has passed</p>
@@ -917,7 +917,7 @@ if (empty($room_types)) {
         </div>
         <div class="ocm-body">
             <div class="ocm-banner">
-                <span class="ocm-banner-icon">⏰</span>
+                <span class="ocm-banner-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="ocm-banner-text">The following guest(s) have passed their scheduled check-out date and are still marked as <strong>Checked In</strong>. Please process their departure to free up accommodations.</span>
             </div>
             <div class="ocm-list-label">Overdue Guest(s)</div>

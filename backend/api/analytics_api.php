@@ -65,13 +65,13 @@ switch ($action) {
         $total_bookings_res = $conn->query("SELECT COUNT(*) AS c FROM bookings");
         $total_bookings = (int)($total_bookings_res ? $total_bookings_res->fetch_assoc()['c'] : 0);
 
-        $pending_bookings_res = $conn->query("SELECT COUNT(*) AS c FROM bookings WHERE status = 'Pending'");
+        $pending_bookings_res = $conn->query("SELECT COUNT(*) AS c FROM bookings WHERE status IN ('Pending', 'Pending Payment')");
         $pending_bookings = (int)($pending_bookings_res ? $pending_bookings_res->fetch_assoc()['c'] : 0);
 
         $pending_payments_res = $conn->query("SELECT COUNT(*) AS c FROM payments WHERE status = 'pending'");
         $pending_payments = (int)($pending_payments_res ? $pending_payments_res->fetch_assoc()['c'] : 0);
 
-        $checkins_today_res = $conn->query("SELECT COUNT(*) AS c FROM bookings WHERE status = 'Pending' AND DATE(check_in) = CURDATE()");
+        $checkins_today_res = $conn->query("SELECT COUNT(*) AS c FROM bookings WHERE status IN ('Pending', 'Pending Payment', 'Confirmed') AND DATE(check_in) = CURDATE()");
         $checkins_today = (int)($checkins_today_res ? $checkins_today_res->fetch_assoc()['c'] : 0);
 
         $checkouts_today_res = $conn->query("SELECT COUNT(*) AS c FROM bookings WHERE status = 'Checked In' AND DATE(check_out) = CURDATE()");
@@ -121,6 +121,7 @@ switch ($action) {
     case 'status-breakdown':
         $res = $conn->query("SELECT status, COUNT(*) AS count FROM bookings GROUP BY status");
         $breakdown = [
+            'Confirmed'   => 0,
             'Checked In'  => 0,
             'Checked Out' => 0,
             'Pending'     => 0,
@@ -128,9 +129,21 @@ switch ($action) {
         ];
         if ($res) {
             while ($row = $res->fetch_assoc()) {
-                $status = $row['status'];
-                if (isset($breakdown[$status])) {
-                    $breakdown[$status] = (int)$row['count'];
+                $status = trim((string)$row['status']);
+                $cnt = (int)$row['count'];
+                $lower = strtolower($status);
+                if ($lower === 'pending payment' || $lower === 'pending') {
+                    $breakdown['Pending'] += $cnt;
+                } elseif ($lower === 'confirmed') {
+                    $breakdown['Confirmed'] += $cnt;
+                } elseif ($lower === 'checked in') {
+                    $breakdown['Checked In'] += $cnt;
+                } elseif ($lower === 'checked out') {
+                    $breakdown['Checked Out'] += $cnt;
+                } elseif ($lower === 'cancelled' || $lower === 'canceled') {
+                    $breakdown['Cancelled'] += $cnt;
+                } else {
+                    $breakdown['Pending'] += $cnt;
                 }
             }
         }
@@ -243,7 +256,7 @@ switch ($action) {
         $bk_res = $conn->query("SELECT COUNT(*) AS total_bookings FROM bookings");
         $total_bookings = (int)($bk_res ? $bk_res->fetch_assoc()['total_bookings'] : 0);
 
-        $pb_res = $conn->query("SELECT COUNT(*) AS pending_bookings FROM bookings WHERE status = 'Pending'");
+        $pb_res = $conn->query("SELECT COUNT(*) AS pending_bookings FROM bookings WHERE status IN ('Pending', 'Pending Payment')");
         $pending_bookings = (int)($pb_res ? $pb_res->fetch_assoc()['pending_bookings'] : 0);
 
         $g_res = $conn->query("SELECT COALESCE(SUM(guests_count), 0) AS total_guests FROM bookings");

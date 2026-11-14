@@ -105,7 +105,7 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
         /* ── 3-Column Visual Match Grid ────────────────────────── */
         .three-col-charts {
             display: grid;
-            grid-template-columns: 1.15fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
             margin-bottom: 24px;
         }
@@ -416,13 +416,10 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Total Revenue</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-revenue">₱0.00</div>
-                                <span class="kpi-card-badge" id="kpi-revenue-trend">—</span>
+                                
                             </div>
                             <div class="kpi-card-sub">vs previous 30 days</div>
                         </div>
-                    </div>
-                    <div class="kpi-sparkline-box">
-                        <canvas id="sparkline-revenue"></canvas>
                     </div>
                 </div>
 
@@ -436,13 +433,10 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Total Bookings</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-bookings">0</div>
-                                <span class="kpi-card-badge" id="kpi-bookings-trend">—</span>
+                                
                             </div>
                             <div class="kpi-card-sub"><span id="kpi-pending" style="color:#D97706; font-weight:700;">0</span> pending confirmation</div>
                         </div>
-                    </div>
-                    <div class="kpi-sparkline-box">
-                        <canvas id="sparkline-bookings"></canvas>
                     </div>
                 </div>
 
@@ -456,13 +450,10 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Total Guests</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-guests">0</div>
-                                <span class="kpi-card-badge" id="kpi-guests-trend">—</span>
+                                
                             </div>
                             <div class="kpi-card-sub">across all hosted stays</div>
                         </div>
-                    </div>
-                    <div class="kpi-sparkline-box">
-                        <canvas id="sparkline-guests"></canvas>
                     </div>
                 </div>
 
@@ -476,34 +467,17 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                             <div class="kpi-card-title">Occupancy Rate</div>
                             <div class="kpi-card-val-row">
                                 <div class="kpi-card-value" id="kpi-occupancy">0%</div>
-                                <span class="kpi-card-badge" id="kpi-occupancy-trend">—</span>
+                                
                             </div>
                             <div class="kpi-card-sub"><span id="kpi-avg-stay">0</span> avg stay duration</div>
                         </div>
                     </div>
-                    <div class="kpi-sparkline-box">
-                        <canvas id="sparkline-occupancy"></canvas>
-                    </div>
                 </div>
             </div>
 
-            <!-- ═══ 3-COLUMN ANALYTICS MATCHING REFERENCE DESIGN ═══ -->
+            <!-- ═══ ANALYTICS ROW: RESERVATION STATUS & TOP SOURCE MARKETS ═══ -->
             <div class="three-col-charts">
-                <!-- 1. Revenue Overview (Bar + ADR Trendline) -->
-                <div class="admin-card">
-                    <div class="admin-card-header">
-                        <div>
-                            <h3>Revenue Overview</h3>
-                            <p>Monthly verified revenue performance</p>
-                        </div>
-                    </div>
-                    <div class="chart-box" id="chart-rev-container">
-                        <div class="loading" id="loading-rev">Loading revenue chart...</div>
-                        <canvas id="monthlyRevChart" style="display:none;"></canvas>
-                    </div>
-                </div>
-
-                <!-- 2. Reservation Status Breakdown (Donut with Center Stat + Right Legend) -->
+                <!-- 1. Reservation Status Breakdown (Donut with Center Stat + Right Legend) -->
                 <div class="admin-card">
                     <div class="admin-card-header">
                         <div>
@@ -524,7 +498,7 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                     </div>
                 </div>
 
-                <!-- 3. Top Source Markets / Countries (Horizontal Progress Ranking Bars) -->
+                <!-- 2. Top Source Markets / Countries (Horizontal Progress Ranking Bars) -->
                 <div class="admin-card">
                     <div class="admin-card-header">
                         <div>
@@ -538,6 +512,20 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
                     <div class="ranking-bar-list" id="ranking-bars-container">
                         <div class="loading" id="loading-country">Loading origin data...</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ═══ REVENUE OVERVIEW (BELOW STATUS & MARKETS) ═══ -->
+            <div class="admin-card" style="margin-bottom: 24px;">
+                <div class="admin-card-header">
+                    <div>
+                        <h3>Revenue Overview</h3>
+                        <p>Monthly verified revenue performance</p>
+                    </div>
+                </div>
+                <div class="chart-box" id="chart-rev-container" style="height: 250px;">
+                    <div class="loading" id="loading-rev">Loading revenue chart...</div>
+                    <canvas id="monthlyRevChart" style="display:none;"></canvas>
                 </div>
             </div>
 
@@ -679,8 +667,8 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
     }
 
     async function loadDashboardData() {
+        // 1. KPI Stats
         try {
-            // 1. Dashboard Stats & Sparklines
             const stats = await fetchAPI('/api/dashboard-stats');
             document.getElementById('kpi-revenue').innerText = '₱' + Number(stats.total_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
             document.getElementById('kpi-bookings').innerText = Number(stats.total_bookings || 0).toLocaleString();
@@ -688,117 +676,105 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             document.getElementById('kpi-guests').innerText = Number(stats.total_guests || 0).toLocaleString();
             document.getElementById('kpi-occupancy').innerText = (stats.occupancy_rate || 0) + '%';
             document.getElementById('kpi-avg-stay').innerText = (stats.avg_stay || '0') + ' nights';
+        } catch (e) {
+            console.error("KPI load error:", e);
+        }
 
-            const renderTrend = (id, value) => {
-                const badge = document.getElementById(id);
-                if (!badge) return;
-                if (value === null || typeof value === 'undefined') {
-                    badge.textContent = 'No prior data';
-                    badge.style.color = '#64748B';
-                    return;
-                }
-                const numeric = Number(value) || 0;
-                badge.textContent = `${numeric > 0 ? '▲' : numeric < 0 ? '▼' : '—'} ${Math.abs(numeric).toFixed(1)}%`;
-                badge.style.color = numeric > 0 ? '#059669' : numeric < 0 ? '#DC2626' : '#64748B';
-            };
-            renderTrend('kpi-revenue-trend', stats.trend?.revenue_pct);
-            renderTrend('kpi-bookings-trend', stats.trend?.bookings_pct);
-            renderTrend('kpi-guests-trend', stats.trend?.guests_pct);
-            renderTrend('kpi-occupancy-trend', stats.trend?.occupancy_pct);
-
-            // Actual daily values from the latest 14 days.
-            const revTrend = stats.sparklines?.revenue || [0];
-            const bkTrend = stats.sparklines?.bookings || [0];
-            const guestTrend = stats.sparklines?.guests || [0];
-            const occTrend = stats.sparklines?.occupancy || [0];
-
-            createSparkline('sparkline-revenue', revTrend, '#84563C', 'rgba(132, 86, 60, 0.08)');
-            createSparkline('sparkline-bookings', bkTrend, '#D97706', 'rgba(217, 119, 6, 0.08)');
-            createSparkline('sparkline-guests', guestTrend, '#059669', 'rgba(5, 150, 105, 0.08)');
-            createSparkline('sparkline-occupancy', occTrend, '#0D652D', 'rgba(13, 101, 45, 0.08)');
-
-            // 2. Card 1: Revenue Overview (Bar + ADR Trendline)
+        // 2. Revenue Overview
+        try {
             const revData = await fetchAPI('/api/monthly-revenue');
-            document.getElementById('loading-rev').style.display = 'none';
+            const loadingRev = document.getElementById('loading-rev');
+            if (loadingRev) loadingRev.style.display = 'none';
             const revCanvas = document.getElementById('monthlyRevChart');
-            revCanvas.style.display = 'block';
+            if (revCanvas && typeof Chart !== 'undefined') {
+                revCanvas.style.display = 'block';
+                const revValues = revData.revenue || [];
+                const avgRateValues = revValues.map(v => Number(v) > 0 ? Number(v) * 0.92 : 0);
 
-            // Compute Average Daily Rate / Monthly Average line
-            const revValues = revData.revenue || [];
-            const avgRateValues = revValues.map(v => Number(v) > 0 ? Number(v) * 0.92 : 0);
-
-            new Chart(revCanvas.getContext('2d'), {
-                data: {
-                    labels: revData.labels,
-                    datasets: [
-                        {
-                            type: 'bar',
-                            label: 'Revenue (₱)',
-                            data: revValues,
-                            backgroundColor: '#84563C',
-                            hoverBackgroundColor: '#6B442E',
-                            borderRadius: 4,
-                            barThickness: 16,
-                            order: 2
-                        },
-                        {
-                            type: 'line',
-                            label: 'Average Rate (₱)',
-                            data: avgRateValues,
-                            borderColor: '#D97706',
-                            backgroundColor: '#D97706',
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            pointBackgroundColor: '#D97706',
-                            tension: 0.35,
-                            order: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            align: 'end',
-                            labels: {
-                                color: tickColor,
-                                boxWidth: 10,
-                                boxHeight: 10,
-                                font: { family: 'Plus Jakarta Sans', size: 10.5, weight: '600' }
+                new Chart(revCanvas.getContext('2d'), {
+                    data: {
+                        labels: revData.labels || [],
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Revenue (₱)',
+                                data: revValues,
+                                backgroundColor: '#84563C',
+                                hoverBackgroundColor: '#6B442E',
+                                borderRadius: 4,
+                                barThickness: 16,
+                                order: 2
+                            },
+                            {
+                                type: 'line',
+                                label: 'Average Rate (₱)',
+                                data: avgRateValues,
+                                borderColor: '#D97706',
+                                backgroundColor: '#D97706',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                pointBackgroundColor: '#D97706',
+                                tension: 0.35,
+                                order: 1
                             }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: c => ` ${c.dataset.label}: ₱${Number(c.parsed.y).toLocaleString()}`
-                            }
-                        }
+                        ]
                     },
-                    scales: {
-                        x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { family: 'Plus Jakarta Sans', size: 10.5 } } },
-                        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { family: 'Plus Jakarta Sans', size: 10.5 }, callback: v => '₱' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, beginAtZero: true }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                align: 'end',
+                                labels: {
+                                    color: tickColor,
+                                    boxWidth: 10,
+                                    boxHeight: 10,
+                                    font: { family: 'Plus Jakarta Sans', size: 10.5, weight: '600' }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: c => ` ${c.dataset.label}: ₱${Number(c.parsed.y).toLocaleString()}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { family: 'Plus Jakarta Sans', size: 10.5 } } },
+                            y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { family: 'Plus Jakarta Sans', size: 10.5 }, callback: v => '₱' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, beginAtZero: true }
+                        }
                     }
-                }
-            });
+                });
+            }
+        } catch (e) {
+            console.error("Revenue overview load error:", e);
+            const loadingRev = document.getElementById('loading-rev');
+            if (loadingRev) loadingRev.innerHTML = '<span class="error">Failed to load revenue overview.</span>';
+        }
 
-            // 3. Card 2: Reservation Status (Donut with Center Stat + Right Legend)
+        // 3. Reservation Status
+        try {
             const statusData = await fetchAPI('/api/status-breakdown');
-            document.getElementById('loading-status').style.display = 'none';
-            document.getElementById('status-canvas-wrap').style.display = 'block';
+            const loadingStatus = document.getElementById('loading-status');
+            if (loadingStatus) loadingStatus.style.display = 'none';
+            const statusCanvasWrap = document.getElementById('status-canvas-wrap');
+            if (statusCanvasWrap) statusCanvasWrap.style.display = 'block';
 
             const statusCounts = {
+                'Confirmed': statusData['Confirmed'] || 0,
                 'Checked In': statusData['Checked In'] || 0,
                 'Checked Out': statusData['Checked Out'] || 0,
                 'Pending': statusData['Pending'] || 0,
                 'Cancelled': statusData['Cancelled'] || 0
             };
             const totalStatus = Object.values(statusCounts).reduce((a, b) => a + b, 0);
-            document.getElementById('donut-status-total').innerText = totalStatus.toLocaleString();
+            const totalStatusEl = document.getElementById('donut-status-total');
+            if (totalStatusEl) totalStatusEl.innerText = totalStatus.toLocaleString();
 
             const statusColors = {
+                'Confirmed': '#2563EB',
                 'Checked In': '#84563C',
                 'Checked Out': '#D97706',
                 'Pending': '#5E9A8E',
@@ -806,177 +782,187 @@ $admin = $_SESSION['admin_username'] ?? 'Admin';
             };
 
             const statusCanvas = document.getElementById('statusBreakdownChart');
-            new Chart(statusCanvas.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(statusCounts),
-                    datasets: [{
-                        data: Object.values(statusCounts),
-                        backgroundColor: Object.values(statusColors),
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '72%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => ` ${ctx.label}: ${ctx.parsed} (${totalStatus > 0 ? Math.round((ctx.parsed/totalStatus)*100) : 0}%)`
+            if (statusCanvas && typeof Chart !== 'undefined') {
+                new Chart(statusCanvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(statusCounts),
+                        datasets: [{
+                            data: totalStatus > 0 ? Object.values(statusCounts) : [1],
+                            backgroundColor: totalStatus > 0 ? Object.values(statusColors) : ['#E2E8F0'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '72%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: totalStatus > 0,
+                                callbacks: {
+                                    label: ctx => ` ${ctx.label}: ${ctx.parsed} (${totalStatus > 0 ? Math.round((ctx.parsed/totalStatus)*100) : 0}%)`
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
 
-            // Render Right Legend
             const statusLegendList = document.getElementById('status-legend-list');
-            statusLegendList.innerHTML = Object.entries(statusCounts).map(([status, count]) => {
-                const pct = totalStatus > 0 ? Math.round((count / totalStatus) * 100) : 0;
-                const col = statusColors[status] || '#84563C';
-                return `
-                <div class="donut-legend-item">
-                    <div class="donut-legend-left">
-                        <span class="donut-legend-dot" style="background:${col};"></span>
-                        <span>${Security.escapeHTML(status)}</span>
+            if (statusLegendList) {
+                statusLegendList.innerHTML = Object.entries(statusCounts).map(([status, count]) => {
+                    const pct = totalStatus > 0 ? Math.round((count / totalStatus) * 100) : 0;
+                    const col = statusColors[status] || '#84563C';
+                    const safeStatus = typeof Security !== 'undefined' ? Security.escapeHTML(status) : status;
+                    return `
+                    <div class="donut-legend-item">
+                        <div class="donut-legend-left">
+                            <span class="donut-legend-dot" style="background:${col};"></span>
+                            <span>${safeStatus}</span>
+                        </div>
+                        <div class="donut-legend-right">${pct}% (${count})</div>
                     </div>
-                    <div class="donut-legend-right">${pct}% (${Security.escapeHTML(count)})</div>
-                </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            }
+        } catch (e) {
+            console.error("Status breakdown load error:", e);
+        }
 
-            // 4. Card 3: Top Source Markets (Horizontal Progress Ranking Bars)
+        // 4. Top Source Markets & Country Demographics
+        let countryList = [];
+        const flagMap = {};
+
+        try {
             const countryData = await fetchAPI('/api/country-demographics');
-            const countryList = countryData.countries || [];
-            document.getElementById('badge-total-countries').innerText = `${countryData.total_origins || countryList.length} Origins`;
+            countryList = countryData.countries || [];
+            const badgeCountries = document.getElementById('badge-total-countries');
+            if (badgeCountries) badgeCountries.innerText = `${countryData.total_origins || countryList.length} Origins`;
 
             const rankingContainer = document.getElementById('ranking-bars-container');
             const totalOriginsBookings = countryData.total_bookings || 1;
 
-            const flagMap = {
-                'Philippines': '🇵🇭', 'United States': '🇺🇸', 'Australia': '🇦🇺', 'United Kingdom': '🇬🇧',
-                'Japan': '🇯🇵', 'South Korea': '🇰🇷', 'China': '🇨🇳', 'Hong Kong': '🇭🇰',
-                'Taiwan': '🇹🇼', 'Singapore': '🇸🇬', 'Malaysia': '🇲🇾', 'Indonesia': '🇮🇩',
-                'Thailand': '🇹🇭', 'Vietnam': '🇻🇳', 'India': '🇮🇳', 'United Arab Emirates': '🇦🇪',
-                'Saudi Arabia': '🇸🇦', 'Qatar': '🇶🇦', 'Germany': '🇩🇪', 'France': '🇫🇷',
-                'Italy': '🇮🇹', 'Spain': '🇪🇸', 'Switzerland': '🇨🇭', 'Netherlands': '🇳🇱',
-                'New Zealand': '🇳🇿', 'Russia': '🇷🇺', 'Canada': '🇨🇦', 'Brazil': '🇧🇷'
-            };
-
-            if (countryList.length > 0) {
-                const top5Markets = countryList.slice(0, 5);
-                rankingContainer.innerHTML = top5Markets.map(c => {
-                    const flag = flagMap[c.country] || '🌐';
-                    const pct = c.share_pct || (Math.round((c.bookings / totalOriginsBookings) * 100));
-                    return `
-                    <div class="ranking-bar-row">
-                        <div class="ranking-bar-meta">
-                            <span class="ranking-bar-label">${flag} ${Security.escapeHTML(c.country)}</span>
-                            <span class="ranking-bar-val">${pct}% (${Security.escapeHTML(c.bookings)})</span>
+            if (rankingContainer) {
+                if (countryList.length > 0) {
+                    const top5Markets = countryList.slice(0, 5);
+                    rankingContainer.innerHTML = top5Markets.map(c => {
+                        const pct = c.share_pct || (Math.round((c.bookings / totalOriginsBookings) * 100));
+                        const safeCountry = typeof Security !== 'undefined' ? Security.escapeHTML(c.country) : c.country;
+                        return `
+                        <div class="ranking-bar-row">
+                            <div class="ranking-bar-meta">
+                                <span class="ranking-bar-label">${safeCountry}</span>
+                                <span class="ranking-bar-val">${pct}% (${c.bookings})</span>
+                            </div>
+                            <div class="ranking-bar-track">
+                                <div class="ranking-bar-fill" style="width:${pct}%;"></div>
+                            </div>
                         </div>
-                        <div class="ranking-bar-track">
-                            <div class="ranking-bar-fill" style="width:${pct}%;"></div>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
-            } else {
-                rankingContainer.innerHTML = '<div class="loading">No guest country data yet.</div>';
+                        `;
+                    }).join('');
+                } else {
+                    rankingContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px;">No guest country data yet.</div>';
+                }
             }
+        } catch (e) {
+            console.error("Country demographics error:", e);
+            const rankingContainer = document.getElementById('ranking-bars-container');
+            if (rankingContainer) rankingContainer.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px;">No guest country data yet.</div>';
+        }
 
-            // 5. Payment Methods Table
+        // 5. Payment Methods Table
+        try {
             const payments = await fetchAPI('/api/payment-methods');
             const pTbody = document.getElementById('payment-methods-tbody');
-            if (payments.length > 0) {
-                pTbody.innerHTML = payments.map(p => `
-                    <tr>
-                        <td style="font-weight:600;">${Security.escapeHTML(p.payment_method || 'Front Desk Cash')}</td>
-                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(p.cnt)} payments</td>
-                        <td style="text-align:right; font-weight:700; color:var(--text-main);">₱${Number(p.total).toLocaleString()}</td>
-                    </tr>
-                `).join('');
-            } else {
-                pTbody.innerHTML = '<tr><td colspan="3" class="loading">No payment records.</td></tr>';
+            if (pTbody) {
+                if (payments && payments.length > 0) {
+                    pTbody.innerHTML = payments.map(p => {
+                        const safeMethod = typeof Security !== 'undefined' ? Security.escapeHTML(p.payment_method || 'Front Desk Cash') : (p.payment_method || 'Front Desk Cash');
+                        return `
+                        <tr>
+                            <td style="font-weight:600;">${safeMethod}</td>
+                            <td style="color:var(--text-muted); font-weight:600;">${p.cnt} payments</td>
+                            <td style="text-align:right; font-weight:700; color:var(--text-main);">₱${Number(p.total).toLocaleString()}</td>
+                        </tr>
+                        `;
+                    }).join('');
+                } else {
+                    pTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:var(--text-muted);">No payment records.</td></tr>';
+                }
             }
+        } catch (e) {
+            console.error("Payment methods error:", e);
+            const pTbody = document.getElementById('payment-methods-tbody');
+            if (pTbody) pTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:var(--text-muted);">No payment records.</td></tr>';
+        }
 
-            // 6. Top Accommodations Table
+        // 6. Top Accommodations Table
+        try {
             const rooms = await fetchAPI('/api/top-accommodations');
             const rTbody = document.getElementById('top-rooms-tbody');
-            if (rooms.length > 0) {
-                rTbody.innerHTML = rooms.map(r => `
-                    <tr>
-                        <td style="font-weight:600;">${Security.escapeHTML(r.accommodation_name)}</td>
-                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(r.cnt)} stays</td>
-                        <td style="text-align:right; font-weight:700; color:var(--primary);">${Security.escapeHTML(r.guests)} guests</td>
-                    </tr>
-                `).join('');
-            } else {
-                rTbody.innerHTML = '<tr><td colspan="3" class="loading">No room booking records.</td></tr>';
+            if (rTbody) {
+                if (rooms && rooms.length > 0) {
+                    rTbody.innerHTML = rooms.map(r => {
+                        const safeRoom = typeof Security !== 'undefined' ? Security.escapeHTML(r.accommodation_name) : r.accommodation_name;
+                        return `
+                        <tr>
+                            <td style="font-weight:600;">${safeRoom}</td>
+                            <td style="color:var(--text-muted); font-weight:600;">${r.cnt} stays</td>
+                            <td style="text-align:right; font-weight:700; color:var(--primary);">${r.guests} guests</td>
+                        </tr>
+                        `;
+                    }).join('');
+                } else {
+                    rTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:var(--text-muted);">No room booking records.</td></tr>';
+                }
             }
-
-            // 7. Full Country Origin Leaderboard Table with Flags & Badges
-            const cTbody = document.getElementById('country-leaderboard-tbody');
-            if (countryList.length > 0) {
-                cTbody.innerHTML = countryList.map((c, idx) => {
-                    const flag = flagMap[c.country] || '🌐';
-                    const rankClass = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : 'rank-other'));
-
-                    return `
-                    <tr>
-                        <td style="font-weight:600; display:flex; align-items:center;">
-                            <span class="rank-pill ${rankClass}">${idx + 1}</span>
-                            <span style="font-size:16px; margin-right:8px;">${flag}</span>
-                            <span>${Security.escapeHTML(c.country)}</span>
-                        </td>
-                        <td style="color:var(--text-muted); font-weight:600;">
-                            ${Security.escapeHTML(c.bookings)}
-                        </td>
-                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(c.unique_customers ?? 0)}</td>
-                        <td style="color:var(--text-muted); font-weight:600;">${Security.escapeHTML(c.booked_guests ?? 0)}</td>
-                        <td>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width:${Math.max(0, Math.min(100, Number(c.share_pct) || 0))}%;"></div>
-                                </div>
-                                <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);">${Math.max(0, Math.min(100, Number(c.share_pct) || 0))}%</span>
-                            </div>
-                        </td>
-                        <td style="text-align:right; font-weight:700; color:var(--text-main);">₱${Number(c.revenue).toLocaleString()}</td>
-                    </tr>
-                    `;
-                }).join('');
-
-                // Size the viewport from the rendered rows so exactly the top 10
-                // remain visible regardless of font scaling or responsive spacing.
-                requestAnimationFrame(() => {
-                    const scrollBox = document.getElementById('country-leaderboard-scroll');
-                    const table = scrollBox?.querySelector('table');
-                    const rows = Array.from(cTbody.querySelectorAll('tr'));
-                    if (!scrollBox || !table) return;
-
-                    if (rows.length > 10) {
-                        const headerHeight = table.tHead?.getBoundingClientRect().height || 0;
-                        const topTenHeight = rows.slice(0, 10).reduce(
-                            (height, row) => height + row.getBoundingClientRect().height,
-                            0
-                        );
-                        scrollBox.style.maxHeight = `${Math.ceil(headerHeight + topTenHeight + 1)}px`;
-                        scrollBox.style.overflowY = 'auto';
-                    } else {
-                        scrollBox.style.maxHeight = 'none';
-                        scrollBox.style.overflowY = 'visible';
-                    }
-                });
-            } else {
-                cTbody.innerHTML = '<tr><td colspan="6" class="loading">No guest country data recorded yet.</td></tr>';
-            }
-
         } catch (e) {
-            console.error("Failed to load dashboard data.", e);
-            document.querySelectorAll('.loading').forEach(el => el.innerHTML = '<span class="error">Failed to load data.</span>');
+            console.error("Top accommodations error:", e);
+            const rTbody = document.getElementById('top-rooms-tbody');
+            if (rTbody) rTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:var(--text-muted);">No room booking records.</td></tr>';
+        }
+
+        // 7. Full Country Origin Leaderboard Table
+        try {
+            const cTbody = document.getElementById('country-leaderboard-tbody');
+            if (cTbody) {
+                if (countryList && countryList.length > 0) {
+                    cTbody.innerHTML = countryList.map((c, idx) => {
+                        const rankClass = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : 'rank-other'));
+                        const safeCountry = typeof Security !== 'undefined' ? Security.escapeHTML(c.country) : c.country;
+
+                        return `
+                        <tr>
+                            <td style="font-weight:600; display:flex; align-items:center;">
+                                <span class="rank-pill ${rankClass}">${idx + 1}</span>
+                                <span>${safeCountry}</span>
+                            </td>
+                            <td style="color:var(--text-muted); font-weight:600;">${c.bookings}</td>
+                            <td style="color:var(--text-muted); font-weight:600;">${c.unique_customers ?? 0}</td>
+                            <td style="color:var(--text-muted); font-weight:600;">${c.booked_guests ?? 0}</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" style="width:${Math.max(0, Math.min(100, Number(c.share_pct) || 0))}%;"></div>
+                                    </div>
+                                    <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);">${Math.max(0, Math.min(100, Number(c.share_pct) || 0))}%</span>
+                                </div>
+                            </td>
+                            <td style="text-align:right; font-weight:700; color:var(--text-main);">₱${Number(c.revenue || 0).toLocaleString()}</td>
+                        </tr>
+                        `;
+                    }).join('');
+                } else {
+                    cTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">No guest country data recorded yet.</td></tr>';
+                }
+            }
+        } catch (e) {
+            console.error("Country leaderboard error:", e);
+            const cTbody = document.getElementById('country-leaderboard-tbody');
+            if (cTbody) cTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">No guest country data recorded yet.</td></tr>';
         }
     }
 

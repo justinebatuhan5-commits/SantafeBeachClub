@@ -404,7 +404,7 @@ $default_prices = [
             font-style: italic;
         }
     </style>
-<script src="assets/js/site-dialog.js?v=1"></script>
+<script src="assets/js/site-dialog.js?v=<?php echo filemtime(__DIR__ . '/assets/js/site-dialog.js'); ?>"></script>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
@@ -418,10 +418,10 @@ $default_prices = [
     ?>
 
     <?php if ($success): ?>
-        <div class="alert alert-success">✔ <?php echo $success; ?></div>
+        <div class="alert alert-success"><?php echo $success; ?></div>
     <?php endif; ?>
     <?php if ($error): ?>
-        <div class="alert alert-error">✖ <?php echo htmlspecialchars($error); ?></div>
+        <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
 
     <div class="rp-grid">

@@ -1255,16 +1255,21 @@ body.home-page {
    STAYS / ROOMS SECTION
    ============================================================ */
 .stays-section {
+    width: 100%;
     padding: 80px 5%;
     background: #faf4ed;
 }
 
 .stays-inner {
+    width: 100%;
     max-width: 1120px;
     margin: 0 auto;
 }
 
 .stays-header {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
     text-align: center;
     margin-bottom: 52px;
 }
@@ -1296,12 +1301,17 @@ body.home-page {
 }
 
 .stays-grid {
+    align-items: stretch;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 28px;
 }
 
 .stay-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(138, 90, 58, 0.12);
     background: #fff;
     border-radius: 20px;
     overflow: hidden;
@@ -1332,6 +1342,9 @@ body.home-page {
 }
 
 .stay-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     padding: 24px;
 }
 
@@ -1344,6 +1357,7 @@ body.home-page {
 }
 
 .stay-card-body > p {
+    flex: 1;
     font-size: 14px;
     color: #6b5e54;
     line-height: 1.68;
@@ -1351,6 +1365,8 @@ body.home-page {
 }
 
 .stay-card-footer {
+    margin-top: auto;
+    gap: 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1421,11 +1437,13 @@ body.home-page {
    TESTIMONIALS SECTION
    ============================================================ */
 .testimonials-section {
+    width: 100%;
     padding: 96px 5%;
     background: linear-gradient(180deg, #faf4ed 0%, #fff 100%);
 }
 
 .testimonials-inner {
+    width: 100%;
     max-width: 1120px;
     margin: 0 auto;
     text-align: center;
@@ -1568,6 +1586,7 @@ body.home-page {
     }
 
     .stays-grid {
+    align-items: stretch;
         gap: 20px;
     }
 
@@ -1860,6 +1879,7 @@ body.home-page {
     }
 
     .stays-grid {
+    align-items: stretch;
         grid-template-columns: 1fr;
     }
 
@@ -1917,33 +1937,6 @@ body.home-page {
         text-align: center;
         justify-content: center;
         padding: 14px 20px;
-    }
-
-    /* Interactive Calendar Mobile Adaptations */
-    .rooms-cal-wrapper {
-        padding: 0 10px !important;
-        margin-bottom: 20px !important;
-    }
-
-    .rooms-cal-wrapper > div {
-        padding: 16px 12px !important;
-    }
-
-    #guest-cal-grid > div {
-        font-size: 9px !important;
-    }
-
-    #guest-cal-days > div {
-        height: 42px !important;
-        padding: 2px !important;
-    }
-
-    #guest-cal-days strong {
-        font-size: 11px !important;
-    }
-
-    #guest-cal-days span {
-        font-size: 8px !important;
     }
 }
 

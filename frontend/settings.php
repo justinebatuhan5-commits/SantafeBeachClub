@@ -401,17 +401,17 @@ $active_tab = $_GET['tab'] ?? 'profile';
             max-width: 860px;
         }
 
-        .page-header {
+        .settings-legacy-header {
             margin-bottom: 28px;
         }
 
-        .page-header h1 {
+        .settings-legacy-header h1 {
             font-size: 24px;
             font-weight: 700;
             color: #1F2937;
         }
 
-        .page-header p {
+        .settings-legacy-header p {
             font-size: 14px;
             color: var(--color-text-muted);
             margin-top: 4px;
@@ -751,10 +751,10 @@ $active_tab = $_GET['tab'] ?? 'profile';
     <?php $active_page = 'settings'; include __DIR__ . '/partials/_sidebar.php'; ?>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content"><?php $page_title = 'Settings'; $page_subtitle = 'Manage your account, team access, and property configuration.'; include __DIR__ . '/partials/_page_header.php'; ?><div class="admin-body">
         <div class="settings-wrapper">
 
-            <div class="page-header">
+            <div class="settings-legacy-header" hidden>
                 <h1>Settings</h1>
                 <p>Manage your account, team access, and property configuration.</p>
             </div>
@@ -1213,7 +1213,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
 
             </div>
         </div>
-    </main>
+        </div></main>
 
     <script>
         function switchTab(tab) {
@@ -1340,7 +1340,7 @@ $active_tab = $_GET['tab'] ?? 'profile';
             // ── Test Buttons ──────────────────────────────────────────────
             testSoundBtn.addEventListener('click', function() {
                 playTestSound();
-                testSoundBtn.textContent = '✓ Played!';
+                testSoundBtn.textContent = 'Played!';
                 setTimeout(function() {
                     testSoundBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Test Sound';
                 }, 1600);
@@ -1351,12 +1351,12 @@ $active_tab = $_GET['tab'] ?? 'profile';
                     SiteDialog.alert('Desktop notifications are not permitted. Enable them first using the toggle above.');
                     return;
                 }
-                var n = new Notification('🔔 Santa Fe Beach Club', {
+                var n = new Notification('Santa Fe Beach Club', {
                     body: 'This is a test desktop notification. You are all set!',
                     tag: 'sbc-test-notif'
                 });
                 setTimeout(function() { n.close(); }, 5000);
-                testDesktopBtn.textContent = '✓ Sent!';
+                testDesktopBtn.textContent = 'Sent!';
                 setTimeout(function() {
                     testDesktopBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Send Test Popup';
                 }, 1600);

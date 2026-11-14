@@ -52,6 +52,7 @@ if ($price_q) {
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Santa Fe Beach Club - Escape to Paradise</title>
+    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <script src="assets/js/dark-mode-toggle.js" defer></script>
@@ -162,7 +163,7 @@ if ($price_q) {
                     Search
                 </button>
                 <p class="booking-policy-note">
-                    <span aria-hidden="true">&#10003;</span>
+                    <span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg></span>
                     Reserve with a 50% deposit. The remaining balance is due 24 hours before arrival.
                 </p>
             </form>
@@ -193,107 +194,107 @@ if ($price_q) {
         </div>
     </section>
     <!-- Stays / Rooms Section -->
-    <section class="stays-section" id="stays">
+    <section class="stays-section py-20 px-[5%]" id="stays">
         <div class="stays-inner">
-            <div class="stays-header">
-                <p class="section-kicker stays-kicker">Signature Stays</p>
-                <h2 class="stays-heading">Choose Your Escape</h2>
-                <p class="stays-subtitle">From cozy standard rooms to private beach villas, every stay is crafted for comfort and unforgettable memories.</p>
+            <div class="stays-header text-center max-w-2xl mx-auto mb-14">
+                <p class="section-kicker stays-kicker text-bronze uppercase tracking-[2px] text-xs font-heading font-bold mb-2">Signature Stays</p>
+                <h2 class="stays-heading font-serif text-3xl md:text-4xl text-resort-dark mb-4">Choose Your Escape</h2>
+                <p class="stays-subtitle font-body text-slate-600 text-base leading-relaxed">From cozy standard rooms to private beach villas, every stay is crafted for comfort and unforgettable memories.</p>
             </div>
-            <div class="stays-grid">
-                <div class="stay-card">
-                    <div class="stay-card-image-wrap">
-                        <div class="stay-card-image" style="background-image: url('<?php echo htmlspecialchars($db_photos['standard_room'] ?? 'assets/rooms/standard/standard-room-1.png'); ?>');"></div>
+            <div class="stays-grid grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="stay-card bg-white rounded-luxury shadow-card hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-warm-gray/60 group">
+                    <div class="stay-card-image-wrap h-64 overflow-hidden relative">
+                        <div class="stay-card-image w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style="background-image: url('<?php echo htmlspecialchars($db_photos['standard_room'] ?? 'assets/rooms/standard/standard-room-1.png'); ?>');"></div>
                     </div>
-                    <div class="stay-card-body">
+                    <div class="stay-card-body p-6 flex flex-col flex-1">
                         <h3>Standard Room</h3>
                         <p>A cozy retreat with all essentials, air conditioning, and garden views, perfect for couples or solo travelers.</p>
-                        <div class="stay-card-footer">
+                        <div class="stay-card-footer flex items-center justify-between pt-4 border-t border-warm-gray/60">
                             <div class="stay-price">
                                 <?php if (!empty($db_prices['standard_room'])): ?>
                                 <span class="stay-price-from">From</span>
                                 <strong>&#8369;<?php echo number_format($db_prices['standard_room']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms#room-standard-room" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-standard-room" class="btn-primary !px-4 !py-2 !text-xs !rounded-lg inline-flex items-center">View Room</a>
                         </div>
                     </div>
                 </div>
-                <div class="stay-card">
-                    <div class="stay-card-image-wrap">
-                        <div class="stay-card-image" style="background-image: url('<?php echo htmlspecialchars($db_photos['beachview_duplex'] ?? 'assets/hero-slide-2.jpg'); ?>');"></div>
+                <div class="stay-card bg-white rounded-luxury shadow-card hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-warm-gray/60 group">
+                    <div class="stay-card-image-wrap h-64 overflow-hidden relative">
+                        <div class="stay-card-image w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style="background-image: url('<?php echo htmlspecialchars($db_photos['beachview_duplex'] ?? 'assets/hero-slide-2.jpg'); ?>');"></div>
                     </div>
-                    <div class="stay-card-body">
+                    <div class="stay-card-body p-6 flex flex-col flex-1">
                         <h3>Beachview Duplex</h3>
                         <p>A spacious two-floor unit with sweeping beach views, a private terrace, and room for the whole family.</p>
-                        <div class="stay-card-footer">
+                        <div class="stay-card-footer flex items-center justify-between pt-4 border-t border-warm-gray/60">
                             <div class="stay-price">
                                 <?php if (!empty($db_prices['beachview_duplex'])): ?>
                                 <span class="stay-price-from">From</span>
                                 <strong>&#8369;<?php echo number_format($db_prices['beachview_duplex']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms#room-beachview-duplex" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-beachview-duplex" class="btn-primary !px-4 !py-2 !text-xs !rounded-lg inline-flex items-center">View Room</a>
                         </div>
                     </div>
                 </div>
-                <div class="stay-card">
-                    <div class="stay-card-image-wrap">
-                        <div class="stay-card-image" style="background-image: url('<?php echo htmlspecialchars($db_photos['seaview_duplex'] ?? 'assets/hero-slide-3.jpg'); ?>');"></div>
+                <div class="stay-card bg-white rounded-luxury shadow-card hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-warm-gray/60 group">
+                    <div class="stay-card-image-wrap h-64 overflow-hidden relative">
+                        <div class="stay-card-image w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style="background-image: url('<?php echo htmlspecialchars($db_photos['seaview_duplex'] ?? 'assets/hero-slide-3.jpg'); ?>');"></div>
                     </div>
-                    <div class="stay-card-body">
+                    <div class="stay-card-body p-6 flex flex-col flex-1">
                         <h3>Seaview Duplex</h3>
                         <p>Wake up to ocean panoramas. This split-level duplex blends open-air living with cool interior comfort.</p>
-                        <div class="stay-card-footer">
+                        <div class="stay-card-footer flex items-center justify-between pt-4 border-t border-warm-gray/60">
                             <div class="stay-price">
                                 <?php if (!empty($db_prices['seaview_duplex'])): ?>
                                 <span class="stay-price-from">From</span>
                                 <strong>&#8369;<?php echo number_format($db_prices['seaview_duplex']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms#room-seaview-duplex" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-seaview-duplex" class="btn-primary !px-4 !py-2 !text-xs !rounded-lg inline-flex items-center">View Room</a>
                         </div>
                     </div>
                 </div>
-                <div class="stay-card">
-                    <div class="stay-card-image-wrap">
-                        <div class="stay-card-image" style="background-image: url('<?php echo htmlspecialchars($db_photos['beach_villa'] ?? 'assets/hero-slide-1.jpg'); ?>');"></div>
+                <div class="stay-card bg-white rounded-luxury shadow-card hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-warm-gray/60 group">
+                    <div class="stay-card-image-wrap h-64 overflow-hidden relative">
+                        <div class="stay-card-image w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style="background-image: url('<?php echo htmlspecialchars($db_photos['beach_villa'] ?? 'assets/hero-slide-1.jpg'); ?>');"></div>
                     </div>
-                    <div class="stay-card-body">
+                    <div class="stay-card-body p-6 flex flex-col flex-1">
                         <h3>Beach Villa</h3>
                         <p>The pinnacle of resort living. A private villa steps from the shoreline, ideal for special occasions.</p>
-                        <div class="stay-card-footer">
+                        <div class="stay-card-footer flex items-center justify-between pt-4 border-t border-warm-gray/60">
                             <div class="stay-price">
                                 <?php if (!empty($db_prices['beach_villa'])): ?>
                                 <span class="stay-price-from">From</span>
                                 <strong>&#8369;<?php echo number_format($db_prices['beach_villa']); ?> <span>/ night</span></strong>
                                 <?php endif; ?>
                             </div>
-                            <a href="rooms#room-beach-villa" class="btn-stay-book">View Room</a>
+                            <a href="rooms#room-beach-villa" class="btn-primary !px-4 !py-2 !text-xs !rounded-lg inline-flex items-center">View Room</a>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="stays-cta-row">
-                <a href="rooms" class="btn-see-all-rooms">View All Room Details &rarr;</a>
+            <div class="stays-cta-row text-center mt-12">
+                <a href="rooms" class="btn-secondary !inline-flex items-center gap-2">View All Room Details &rarr;</a>
             </div>
         </div>
     </section>
 
-    <section class="experience-section" aria-labelledby="resort-story-title">
-        <div class="experience-inner">
+    <section class="experience-section py-20 px-[5%] bg-cream border-y border-warm-gray" aria-labelledby="resort-story-title">
+        <div class="experience-inner max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div class="experience-copy">
-                <span class="experience-kicker">Discover Santa Fe</span>
-                <h2 class="experience-heading" id="resort-story-title">A relaxed island stay near the shore.</h2>
-                <p class="experience-lead">Santa Fe Beach Club brings together comfortable rooms, warm front-desk service, and an easy coastal setting in Pantalan, Santa Fe. Settle in, slow down, and keep the best of Bantayan Island within reach.</p>
-                <div class="experience-actions">
-                    <a href="location" class="experience-primary-link">View Location <span aria-hidden="true">&rarr;</span></a>
-                    <a href="contact" class="experience-secondary-link">Contact Reception</a>
+                <span class="experience-kicker text-bronze uppercase tracking-[2px] text-xs font-heading font-bold mb-2 block">Discover Santa Fe</span>
+                <h2 class="experience-heading font-serif text-3xl md:text-5xl text-resort-dark mb-6 leading-tight" id="resort-story-title">A relaxed island stay near the shore.</h2>
+                <p class="experience-lead font-body text-slate-600 text-base md:text-lg leading-relaxed mb-8">Santa Fe Beach Club brings together comfortable rooms, warm front-desk service, and an easy coastal setting in Pantalan, Santa Fe. Settle in, slow down, and keep the best of Bantayan Island within reach.</p>
+                <div class="experience-actions flex flex-wrap gap-4 items-center">
+                    <a href="location" class="btn-primary !inline-flex items-center gap-2">View Location <span aria-hidden="true">&rarr;</span></a>
+                    <a href="contact" class="btn-secondary !inline-flex items-center">Contact Reception</a>
                 </div>
             </div>
-            <div class="experience-image-wrap">
-                <img class="experience-image" src="assets/hero-slide-4-hd.png" alt="Coastal scenery near Santa Fe Beach Club" loading="lazy">
-                <div class="experience-badge"><span class="experience-badge-value">Santa Fe</span><span class="experience-badge-label">Bantayan Island</span></div>
+            <div class="experience-image-wrap relative rounded-luxury overflow-hidden shadow-card border border-warm-gray">
+                <img class="experience-image w-full h-[420px] object-cover" src="assets/hero-slide-4-hd.png" alt="Coastal scenery near Santa Fe Beach Club" loading="lazy">
+                <div class="experience-badge absolute bottom-6 left-6 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl shadow-md border border-warm-gray flex flex-col"><span class="experience-badge-value font-heading font-bold text-resort-dark text-sm">Santa Fe</span><span class="experience-badge-label text-[11px] text-bronze uppercase tracking-wider font-semibold">Bantayan Island</span></div>
             </div>
         </div>
     </section>
@@ -308,21 +309,21 @@ if ($price_q) {
         }
     }
     ?>
-    <section class="testimonials-section" id="guest-reviews">
+    <section class="testimonials-section py-20 px-[5%]" id="guest-reviews">
         <div class="testimonials-inner">
-            <div class="testimonials-heading-row">
+            <div class="testimonials-heading-row flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                 <div>
-                    <p class="section-kicker testimonials-kicker">Guest Reviews</p>
-                    <h2 class="testimonials-heading">What Our Guests Say</h2>
+                    <p class="section-kicker testimonials-kicker text-bronze uppercase tracking-[2px] text-xs font-heading font-bold mb-2">Guest Reviews</p>
+                    <h2 class="testimonials-heading font-serif text-3xl md:text-4xl text-resort-dark">What Our Guests Say</h2>
                 </div>
-                <button type="button" class="btn btn-primary btn-review" onclick="openReviewModal()">
-                    &#9733; Leave a Review
+                <button type="button" class="btn-primary !inline-flex items-center gap-2 cursor-pointer" onclick="openReviewModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Leave a Review
                 </button>
             </div>
 
             <?php if (empty($reviews_list)): ?>
                 <div class="testimonials-empty">
-                    <div class="testimonials-empty-icon" aria-hidden="true">&#127775;</div>
+                    <div class="testimonials-empty-icon" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:block;margin:0 auto;color:#C8996F;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
                     <h3>No Guest Reviews Yet</h3>
                     <p>Be the first to share your experience staying at Santa Fe Beach Club!</p>
                     <button type="button" class="btn btn-primary btn-review" onclick="openReviewModal()">
@@ -330,10 +331,10 @@ if ($price_q) {
                     </button>
                 </div>
             <?php else: ?>
-                <div class="testimonials-grid">
+                <div class="testimonials-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php foreach ($reviews_list as $rev):
                         $rating_val = max(1, min(5, (int)$rev['rating']));
-                        $stars_html = str_repeat('&#9733;', $rating_val) . str_repeat('&#9734;', 5 - $rating_val);
+                        $stars_html = str_repeat('<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="display:inline-block;vertical-align:-2px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', $rating_val) . str_repeat('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" style="display:inline-block;vertical-align:-2px;opacity:.45;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', 5 - $rating_val);
                         $name_parts = explode(' ', trim($rev['guest_name']));
                         $initials = '';
                         foreach ($name_parts as $p) {
@@ -341,11 +342,11 @@ if ($price_q) {
                         }
                         $initials = substr($initials, 0, 2) ?: 'G';
                     ?>
-                    <div class="testimonial-card">
-                        <div class="testimonial-stars" aria-label="<?php echo $rating_val; ?> out of 5 stars"><?php echo $stars_html; ?></div>
-                        <p class="testimonial-text">"<?php echo htmlspecialchars($rev['review_text'], ENT_QUOTES, 'UTF-8'); ?>"</p>
-                        <div class="testimonial-author">
-                            <div class="testimonial-avatar" aria-hidden="true"><?php echo htmlspecialchars($initials, ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="testimonial-card bg-white rounded-luxury p-6 shadow-card border border-warm-gray/60 flex flex-col justify-between hover:shadow-hover transition-shadow duration-300">
+                        <div class="testimonial-stars text-amber-500 tracking-wider text-base mb-3" aria-label="<?php echo $rating_val; ?> out of 5 stars"><?php echo $stars_html; ?></div>
+                        <p class="testimonial-text font-body text-slate-700 italic text-sm leading-relaxed mb-6 flex-1">"<?php echo htmlspecialchars($rev['review_text'], ENT_QUOTES, 'UTF-8'); ?>"</p>
+                        <div class="testimonial-author flex items-center gap-3 pt-4 border-t border-warm-gray/40">
+                            <div class="testimonial-avatar w-10 h-10 rounded-full bg-bronze/10 text-bronze font-heading font-bold flex items-center justify-center text-sm border border-bronze/20" aria-hidden="true"><?php echo htmlspecialchars($initials, ENT_QUOTES, 'UTF-8'); ?></div>
                             <div>
                                 <strong><?php echo htmlspecialchars($rev['guest_name'], ENT_QUOTES, 'UTF-8'); ?></strong>
                                 <span><?php echo htmlspecialchars($rev['guest_location'] ?: 'Verified Guest', ENT_QUOTES, 'UTF-8'); ?></span>
@@ -413,11 +414,11 @@ if ($price_q) {
                 <div style="margin-bottom:14px;">
                     <label style="display:block; font-size:12px; font-weight:700; color:#374151; margin-bottom:4px;">YOUR RATING</label>
                     <div style="display:flex; gap:8px; font-size:26px; cursor:pointer; color:#D1D5DB;" id="starRatingContainer">
-                        <span onclick="setRating(1)" class="star-item">&#9733;</span>
-                        <span onclick="setRating(2)" class="star-item">&#9733;</span>
-                        <span onclick="setRating(3)" class="star-item">&#9733;</span>
-                        <span onclick="setRating(4)" class="star-item">&#9733;</span>
-                        <span onclick="setRating(5)" class="star-item">&#9733;</span>
+                        <span onclick="setRating(1)" class="star-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="display:block;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+                        <span onclick="setRating(2)" class="star-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="display:block;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+                        <span onclick="setRating(3)" class="star-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="display:block;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+                        <span onclick="setRating(4)" class="star-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="display:block;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+                        <span onclick="setRating(5)" class="star-item"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="display:block;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
                     </div>
                     <input type="hidden" name="rating" id="reviewRatingInput" value="5" required>
                 </div>

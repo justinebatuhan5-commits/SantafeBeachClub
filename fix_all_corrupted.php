@@ -14,7 +14,7 @@ foreach ($files as $file) {
     // Replace corrupted dots / bullets: A&middot;, Â·, Â &middot;, ?"
     $raw = str_replace(["A&middot;", "Â·", "Â &middot;"], "·", $raw);
     $raw = str_replace(["?\"", "—"], "-", $raw);
-    $raw = str_replace("o\"", "✓", $raw);
+    $raw = str_replace("o\"", "", $raw);
     $raw = str_replace("+'", "→", $raw);
     
     file_put_contents($file, $raw);

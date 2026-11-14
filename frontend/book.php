@@ -83,7 +83,6 @@ $allowed_room_types = ['beachview_duplex', 'seaview_duplex', 'beach_villa', 'sta
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && (isset($_GET['rebook']) && $_GET['rebook'] === '1')) {
     $rebook_session_fields = [
-        'guest_title' => 'title',
         'guest_first_name' => 'first_name',
         'guest_last_name' => 'last_name',
         'guest_email' => 'email',
@@ -101,11 +100,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && (isset($_GET['rebook']) && $_GET['r
 
 $step = isset($_REQUEST['step']) ? (int)$_REQUEST['step'] : 1;
 
-// Grab values from homepage search or session/request
-$checkin = isset($_REQUEST['checkin']) ? $_REQUEST['checkin'] : (isset($_SESSION['book_checkin']) ? $_SESSION['book_checkin'] : date('Y-m-d'));
-$checkout = isset($_REQUEST['checkout']) ? $_REQUEST['checkout'] : (isset($_SESSION['book_checkout']) ? $_SESSION['book_checkout'] : date('Y-m-d', strtotime('+1 day')));
+// Grab values from homepage search, chatbot pre-filled link, or session/request
+$checkin = $_REQUEST['checkin'] ?? ($_REQUEST['check_in'] ?? ($_SESSION['book_checkin'] ?? date('Y-m-d')));
+$checkout = $_REQUEST['checkout'] ?? ($_REQUEST['check_out'] ?? ($_SESSION['book_checkout'] ?? date('Y-m-d', strtotime('+1 day'))));
 $guests = isset($_REQUEST['guests']) ? (int)$_REQUEST['guests'] : (isset($_SESSION['book_guests']) ? (int)$_SESSION['book_guests'] : 2);
-$room_type = isset($_REQUEST['room_type']) ? $_REQUEST['room_type'] : (isset($_SESSION['book_room_type']) ? $_SESSION['book_room_type'] : 'beachview_duplex');
+$room_type = $_REQUEST['room_type'] ?? ($_REQUEST['room'] ?? ($_SESSION['book_room_type'] ?? 'beachview_duplex'));
 if (!in_array($room_type, $allowed_room_types, true)) {
     $room_type = 'standard_room';
 }
@@ -315,7 +314,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         } elseif ($_POST['action'] === 'go_step_3') {
             // Save guest details
-            $_SESSION['guest_title'] = $_POST['title'] ?? 'Mr.';
             $_SESSION['guest_first_name'] = ucwords(strtolower(trim($_POST['first_name'] ?? '')));
             $_SESSION['guest_last_name'] = ucwords(strtolower(trim($_POST['last_name'] ?? '')));
             $_SESSION['guest_email'] = trim($_POST['email'] ?? '');
@@ -436,10 +434,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $cancel_token = bin2hex(random_bytes(16));
             $payment_method = $_POST['payment_method'] ?? 'Bank Deposit';
             $bank_reference = isset($_POST['bank_reference']) ? trim($_POST['bank_reference']) : '';
+            $gcash_reference = isset($_POST['gcash_reference']) ? trim($_POST['gcash_reference']) : '';
             $skip_insert = false;
 
             if ($payment_method === 'Bank Deposit' && empty($bank_reference)) {
                 $error = 'Please enter your Bank transfer reference number to continue.';
+                $step = 3;
+                $skip_insert = true;
+            } elseif ($payment_method === 'GCash QR' && empty($gcash_reference)) {
+                $error = 'Please enter your GCash reference number to continue.';
                 $step = 3;
                 $skip_insert = true;
             }
@@ -447,6 +450,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $payment_ref = 'TXN-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
             if ($payment_method === 'Bank Deposit') {
                 $payment_ref = $bank_reference;
+            } elseif ($payment_method === 'GCash QR') {
+                $payment_ref = $gcash_reference;
             }
 
             $receipt_url = null;
@@ -728,6 +733,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Reservation - Santa Fe Beach Club</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="assets/css/book.css?v=<?= time(); ?>">
     <script src="assets/js/security.js?v=<?= time(); ?>" defer></script>
@@ -738,12 +744,21 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
 
     <!-- Header -->
     <header class="main-header">
-        <div class="brand-logo" style="display:flex; align-items:center;">
-            <a href="index" class="logo-link"><img src="assets/logo.jpg" alt="Santa Fe Beach Club" style="height:40px; width:40px; border-radius:50%; object-fit:cover;"></a>
+        <div class="bk-brand-group">
+            <a href="index" class="logo-link">
+                <img src="assets/logo.jpg" alt="Santa Fe Beach Club" class="bk-brand-logo-img">
+                <span>Santa Fe Beach Club</span>
+            </a>
+            <span class="bk-secure-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Secure Reservation
+            </span>
         </div>
-        <nav class="nav-menu">
+        <nav class="nav-menu" aria-label="Checkout navigation">
             <ul>
-                <li><a href="index#about" style="color:#111; font-weight:600;">About Us</a></li>
+                <li><a href="rooms">Rooms</a></li>
+                <li><a href="contact">Contact</a></li>
+                <li><a href="my_booking">Manage Booking</a></li>
             </ul>
         </nav>
     </header>
@@ -791,7 +806,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom: 5px; font-size: 13px;">
                         <span>Deposit (Pending Verification):</span>
-                        <strong style="color: #0284c7;">₱ <?php echo number_format($deposit_amount, 2); ?></strong>
+                        <strong style="color: #7C533C;">₱ <?php echo number_format($deposit_amount, 2); ?></strong>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-top: 10px; font-size: 15px; font-weight: 700; color: #b45309; background: #fffbeb; padding: 10px; border-radius: 6px;">
                         <span>Balance due at Front Desk:</span>
@@ -815,7 +830,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                 </a>
                 <a href="assets/qrcodes/qr_booking_<?php echo $booking_id; ?>.png" 
                    download="SantaFe_Pass_<?php echo htmlspecialchars($booking_ref); ?>.png"
-                   class="btn-home" style="background:#0F172A; color:#fff; margin-right:10px;">
+                   class="btn-home" style="background:#3A251A; color:#fff; margin-right:10px;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px; vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Save QR Pass (PNG)
                 </a>
@@ -826,28 +841,34 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
     <?php else: ?>
 
     <div class="bk-layout">
-        
-        <!-- Top Progress Bar -->
-        <div class="bk-progress">
-            <div class="bk-step <?php echo $step >= 1 ? 'bk-step--active' : ''; ?> <?php echo $step > 1 ? 'bk-step--done' : ''; ?>">
-                <div class="bk-step-num">
-                    <?php if($step > 1): ?><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><?php else: ?>1<?php endif; ?>
-                </div>
-                <div class="bk-step-label">CONFIRMATION & EXTRAS</div>
+        <nav class="bk-progress" aria-label="Booking progress">
+            <div class="bk-step <?php echo $step === 1 ? 'bk-step--active' : ($step > 1 ? 'bk-step--done' : ''); ?>">
+                <span class="bk-step-num">
+                    <?php if ($step > 1): ?>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <?php else: ?>
+                        1
+                    <?php endif; ?>
+                </span>
+                <span class="bk-step-label">Room &amp; Extras</span>
             </div>
-            <div class="bk-line"></div>
-            <div class="bk-step <?php echo $step >= 2 ? 'bk-step--active' : ''; ?> <?php echo $step > 2 ? 'bk-step--done' : ''; ?>">
-                <div class="bk-step-num">
-                    <?php if($step > 2): ?><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><?php else: ?>2<?php endif; ?>
-                </div>
-                <div class="bk-step-label">GUEST DETAILS</div>
+            <div class="bk-line" aria-hidden="true"></div>
+            <div class="bk-step <?php echo $step === 2 ? 'bk-step--active' : ($step > 2 ? 'bk-step--done' : ''); ?>">
+                <span class="bk-step-num">
+                    <?php if ($step > 2): ?>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    <?php else: ?>
+                        2
+                    <?php endif; ?>
+                </span>
+                <span class="bk-step-label">Guest Details</span>
             </div>
-            <div class="bk-line"></div>
-            <div class="bk-step <?php echo $step >= 3 ? 'bk-step--active' : ''; ?>">
-                <div class="bk-step-num">3</div>
-                <div class="bk-step-label">PAYMENT</div>
+            <div class="bk-line" aria-hidden="true"></div>
+            <div class="bk-step <?php echo $step === 3 ? 'bk-step--active' : ''; ?>">
+                <span class="bk-step-num">3</span>
+                <span class="bk-step-label">Review &amp; Payment</span>
             </div>
-        </div>
+        </nav>
 
         <?php if (!empty($error)): ?>
             <div class="bk-error-banner">
@@ -908,7 +929,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                                         <span><?php echo $guests_total; ?> adult<?php echo $guests_total > 1 ? 's' : ''; ?></span>
                                     </span>
                                     <?php if (($pricing['extra_person_total'] ?? 0) > 0): ?>
-                                        <span style="color:#0284C7; font-weight:600;">(includes <?php echo $pricing['extra_adults']; ?> extra adult<?php echo $pricing['extra_adults']>1?'s':''; ?>)</span>
+                                        <span style="color:#7C533C; font-weight:600;">(includes <?php echo $pricing['extra_adults']; ?> extra adult<?php echo $pricing['extra_adults']>1?'s':''; ?>)</span>
                                     <?php endif; ?>
                                 </div>
                                 <?php if ($discount_amount > 0): ?>
@@ -919,21 +940,21 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     </div>
 
                     <!-- PROMO CODE INPUT BOX -->
-                    <div class="bk-card" style="padding:16px 20px;">
-                        <h3 style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                    <div class="bk-card" style="padding:18px 22px;">
+                        <h3 style="font-size:14px; font-weight:700; margin-bottom:10px; color:var(--ink); display:flex; align-items:center; gap:8px;">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7C533C" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                             Have a Promo / Coupon Code?
                         </h3>
                         <div style="display:flex; gap:10px; align-items:center;">
-                            <input type="text" name="promo_code" value="<?php echo htmlspecialchars($applied_promo_code ?? ''); ?>" placeholder="Enter code (e.g. SUMMER2026)" style="flex:1; padding:10px 14px; border:1px solid #CBD5E1; border-radius:8px; font-size:13px; text-transform:uppercase;">
-                            <button type="submit" name="apply_promo" value="1" class="btn-secondary" style="padding:10px 16px; font-size:12px; font-weight:700; cursor:pointer; background:#0F172A; color:#FFF; border-radius:8px; border:none;">Apply</button>
+                            <input type="text" name="promo_code" value="<?php echo htmlspecialchars($applied_promo_code ?? ''); ?>" placeholder="Enter code (e.g. SUMMER2026)" style="flex:1; padding:10px 14px; border:1.5px solid #EAE0D5; border-radius:10px; font-size:13px; text-transform:uppercase; background:#FAF7F2; color:#2B2420;">
+                            <button type="submit" name="apply_promo" value="1" class="btn-secondary" style="padding:10px 18px; font-size:12.5px; font-weight:700; cursor:pointer; background:#5C3D2B; color:#FFF; border-radius:10px; border:none;">Apply</button>
                             <?php if ($applied_promo_code): ?>
                                 <button type="submit" name="remove_promo" value="1" class="btn-secondary" style="padding:10px 12px; font-size:12px; cursor:pointer; background:#FEE2E2; color:#B91C1C; border-radius:8px; border:none;">Remove</button>
                             <?php endif; ?>
                         </div>
                         <?php if ($applied_promo_code && $discount_amount > 0): ?>
                             <div style="margin-top:8px; font-size:12px; color:#15803D; font-weight:600;">
-                                ✓ Code <strong><?php echo htmlspecialchars($applied_promo_code); ?></strong> applied! You save ₱<?php echo number_format($discount_amount, 2); ?>.
+                                Code <strong><?php echo htmlspecialchars($applied_promo_code); ?></strong> applied! You save ₱<?php echo number_format($discount_amount, 2); ?>.
                             </div>
                         <?php endif; ?>
                     </div>
@@ -953,15 +974,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                         <div class="bk-form-grid">
                             <div class="bk-form-group">
                                 <label>First name <span class="req">*</span></label>
-                                <div class="bk-input-combo">
-                                    <select name="title" class="bk-select-honorific" style="width:66px; min-width:66px; max-width:66px; flex:0 0 66px;" aria-label="Honorific Title">
-                                        <option value="Mr." <?php echo (($_SESSION['guest_title'] ?? 'Mr.') === 'Mr.') ? 'selected' : ''; ?>>Mr.</option>
-                                        <option value="Ms." <?php echo (($_SESSION['guest_title'] ?? '') === 'Ms.') ? 'selected' : ''; ?>>Ms.</option>
-                                        <option value="Mrs." <?php echo (($_SESSION['guest_title'] ?? '') === 'Mrs.') ? 'selected' : ''; ?>>Mrs.</option>
-                                        <option value="Dr." <?php echo (($_SESSION['guest_title'] ?? '') === 'Dr.') ? 'selected' : ''; ?>>Dr.</option>
-                                    </select>
-                                    <input type="text" name="first_name" placeholder="First name" required data-validate="name" data-label="First name" style="text-transform: capitalize;" value="<?php echo htmlspecialchars($_SESSION['guest_first_name'] ?? ''); ?>">
-                                </div>
+                                <input type="text" name="first_name" placeholder="First name" required data-validate="name" data-label="First name" style="text-transform: capitalize;" value="<?php echo htmlspecialchars($_SESSION['guest_first_name'] ?? ''); ?>">
                             </div>
                             <div class="bk-form-group">
                                 <label>Last name <span class="req">*</span></label>
@@ -982,45 +995,18 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                                 <div class="bk-input-combo">
                                     <select name="phone_code" class="bk-select-phone" aria-label="Country Code">
                                         <?php
-                                        $phone_codes = [
-                                            ['code' => '+63', 'flag' => '🇵🇭', 'name' => 'PH (+63)'],
-                                            ['code' => '+1',  'flag' => '🇺🇸', 'name' => 'US/CA (+1)'],
-                                            ['code' => '+61', 'flag' => '🇦🇺', 'name' => 'AU (+61)'],
-                                            ['code' => '+44', 'flag' => '🇬🇧', 'name' => 'UK (+44)'],
-                                            ['code' => '+81', 'flag' => '🇯🇵', 'name' => 'JP (+81)'],
-                                            ['code' => '+82', 'flag' => '🇰🇷', 'name' => 'KR (+82)'],
-                                            ['code' => '+86', 'flag' => '🇨🇳', 'name' => 'CN (+86)'],
-                                            ['code' => '+852','flag' => '🇭🇰', 'name' => 'HK (+852)'],
-                                            ['code' => '+886','flag' => '🇹🇼', 'name' => 'TW (+886)'],
-                                            ['code' => '+65', 'flag' => '🇸🇬', 'name' => 'SG (+65)'],
-                                            ['code' => '+60', 'flag' => '🇲🇾', 'name' => 'MY (+60)'],
-                                            ['code' => '+62', 'flag' => '🇮🇩', 'name' => 'ID (+62)'],
-                                            ['code' => '+66', 'flag' => '🇹🇭', 'name' => 'TH (+66)'],
-                                            ['code' => '+84', 'flag' => '🇻🇳', 'name' => 'VN (+84)'],
-                                            ['code' => '+91', 'flag' => '🇮🇳', 'name' => 'IN (+91)'],
-                                            ['code' => '+971','flag' => '🇦🇪', 'name' => 'AE (+971)'],
-                                            ['code' => '+966','flag' => '🇸🇦', 'name' => 'SA (+966)'],
-                                            ['code' => '+974','flag' => '🇶🇦', 'name' => 'QA (+974)'],
-                                            ['code' => '+49', 'flag' => '🇩🇪', 'name' => 'DE (+49)'],
-                                            ['code' => '+33', 'flag' => '🇫🇷', 'name' => 'FR (+33)'],
-                                            ['code' => '+39', 'flag' => '🇮🇹', 'name' => 'IT (+39)'],
-                                            ['code' => '+34', 'flag' => '🇪🇸', 'name' => 'ES (+34)'],
-                                            ['code' => '+41', 'flag' => '🇨🇭', 'name' => 'CH (+41)'],
-                                            ['code' => '+31', 'flag' => '🇳🇱', 'name' => 'NL (+31)'],
-                                            ['code' => '+64', 'flag' => '🇳🇿', 'name' => 'NZ (+64)'],
-                                            ['code' => '+7',  'flag' => '🇷🇺', 'name' => 'RU (+7)'],
-                                            ['code' => '+55', 'flag' => '🇧🇷', 'name' => 'BR (+55)'],
-                                            ['code' => '+52', 'flag' => '🇲🇽', 'name' => 'MX (+52)'],
-                                            ['code' => '+27', 'flag' => '🇿🇦', 'name' => 'ZA (+27)'],
-                                        ];
-                                        $selected_phone_code = $_SESSION['guest_phone_code'] ?? '+63';
+                                        require_once __DIR__ . '/../backend/helpers/country_codes.php';
+                                        $country_calling_codes = sf_get_country_calling_codes();
+                                        $phone_codes = sf_get_distinct_calling_codes();
+                                        $selected_country = $_SESSION['guest_country'] ?? '';
+                                        $selected_phone_code = $_SESSION['guest_phone_code'] ?? ($selected_country && isset($country_calling_codes[$selected_country]) ? $country_calling_codes[$selected_country]['code'] : '+63');
                                         foreach ($phone_codes as $item):
                                             $sel = ($selected_phone_code === $item['code']) ? 'selected' : '';
-                                            echo "<option value=\"" . htmlspecialchars($item['code']) . "\" {$sel}>" . $item['flag'] . " " . htmlspecialchars($item['code']) . "</option>\n";
+                                            echo "<option value=\"" . htmlspecialchars($item['code']) . "\" data-flag=\"" . htmlspecialchars($item['flag']) . "\" {$sel}>" . htmlspecialchars($item['display']) . "</option>\n";
                                         endforeach;
                                         ?>
                                     </select>
-                                    <input type="tel" name="phone" placeholder="09171234567" required data-validate="phone" data-label="Phone number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
+                                    <input type="tel" name="phone" placeholder="<?php echo ($selected_phone_code === '+63') ? '09171234567' : 'e.g. 12345678'; ?>" required data-validate="phone" data-label="Phone number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
                                 </div>
                             </div>
                             <div class="bk-form-group">
@@ -1079,10 +1065,10 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                                         'Nauru','New Zealand','Palau','Papua New Guinea','Samoa',
                                         'Solomon Islands','Tonga','Tuvalu','Vanuatu',
                                     ];
-                                    $selected_country = $_SESSION['guest_country'] ?? '';
                                     foreach ($countries as $country):
                                         $sel = ($selected_country === $country) ? 'selected' : '';
-                                        echo "<option value=\"" . htmlspecialchars($country) . "\" {$sel}>" . htmlspecialchars($country) . "</option>\n";
+                                        $info = $country_calling_codes[$country] ?? ['code' => '+63', 'flag' => 'PH'];
+                                        echo "<option value=\"" . htmlspecialchars($country) . "\" data-dial-code=\"" . htmlspecialchars($info['code']) . "\" data-flag=\"" . htmlspecialchars($info['flag']) . "\" {$sel}>" . htmlspecialchars($country) . "</option>\n";
                                     endforeach;
                                     ?>
                                 </select>
@@ -1117,6 +1103,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     <?php elseif ($step === 3): ?>
                     <div class="bk-card bk-discount-card">
                         <h2 class="bk-card-title">Senior Citizen / PWD discount</h2>
+                        <p class="bk-card-sub">Applicable to valid Senior Citizen or PWD ID holders upon front desk verification.</p>
                         <input type="hidden" name="discount_request_nonce" value="<?php echo htmlspecialchars($_SESSION['discount_request_nonce'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                         <label for="discountCategory">Booking type</label>
                         <select name="discount_category" id="discountCategory" class="bk-input">
@@ -1144,40 +1131,38 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     <!-- STEP 3: PAYMENT -->
                     <div class="bk-card">
                         <div class="bk-card-header-flex">
-                            <h2 class="bk-card-title" style="margin:0;">Pay 50% Deposit With</h2>
-                            <div class="bk-pay-logos">
-                                <span style="font-size:10.5px; font-weight:800; display:flex; align-items:center; color:#059669; background:#ECFDF5; padding:3px 8px; border-radius:6px; letter-spacing:0.5px;">
-                                    ⚡ AUTO CONFIRMED
-                                </span>
+                            <div>
+                                <h2 class="bk-card-title" style="margin:0;">Pay 50% Deposit With</h2>
+                                <p class="bk-card-sub" style="margin:6px 0 0;">Select your preferred method to settle the 50% reservation deposit.</p>
                             </div>
                         </div>
 
                         <!-- 1. INSTANT ONLINE PAYMONGO (AUTO CONFIRMED) -->
                         <div class="bk-pay-option bk-pay-option--active" id="opt-paymongo">
-                            <label class="bk-pay-radio" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                                <div style="display:flex; align-items:center;">
+                            <label class="bk-pay-radio">
+                                <span class="bk-pay-radio-left">
                                     <input type="radio" name="payment_method" value="PayMongo Online" checked>
-                                    <span style="font-size:16px; margin-right:8px;">⚡</span>
-                                    <div>
-                                        <strong style="font-size:14.5px; color:#0F172A;">Instant Online (GCash / Maya / Cards / QR Ph)</strong>
-                                        <div style="font-size:12px; color:#64748B; margin-top:2px;">Fastest confirmation • Powered by PayMongo</div>
-                                    </div>
-                                </div>
-                                <span style="background:#DCFCE7; color:#15803D; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0;">
-                                    AUTO CONFIRMED
+                                    <span class="bk-pay-icon-box" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                                    </span>
+                                    <span class="bk-pay-title-wrap">
+                                        <strong class="bk-pay-title">Instant Online (GCash / Maya / Cards / QR Ph)</strong>
+                                        <span class="bk-pay-subtitle">Fastest confirmation &bull; Powered by PayMongo</span>
+                                    </span>
                                 </span>
+                                <span class="bk-pay-badge bk-pay-badge--auto">Auto Confirmed</span>
                             </label>
-                            <div id="paymongo-form" class="bk-card-form" style="padding-top:14px;">
-                                <div style="background:#F0FDF4; border:1.5px solid #BBF7D0; border-radius:12px; padding:16px 18px; margin-bottom:12px;">
-                                    <div style="font-size:13.5px; color:#166534; font-weight:600; line-height:1.5;">
-                                        👉 Upon clicking <strong>"Confirm & Pay ₱ <?php echo number_format($deposit_amount, 2); ?>"</strong>, you will be redirected to the secure PayMongo checkout screen.
+                            <div id="paymongo-form" class="bk-card-form">
+                                <div class="bk-pay-infobox bk-pay-infobox--emerald">
+                                    <div style="font-size:13.5px; color:#166534; font-weight:600; line-height:1.55;">
+                                        Upon clicking <strong>"Confirm and book"</strong>, you will be redirected to the secure PayMongo checkout screen to settle <strong>₱ <?php echo number_format($deposit_amount, 2); ?></strong>.
                                     </div>
-                                    <div style="font-size:12.5px; color:#15803D; margin-top:8px; display:flex; align-items:center; gap:6px;">
-                                        <span>💳 Visa / Mastercard</span> &bull; <span>📱 GCash</span> &bull; <span>💚 Maya</span> &bull; <span>📲 QR Ph</span>
+                                    <div style="font-size:12px; color:#15803D; margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:6px;">
+                                        <span>Visa / Mastercard</span> &bull; <span>GCash</span> &bull; <span>Maya</span> &bull; <span>QR Ph</span>
                                     </div>
                                 </div>
-                                <p style="font-size:12px; color:#059669; font-weight:600; margin:0;">
-                                    ✓ No need to upload receipt. Your booking is verified instantly upon payment.
+                                <p style="font-size:12px; color:#166534; font-weight:600; margin:0;">
+                                    No receipt upload required. Your reservation is confirmed immediately upon payment.
                                 </p>
                             </div>
                         </div>
@@ -1185,95 +1170,118 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                         <!-- 2. BANK TRANSFER (MANUAL VERIFICATION) -->
                         <div class="bk-pay-option" id="opt-bank">
                             <label class="bk-pay-radio">
-                                <input type="radio" name="payment_method" value="Bank Deposit">
-                                <span style="font-size:11px; font-weight:700; display:inline-flex; align-items:center; margin-right:6px; color:#555; letter-spacing:0.5px;">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                                    BANK TRANSFER
+                                <span class="bk-pay-radio-left">
+                                    <input type="radio" name="payment_method" value="Bank Deposit">
+                                    <span class="bk-pay-icon-box" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/></svg>
+                                    </span>
+                                    <span class="bk-pay-title-wrap">
+                                        <strong class="bk-pay-title">Bank Deposit (BDO)</strong>
+                                        <span class="bk-pay-subtitle">Direct bank transfer with receipt upload</span>
+                                    </span>
                                 </span>
-                                <strong style="font-size:14.5px; color:#0F172A;">Bank Deposit (Manual)</strong>
+                                <span class="bk-pay-badge bk-pay-badge--manual">Manual Verification</span>
                             </label>
-                            <div id="bank-form" class="bk-card-form" style="display:none; padding-top: 16px;">
-                                <p style="font-size:13.5px; color:#475569; margin:0 0 16px 0; line-height:1.5;">Please transfer the 50% deposit amount (<strong>₱ <?php echo number_format($deposit_amount, 2); ?></strong>) to our BDO Account.</p>
-                                <div style="background:#F0F8FF; border-radius:12px; padding:16px 20px; margin-bottom:20px; border:1px solid #E0F2FE;">
-                                    <div style="font-size:13px; color:#64748B; margin-bottom:6px;">Bank Name: <strong style="color:#0F172A;">BDO (Banco de Oro)</strong></div>
-                                    <div style="font-size:13px; color:#64748B; margin-bottom:6px;">Account Name: <strong style="color:#0F172A;">Santa Fe Beach Club</strong></div>
-                                    <div style="font-size:13px; color:#64748B;">Account Number: <strong style="color:#0F172A; letter-spacing:0.5px;">0012 3456 7890</strong></div>
+                            <div id="bank-form" class="bk-card-form" style="display:none;">
+                                <p style="font-size:13.5px; color:#4A3E36; margin:0; line-height:1.55;">Please transfer the 50% deposit amount (<strong>₱ <?php echo number_format($deposit_amount, 2); ?></strong>) to our BDO account below.</p>
+                                <div class="bk-pay-infobox">
+                                    <div style="font-size:13px; color:#6E6259; margin-bottom:5px;">Bank Name: <strong style="color:#2B2420;">BDO (Banco de Oro)</strong></div>
+                                    <div style="font-size:13px; color:#6E6259; margin-bottom:5px;">Account Name: <strong style="color:#2B2420;">Santa Fe Beach Club</strong></div>
+                                    <div style="font-size:13px; color:#6E6259;">Account Number: <strong style="color:#7C533C; letter-spacing:0.5px;">0012 3456 7890</strong></div>
                                 </div>
-                                <div class="bk-form-group" style="width:100%; text-align:left; margin-bottom:18px;">
-                                    <label style="font-size:11px; font-weight:800; color:#1E293B; margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Bank Reference / Transaction Number <span class="req" style="color:#EF4444;">*</span></label>
-                                    <input type="text" name="bank_reference" id="bankReferenceInput" placeholder="Enter reference number" value="<?php echo htmlspecialchars($_POST['bank_reference'] ?? ''); ?>" style="width:100%; padding:13px 16px; border:1.5px solid #E0F2FE; border-radius:10px; font-size:14px; outline:none; background:#F8FAFC; color:#1E293B; box-sizing:border-box; transition:border-color 0.2s, background 0.2s;" onfocus="this.style.borderColor='#007AFF'; this.style.background='#FFFFFF';" onblur="this.style.borderColor='#E0F2FE'; this.style.background='#F8FAFC';">
+                                <div class="bk-form-group" style="width:100%; text-align:left;">
+                                    <label for="bankReferenceInput">Bank Reference / Transaction Number <span class="req">*</span></label>
+                                    <input type="text" name="bank_reference" id="bankReferenceInput" placeholder="Enter reference number" value="<?php echo htmlspecialchars($_POST['bank_reference'] ?? ''); ?>">
                                     <div id="bankRefError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500;">Please enter the reference number.</div>
                                 </div>
-                                <div class="bk-form-group" style="width:100%; text-align:left; margin-bottom:16px;">
-                                    <label style="font-size:11px; font-weight:800; color:#1E293B; margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Upload Payment Receipt (JPG, PNG, PDF &mdash; Max 2MB) <span class="req" style="color:#EF4444;">*</span></label>
-                                    <input type="file" name="bank_receipt" id="bankReceiptInput" accept="image/jpeg,image/png,image/webp,application/pdf" data-max-size="2" data-label="Bank receipt" style="width:100%; padding:12px 16px; border:1.5px dashed #BAE6FD; border-radius:10px; font-size:14px; outline:none; background:#F8FAFC; color:#64748B; box-sizing:border-box;" onchange="validateReceiptFile(this, ['jpg','jpeg','png','pdf'], 'bankReceiptError')">
+                                <div class="bk-form-group" style="width:100%; text-align:left;">
+                                    <label for="bankReceiptInput">Upload Payment Receipt (JPG, PNG, PDF &mdash; Max 2MB) <span class="req">*</span></label>
+                                    <input type="file" name="bank_receipt" id="bankReceiptInput" accept="image/jpeg,image/png,image/webp,application/pdf" data-max-size="2" data-label="Bank receipt" style="width:100%; padding:12px 15px; border:1.5px dashed #C8996F; border-radius:10px; font-size:13.5px; outline:none; background:#FAF7F2; color:#6E6259; box-sizing:border-box;" onchange="validateReceiptFile(this, ['jpg','jpeg','png','pdf'], 'bankReceiptError')">
                                     <div id="bankReceiptError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500; background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; padding:8px 12px; align-items:center; gap:6px;">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                         <span>Invalid file. Please upload an actual JPG, PNG, or PDF file — renaming other file types (e.g. .exe renamed to .png) is not allowed.</span>
                                     </div>
                                 </div>
-                                <p style="font-size:12px; color:#94A3B8; text-align:center; margin:16px 0 0 0;">Your booking remains pending until our front desk verifies the payment.</p>
+                                <p style="font-size:12px; color:#6E6259; margin:0;">Your booking remains pending until our front desk verifies your transfer receipt.</p>
                             </div>
                         </div>
 
                         <!-- 3. GCASH QR CODE UPLOAD (MANUAL VERIFICATION) -->
                         <div class="bk-pay-option" id="opt-online">
                             <label class="bk-pay-radio">
-                                <input type="radio" name="payment_method" value="GCash QR">
-                                <img src="assets/images/gcash_logo.png?v=<?php echo time(); ?>" alt="GCash" style="width:24px; height:24px; border-radius:6px; margin-right:8px; object-fit:contain; vertical-align:middle; display:inline-block;">
-                                <strong>GCash QR Screenshot (Manual)</strong>
+                                <span class="bk-pay-radio-left">
+                                    <input type="radio" name="payment_method" value="GCash QR">
+                                    <span class="bk-pay-icon-box" style="background:#FFFDF9;">
+                                        <img src="assets/images/gcash_logo.png?v=<?php echo time(); ?>" alt="GCash" style="width:20px; height:20px; border-radius:4px; object-fit:contain; display:block;">
+                                    </span>
+                                    <span class="bk-pay-title-wrap">
+                                        <strong class="bk-pay-title">GCash QR Screenshot</strong>
+                                        <span class="bk-pay-subtitle">Scan QR code and upload proof of payment</span>
+                                    </span>
+                                </span>
+                                <span class="bk-pay-badge bk-pay-badge--manual">Manual Verification</span>
                             </label>
-                            <div id="online-form" class="bk-card-form" style="display:none; padding-top:20px; flex-direction:column; align-items:center;">
-                                <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:400px; background:#ffffff; border:1px solid #E5E7EB; border-radius:16px; padding:24px; box-shadow:0 8px 30px rgba(0,0,0,0.04);">
-                                    <div style="font-size:15px; color:#374151; font-weight:700; text-align:center; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                                        <img src="assets/images/gcash_logo.png?v=<?php echo time(); ?>" alt="GCash" style="width:22px; height:22px; border-radius:4px; vertical-align:middle; object-fit:contain;">
-                                        Scan to Pay via <span style="color:#005CE6;">GCash</span>
+                            <div id="online-form" class="bk-card-form" style="display:none; flex-direction:column; align-items:center;">
+                                <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width:420px; background:#FFFDF9; border:1px solid #EAE0D5; border-radius:14px; padding:22px; box-shadow:0 6px 24px rgba(43,36,32,0.04);">
+                                    <div style="font-size:15px; color:#2B2420; font-weight:700; text-align:center; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                        <img src="assets/images/gcash_logo.png?v=<?php echo time(); ?>" alt="GCash" style="width:20px; height:20px; border-radius:4px; vertical-align:middle; object-fit:contain;">
+                                        Scan to Pay via <span style="color:#7C533C;">GCash</span>
                                     </div>
-                                    <div style="font-size:13px; color:#64748B; text-align:center; margin-bottom:16px;">
-                                        Amount: <strong style="color:#0F172A;">₱ <?php echo number_format($deposit_amount, 2); ?></strong>
+                                    <div style="font-size:13px; color:#6E6259; text-align:center; margin-bottom:16px;">
+                                        Amount: <strong style="color:#2B2420;">₱ <?php echo number_format($deposit_amount, 2); ?></strong>
                                     </div>
-                                    <div style="background:#fff; border:2px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:16px;">
+                                    <div style="background:#FFFFFF; border:1.5px solid #EAE0D5; border-radius:12px; padding:12px; margin-bottom:16px;">
                                         <img src="assets/images/gcash_qr.png?v=<?php echo time(); ?>"
                                              onerror="this.style.display='none'; document.getElementById('gcash-qr-placeholder').style.display='flex';"
                                              alt="GCash / InstaPay QR Code"
                                              style="width:180px; height:180px; object-fit:contain; display:block;">
-                                        <div id="gcash-qr-placeholder" style="display:none; width:180px; height:180px; background:#F3F4F6; border-radius:8px; align-items:center; justify-content:center; flex-direction:column; gap:8px;">
-                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.2">
+                                        <div id="gcash-qr-placeholder" style="display:none; width:180px; height:180px; background:#FAF7F2; border-radius:8px; align-items:center; justify-content:center; flex-direction:column; gap:8px;">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9C8F84" stroke-width="1.2">
                                                 <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
                                                 <rect x="3" y="14" width="7" height="7" rx="1"/>
                                                 <rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="2"/>
                                                 <rect x="14" y="18" width="2" height="3"/><rect x="19" y="19" width="2" height="2"/>
                                             </svg>
-                                            <span style="font-size:11px; color:#9CA3AF; font-weight:600; text-align:center;">GCash QR placeholder<br><em>Upload your QR to assets/images/gcash_qr.png</em></span>
+                                            <span style="font-size:11px; color:#6E6259; font-weight:600; text-align:center;">GCash QR placeholder<br><em>Upload your QR to assets/images/gcash_qr.png</em></span>
                                         </div>
                                     </div>
-                                    <div style="background:#F0F7FF; border:1.5px solid #BAE6FD; border-radius:12px; padding:12px 16px; margin-bottom:16px; text-align:center; width:100%; box-sizing:border-box;">
-                                        <div style="font-size:11px; color:#0369A1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">
+                                    <div class="bk-pay-infobox" style="margin-bottom:16px; text-align:center; width:100%; box-sizing:border-box;">
+                                        <div style="font-size:10.5px; color:#7C533C; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:4px;">
                                             GCash Account Details
                                         </div>
-                                        <div style="font-size:16px; font-weight:800; color:#005CE6; display:flex; align-items:center; justify-content:center; gap:6px;">
+                                        <div style="font-size:16px; font-weight:800; color:#5C3D2B; display:flex; align-items:center; justify-content:center; gap:6px;">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> <?php echo htmlspecialchars($gcash_number); ?>
                                         </div>
-                                        <div style="font-size:12px; color:#475569; margin-top:3px;">
-                                            Account Name: <strong style="color:#0F172A;"><?php echo htmlspecialchars($gcash_name); ?></strong>
+                                        <div style="font-size:12px; color:#6E6259; margin-top:3px;">
+                                            Account Name: <strong style="color:#2B2420;"><?php echo htmlspecialchars($gcash_name); ?></strong>
                                         </div>
                                     </div>
 
-                                    <div style="font-size:12px; color:#64748B; text-align:center; margin-bottom:16px; line-height:1.8;">
+                                    <div style="font-size:12px; color:#6E6259; text-align:center; margin-bottom:16px; line-height:1.75;">
                                         1. Open your <strong>GCash app</strong><br>
                                         2. Tap <strong>Pay QR</strong> and scan the code above<br>
                                         3. Enter <strong>₱ <?php echo number_format($deposit_amount, 2); ?></strong> and complete payment<br>
-                                        4. Take a <strong>screenshot</strong> of the receipt and upload below
+                                        4. Enter the <strong>GCash Reference No.</strong> &amp; upload receipt screenshot below
                                     </div>
-                                    <div style="width:100%; text-align:left;">
-                                        <label style="font-size:12px; font-weight:600; color:#334155; margin-bottom:8px; display:block;">Upload GCash Receipt Screenshot (JPG or PNG &mdash; Max 2MB) <span style="color:#EF4444;">*</span></label>
-                                        <input type="file" name="gcash_receipt" id="gcashReceiptInput" accept="image/jpeg,image/png" data-max-size="2" data-label="GCash receipt" style="width:100%; padding:12px 16px; border:2px dashed #007AFF; border-radius:10px; font-size:14px; outline:none; background:#F0F7FF; box-sizing:border-box;" onchange="validateReceiptFile(this, ['jpg','jpeg','png'], 'gcashReceiptError')">
+                                    <div class="bk-form-group" style="width:100%; text-align:left; margin-bottom:14px;">
+                                        <label for="gcashReferenceInput">
+                                            GCash Reference Number <span class="req">*</span>
+                                        </label>
+                                        <input type="text" name="gcash_reference" id="gcashReferenceInput" placeholder="e.g. 1001 2345 6789 or 13-digit Ref No."
+                                            value="<?php echo htmlspecialchars($_POST['gcash_reference'] ?? ''); ?>">
+                                        <div id="gcashRefError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500;">
+                                            Please enter your GCash reference number.
+                                        </div>
+                                    </div>
+                                    <div class="bk-form-group" style="width:100%; text-align:left;">
+                                        <label for="gcashReceiptInput">Upload GCash Receipt Screenshot (JPG or PNG &mdash; Max 2MB) <span class="req">*</span></label>
+                                        <input type="file" name="gcash_receipt" id="gcashReceiptInput" accept="image/jpeg,image/png" data-max-size="2" data-label="GCash receipt" style="width:100%; padding:12px 15px; border:1.5px dashed #C8996F; border-radius:10px; font-size:13.5px; outline:none; background:#FAF7F2; color:#6E6259; box-sizing:border-box;" onchange="validateReceiptFile(this, ['jpg','jpeg','png'], 'gcashReceiptError')">
                                         <div id="gcashReceiptError" style="display:none; color:#B91C1C; font-size:12px; margin-top:6px; font-weight:500; background:#FEF2F2; border:1px solid #FECACA; border-radius:6px; padding:8px 12px; align-items:center; gap:6px;">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                             <span>Invalid file. Please upload an actual JPG or PNG screenshot — renaming other file types is not allowed.</span>
                                         </div>
                                     </div>
-                                    <p style="font-size:11px; color:#94A3B8; text-align:center; margin-top:12px; margin-bottom:0;">Our staff will verify your GCash receipt and confirm your booking.</p>
+                                    <p style="font-size:11.5px; color:#6E6259; text-align:center; margin-top:12px; margin-bottom:0;">Our front desk will verify your GCash screenshot and confirm your booking.</p>
                                 </div>
                             </div>
                         </div>
@@ -1285,49 +1293,56 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     <div class="bk-card" id="regularPaymentSchedule">
                         <h2 class="bk-card-title">Payment schedule</h2>
                         <div class="bk-schedule-row">
-                            <span>Deposit due now</span>
+                            <div>
+                                <span>Deposit due now</span>
+                                <span class="bk-schedule-sub">50% deposit required to confirm your reservation</span>
+                            </div>
                             <span class="bk-amt">₱ <?php echo number_format($deposit_amount, 2); ?></span>
                         </div>
                         <div class="bk-schedule-row bk-schedule-row--due">
                             <div>
-                                Due on <?php echo date('d M Y', strtotime($checkin . ' -1 day')); ?><br>
-                                <small style="color:#888;">Amount</small><br>
-                                <small style="color:#888;">Payment convenience fee</small>
+                                <span>Balance due on <?php echo date('d M Y', strtotime($checkin . ' -1 day')); ?></span>
+                                <span class="bk-schedule-sub">Remaining room balance (₱ <?php echo number_format($total_amount - $deposit_amount, 2); ?>) &bull; Payment convenience fee: ₱ 0.00</span>
                             </div>
-                            <div style="text-align: right;">
-                                <span class="bk-amt">₱ <?php echo number_format($total_amount - $deposit_amount, 2); ?></span><br>
-                                <small style="color:#888;">₱ <?php echo number_format($total_amount - $deposit_amount, 2); ?></small><br>
-                                <small style="color:#888;">₱ 0.00</small>
-                            </div>
+                            <span class="bk-amt">₱ <?php echo number_format($total_amount - $deposit_amount, 2); ?></span>
                         </div>
                     </div>
 
                     <div class="bk-card">
                         <h2 class="bk-card-title">Booking Policies</h2>
-                        <p class="bk-policy-intro">Our booking includes items with different booking policies.</p>
+                        <p class="bk-policy-intro">Please review the stay policies, deposit deadlines, and check-in guidelines before confirming.</p>
                         <div class="bk-policy-box">
-                            <strong><?php echo htmlspecialchars($accommodation_name, ENT_QUOTES, 'UTF-8'); ?></strong>
-                            <p>Cancellation: If cancelled, modified or in case of no-show, the first night will be charged.</p>
-                            <p>Payment: A 50% deposit confirms the reservation. The remaining balance must be paid by the displayed deadline, one day before arrival. Unpaid bookings enter a grace period and may then be cancelled after staff review.</p>
-                            <p>Other policies: - Guests availing of a Senior Citizen or PWD discount must provide a valid ID for verification. Please message the hotel’s official Facebook page <a href="https://www.facebook.com/SantaFeBeachClub" target="_blank" rel="noopener noreferrer">https://www.facebook.com/SantaFeBeachClub</a> or email <a href="mailto:santafebeachclub@gmail.com">santafebeachclub@gmail.com</a> to submit your ID. Once approved, the hotel will send a payment link with the discounted amount. Only one discount may be applied per booking.</p>
-                            - 1,000+ 150/pax for excess of 10pax<br>
-                            - 1,000 50 to 10 pax<br>
-                            - 500 1 to 5 pax<br><br>
-                            ☐ Check out time is 11:00 AM<br>
-                            ☐ Check in time is 1:30 PM<br><br>
-                            ☐ Restaurant time:<br>
-                            ☐ Breakfast 7AM to 1:30 PM
+                            <div class="bk-policy-room-title"><?php echo htmlspecialchars($accommodation_name, ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="bk-policy-grid">
+                                <div class="bk-policy-item">
+                                    <strong>Cancellation &amp; No-Show</strong>
+                                    <p>If cancelled, modified, or in case of no-show, the first night will be charged.</p>
+                                </div>
+                                <div class="bk-policy-item">
+                                    <strong>Deposit &amp; Balance</strong>
+                                    <p>A 50% deposit confirms your reservation. Remaining balance is due one day before arrival; unpaid bookings enter a grace period before staff review.</p>
+                                </div>
+                            </div>
+                            <div class="bk-policy-notes">
+                                <strong>Check-In, Dining &amp; Discount Guidelines</strong>
+                                <ul>
+                                    <li>Check-in time is <strong>1:30 PM</strong> &bull; Check-out time is <strong>11:00 AM</strong></li>
+                                    <li>Restaurant breakfast hours: <strong>7:00 AM &ndash; 1:30 PM</strong></li>
+                                    <li>Additional guest rates: ₱500 (1&ndash;5 pax), ₱1,000 (6&ndash;10 pax), ₱1,000+ &amp; ₱150/pax in excess of 10 pax</li>
+                                    <li>Senior Citizen / PWD ID verification: message <a href="https://www.facebook.com/SantaFeBeachClub" target="_blank" rel="noopener noreferrer">Santa Fe Beach Club Facebook</a> or email <a href="mailto:santafebeachclub@gmail.com">santafebeachclub@gmail.com</a> to submit your ID. Once approved, we will send a payment link for the discounted total. Only one discount applies per booking.</li>
+                                </ul>
+                            </div>
                         </div>
                         <label class="bk-checkbox-label">
                             <input type="checkbox" required>
-                            Please check this box to indicate that you have read and agree to the <a href="terms" target="_blank" rel="noopener noreferrer">Booking Policies, Terms of Service, and Privacy Policy</a>.
+                            <span>Please check this box to indicate that you have read and agree to the <a href="terms" target="_blank" rel="noopener noreferrer">Booking Policies, Terms of Service, and Privacy Policy</a>.</span>
                         </label>
                     </div>
 
-                    <div class="bk-actions" style="justify-content: flex-start; gap: 15px;">
+                    <div class="bk-actions">
                         <a href="book?step=2" class="btn-bk-back">← Back</a>
                         <input type="hidden" name="action" value="confirm_booking">
-                        <button type="submit" class="btn-bk-next" style="width: auto; padding: 14px 40px; margin-left: 0;">Confirm and book</button>
+                        <button type="submit" class="btn-bk-next">Confirm and book</button>
                     </div>
 
                     <?php endif; ?>
@@ -1339,9 +1354,10 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
             <aside class="bk-sidebar">
                 <!-- Dark branded header -->
                 <div class="bk-sidebar-header">
+                    <span class="bk-sb-kicker">Reservation Summary</span>
                     <h3 class="bk-sb-title">Booking Summary</h3>
                     <?php if ($full_name): ?>
-                    <div style="color:rgba(255,255,255,0.65); font-size:13px; margin-top:4px;"><?php echo htmlspecialchars($full_name); ?></div>
+                    <div style="color:rgba(255,255,255,0.72); font-size:13px; margin-top:4px;"><?php echo htmlspecialchars($full_name); ?></div>
                     <?php endif; ?>
                 </div>
 
@@ -1349,14 +1365,14 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     <div class="bk-sb-dates">
                         <div class="bk-sb-dcol">
                             <div class="bk-sb-dmain"><?php echo $checkin_fmt; ?></div>
-                            <div class="bk-sb-dsub">Check-in · 13:30</div>
+                            <div class="bk-sb-dsub">Check-in &middot; 13:30</div>
                         </div>
                         <div class="bk-sb-darrow">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                         </div>
                         <div class="bk-sb-dcol">
                             <div class="bk-sb-dmain"><?php echo $checkout_fmt; ?></div>
-                            <div class="bk-sb-dsub">Check-out · 11:00</div>
+                            <div class="bk-sb-dsub">Check-out &middot; 11:00</div>
                         </div>
                     </div>
 
@@ -1374,7 +1390,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     </div>
 
                     <?php if (($pricing['extra_person_total'] ?? 0) > 0): ?>
-                    <div class="bk-sb-room-row" style="color:#0284C7; font-size:12.5px;">
+                    <div class="bk-sb-room-row" style="color:#7C533C; font-size:12.5px;">
                         <span>Extra Adult Fee (<?php echo $pricing['extra_adults']; ?> × ₱<?php echo number_format($pricing['extra_rate_per_adult'], 0); ?>)</span>
                         <span>+₱ <?php echo number_format($pricing['extra_person_total'], 2); ?></span>
                     </div>
@@ -1404,7 +1420,7 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                     <div class="bk-sb-room-detail">
                         <strong>1 × <?php echo htmlspecialchars($accommodation_name); ?></strong>
                         <?php echo $guests_total; ?> adult<?php echo $guests_total>1?'s':''; ?>
-                        <?php if ($has_breakfast): ?><br><span style="color:var(--green); font-size:12px; font-weight:600;">✓ Breakfast included</span><?php endif; ?>
+                        <?php if ($has_breakfast): ?><br><span style="color:var(--green); font-size:12px; font-weight:600;">Breakfast included</span><?php endif; ?>
                     </div>
 
                     <div class="bk-sb-total-row" id="regularSummaryTotal">
@@ -1412,13 +1428,28 @@ if ($step === 3 && empty($_SESSION['discount_request_nonce'])) $_SESSION['discou
                         <span>₱ <?php echo number_format($total_amount, 2); ?></span>
                     </div>
 
-                    <div class="bk-sb-room-row" id="regularSummaryDeposit" style="margin-top:10px; font-weight:700; color:#0284C7;">
-                        <span>50% Deposit Due:</span>
+                    <div class="bk-sb-deposit-pill" id="regularSummaryDeposit">
+                        <span>50% Deposit Due</span>
                         <span>₱ <?php echo number_format($deposit_amount, 2); ?></span>
                     </div>
 
                     <div class="bk-sb-tax-note">Price includes all taxes and applicable fees</div>
                     <div id="discountSummary" hidden><p><strong>Estimated total after 20% discount: ₱ <?php echo number_format(round($pricing['subtotal'] * .8, 2), 2); ?></strong></p><p>No payment due while awaiting ID verification. Any promo code shown above will not apply.</p></div>
+                </div>
+
+                <div class="bk-trust-badges">
+                    <div class="bk-trust-badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span>Encrypted</span>
+                    </div>
+                    <div class="bk-trust-badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <span>Direct Rate</span>
+                    </div>
+                    <div class="bk-trust-badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>24/7 Desk</span>
+                    </div>
                 </div>
             </aside>
             
@@ -1571,7 +1602,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
         } else if (selectedMethod.value === 'GCash QR') {
+            var gcashRefInput = document.getElementById('gcashReferenceInput');
+            var gcashRefError = document.getElementById('gcashRefError');
             var gcashReceiptInput = document.getElementById('gcashReceiptInput');
+
+            if (gcashRefInput && gcashRefInput.value.trim() === '') {
+                e.preventDefault();
+                if (gcashRefError) gcashRefError.style.display = 'block';
+                gcashRefInput.style.borderColor = '#EF4444';
+                gcashRefInput.focus();
+                gcashRefInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
             if (gcashReceiptInput && gcashReceiptInput.files.length === 0) {
                 e.preventDefault();
                 SiteDialog.alert('Please upload a screenshot of your GCash payment receipt.');
@@ -1587,6 +1629,17 @@ document.addEventListener('DOMContentLoaded', function() {
         bankRefInput.addEventListener('input', function() {
             if (this.value.trim() !== '') {
                 document.getElementById('bankRefError').style.display = 'none';
+                this.style.borderColor = '';
+            }
+        });
+    }
+
+    var gcashRefInput = document.getElementById('gcashReferenceInput');
+    if (gcashRefInput) {
+        gcashRefInput.addEventListener('input', function() {
+            if (this.value.trim() !== '') {
+                var err = document.getElementById('gcashRefError');
+                if (err) err.style.display = 'none';
                 this.style.borderColor = '';
             }
         });
@@ -1708,7 +1761,7 @@ function validateReceiptFile(input, allowedExts, errorDivId) {
             showFileError(
                 input,
                 errorDiv,
-                '⛔ This file is not a real ' + ext.toUpperCase() + ' file. You cannot upload a renamed file (e.g. an .exe or .zip renamed to .' + ext + '). Please upload a genuine screenshot or photo.'
+                'This file is not a real ' + ext.toUpperCase() + ' file. You cannot upload a renamed file (e.g. an .exe or .zip renamed to .' + ext + '). Please upload a genuine screenshot or photo.'
             );
             input.value = ''; // Clear the input
         }
@@ -2080,6 +2133,50 @@ function _editExtraLabel(int $n, int $inc, int $rate): string {
         });
     }
 
+    // ── Country change auto-syncs international calling code ───────
+    var countrySelect = document.querySelector('select[name="country"]');
+    var phoneCodeSelect = document.querySelector('select[name="phone_code"]');
+    var phoneInput = document.querySelector('input[name="phone"]');
+
+    if (countrySelect && phoneCodeSelect) {
+        countrySelect.addEventListener('change', function() {
+            var opt = countrySelect.options[countrySelect.selectedIndex];
+            if (!opt || !opt.value) return;
+            var dialCode = opt.getAttribute('data-dial-code');
+            var flag = opt.getAttribute('data-flag') || '';
+            if (!dialCode) return;
+
+            var found = false;
+            for (var i = 0; i < phoneCodeSelect.options.length; i++) {
+                if (phoneCodeSelect.options[i].value === dialCode) {
+                    phoneCodeSelect.selectedIndex = i;
+                    if (flag) {
+                        phoneCodeSelect.options[i].textContent = flag + ' ' + dialCode;
+                    }
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                var newOpt = document.createElement('option');
+                newOpt.value = dialCode;
+                newOpt.textContent = (flag ? flag + ' ' : '') + dialCode;
+                phoneCodeSelect.appendChild(newOpt);
+                phoneCodeSelect.value = dialCode;
+            }
+
+            if (phoneInput) {
+                if (dialCode === '+63') {
+                    phoneInput.placeholder = '09171234567';
+                } else {
+                    phoneInput.placeholder = 'e.g. 12345678';
+                }
+            }
+
+            phoneCodeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    }
+
     document.addEventListener('keydown', function(e){
         if (e.key === 'Escape') {
             if (editModal && editModal.style.display === 'flex') { editModal.style.display = 'none'; document.body.style.overflow = ''; }
@@ -2088,5 +2185,7 @@ function _editExtraLabel(int $n, int $inc, int $rate): string {
     });
 })();
 </script>
+
+<?php include __DIR__ . '/partials/_chatbot_widget.php'; ?>
 </body>
 </html>

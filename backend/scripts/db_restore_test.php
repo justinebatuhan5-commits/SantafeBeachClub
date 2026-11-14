@@ -127,8 +127,8 @@ echo "[+] Test database dropped." . PHP_EOL;
 // ── 8. Final result ──────────────────────────────────────────────────────────
 echo PHP_EOL;
 if ($all_ok) {
-    echo "✅ RESTORATION TEST PASSED — Backup is valid and restorable." . PHP_EOL;
+    echo "[PASS] RESTORATION TEST PASSED — Backup is valid and restorable." . PHP_EOL;
 } else {
-    echo "❌ RESTORATION TEST FAILED — Review errors above." . PHP_EOL;
+    echo "[FAIL] RESTORATION TEST FAILED — Review errors above." . PHP_EOL;
     exit(1);
 }

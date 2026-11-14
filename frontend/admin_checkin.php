@@ -683,7 +683,7 @@ $bookings_query = $conn->query("
     <?php $active_page = 'checkin'; include __DIR__ . '/partials/_sidebar.php'; ?>
 
     <main class="admin-main">
-        <div class="admin-body">
+
         <?php
         $page_title = 'Check-in / Check-out';
         $page_subtitle = 'Manage guest arrivals and departures';
@@ -696,13 +696,15 @@ $bookings_query = $conn->query("
         include __DIR__ . '/partials/_page_header.php';
         ?>
 
+        <div class="admin-body">
+
         <?php $stay_operations_active = 'checkin'; include __DIR__ . '/partials/_stay_operations_tabs.php'; ?>
 
         <section class="dashboard-grid" style="grid-template-columns: 1fr;">
             <?php if (isset($_GET['success'])): ?>
                 <?php if ($_GET['success'] === 'walkin'): ?>
                     <div class="alert-success" style="display:flex; align-items:center; gap:8px;">
-                        <span>⚡</span>
+                        <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
                         <span>Walk-in guest successfully registered and checked in! Room is now marked occupied.</span>
                     </div>
                 <?php else: ?>
@@ -712,7 +714,7 @@ $bookings_query = $conn->query("
 
             <?php if (isset($_GET['cancelled'])): ?>
                 <div class="alert-warning" style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:18px;">⚠️</span>
+                    <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
                     <span>Reservation #<?php echo htmlspecialchars($_GET['bid'] ?? ''); ?> has been marked as <strong>Cancelled / No-Show</strong>. Room availability has been released.</span>
                     <?php if (($_SESSION['admin_role'] ?? '') === 'receptionist'
                         && !empty($_SESSION['noshow_refund_handoff'])
@@ -770,7 +772,7 @@ $bookings_query = $conn->query("
                         <?php if ($spec_balance > 0): ?>
                             <div style="background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 1.5px solid #FDBA74; border-radius: 14px; padding: 14px 16px; margin-bottom: 22px; text-align: left; display: flex; align-items: center; justify-content: space-between;">
                                 <div>
-                                    <div style="font-size: 11px; font-weight: 800; color: #9A3412; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">⚠️ Balance Due</div>
+                                    <div style="font-size: 11px; font-weight: 800; color: #9A3412; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Balance Due</div>
                                     <div style="font-size: 12px; color: #C2410C; font-weight: 500;">Collect before room turnover</div>
                                 </div>
                                 <div style="font-size: 20px; font-weight: 900; color: #C2410C; letter-spacing: -0.02em;">₱<?php echo number_format($spec_balance, 2); ?></div>
@@ -781,7 +783,7 @@ $bookings_query = $conn->query("
                                     <div style="font-size: 11px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Payment Status</div>
                                     <div style="font-size: 12px; color: #15803D; font-weight: 500;">All charges fully settled</div>
                                 </div>
-                                <span style="background: #15803D; color: #fff; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">✓ PAID IN FULL</span>
+                                <span style="background: #15803D; color: #fff; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">PAID IN FULL</span>
                             </div>
                         <?php endif; ?>
                         
@@ -810,7 +812,7 @@ $bookings_query = $conn->query("
                     </div>
                     <button type="button" class="btn-walkin-primary" onclick="openWalkinModal()" style="display:inline-flex; align-items:center; gap:8px; background:#7C533C; color:#ffffff; border:none; padding:11px 22px; border-radius:8px; font-weight:700; font-size:14px; cursor:pointer; box-shadow:0 4px 12px rgba(124,83,60,0.3); transition:all 0.2s ease;" onmouseover="this.style.background='#5C3D2B'" onmouseout="this.style.background='#7C533C'">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                        <span>⚡ Express Walk-in Check-in</span>
+                        <span>Express Walk-in Check-in</span>
                     </button>
                 </div>
 
@@ -868,9 +870,9 @@ $bookings_query = $conn->query("
                                 }
                                 if ($is_overdue) {
                                     $days_late = (int)ceil((strtotime($today_date) - strtotime($checkin_date_only)) / 86400);
-                                    echo "<span class='badge-overdue' title='Check-in date has passed by {$days_late} day(s)'>⚠️ Overdue (" . $days_late . "d)</span>";
+                                    echo "<span class='badge-overdue' title='Check-in date has passed by {$days_late} day(s)'>Overdue (" . $days_late . "d)</span>";
                                 } elseif ($is_today) {
-                                    echo "<span class='badge-today'>📅 Arriving Today</span>";
+                                    echo "<span class='badge-today'>Arriving Today</span>";
                                 }
                                 echo "</td>";
                                 
@@ -1003,7 +1005,7 @@ $bookings_query = $conn->query("
                         <label class="pay-method-card">
                             <input type="radio" name="payment_method" value="Front Desk Cash" checked style="display:none;" onchange="updateWalkinPaySelectors()">
                             <div class="pay-card-inner">
-                                <span class="icon">💵</span>
+                                <span class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></span>
                                 <span class="label">Cash</span>
                             </div>
                         </label>
@@ -1017,7 +1019,7 @@ $bookings_query = $conn->query("
                         <label class="pay-method-card">
                             <input type="radio" name="payment_method" value="Front Desk Card" style="display:none;" onchange="updateWalkinPaySelectors()">
                             <div class="pay-card-inner">
-                                <span class="icon">💳</span>
+                                <span class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
                                 <span class="label">Card</span>
                             </div>
                         </label>
@@ -1061,7 +1063,7 @@ $bookings_query = $conn->query("
                 <input type="hidden" name="reference_number" id="walkinFinalReferenceNumber" value="">
 
                 <button type="submit" id="btnSubmitWalkin" <?php echo empty($available_rooms) ? 'disabled' : ''; ?> style="width:100%; background:#7C533C; color:#fff; border:none; padding:13px; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:8px; box-shadow:0 2px 8px rgba(124,83,60,0.3);" onmouseover="this.style.background='#5C3D2B'" onmouseout="this.style.background='#7C533C'">
-                    ⚡ Complete Walk-in Check-in
+                    Complete Walk-in Check-in
                 </button>
                 <button type="button" onclick="closeWalkinModal()" style="width:100%; background:transparent; border:1px solid #E5E7EB; color:#666; padding:9px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;">
                     Cancel
@@ -1106,7 +1108,7 @@ $bookings_query = $conn->query("
             </div>
 
             <p style="font-size: 13px; color: #4B5563; line-height: 1.5; margin-bottom: 14px;">
-                ⚠️ This action will mark this reservation as <strong>Cancelled</strong> and immediately make the room available again for other guests and walk-ins.
+                This action will mark this reservation as <strong>Cancelled</strong> and immediately make the room available again for other guests and walk-ins.
             </p>
 
             <form method="POST" id="noshowForm" action="admin_checkin">
@@ -1193,7 +1195,7 @@ $bookings_query = $conn->query("
                         <label class="pay-method-card">
                             <input type="radio" name="payment_method" value="Front Desk Cash" checked style="display:none;" onchange="updatePaySelectors()">
                             <div class="pay-card-inner">
-                                <span class="icon">💵</span>
+                                <span class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></span>
                                 <span class="label">Cash</span>
                             </div>
                         </label>
@@ -1207,7 +1209,7 @@ $bookings_query = $conn->query("
                         <label class="pay-method-card">
                             <input type="radio" name="payment_method" value="Front Desk Card" style="display:none;" onchange="updatePaySelectors()">
                             <div class="pay-card-inner">
-                                <span class="icon">💳</span>
+                                <span class="icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
                                 <span class="label">Card</span>
                             </div>
                         </label>
@@ -1253,7 +1255,7 @@ $bookings_query = $conn->query("
                 <input type="hidden" name="reference_number" id="finalReferenceNumber" value="">
 
                 <button type="submit" style="width:100%; background:#2E7D32; color:#fff; border:none; padding:14px; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px;">
-                    &#10003; Confirm Check-in &amp; Record Payment
+                    Confirm Check-in &amp; Record Payment
                 </button>
                 <button type="button" onclick="closeBalanceModal()" style="width:100%; background:transparent; border:1px solid #E5E7EB; color:#666; padding:10px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
                     Cancel
@@ -1409,7 +1411,7 @@ async function handleCheckinClick(event, bookingId, guestName, accName, totalCos
             title: isEarly ? 'Early check-in warning' : 'Confirm guest check-in',
             confirmText: hasBalance ? 'Continue to payment' : 'Yes, check in guest',
             danger: isEarly,
-            icon: isEarly ? '⚠' : (isOverdue ? '!' : '✓')
+            icon: isEarly ? '!' : (isOverdue ? '!' : 'i')
         }
     );
     if (!accepted) return;
@@ -1434,8 +1436,8 @@ async function handleCheckinClick(event, bookingId, guestName, accName, totalCos
         document.getElementById('modalScheduledCheckin').textContent = scheduledLabel;
         const dateWarning = document.getElementById('modalDateWarning');
         dateWarning.textContent = isEarly
-            ? '⚠ Early check-in: confirm that the room is ready before continuing.'
-            : (isOverdue ? '⚠ This guest is arriving after the scheduled check-in date.' : '✓ Guest is checking in on the scheduled date.');
+            ? 'Early check-in: confirm that the room is ready before continuing.'
+            : (isOverdue ? 'This guest is arriving after the scheduled check-in date.' : 'Guest is checking in on the scheduled date.');
         dateWarning.style.display = 'block';
         dateWarning.style.background = isEarly || isOverdue ? '#FFF7ED' : '#F0FDF4';
         dateWarning.style.color = isEarly || isOverdue ? '#9A3412' : '#166534';

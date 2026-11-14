@@ -447,7 +447,7 @@ unset($_SESSION['notif_flash']);
 
     <!-- Main Dashboard Panel -->
     <main class="admin-main">
-        <div class="admin-body notifications-page">
+
         <!-- Top Bar (shared component, same as Dashboard) -->
         <?php
         $page_title = 'Admin Notifications';
@@ -463,6 +463,7 @@ unset($_SESSION['notif_flash']);
             </form>
         ';
         include __DIR__ . '/partials/_page_header.php';
+        echo "\n        <div class=\"admin-body notifications-page\">\n";
         ?>
 
         <?php if ($notif_flash): ?>
@@ -538,14 +539,14 @@ unset($_SESSION['notif_flash']);
                                             <?php echo csrf_field(); ?>
                                             <input type="hidden" name="action" value="mark_read">
                                             <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
-                                            <button type="submit" class="btn-action-icon" title="Mark as read">✓ Read</button>
+                                            <button type="submit" class="btn-action-icon" title="Mark as read">Mark Read</button>
                                         </form>
                                     <?php endif; ?>
                                     <form method="POST" action="admin_notifications" style="margin:0;">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
-                                        <button type="submit" class="btn-action-icon btn-delete-notif" title="Delete notification" aria-label="Delete notification">✕</button>
+                                        <button type="submit" class="btn-action-icon btn-delete-notif" title="Delete notification" aria-label="Delete notification">&times;</button>
                                     </form>
                                 </div>
                             </div>

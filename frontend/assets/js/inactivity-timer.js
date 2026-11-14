@@ -371,6 +371,14 @@
     }
 
     function performLogout() {
+        try {
+            const keys = [];
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const k = sessionStorage.key(i);
+                if (k && k.indexOf('sfbc_staff_ai_state_') === 0) keys.push(k);
+            }
+            keys.forEach(function (k) { sessionStorage.removeItem(k); });
+        } catch (e) {}
         localStorage.setItem(LOGOUT_FLAG_KEY, Date.now().toString());
         // Clean session and redirect to login page with timeout notice
         window.location.href = 'logout.php?timeout=1';

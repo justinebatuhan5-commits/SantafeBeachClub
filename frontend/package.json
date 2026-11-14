@@ -1,0 +1,19 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "config.js",
+  "scripts": {
+    "tw:build": "npx @tailwindcss/cli -i ./assets/css/tailwind-source.css -o ./assets/css/tailwind.css --minify",
+    "tw:watch": "npx @tailwindcss/cli -i ./assets/css/tailwind-source.css -o ./assets/css/tailwind.css --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.5",
+    "tailwindcss": "^4.3.5"
+  }
+}

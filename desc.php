@@ -131,9 +131,9 @@ $rules = $conn->query("SELECT * FROM pricing_rules ORDER BY is_active DESC, id D
                     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:3px;">Rule Trigger</div>
                     <div style="font-size:13px;color:var(--text-main);font-weight:600;">
                         <?php if ($r['rule_type'] === 'weekend'): ?>
-                            <span>📅 Weekend (Fri, Sat, Sun)</span>
+                            <span>Weekend (Fri, Sat, Sun)</span>
                         <?php else: ?>
-                            <span>🗓️ <?php echo date('M j', strtotime($r['start_date'])); ?> – <?php echo date('M j, Y', strtotime($r['end_date'])); ?></span>
+                            <span><?php echo date('M j', strtotime($r['start_date'])); ?> – <?php echo date('M j, Y', strtotime($r['end_date'])); ?></span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -147,7 +147,7 @@ $rules = $conn->query("SELECT * FROM pricing_rules ORDER BY is_active DESC, id D
                         <?php echo $r['is_active'] ? 'Disable' : 'Enable'; ?>
                     </button>
                 </form>
-                <form method="POST" onsubmit="return false;" data-confirm-title="Delete Pricing Rule" data-confirm-msg="This pricing rule will be permanently deleted." data-confirm-icon="🗑️" data-confirm-icon-bg="#FEE2E2">
+                <form method="POST" onsubmit="return false;" data-confirm-title="Delete Pricing Rule" data-confirm-msg="This pricing rule will be permanently deleted." data-confirm-icon="trash" data-confirm-icon-bg="#FEE2E2">
                     <input type="hidden" name="action" value="delete_rule">
                     <input type="hidden" name="rule_id" value="<?php echo $r['id']; ?>">
                     <button type="submit" class="btn-danger">Delete</button>

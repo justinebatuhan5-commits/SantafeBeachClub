@@ -152,7 +152,7 @@ $estimate = in_array($d['state'],['Awaiting ID verification','More information n
 <?php endif ?>
 <?php elseif ($d['state']==='Confirmed'): ?>
 <div style="background:#eef7f2; border:1px solid #c3e2d1; border-radius:12px; padding:20px; text-align:center;">
-    <div style="font-size:32px; margin-bottom:8px;">🎉</div>
+    <div style="width:48px; height:48px; margin:0 auto 12px; border-radius:50%; background:#dcfce7; color:#166534; display:flex; align-items:center; justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
     <h3 style="margin:0 0 8px 0; color:#165e48;">Reservation Confirmed</h3>
     <p style="margin:0 0 12px 0; color:var(--ink); font-size:15px;">Your 50% deposit has been verified and your room is reserved.</p>
     <div style="background:#fff; border:1px solid #dce6df; border-radius:8px; padding:12px; margin-top:10px; font-size:14px; text-align:left;">

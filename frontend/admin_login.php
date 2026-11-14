@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../backend/helpers/session_init.php';
 require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
@@ -8,6 +8,8 @@ require_once __DIR__ . '/../backend/helpers/security_logger.php';
 require_once __DIR__ . '/../backend/helpers/validator_helper.php';
 require_once __DIR__ . '/../backend/helpers/password_helper.php';
 require_once __DIR__ . '/../backend/helpers/recaptcha_helper.php';
+require_once __DIR__ . '/../backend/helpers/device_trust_helper.php';
+require_once __DIR__ . '/../backend/helpers/admin_session_helper.php';
 
 /** @var mysqli $conn */
 
@@ -88,6 +90,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $upd->bind_param("si", $newHash, $row['id']);
                         $upd->execute();
                         $upd->close();
+                    }
+
+                    // --- Device Trust Check: Skip MFA if verified on this device within 24 hours ---
+                    if (is_device_trusted((int)$row['id'], 'admin', $conn)) {
+                        session_regenerate_id(true);
+                        $_SESSION['admin_logged_in']    = true;
+                        $_SESSION['admin_username']     = $username;
+                        $_SESSION['admin_role']         = 'admin';
+                        $_SESSION['session_start_time'] = time();
+                        $_SESSION['last_activity']       = time();
+                        admin_session_register($conn, (int)$row['id'], 'admin', $username);
+
+                        // Refresh trust cookie TTL for another 24 hours of active use
+                        remember_trusted_device((int)$row['id'], 'admin', $conn);
+
+                        RateLimiter::clearFailedLogins($conn, (int)$row['id'], 'administrators');
+                        log_activity($conn, $username, 'Login Trusted Device', 'Logged in via 24h trusted device bypass');
+                        SecurityLogger::log($conn, 'LOGIN_SUCCESS_TRUSTED_DEVICE', "Admin logged in via trusted device (MFA skipped)", SecurityLogger::LEVEL_INFO, $username);
+
+                        if ($is_ajax) {
+                            header('Content-Type: application/json');
+                            echo json_encode([
+                                'success'  => true,
+                                'redirect' => 'admin_dashboard'
+                            ]);
+                            exit;
+                        }
+
+                        header("Location: admin_dashboard");
+                        exit;
                     }
 
                     // --- MFA: Password verified. Now require OTP. ---
@@ -952,7 +984,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
 
                 <div class="switch-portal-wrap">
-                    🔒 Authorized personnel only. Unauthorized access is strictly prohibited.
+                    Authorized personnel only. Unauthorized access is strictly prohibited.
                 </div>
             </div>
         </section>

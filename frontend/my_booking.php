@@ -145,6 +145,7 @@ $csrf_token = get_csrf_token();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Booking — Santa Fe Beach Club</title>
+    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
     <style>
@@ -934,7 +935,7 @@ $csrf_token = get_csrf_token();
     <!-- ── Booking Summary Card ── -->
     <div class="portal-card">
         <div class="portal-card-header">
-            <span class="portal-card-icon">🏠</span>
+            <span class="portal-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
             <h2>Booking Summary</h2>
             <span class="status-badge" style="margin-left:auto; background:<?php echo $status_style['bg']; ?>; color:<?php echo $status_style['color']; ?>;">
                 <?php echo $status_style['icon']; ?> <?php echo htmlspecialchars($bk_status); ?>
@@ -996,7 +997,7 @@ $csrf_token = get_csrf_token();
     <?php if ($payment || $discountBooking): ?>
     <div class="portal-card">
         <div class="portal-card-header">
-            <span class="portal-card-icon">💳</span>
+            <span class="portal-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
             <h2>Payment</h2>
             <span class="status-badge" style="margin-left:auto; background:<?php echo $pay_style['bg']; ?>; color:<?php echo $pay_style['color']; ?>;">
                 <?php echo $pay_style['label']; ?>
@@ -1047,7 +1048,7 @@ $csrf_token = get_csrf_token();
     <!-- ── Actions Card ── -->
     <div class="portal-card">
         <div class="portal-card-header">
-            <span class="portal-card-icon">⚡</span>
+            <span class="portal-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
             <h2>Quick Actions</h2>
         </div>
         <div class="portal-card-body">

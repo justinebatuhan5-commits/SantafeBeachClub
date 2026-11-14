@@ -100,6 +100,7 @@
             <li><strong>Payment Receipts:</strong> Securely deleted 90 days after checkout verification.</li>
             <li><strong>OTP Codes & Auth Tokens:</strong> Cryptographically hashed and automatically invalidated after 10–15 minutes or immediately upon use.</li>
             <li><strong>Audit & Security Logs:</strong> Retained for 90 days to monitor system integrity and investigate unauthorized access attempts.</li>
+            <li><strong>Virtual Guest Assistant (AI Concierge) Transcripts:</strong> Questions sent to the AI Concierge have email addresses and phone numbers automatically masked prior to storage, are used solely to assist guests and improve resort service, and are automatically purged after 90 days. Personal reservation details are never disclosed in chat without prior 6-digit email OTP verification.</li>
         </ul>
 
         <h2>3. Access Control & Security Safeguards</h2>

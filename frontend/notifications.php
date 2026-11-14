@@ -207,13 +207,13 @@ unset($_SESSION['notif_flash']);
                                     <form method="POST" action="notifications" style="margin:0;">
                                         <input type="hidden" name="action" value="mark_read">
                                         <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
-                                        <button type="submit" class="btn-action-icon" title="Mark as read">✓ Read</button>
+                                        <button type="submit" class="btn-action-icon" title="Mark as read">Mark Read</button>
                                     </form>
                                 <?php endif; ?>
                                 <form method="POST" action="notifications" style="margin:0;">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
-                                    <button type="submit" class="btn-action-icon" style="color: #c62828;" title="Delete notification">✕</button>
+                                    <button type="submit" class="btn-action-icon" style="color: #c62828;" title="Delete notification">&times;</button>
                                 </form>
                             </div>
                         </div>

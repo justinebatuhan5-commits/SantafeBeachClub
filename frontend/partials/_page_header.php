@@ -44,7 +44,92 @@ if (isset($conn)) {
         }
     }
 }
+if (!function_exists('sf_header_context')) {
+    /**
+     * Maps the active admin/reception route or title to a clean section label and crisp SVG icon.
+     */
+    function sf_header_context($activePage, $title, $isAdmin) {
+        $key = strtolower(trim((string)$activePage));
+        $t   = strtolower(trim((string)$title));
+        $icons = [
+            'grid'     => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
+            'calendar' => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>',
+            'checkin'  => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3l4 4-4 4"/><path d="M20 7H4"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h16"/></svg>',
+            'users'    => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+            'home'     => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>',
+            'tag'      => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
+            'gallery'  => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+            'wallet'   => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+            'chart'    => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+            'bell'     => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+            'chat'     => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+            'shield'   => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            'settings' => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+            'clock'    => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+            'backup'   => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
+        ];
+
+        $map = [
+            'dashboard'         => ['section' => 'Overview',             'icon' => $icons['grid']],
+            'reservations'      => ['section' => 'Front Desk',           'icon' => $icons['calendar']],
+            'checkin'           => ['section' => 'Front Desk',           'icon' => $icons['checkin']],
+            'checkout'          => ['section' => 'Front Desk',           'icon' => $icons['checkin']],
+            'guests'            => ['section' => 'Property & Guests',    'icon' => $icons['users']],
+            'accommodations'    => ['section' => 'Property & Guests',    'icon' => $icons['home']],
+            'calendar'          => ['section' => 'Property & Guests',    'icon' => $icons['calendar']],
+            'promotions'        => ['section' => 'Property & Guests',    'icon' => $icons['tag']],
+            'gallery'           => ['section' => 'Property & Guests',    'icon' => $icons['gallery']],
+            'room_photos'       => ['section' => 'Property & Guests',    'icon' => $icons['home']],
+            'chatbot'           => ['section' => 'AI Concierge',         'icon' => $icons['chat']],
+            'discount_requests' => ['section' => 'Finance',              'icon' => $icons['tag']],
+            'payments'          => ['section' => 'Finance',              'icon' => $icons['wallet']],
+            'admin_refunds'     => ['section' => 'Finance',              'icon' => $icons['wallet']],
+            'reports'           => ['section' => 'Insights & Updates',   'icon' => $icons['chart']],
+            'notifications'     => ['section' => 'Insights & Updates',   'icon' => $icons['bell']],
+            'inquiries'         => ['section' => 'Guest Feedback',       'icon' => $icons['chat']],
+            'live_support'      => ['section' => 'Guest Feedback',       'icon' => $icons['chat']],
+            'reviews'           => ['section' => 'Guest Feedback',       'icon' => $icons['chat']],
+            'staff'             => ['section' => 'System & Access',      'icon' => $icons['users']],
+            'logs'              => ['section' => 'System & Access',      'icon' => $icons['shield']],
+            'backups'           => ['section' => 'System & Access',      'icon' => $icons['backup']],
+            'automation'        => ['section' => 'System & Access',      'icon' => $icons['clock']],
+            'admin_sessions'    => ['section' => 'System & Access',      'icon' => $icons['shield']],
+            'sessions'          => ['section' => 'System & Access',      'icon' => $icons['shield']],
+            'settings'          => ['section' => 'System & Access',      'icon' => $icons['settings']],
+        ];
+
+        if (isset($map[$key])) {
+            return $map[$key];
+        }
+        if (str_contains($t, 'discount') || str_contains($t, 'payment') || str_contains($t, 'refund')) {
+            return ['section' => 'Finance', 'icon' => $icons['wallet']];
+        }
+        if (str_contains($t, 'review') || str_contains($t, 'inquir')) {
+            return ['section' => 'Guest Feedback', 'icon' => $icons['chat']];
+        }
+        if (str_contains($t, 'reservation') || str_contains($t, 'check-in') || str_contains($t, 'check-out')) {
+            return ['section' => 'Front Desk', 'icon' => $icons['calendar']];
+        }
+        if (str_contains($t, 'setting')) {
+            return ['section' => 'System & Access', 'icon' => $icons['settings']];
+        }
+        if (str_contains($t, 'session') || str_contains($t, 'log')) {
+            return ['section' => 'System & Access', 'icon' => $icons['shield']];
+        }
+
+        return [
+            'section' => $isAdmin ? 'Resort Operations' : 'Front Desk',
+            'icon'    => $icons['grid'],
+        ];
+    }
+}
+$_ph_active_key = $active_page ?? basename($_SERVER['PHP_SELF'] ?? '', '.php');
+$_ph_context = sf_header_context($_ph_active_key, $_ph_title, $_ph_is_admin);
+$_ph_portal_badge = $_ph_is_admin ? 'Admin' : 'Front Desk';
 ?>
+<link rel="stylesheet" href="<?php echo $base_url ?? ''; ?>assets/css/tailwind.css?v=<?php echo (int) @filemtime(__DIR__ . '/../assets/css/tailwind.css'); ?>">
+<link rel="stylesheet" href="<?php echo $base_url ?? ''; ?>assets/css/page-transitions.css?v=<?php echo (int) @filemtime(__DIR__ . '/../assets/css/page-transitions.css'); ?>">
+<script src="<?php echo $base_url ?? ''; ?>assets/js/page-transitions.js?v=<?php echo (int) @filemtime(__DIR__ . '/../assets/js/page-transitions.js'); ?>" defer></script>
 <style>
 /* Notification Popover Dropdown Styles */
 .header-notif-menu {
@@ -214,44 +299,76 @@ if (isset($conn)) {
     text-decoration: underline;
 }
 
-/* Luxury Header Base */
-.page-header {
+/* Luxury Coastal Workspace Header (All Admin & Reception Pages) */
+header.page-header[data-role] {
+    position: sticky;
+    top: 0;
+    z-index: 95;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    background: var(--bg-surface, #ffffff);
-    border-bottom: 1px solid var(--border, #E2E8F0);
-    padding: 18px 36px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+    gap: 16px;
+    row-gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 32px;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: 1px solid var(--sb-border, #E5E9F0) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 12px 28px -18px rgba(132, 86, 60, 0.22) !important;
 }
-[data-theme="dark"] .page-header {
-    background: var(--bg-surface, #131826);
-    border-bottom-color: var(--border, #1E293B);
+header.page-header[data-role]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    z-index: 2;
+    background: linear-gradient(90deg, #84563C 0%, #C49574 44%, rgba(212, 163, 115, 0.14) 100%);
+    pointer-events: none;
+}
+header.page-header[data-role]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(108deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.94) 58%, rgba(248, 241, 235, 0.93) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    pointer-events: none;
+}
+[data-theme="dark"] header.page-header[data-role] {
+    border-bottom-color: var(--sb-border, #1E293B) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.34), 0 14px 28px -18px rgba(0, 0, 0, 0.7) !important;
+}
+[data-theme="dark"] header.page-header[data-role]::after {
+    background: linear-gradient(108deg, rgba(15, 20, 34, 0.95) 0%, rgba(18, 25, 42, 0.94) 60%, rgba(36, 27, 29, 0.92) 100%);
+}
+main > header.page-header[data-role] + :not(.admin-body):not(.stay-operations-tabs-wrap):not(script):not(style) {
+    margin-top: 22px;
 }
 
-.page-header-left {
+header.page-header[data-role] .page-header-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     min-width: 0;
-    flex: 1 1 300px;
+    flex: 1 1 180px;
 }
 
 .sidebar-toggle-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border: 1px solid var(--border, #E2E8F0);
     background: var(--bg-surface-elev, #ffffff);
     color: var(--text-main, #0F172A);
     cursor: pointer;
-    border-radius: var(--radius-md, 12px);
+    border-radius: 11px;
     flex-shrink: 0;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: var(--shadow-xs);
@@ -263,76 +380,202 @@ if (isset($conn)) {
     transform: translateY(-1px);
 }
 
+.page-header-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #84563C;
+    background: linear-gradient(145deg, #FBF6F1 0%, #F1E2D5 100%);
+    border: 1px solid rgba(132, 86, 60, 0.2);
+    box-shadow: 0 3px 10px -4px rgba(132, 86, 60, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+[data-theme="dark"] .page-header-icon {
+    color: #E2B892;
+    background: linear-gradient(145deg, rgba(132, 86, 60, 0.24) 0%, rgba(132, 86, 60, 0.1) 100%);
+    border-color: rgba(212, 163, 115, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .page-header-titles {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    flex: 1;
 }
 
-.page-header-title {
+.page-header-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-family: var(--font-heading, 'Outfit', sans-serif);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text-main, #0F172A);
-    letter-spacing: -0.3px;
-    line-height: 1.25;
-    margin: 0;
-    white-space: normal;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted, #64748B);
+    line-height: 1.2;
+    margin-bottom: 2px;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.page-header-portal-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 1.5px 7px;
+    border-radius: 999px;
+    background: rgba(132, 86, 60, 0.1);
+    color: var(--primary, #84563C);
+    font-weight: 800;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .page-header-portal-chip {
+    background: rgba(212, 163, 115, 0.16);
+    color: #E2B892;
+}
+.page-header-eyebrow-sep {
+    opacity: 0.45;
+}
 
-.page-header-subtitle {
-    font-size: 12.5px;
-    font-weight: 500;
-    color: var(--text-muted, #64748B);
-    margin: 2px 0 0;
+header.page-header[data-role] .page-header-title {
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: clamp(17.5px, 1.35vw, 20.5px);
+    font-weight: 800;
+    color: var(--text-main, #0F172A);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.page-header-actions {
+header.page-header[data-role] .page-header-subtitle {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-muted, #64748B);
+    margin: 2px 0 0;
+    line-height: 1.35;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+header.page-header[data-role] .page-header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-shrink: 0;
-    flex-wrap: wrap;
-    max-width: 100%;
+    flex-wrap: nowrap;
+    margin-left: auto;
 }
 
-.page-header {
-    flex-wrap: wrap;
-}
-
-.page-header .search-wrapper {
+header.page-header[data-role] .admin-search-wrapper,
+header.page-header[data-role] .search-wrapper {
+    position: relative;
     display: flex;
-    min-width: 0;
-    flex: 1 1 180px;
+    align-items: center;
+    order: 1;
 }
 
-.page-header .search-input {
-    width: 100%;
-    min-width: 0;
+header.page-header[data-role] .admin-search-input,
+header.page-header[data-role] .search-input {
+    background-color: var(--bg-surface-elev, #ffffff);
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 999px;
+    padding: 8px 16px 8px 36px;
+    font-family: inherit;
+    font-size: 13px;
+    width: 210px;
+    height: 38px;
+    outline: none;
+    color: var(--text-main, #0F172A);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: width 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+header.page-header[data-role] .admin-search-input:focus,
+header.page-header[data-role] .search-input:focus {
+    width: 250px;
+    border-color: var(--primary, #84563C);
+    box-shadow: 0 0 0 3px rgba(132, 86, 60, 0.14);
+}
+
+header.page-header[data-role] .header-resort-clock {
+    order: 2;
+}
+
+header.page-header[data-role] .btn-primary,
+header.page-header[data-role] .btn-new-res-top {
+    order: 3;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 0;
+    border-radius: 10px;
+    padding: 0 15px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none;
+    background: linear-gradient(135deg, #84563C 0%, #9E6C50 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px -3px rgba(132, 86, 60, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+header.page-header[data-role] .btn-primary:hover,
+header.page-header[data-role] .btn-new-res-top:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px -3px rgba(132, 86, 60, 0.44);
+}
+
+header.page-header[data-role] .header-notif-menu {
+    order: 4;
+    margin-left: 6px;
+}
+
+header.page-header[data-role] .header-notif-menu::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 22px;
+    background: var(--border, #E2E8F0);
+    pointer-events: none;
+}
+
+header.page-header[data-role] .header-user-menu {
+    order: 5;
 }
 
 /* Redesigned Resort Clock */
 .header-resort-clock {
     display: inline-flex;
     align-items: center;
-    gap: 9px;
-    background: var(--sidebar-hover, #F8FAFC);
+    gap: 8px;
+    height: 38px;
+    background: rgba(248, 250, 252, 0.92);
     border: 1px solid var(--border, #E2E8F0);
-    padding: 7px 14px;
+    padding: 0 13px;
     border-radius: 999px;
     font-size: 12.5px;
     color: var(--text-main, #0F172A);
     font-weight: 600;
     user-select: none;
-    box-shadow: var(--shadow-xs);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    white-space: nowrap;
 }
 [data-theme="dark"] .header-resort-clock {
-    background: var(--bg-surface-elev, #1A2234);
+    background: var(--bg-surface-elev, #161E31);
     border-color: var(--border, #1E293B);
 }
 .resort-clock-icon {
@@ -364,7 +607,7 @@ if (isset($conn)) {
 }
 .resort-clock-time {
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12.5px;
     letter-spacing: 0.2px;
     font-variant-numeric: tabular-nums;
 }
@@ -383,28 +626,42 @@ if (isset($conn)) {
     color: var(--primary, #84563C);
     border-radius: 4px;
 }
+[data-theme="dark"] .resort-clock-badge {
+    background: rgba(212, 163, 115, 0.16);
+    color: #E2B892;
+}
 
 /* Icon Buttons (Notifications, etc) */
 .header-icon-btn {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-surface-elev, #ffffff);
     border: 1px solid var(--border, #E2E8F0);
-    border-radius: var(--radius-md, 12px);
+    border-radius: 11px;
     color: var(--text-muted, #64748B);
     cursor: pointer;
     position: relative;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: var(--shadow-xs);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 .header-icon-btn:hover {
-    background: var(--sidebar-hover, #F8FAFC);
+    background: rgba(132, 86, 60, 0.06);
     color: var(--primary, #84563C);
-    border-color: var(--primary, #84563C);
+    border-color: rgba(132, 86, 60, 0.35);
     transform: translateY(-1px);
+}
+[data-theme="dark"] .header-icon-btn {
+    background: #161E31;
+    border-color: #1E293B;
+    color: #94A3B8;
+}
+[data-theme="dark"] .header-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #E2B892;
+    border-color: rgba(212, 163, 115, 0.35);
 }
 .notification-badge {
     position: absolute;
@@ -417,7 +674,7 @@ if (isset($conn)) {
     color: #FFFFFF;
     border-radius: 999px;
     border: 2px solid var(--bg-surface, #ffffff);
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 800;
     line-height: 14px;
     display: inline-flex;
@@ -433,39 +690,49 @@ if (isset($conn)) {
     position: relative;
 }
 .header-user-trigger {
+    height: 38px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 5px 12px 5px 6px;
-    background: var(--sidebar-hover, #F8FAFC);
+    gap: 8px;
+    padding: 4px 11px 4px 5px;
+    background: rgba(248, 250, 252, 0.92);
     border: 1px solid var(--border, #E2E8F0);
     border-radius: 999px;
     cursor: pointer;
     font-family: 'Outfit', sans-serif;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: var(--shadow-xs);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 .header-user-trigger:hover {
-    background: var(--primary-light, #F5ECE5);
-    border-color: var(--primary, #84563C);
+    background: #FBF6F1;
+    border-color: rgba(132, 86, 60, 0.35);
+}
+[data-theme="dark"] .header-user-trigger {
+    background: #161E31;
+    border-color: #1E293B;
+}
+[data-theme="dark"] .header-user-trigger:hover {
+    background: rgba(132, 86, 60, 0.18);
+    border-color: rgba(212, 163, 115, 0.35);
 }
 .header-user-avatar {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     background: linear-gradient(135deg, #84563C 0%, #A37152 100%);
     color: #ffffff;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 .header-user-name {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--text-main, #0F172A);
-    max-width: 140px;
+    max-width: 132px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -509,21 +776,90 @@ if (isset($conn)) {
 .header-user-dropdown a.danger:hover {
     background: #FEF2F2;
 }
+[data-theme="dark"] .header-user-dropdown a.danger:hover {
+    background: rgba(220, 38, 38, 0.14);
+}
 
+@media (max-width: 1380px) {
+    header.page-header[data-role] {
+        padding: 13px 24px;
+        gap: 12px;
+    }
+    header.page-header[data-role] .page-header-actions {
+        gap: 8px;
+    }
+    header.page-header[data-role] .admin-search-input,
+    header.page-header[data-role] .search-input {
+        width: 168px;
+    }
+    header.page-header[data-role] .admin-search-input:focus,
+    header.page-header[data-role] .search-input:focus {
+        width: 205px;
+    }
+    header.page-header[data-role] .header-resort-clock {
+        padding: 0 11px;
+        gap: 7px;
+    }
+    header.page-header[data-role] .resort-clock-date {
+        display: none;
+    }
+    header.page-header[data-role] .header-user-name {
+        max-width: 96px;
+    }
+}
 @media (max-width: 1024px) {
-    .page-header {
-        padding: 14px 20px;
+    header.page-header[data-role] {
+        padding: 12px 18px !important;
+        z-index: 95;
+    }
+    .page-header-icon {
+        width: 38px;
+        height: 38px;
     }
     .header-resort-clock .resort-clock-date {
         display: none;
     }
 }
 @media (max-width: 768px) {
-    .page-header-subtitle {
+    header.page-header[data-role] .page-header-subtitle {
         display: none;
     }
     .header-resort-clock {
         display: none;
+    }
+    .header-user-name {
+        display: none;
+    }
+    header.page-header[data-role] .header-user-trigger {
+        padding: 4px 8px 4px 5px;
+        gap: 4px;
+    }
+    header.page-header[data-role] .header-notif-menu {
+        margin-left: 0;
+    }
+    header.page-header[data-role] .header-notif-menu::before {
+        display: none;
+    }
+}
+@media (max-width: 640px) {
+    .page-header-eyebrow {
+        display: none;
+    }
+    header.page-header[data-role] .page-header-title {
+        white-space: normal;
+        font-size: 17.5px;
+    }
+}
+@media print {
+    header.page-header[data-role] {
+        position: static;
+        box-shadow: none !important;
+    }
+    header.page-header[data-role]::after {
+        display: none;
+    }
+    header.page-header[data-role] .page-header-actions {
+        display: none !important;
     }
 }
 </style>
@@ -543,10 +879,19 @@ if (isset($conn)) {
             </svg>
         </button>
 
+        <div class="page-header-icon" aria-hidden="true">
+            <?php echo $_ph_context['icon']; ?>
+        </div>
+
         <div class="page-header-titles">
+            <div class="page-header-eyebrow">
+                <span class="page-header-portal-chip"><?php echo htmlspecialchars($_ph_portal_badge); ?></span>
+                <span class="page-header-eyebrow-sep" aria-hidden="true">/</span>
+                <span><?php echo htmlspecialchars($_ph_context['section']); ?></span>
+            </div>
             <h1 class="page-header-title"><?php echo htmlspecialchars($_ph_title); ?></h1>
             <?php if ($_ph_subtitle !== ''): ?>
-            <p class="page-header-subtitle"><?php echo htmlspecialchars($_ph_subtitle); ?></p>
+            <p class="page-header-subtitle" title="<?php echo htmlspecialchars($_ph_subtitle, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($_ph_subtitle); ?></p>
             <?php endif; ?>
         </div>
     </div>
@@ -638,7 +983,7 @@ if (isset($conn)) {
         </div>
 
         <div class="header-user-menu" id="pageHeaderUserMenu">
-            <button class="header-user-trigger" onclick="toggleUserDropdown(event)">
+            <button type="button" class="header-user-trigger" onclick="toggleUserDropdown(event)" title="<?php echo htmlspecialchars(($_ph_username !== '' ? $_ph_username : $_ph_role_label) . ' (' . $_ph_role_label . ')', ENT_QUOTES, 'UTF-8'); ?>">
                 <?php if (!empty($_ph_photo) && (str_starts_with($_ph_photo, 'http') || file_exists(__DIR__ . '/../' . $_ph_photo))): ?>
                     <img src="<?php echo htmlspecialchars($_ph_photo); ?>" alt="Avatar" class="header-user-avatar" style="object-fit:cover; border:1px solid var(--border);">
                 <?php else: ?>
@@ -760,6 +1105,12 @@ function resolveNotificationAction(data) {
     }
     if (context.includes('maintenance') || context.includes('room unavailable')) {
         return { label: 'View Rooms', url: 'accommodations' };
+    }
+    if (context.includes('concierge') || context.includes('escalation') || context.includes('human support') || context.includes('live chat') || context.includes('live support')) {
+        return { label: 'Open Live Chats', url: 'admin_live_support' };
+    }
+    if (context.includes('inquiry')) {
+        return { label: 'Open Inquiries', url: 'admin_inquiries' };
     }
     if (bookingId > 0) {
         return { label: 'View Reservation', url: adminReservations + '?search=' + query };
