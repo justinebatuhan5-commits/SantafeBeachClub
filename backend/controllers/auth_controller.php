@@ -133,12 +133,13 @@ function sfbc_handle_portal_login_page(mysqli $conn, string $portal): array
 
                     if (!empty($username) && !empty($password)) {
                         $table = $cfg['table'];
-                        $stmt = $conn->prepare("SELECT id, password, email FROM `{$table}` WHERE username = ?");
+                        $stmt = $conn->prepare("SELECT id, username, password, email FROM `{$table}` WHERE LOWER(username) = LOWER(?) LIMIT 1");
                         $stmt->bind_param("s", $username);
                         $stmt->execute();
                         $result = $stmt->get_result();
 
                         if ($row = $result->fetch_assoc()) {
+                            $username = (string) ($row['username'] ?? $username);
                             $lockStatus = RateLimiter::checkAccountLockout($conn, (int)$row['id'], $table);
                             if ($lockStatus['locked']) {
                                 if (!empty($lockStatus['is_permanent'])) {
