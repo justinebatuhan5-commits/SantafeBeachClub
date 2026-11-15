@@ -16,22 +16,42 @@ if (PHP_SAPI !== 'cli') {
 
 require_once __DIR__ . '/../config/db.php';
 
+$fromEnv = in_array('--from-env', $argv ?? [], true);
+
 $existing = $conn->query('SELECT id FROM administrators LIMIT 1');
 if ($existing && $existing->num_rows > 0) {
-    exit("An administrator already exists. Use the authenticated admin interface to manage users.\n");
+    fwrite(STDOUT, "An administrator already exists. Use the authenticated admin interface to manage users.\n");
+    exit(0);
 }
 
-fwrite(STDOUT, 'Administrator email: ');
-$email = trim((string) fgets(STDIN));
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    exit("A valid email address is required.\n");
-}
+if ($fromEnv) {
+    $email = trim((string) (getenv('INITIAL_ADMIN_EMAIL') ?: ($_ENV['INITIAL_ADMIN_EMAIL'] ?? '')));
+    $password = (string) (getenv('INITIAL_ADMIN_PASSWORD') ?: ($_ENV['INITIAL_ADMIN_PASSWORD'] ?? ''));
+    if ($email === '' && $password === '') {
+        exit(0);
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        fwrite(STDERR, "INITIAL_ADMIN_EMAIL must be a valid email address.\n");
+        exit(1);
+    }
+    $passwordError = pw_validate($password);
+    if ($passwordError !== null) {
+        fwrite(STDERR, $passwordError . "\n");
+        exit(1);
+    }
+} else {
+    fwrite(STDOUT, 'Administrator email: ');
+    $email = trim((string) fgets(STDIN));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        exit("A valid email address is required.\n");
+    }
 
-fwrite(STDOUT, 'Administrator password: ');
-$password = rtrim((string) fgets(STDIN), "\r\n");
-$passwordError = pw_validate($password);
-if ($passwordError !== null) {
-    exit($passwordError . "\n");
+    fwrite(STDOUT, 'Administrator password: ');
+    $password = rtrim((string) fgets(STDIN), "\r\n");
+    $passwordError = pw_validate($password);
+    if ($passwordError !== null) {
+        exit($passwordError . "\n");
+    }
 }
 
 $hash = pw_hash($password);

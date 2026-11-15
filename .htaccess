@@ -11,7 +11,7 @@ ServerSignature Off
 </IfModule>
 
 # Protect Sensitive & Configuration Files (Checklist 6)
-<FilesMatch "(?:^\.env|\.git|\.gitignore|composer\.(json|lock)|package(-lock)?\.json|config\.php|database\.(php|sql)|wapiti_report\.txt|requirements\.txt|\.(?:log|md|ini|bak|sh|py|bat|ps1|drawio|pptx|sql)$)">
+<FilesMatch "(?:^\.env|\.git|\.gitignore|\.gitattributes|\.dockerignore|^Dockerfile$|^docker-entrypoint\.sh$|^render\.yaml$|composer\.(json|lock)|package(-lock)?\.json|config\.php|database\.(php|sql)|wapiti_report\.txt|requirements\.txt|\.(?:log|md|ini|bak|sh|py|bat|ps1|drawio|pptx|sql)$)">
     Require all denied
 </FilesMatch>
 

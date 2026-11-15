@@ -18,10 +18,14 @@ if ($env_host) {
     $env_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? ($_SERVER['DB_PASS'] ?? ''));
     $env_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? 'defaultdb'));
     $env_port = (int)(getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? ($_SERVER['DB_PORT'] ?? 3306)));
+    $env_ssl_ca = getenv('DB_SSL_CA') ?: ($_ENV['DB_SSL_CA'] ?? ($_SERVER['DB_SSL_CA'] ?? ''));
+    if ($env_ssl_ca === '' && is_file('/etc/ssl/certs/ca-certificates.crt')) {
+        $env_ssl_ca = '/etc/ssl/certs/ca-certificates.crt';
+    }
     $conn = mysqli_init();
     if ($conn) {
         $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
-        $conn->ssl_set(null, null, null, null, null);
+        $conn->ssl_set(null, null, $env_ssl_ca !== '' ? $env_ssl_ca : null, null, null);
         if (!@$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port, null, MYSQLI_CLIENT_SSL)) {
             @$conn->real_connect($env_host, $env_user, $env_pass, $env_name, $env_port);
         }

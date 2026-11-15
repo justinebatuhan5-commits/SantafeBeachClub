@@ -13,7 +13,22 @@ function getPdoConnection(): PDO {
         $user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? 'root');
         $pass = getenv('DB_PASS');
         if ($pass === false) $pass = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? '';
-        $pdo = new PDO("mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4", $user, $pass, $options);
+        $dsn = "mysql:host=$host;port=$port;dbname=$name;charset=utf8mb4";
+        $sslCa = getenv('DB_SSL_CA') ?: ($_ENV['DB_SSL_CA'] ?? ($_SERVER['DB_SSL_CA'] ?? ''));
+        if ($sslCa === '' && is_file('/etc/ssl/certs/ca-certificates.crt')) {
+            $sslCa = '/etc/ssl/certs/ca-certificates.crt';
+        }
+        if ($sslCa !== '' && defined('PDO::MYSQL_ATTR_SSL_CA')) {
+            $sslOptions = $options;
+            $sslOptions[PDO::MYSQL_ATTR_SSL_CA] = $sslCa;
+            try {
+                $pdo = new PDO($dsn, $user, $pass, $sslOptions);
+                return $pdo;
+            } catch (PDOException $e) {
+                // Fall back to standard connection if server does not require CA-verified TLS.
+            }
+        }
+        $pdo = new PDO($dsn, $user, $pass, $options);
         return $pdo;
     }
     $local = in_array($_SERVER['HTTP_HOST'] ?? '127.0.0.1', ['localhost','127.0.0.1','::1'], true);
