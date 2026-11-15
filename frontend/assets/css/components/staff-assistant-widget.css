@@ -1,0 +1,73 @@
+/* Santa Fe Beach Club — Read-Only Staff AI Operations Assistant */
+#sfbcStaffAiWidget {
+    position: fixed !important;
+    bottom: 22px !important;
+    right: 22px !important;
+    z-index: 2147483647 !important;
+    font-family: inherit !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+}
+#sfbcStaffAiToggle {
+    height: 46px !important;
+    padding: 0 16px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(135deg, #0F172A, #1E293B) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+#sfbcStaffAiToggle:hover {
+    transform: scale(1.04) !important;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.45) !important;
+}
+#sfbcStaffAiToggle:active {
+    transform: scale(0.96) !important;
+}
+#sfbcStaffAiBox {
+    display: none;
+    position: fixed !important;
+    bottom: 78px !important;
+    right: 22px !important;
+    width: 370px !important;
+    max-width: calc(100vw - 32px) !important;
+    height: 490px !important;
+    max-height: calc(100vh - 100px) !important;
+    background: var(--card-bg, #ffffff) !important;
+    color: var(--text-main, #0F172A) !important;
+    border: 1px solid var(--border, #CBD5E1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), height 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+#sfbcStaffAiBox.sfbc-staff-open {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+#sfbcStaffAiBox.sfbc-staff-expanded {
+    width: 760px !important;
+    max-width: calc(100vw - 32px) !important;
+    height: 720px !important;
+    max-height: calc(100vh - 90px) !important;
+}
+#sfbcStaffClearBtn:hover,
+#sfbcStaffExpandBtn:hover {
+    background: rgba(255, 255, 255, 0.24) !important;
+}

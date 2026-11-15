@@ -1,0 +1,6 @@
+Options -Indexes
+
+RewriteEngine On
+# Allow only laravel_core/public/* over HTTP (used by frontend/admin_automation.php).
+# Block .env, app/, bootstrap/, config/, database/, storage/, vendor/, and root scratch PHP files.
+RewriteRule ^(?!public(?:/|$)).* - [F,L]

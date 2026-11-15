@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
 
-$source = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php');
+$source = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/admin_refunds/_refund_cards.php');
 if ($source === false) throw new RuntimeException('Unable to read refund administration page.');
 
 foreach (['https://dashboard.paymongo.com/login', 'Open PayMongo Dashboard', 'target="_blank"', 'rel="noopener noreferrer"'] as $fragment) {

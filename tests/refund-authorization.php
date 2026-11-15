@@ -34,7 +34,9 @@ if ($auth === false || !str_contains($auth, "(\$_SESSION['admin_role'] ?? '') ==
     throw new RuntimeException('Administrative refund actions are not restricted to the administrator role.');
 }
 
-$ui = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php');
+$ui = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/admin_refunds/_refund_cards.php')
+    . file_get_contents(__DIR__ . '/../frontend/assets/js/pages/admin-refunds.js');
 foreach (['Receptionist refund assistance', 'Submit Guest Request', "action=submit_request"] as $fragment) {
     if ($ui === false || !str_contains($ui, $fragment)) {
         throw new RuntimeException('Missing receptionist refund assistance control: ' . $fragment);

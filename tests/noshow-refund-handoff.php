@@ -32,8 +32,15 @@ $booking['check_out'] = date('Y-m-d');
 handoff_check(sf_noshow_refund_handoff('receptionist', 25, $booking, $reason) === null,
     'Overdue no-shows must not offer a non-refundable handoff.');
 
-$checkin = file_get_contents(__DIR__ . '/../frontend/admin_checkin.php');
-$refunds = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php');
+$checkin = file_get_contents(__DIR__ . '/../frontend/admin_checkin.php')
+    . "\n" . file_get_contents(__DIR__ . '/../backend/controllers/admin_checkin_controller.php')
+    . "\n" . file_get_contents(__DIR__ . '/../frontend/views/admin_checkin/_arrivals_table.php')
+    . "\n" . file_get_contents(__DIR__ . '/../frontend/views/admin_checkin/_modals.php');
+$refunds = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php')
+    . "\n" . file_get_contents(__DIR__ . '/../backend/controllers/admin_refunds_controller.php')
+    . "\n" . file_get_contents(__DIR__ . '/../frontend/views/admin_refunds/_refund_cards.php')
+    . "\n" . file_get_contents(__DIR__ . '/../frontend/views/admin_refunds/_modals.php')
+    . "\n" . file_get_contents(__DIR__ . '/../frontend/assets/js/pages/admin-refunds.js');
 foreach (["['admin', 'receptionist'], true", 'require_csrf_token();', 'sf_noshow_refund_handoff(',
     "SET status = 'Cancelled', cancelled_at = NOW(), cancellation_reason = ?",
     "UPDATE rooms SET status = 'ready'", 'Mark No-Show / Cancelled', 'Reservation Marked No-Show',

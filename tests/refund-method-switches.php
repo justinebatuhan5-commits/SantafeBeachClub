@@ -2,9 +2,17 @@
 $helper=file_get_contents(__DIR__.'/../backend/helpers/refund_method_helper.php');
 $refundApi=file_get_contents(__DIR__.'/../backend/api/refund_request_api.php');
 $manualApi=file_get_contents(__DIR__.'/../backend/api/manual_refund_api.php');
-$admin=file_get_contents(__DIR__.'/../frontend/admin_refunds.php');
-$settings=file_get_contents(__DIR__.'/../frontend/settings.php');
-$guestForm=file_get_contents(__DIR__.'/../frontend/refund_request_form.php');
+$admin=file_get_contents(__DIR__.'/../frontend/admin_refunds.php')
+    .file_get_contents(__DIR__.'/../backend/controllers/admin_refunds_controller.php')
+    .file_get_contents(__DIR__.'/../frontend/views/admin_refunds/_refund_cards.php')
+    .file_get_contents(__DIR__.'/../frontend/views/admin_refunds/_modals.php')
+    .file_get_contents(__DIR__.'/../frontend/assets/js/pages/admin-refunds.js');
+$settings=file_get_contents(__DIR__.'/../frontend/settings.php')
+    .file_get_contents(__DIR__.'/../backend/controllers/settings_controller.php')
+    .file_get_contents(__DIR__.'/../frontend/views/settings/_tab_property.php');
+$guestForm=file_get_contents(__DIR__.'/../frontend/refund_request_form.php')
+    .file_get_contents(__DIR__.'/../backend/controllers/refund_request_controller.php')
+    .file_get_contents(__DIR__.'/../frontend/views/refund_request/_form.php');
 foreach([$helper,$refundApi,$manualApi,$admin,$settings,$guestForm] as $source) if($source===false) throw new RuntimeException('Unable to read refund method switch files.');
 foreach(['refund_paymongo_enabled','refund_manual_gcash_enabled','temporarily disabled by the administrator'] as $fragment) if(!str_contains($helper,$fragment)) throw new RuntimeException('Missing refund method helper behavior: '.$fragment);
 if(!str_contains($refundApi,"sf_require_refund_method(\$conn, 'paymongo')")) throw new RuntimeException('Missing PayMongo switch enforcement.');

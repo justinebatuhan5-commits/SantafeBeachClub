@@ -1,7 +1,12 @@
 <?php
-$book = file_get_contents(__DIR__ . '/../frontend/book.php');
-$balance = file_get_contents(__DIR__ . '/../frontend/balance_payment.php');
-$success = file_get_contents(__DIR__ . '/../frontend/payment_success.php');
+$book = file_get_contents(__DIR__ . '/../frontend/book.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/booking_controller.php');
+$balance = file_get_contents(__DIR__ . '/../frontend/balance_payment.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/balance_payment_controller.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/balance_payment/_card.php');
+$success = file_get_contents(__DIR__ . '/../frontend/payment_success.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/payment_success_controller.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/payment_success/_card.php');
 
 if ($book === false || $balance === false || $success === false) {
     throw new RuntimeException('Unable to read PayMongo return-flow files.');

@@ -9,6 +9,7 @@ require_once __DIR__ . '/../helpers/refund_method_helper.php';
 require_once __DIR__ . '/../helpers/rate_limiter.php';
 require_once __DIR__ . '/../helpers/security_logger.php';
 require_once __DIR__ . '/../helpers/admin_session_helper.php';
+require_once __DIR__ . '/../helpers/url_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
@@ -77,8 +78,7 @@ try {
             $conn->commit();
         } catch (Throwable $e) { $conn->rollback(); throw $e; }
 
-        $base = rtrim((string)(getenv('PUBLIC_APP_URL') ?: 'http://localhost/SantaBeachClub-BookingSystem'), '/');
-        $frontendBase = str_ends_with($base, '/frontend') ? $base : $base . '/frontend';
+        $frontendBase = sfbc_public_frontend_url();
         $link = $frontendBase . '/refund_details.php?token=' . rawurlencode($token);
         $mail = sendManualRefundDetailsEmail($refund['guest_email'], $refund['guest_name'], 'REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT), (float)$refund['net_refund'], $link);
         if (!$mail['success']) throw new RuntimeException('The link was created, but email delivery failed. Generate a new link after checking SMTP.');
@@ -228,8 +228,7 @@ try {
             throw $e;
         }
         log_activity($conn, $actor, 'Manual GCash Refund Completed', 'Refund request #' . $requestId . ' completed with reference ' . $reference . '.');
-        $base = rtrim((string)(getenv('PUBLIC_APP_URL') ?: 'http://localhost/SantaBeachClub-BookingSystem'), '/');
-        $frontendBase = str_ends_with($base, '/frontend') ? $base : $base . '/frontend';
+        $frontendBase = sfbc_public_frontend_url();
         $confirmationLink = $frontendBase . '/refund_confirmation.php?token=' . rawurlencode($confirmationToken);
         if (!empty($refund['guest_email'])) {
             $completionMail = sendRefundCompletedEmail($refund['guest_email'], $refund['guest_name'], 'REF-' . str_pad((string)$refund['booking_id'], 3, '0', STR_PAD_LEFT), (float)$refund['net_refund'], 'Manual GCash transfer reference ' . $reference, $confirmationLink, 'receipts/' . $filename);

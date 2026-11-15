@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 // Static regression guard: payment cancellation must be authorized by the
 // random cancellation token and must never accept a numeric booking ID alone.
-$source = file_get_contents(__DIR__ . '/../frontend/book.php');
-if ($source === false) {
+$source = file_get_contents(__DIR__ . '/../frontend/book.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/booking_controller.php');
+if ($source === '') {
     throw new RuntimeException('Unable to read frontend/book.php.');
 }
 

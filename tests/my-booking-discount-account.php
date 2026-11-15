@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$source = file_get_contents(__DIR__ . '/../frontend/my_booking.php');
+$source = file_get_contents(__DIR__ . '/../frontend/my_booking.php')
+    . "\n" . file_get_contents(__DIR__ . '/../backend/controllers/my_booking_controller.php')
+    . "\n" . file_get_contents(__DIR__ . '/../frontend/views/my_booking/_portal_dashboard.php');
 if ($source === false) throw new RuntimeException('Unable to read My Booking page.');
 
 if (str_contains($source, "header('Location: discount_booking.php?booking='")) {

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/business_time_helper.php';
+require_once __DIR__ . '/url_helper.php';
 
 function sf_balance_setting(mysqli $db, string $key, string $default): string
 {
@@ -11,9 +12,7 @@ function sf_balance_setting(mysqli $db, string $key, string $default): string
 
 function sf_balance_public_url(): string
 {
-    $base=rtrim((string)(getenv('PUBLIC_APP_URL') ?: 'http://localhost/SantaBeachClub-BookingSystem'),'/');
-    if (!str_ends_with($base,'/frontend')) $base.='/frontend';
-    return $base;
+    return sfbc_public_frontend_url();
 }
 
 function sf_balance_deadlines(mysqli $db, string $checkIn, ?string $eta = null): array

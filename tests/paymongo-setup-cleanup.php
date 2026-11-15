@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 
-$source = file_get_contents(__DIR__ . '/../frontend/book.php');
-if ($source === false) throw new RuntimeException('Unable to read booking flow.');
+$source = file_get_contents(__DIR__ . '/../frontend/book.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/booking_controller.php');
+if ($source === '') throw new RuntimeException('Unable to read booking flow.');
 
 foreach ([
     'function cleanup_failed_paymongo_booking',

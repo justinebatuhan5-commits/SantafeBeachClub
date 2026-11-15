@@ -43,15 +43,66 @@
 .booking-lookup-page .btn-lookup:disabled { background: #b08060; }
 .booking-lookup-page button:focus-visible, .booking-lookup-page a:focus-visible { outline: 3px solid #ba936c; outline-offset: 4px; }
 @media (max-width: 900px) {
-    .booking-lookup-page .lookup-section { padding: 185px 24px 56px; gap: 36px; flex-direction: column; }
+    .booking-lookup-page .lookup-section { padding: 112px 24px 56px; gap: 28px; flex-direction: column; }
     .booking-welcome { text-align: center; max-width: 480px; }
     .booking-welcome p { margin: 0 auto; }
     .booking-welcome-note { display: none; }
     .booking-lookup-page .lookup-card { flex: auto; }
 }
-@media (max-width: 480px) {
-    .booking-lookup-page .site-navbar { top: 8px; }
-    .booking-lookup-page .lookup-section { padding-left: 16px; padding-right: 16px; }
-    .booking-lookup-page .lookup-card-header { padding: 28px 24px 0; }
-    .booking-lookup-page .lookup-card-body { padding: 24px; }
+@media (max-width: 768px) {
+    .booking-lookup-page .lookup-section { padding: 98px 16px 88px; gap: 20px; }
+    .booking-lookup-page .booking-welcome h2 { font-size: clamp(28px, 7.5vw, 36px); line-height: 1.15; }
+    .booking-lookup-page .booking-welcome-note { display: none; }
+    .booking-lookup-page .lookup-card-header { padding: 26px 22px 0; }
+    .booking-lookup-page .lookup-card-header h1 { font-size: 27px; margin-bottom: 8px; }
+    .booking-lookup-page .lookup-card-body { padding: 22px; }
+}
+
+.booking-lookup-page .grecaptcha-badge {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    right: 0 !important;
+}
+
+.booking-lookup-page .lf-recaptcha-note {
+    margin: 12px 0 0;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: #807466;
+    text-align: center;
+}
+
+.booking-lookup-page .lf-recaptcha-note a {
+    color: #7C533C;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.booking-lookup-page .lf-help-row {
+    text-align: center;
+    margin: 14px 0 0;
+    font-size: 13px;
+    color: #776a5e;
+}
+
+.booking-lookup-page .lf-contact-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 4px 8px;
+    color: #7C533C;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+    html:has(body.booking-lookup-page),
+    body.booking-lookup-page {
+        overflow-x: clip;
+    }
 }

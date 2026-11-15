@@ -13,8 +13,12 @@ function check_checkin_route(bool $condition, string $message): void
 }
 
 $root = dirname(__DIR__);
-$sidebar = file_get_contents($root . '/frontend/partials/_sidebar.php');
-$header = file_get_contents($root . '/frontend/partials/_page_header.php');
+$sidebar = file_get_contents($root . '/frontend/partials/_sidebar.php')
+    . file_get_contents($root . '/frontend/partials/sidebar/_admin_nav.php')
+    . file_get_contents($root . '/frontend/partials/sidebar/_reception_nav.php')
+    . file_get_contents($root . '/frontend/assets/js/components/sidebar.js');
+$header = file_get_contents($root . '/frontend/partials/_page_header.php')
+    . file_get_contents($root . '/frontend/assets/js/components/page-header.js');
 $legacy = file_get_contents($root . '/frontend/checkin.php');
 $admin = file_get_contents($root . '/frontend/admin_checkin.php');
 

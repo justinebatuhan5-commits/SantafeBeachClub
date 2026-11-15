@@ -11,15 +11,19 @@ ServerSignature Off
 </IfModule>
 
 # Protect Sensitive & Configuration Files (Checklist 6)
-<FilesMatch "^\.env|\.git|\.gitignore|composer\.(json|lock)|config\.php|database\.(php|sql)|\.log|\.md|\.ini|\.bak|\.sh$">
+<FilesMatch "(?:^\.env|\.git|\.gitignore|composer\.(json|lock)|package(-lock)?\.json|config\.php|database\.(php|sql)|wapiti_report\.txt|requirements\.txt|\.(?:log|md|ini|bak|sh|py|bat|ps1|drawio|pptx|sql)$)">
     Require all denied
 </FilesMatch>
 
-# Block access to hidden directories and files (e.g. .git/)
-RewriteRule (^|/)\.(?!well-known/) - [F]
-
 RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Block access to hidden directories and files (e.g. .git/)
+RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+# Block non-public tool/test/docs/scratch directories and legacy desc.php over HTTP
+RewriteRule ^(?:tests|scripts|flowcharts|output|analytics_service|backend/scratch)(?:/|$) - [F,L]
+RewriteRule ^desc\.php$ - [F,L]
 
 # ── Force HTTPS in production (preserves local development) ───────────────────────
 RewriteCond %{HTTPS} !=on
@@ -30,11 +34,11 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 # ── Dynamic rewrite base / path routing ──────────────────────────────────────────
 
 # Directly serve static assets (CSS, JS, images, etc.) from frontend/assets
-RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^assets/(.+)$ frontend/assets/$1 [L]
 
 # Directly serve uploaded receipts and photos
-RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^uploads/(.+)$ frontend/uploads/$1 [L]
 
 # Directly serve backend endpoints if requested

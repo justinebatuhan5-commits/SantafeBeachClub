@@ -1,0 +1,247 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #F8FAFC;
+    color: #1E293B;
+    padding: 30px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.invoice-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+}
+.no-print-bar {
+    max-width: 800px;
+    margin: 0 auto 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.btn-print {
+    background: #7C533C;
+    color: #FFFFFF;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(124, 83, 60, 0.25);
+    transition: all 0.2s ease;
+}
+.btn-print:hover { background: #64422F; transform: translateY(-1px); }
+.btn-back {
+    color: #64748B;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 600;
+}
+.btn-back:hover { color: #1E293B; }
+
+.invoice-header {
+    padding: 32px 36px;
+    background: linear-gradient(135deg, #FAF6F0 0%, #F5EBE0 100%);
+    border-bottom: 2px solid #EADBCC;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.resort-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.resort-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #7C533C;
+}
+.resort-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #5A3E2B;
+    letter-spacing: -0.3px;
+}
+.resort-sub {
+    font-size: 12px;
+    color: #84563C;
+    margin-top: 2px;
+}
+.invoice-meta {
+    text-align: right;
+}
+.invoice-badge {
+    display: inline-block;
+    background: #7C533C;
+    color: #FFFFFF;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.invoice-ref {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1E293B;
+}
+.invoice-date {
+    font-size: 12px;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+.invoice-body {
+    padding: 32px 36px;
+}
+.section-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+.info-card {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px 20px;
+}
+.info-card-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+}
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+.info-row:last-child { margin-bottom: 0; }
+.info-label { color: #64748B; }
+.info-value { font-weight: 600; color: #0F172A; }
+.stay-facts { display: inline-flex; align-items: center; flex-wrap: wrap; }
+.stay-facts > span { padding: 0 8px; white-space: nowrap; }
+.stay-facts > span:first-child { padding-left: 0; }
+.stay-facts > span + span { border-left: 1px solid #0EA5E9; }
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 28px;
+}
+.invoice-table th {
+    background: #F1F5F9;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 16px;
+    border-top: 1px solid #E2E8F0;
+    border-bottom: 1px solid #E2E8F0;
+    text-align: left;
+}
+.invoice-table th:last-child { text-align: right; }
+.invoice-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 13.5px;
+}
+.invoice-table td:last-child { text-align: right; font-weight: 600; }
+
+.invoice-totals {
+    margin-left: auto;
+    width: 320px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+}
+.tot-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+.tot-row.grand {
+    border-top: 1px solid #CBD5E1;
+    padding-top: 8px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0F172A;
+    margin-bottom: 0;
+}
+.tot-row.balance {
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+    font-weight: 700;
+    color: #92400E;
+}
+
+.checkin-pass-banner {
+    background: #FAF6F0;
+    border: 2px dashed #D7C4B7;
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.pass-qr-img {
+    width: 110px;
+    height: 110px;
+    border-radius: 10px;
+    background: #FFF;
+    padding: 6px;
+    border: 1px solid #E2E8F0;
+    flex-shrink: 0;
+}
+.pass-text h4 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #5A3E2B;
+    margin-bottom: 4px;
+}
+.pass-text p {
+    font-size: 12.5px;
+    color: #64748B;
+    line-height: 1.4;
+}
+
+.invoice-footer {
+    padding: 20px 36px;
+    background: #F8FAFC;
+    border-top: 1px solid #E2E8F0;
+    font-size: 11.5px;
+    color: #64748B;
+    text-align: center;
+}
+
+@media print {
+    body { background: #FFFFFF; padding: 0; }
+    .no-print-bar { display: none !important; }
+    .invoice-wrapper { border: none; box-shadow: none; border-radius: 0; max-width: 100%; }
+    .invoice-header, .checkin-pass-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

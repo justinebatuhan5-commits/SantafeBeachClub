@@ -5,10 +5,30 @@
  * Score threshold: 0.5 (0.0 = bot, 1.0 = human)
  */
 
-define('RECAPTCHA_SITE_KEY',   '6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT');
-define('RECAPTCHA_SECRET_KEY', '6LfE7bEtAAAAACG5jsbOJoByCDJJxDUWVDjIyslt');
-define('RECAPTCHA_MIN_SCORE',  0.5);
-define('RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify');
+if (file_exists(__DIR__ . '/../config/env_loader.php')) {
+    require_once __DIR__ . '/../config/env_loader.php';
+    load_env(__DIR__ . '/../../.env');
+}
+
+if (!function_exists('recaptcha_site_key')) {
+    function recaptcha_site_key(): string
+    {
+        return (string) (getenv('RECAPTCHA_SITE_KEY') ?: ($_ENV['RECAPTCHA_SITE_KEY'] ?? '6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT'));
+    }
+}
+
+if (!defined('RECAPTCHA_SITE_KEY')) {
+    define('RECAPTCHA_SITE_KEY', recaptcha_site_key());
+}
+if (!defined('RECAPTCHA_SECRET_KEY')) {
+    define('RECAPTCHA_SECRET_KEY', (string) (getenv('RECAPTCHA_SECRET_KEY') ?: ($_ENV['RECAPTCHA_SECRET_KEY'] ?? '6LfE7bEtAAAAACG5jsbOJoByCDJJxDUWVDjIyslt')));
+}
+if (!defined('RECAPTCHA_MIN_SCORE')) {
+    define('RECAPTCHA_MIN_SCORE', 0.5);
+}
+if (!defined('RECAPTCHA_VERIFY_URL')) {
+    define('RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify');
+}
 
 /**
  * Verify a reCAPTCHA v3 token.

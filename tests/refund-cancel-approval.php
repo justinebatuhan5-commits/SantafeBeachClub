@@ -2,7 +2,9 @@
 declare(strict_types=1);
 
 $api = file_get_contents(__DIR__ . '/../backend/api/refund_request_api.php');
-$ui = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php');
+$ui = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/admin_refunds/_refund_cards.php')
+    . file_get_contents(__DIR__ . '/../frontend/assets/js/pages/admin-refunds.js');
 if ($api === false || $ui === false) throw new RuntimeException('Unable to read refund files.');
 
 foreach (["\$action === 'cancel_approval'", "WHERE r.id = ? AND r.status = 'approved'", "SET status='rejected'", "refund_status='rejected'", 'Refund Approval Cancelled'] as $fragment) {

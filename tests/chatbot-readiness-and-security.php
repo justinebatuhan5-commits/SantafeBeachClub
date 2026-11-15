@@ -37,7 +37,9 @@ assert_chatbot($p7Nights['deadline_hours'] === 168 && $p7Nights['window_label'] 
 // 2. Verify chatbot_service.php and chatbot_tools.php source guarantees
 $serviceSource = file_get_contents($root . '/backend/services/chatbot_service.php');
 $toolsSource = file_get_contents($root . '/backend/services/chatbot_tools.php');
-$widgetSource = file_get_contents($root . '/frontend/partials/_chatbot_widget.php');
+$widgetSource = file_get_contents($root . '/frontend/partials/_chatbot_widget.php')
+    . "\n"
+    . file_get_contents($root . '/frontend/assets/js/components/chatbot-widget.js');
 $footerSource = file_get_contents($root . '/frontend/partials/_footer.php');
 $termsSource = file_get_contents($root . '/terms.php');
 

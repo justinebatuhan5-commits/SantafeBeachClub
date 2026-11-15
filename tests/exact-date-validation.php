@@ -20,5 +20,6 @@ date_check(!isValidDateRange('2026-05-02', '2026-05-01'), 'Backward date range w
 
 echo "Booking dates require exact valid Y-m-d values and an increasing range.\n";
 
-$bookingPage = file_get_contents(__DIR__ . '/../frontend/book.php');
+$bookingPage = file_get_contents(__DIR__ . '/../frontend/book.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/booking_controller.php');
 date_check($bookingPage !== false && str_contains($bookingPage, 'if (!isValidDateRange((string)$checkin, (string)$checkout))'), 'Public booking page does not reject invalid dates before pricing.');

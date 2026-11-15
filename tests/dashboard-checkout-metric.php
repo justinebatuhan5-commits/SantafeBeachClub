@@ -13,7 +13,8 @@ function check_dashboard_checkout(bool $condition, string $message): void
 }
 
 $root = dirname(__DIR__);
-$receptionDashboard = file_get_contents($root . '/frontend/dashboard.php');
+$receptionDashboard = file_get_contents($root . '/frontend/dashboard.php')
+    . "\n" . file_get_contents($root . '/backend/controllers/dashboard_controller.php');
 $analyticsApi = file_get_contents($root . '/backend/api/analytics_api.php');
 $expected = "status = 'Checked In' AND DATE(check_out) = CURDATE()";
 

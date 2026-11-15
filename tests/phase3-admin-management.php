@@ -25,8 +25,17 @@ echo "=== Phase 3 · Administration (Admin Chatbot Management) Verification ===\
 
 assertTrue(sf_chatbot_tables_ready($conn), 'Chatbot database tables are ready');
 
-$adminContent = (string)file_get_contents(__DIR__ . '/../frontend/admin_chatbot.php');
-$widgetContent = (string)file_get_contents(__DIR__ . '/../frontend/partials/_chatbot_widget.php');
+$adminContent = (string)file_get_contents(__DIR__ . '/../frontend/admin_chatbot.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../backend/controllers/admin_chatbot_controller.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../frontend/views/admin_chatbot/_tab_analytics.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../frontend/views/admin_chatbot/_tab_conversations.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../frontend/views/admin_chatbot/_tab_knowledge.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../frontend/views/admin_chatbot/_tab_support.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../frontend/views/admin_chatbot/_tab_settings.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../frontend/assets/js/pages/admin-chatbot.js');
+$widgetContent = (string)file_get_contents(__DIR__ . '/../frontend/partials/_chatbot_widget.php')
+    . "\n"
+    . (string)file_get_contents(__DIR__ . '/../frontend/assets/js/components/chatbot-widget.js');
 
 // 1. Conversation Monitoring checks
 assertTrue(strpos($adminContent, 'id="ai-tab-conversations"') !== false, 'Admin page has Conversation Monitoring tab');

@@ -5,8 +5,8 @@
  * This script can be run:
  * 1. Via CLI / Cron / Windows Task Scheduler:
  *    php -f c:\xampp\htdocs\SantaBeachClub-BookingSystem\backend\cron\send_checkin_reminders.php
- * 2. Via HTTP request (secured with CRON_SECRET or Admin Session):
- *    http://localhost/SantaBeachClub-BookingSystem/backend/cron/send_checkin_reminders.php?key=sfbc_cron_secret_2026
+ * 2. Via HTTP request (secured with CRON_SECRET env var or Admin Session):
+ *    https://yourdomain.com/backend/cron/send_checkin_reminders.php?key=YOUR_CRON_SECRET
  */
 
 require_once __DIR__ . '/../config/db.php';
@@ -19,11 +19,12 @@ if (!$is_cli) {
         session_start();
     }
     
-    $secret_key = getenv('CRON_SECRET') ?: 'sfbc_cron_secret_2026';
-    $provided_key = $_GET['key'] ?? '';
+    $secret_key = trim((string) (getenv('CRON_SECRET') ?: ($_ENV['CRON_SECRET'] ?? '')));
+    $provided_key = (string) ($_GET['key'] ?? '');
     $is_admin = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+    $key_valid = $secret_key !== '' && $provided_key !== '' && hash_equals($secret_key, $provided_key);
 
-    if (!$is_admin && $provided_key !== $secret_key) {
+    if (!$is_admin && !$key_valid) {
         http_response_code(403);
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'error' => 'Forbidden: Invalid or missing authorization key.']);

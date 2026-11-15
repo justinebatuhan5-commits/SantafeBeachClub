@@ -1,52 +1,10 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
-require_once __DIR__ . '/../backend/services/mailer.php';
+require_once __DIR__ . '/../backend/controllers/admin_notifications_controller.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Handle POST actions for notifications
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    require_csrf_token();
-    $action = $_POST['action'];
-
-    if ($action === 'mark_read' && isset($_POST['notif_id'])) {
-        $id = intval($_POST['notif_id']);
-        $stmt = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $stmt->close();
-    } elseif ($action === 'mark_all_read') {
-        $conn->query("UPDATE notifications SET is_read = 1");
-    } elseif ($action === 'delete' && isset($_POST['notif_id'])) {
-        $id = intval($_POST['notif_id']);
-        $stmt = $conn->prepare("DELETE FROM notifications WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $stmt->close();
-    } elseif ($action === 'accept_booking' && isset($_POST['notif_id'], $_POST['booking_id'])) {
-        $notif_id = intval($_POST['notif_id']);
-        $booking_id = intval($_POST['booking_id']);
-
-        $stmt = $conn->prepare('UPDATE notifications SET is_read = 1 WHERE id = ?');
-        $stmt->bind_param('i', $notif_id);
-        $stmt->execute();
-        $stmt->close();
-        $_SESSION['notif_flash'] = 'Booking notification acknowledged. Confirmation is sent automatically after payment verification.';
-    }
-    header("Location: notifications");
-    exit;
-}
-
-// Fetch all notifications from DB
-$notifs_query = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC");
-$unread_count_query = $conn->query("SELECT COUNT(*) as unread FROM notifications WHERE is_read = 0");
-$unread_count = ($unread_count_query) ? $unread_count_query->fetch_assoc()['unread'] : 0;
-
-$notif_flash = $_SESSION['notif_flash'] ?? null;
-unset($_SESSION['notif_flash']);
+$notifData = sfbc_handle_notifications_page($conn, 'notifications', false);
+$v = $notifData['versions'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,113 +13,23 @@ unset($_SESSION['notif_flash']);
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/favicon-circle-180.png?v=3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo filemtime(__DIR__ . '/assets/css/admin.css'); ?>">
-    <link rel="stylesheet" href="assets/css/dashboard.css?v=<?php echo filemtime(__DIR__ . '/assets/css/dashboard.css'); ?>">
-    <style>
-        .notif-card-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .notif-item {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 15px;
-            border-left: 4px solid #ccc;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            transition: all 0.2s ease;
-        }
-        .notif-item.unread {
-            background: #FAFAFC;
-        }
-        .notif-item.type-info { border-left-color: #2196F3; }
-        .notif-item.type-success { border-left-color: #4CAF50; }
-        .notif-item.type-warning { border-left-color: #FF9800; }
-        .notif-item.type-alert { border-left-color: #F44336; }
-
-        .notif-badge {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin-bottom: 6px;
-            display: inline-block;
-        }
-        .badge-info { background: #E3F2FD; color: #1565C0; }
-        .badge-success { background: #E8F5E9; color: #2E7D32; }
-        .badge-warning { background: #FFF3E0; color: #E65100; }
-        .badge-alert { background: #FFEBEE; color: #C62828; }
-
-        .notif-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 4px;
-        }
-        .notif-msg {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.4;
-        }
-        .notif-time {
-            font-size: 11px;
-            color: #999;
-            margin-top: 8px;
-        }
-        .notif-actions {
-            display: flex;
-            gap: 8px;
-        }
-        .btn-action-icon {
-            background: none;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 12px;
-            cursor: pointer;
-            color: #555;
-            font-weight: 600;
-        }
-        .btn-action-icon:hover {
-            background: #f0f0f0;
-        }
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .card-header h2 {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1F2937;
-        }
-    </style>
-<?php require __DIR__ . '/partials/_responsive.php'; ?>
+    <title>Notifications — Santa Fe Beach Club</title>
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo $v['adminCss']; ?>">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=<?php echo $v['dashboardCss']; ?>">
+    <link rel="stylesheet" href="assets/css/pages/admin-notifications.css?v=<?php echo $v['pageCss']; ?>">
+    <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body>
 
     <?php $active_page = 'notifications'; include __DIR__ . '/partials/_sidebar.php'; ?>
 
-    <!-- Main Panel -->
     <main class="main-content">
         <?php
         $page_title = 'Notifications';
         $page_subtitle = 'Front desk alerts & updates';
         $header_extra_html = '
             <form method="POST" action="notifications" style="margin: 0;">
+                ' . $notifData['csrfField'] . '
                 <input type="hidden" name="action" value="mark_all_read">
                 <button type="submit" class="header-icon-btn" title="Mark All as Read" style="width: auto; padding: 0 15px; gap: 8px; font-weight: 600; font-size: 13px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -172,100 +40,9 @@ unset($_SESSION['notif_flash']);
         include __DIR__ . '/partials/_page_header.php';
         ?>
 
-        <?php if ($notif_flash): ?>
-            <div style="background:#E8F5E9; color:#2E7D32; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:14px; font-weight:600;">
-                <?php echo htmlspecialchars($notif_flash); ?>
-            </div>
-        <?php endif; ?>
-
-        <div class="card">
-            <div class="card-header">
-                <h2>Notifications <?php echo $unread_count > 0 ? "({$unread_count} unread)" : ''; ?></h2>
-            </div>
-
-            <div class="notif-card-list">
-                <?php if ($notifs_query && $notifs_query->num_rows > 0): ?>
-                    <?php while ($n = $notifs_query->fetch_assoc()): ?>
-                        <?php
-                            $id = $n['id'];
-                            $title = htmlspecialchars($n['title']);
-                            $msg = htmlspecialchars($n['message']);
-                            $type = htmlspecialchars($n['type']);
-                            $is_read = $n['is_read'];
-                            $time = date('M d, Y h:i A', strtotime($n['created_at']));
-                            $badgeClass = 'badge-' . $type;
-                        ?>
-                        <div class="notif-item type-<?php echo $type; ?> <?php echo ($is_read ? '' : 'unread'); ?>">
-                            <div style="flex: 1; cursor: pointer;" onclick="showNotificationDetailModal({id: <?php echo $id; ?>, title: <?php echo xss_attr_json($n['title']); ?>, message: <?php echo xss_attr_json($n['message']); ?>, type: <?php echo xss_attr_json($type); ?>, booking_id: <?php echo (int)($n['booking_id'] ?? 0); ?>, time: <?php echo xss_attr_json($time); ?>})">
-                                <span class="notif-badge <?php echo $badgeClass; ?>"><?php echo strtoupper($type); ?></span>
-                                <div class="notif-title"><?php echo $title; ?></div>
-                                <div class="notif-msg"><?php echo $msg; ?></div>
-                                <div class="notif-time"><?php echo $time; ?></div>
-                            </div>
-                            <div class="notif-actions" onclick="event.stopPropagation();">
-                                <?php if (!$is_read): ?>
-                                    <form method="POST" action="notifications" style="margin:0;">
-                                        <input type="hidden" name="action" value="mark_read">
-                                        <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
-                                        <button type="submit" class="btn-action-icon" title="Mark as read">Mark Read</button>
-                                    </form>
-                                <?php endif; ?>
-                                <form method="POST" action="notifications" style="margin:0;">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="notif_id" value="<?php echo $id; ?>">
-                                    <button type="submit" class="btn-action-icon" style="color: #c62828;" title="Delete notification">&times;</button>
-                                </form>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <div style="text-align: center; color: #888; padding: 40px;">No notifications found</div>
-                <?php endif; ?>
-            </div>
-        </div>
+        <?php include __DIR__ . '/views/notifications/_notifications_list.php'; ?>
     </main>
 
-
-<!-- ── Custom Accept Confirmation Modal ── -->
-<div id="acceptModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(15,23,42,.22);padding:36px 32px 28px;max-width:420px;width:calc(100% - 40px);text-align:center;animation:modalPop .18s cubic-bezier(.34,1.56,.64,1);">
-        <div style="width:54px;height:54px;border-radius:50%;background:#EFF6FF;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        </div>
-        <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;color:#0f172a;">Review booking notification?</h3>
-        <p style="margin:0 0 26px;font-size:14px;color:#64748b;line-height:1.6;">Mark this booking notification as reviewed. The guest receives a confirmation automatically after payment verification.</p>
-        <div style="display:flex;gap:10px;justify-content:center;">
-            <button onclick="closeAcceptModal()" style="flex:1;padding:11px 0;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;font-size:14px;font-weight:600;color:#475569;cursor:pointer;transition:background .15s;">Cancel</button>
-            <button id="acceptConfirmBtn" style="flex:1;padding:11px 0;border:none;border-radius:10px;background:linear-gradient(135deg,#16a34a,#22c55e);font-size:14px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(34,197,94,.35);transition:opacity .15s;">Mark as reviewed</button>
-        </div>
-    </div>
-</div>
-<style>
-@keyframes modalPop {
-    from { opacity:0; transform:scale(.92) translateY(10px); }
-    to   { opacity:1; transform:scale(1)  translateY(0); }
-}
-</style>
-<script>
-var _acceptForm = null;
-function openAcceptModal(form) {
-    _acceptForm = form;
-    var modal = document.getElementById('acceptModal');
-    modal.style.display = 'flex';
-}
-function closeAcceptModal() {
-    _acceptForm = null;
-    document.getElementById('acceptModal').style.display = 'none';
-}
-document.getElementById('acceptConfirmBtn').addEventListener('click', function() {
-    if (_acceptForm) {
-        _acceptForm.onsubmit = null;
-        _acceptForm.submit();
-    }
-});
-document.getElementById('acceptModal').addEventListener('click', function(e) {
-    if (e.target === this) closeAcceptModal();
-});
-</script>
+    <script src="assets/js/pages/admin-notifications.js?v=<?php echo $v['pageJs']; ?>"></script>
 </body>
 </html>

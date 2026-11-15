@@ -1,0 +1,474 @@
+.reservations-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.reservations-table th,
+.reservations-table td {
+    padding: 18px 16px;
+    text-align: left;
+    border-bottom: 1px solid #E5E7EB;
+    vertical-align: middle;
+}
+
+.reservations-table th {
+    color: #64748B;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    background: #F8FAFC;
+}
+
+.reservations-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.reservations-table tbody tr:hover {
+    background: #FAFAF9;
+}
+
+.reservations-table th:nth-child(1) { width: 31%; }
+.reservations-table th:nth-child(2) { width: 29%; }
+.reservations-table th:nth-child(3) { width: 22%; }
+.reservations-table th:nth-child(4) { width: 18%; }
+
+.arrival-guest-name {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+    color: #172033;
+    font-size: 15px;
+}
+
+.arrival-booking-id {
+    color: #94A3B8;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.arrival-email {
+    display: block;
+    max-width: 100%;
+    color: #64748B;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.arrival-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.arrival-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #F1F5F9;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.arrival-meta-pill.discount {
+    background: #F3E8FF;
+    color: #7E22CE;
+}
+
+.arrival-room {
+    margin-bottom: 7px;
+    color: #172033;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.arrival-date {
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.arrival-time {
+    margin-top: 3px;
+    color: #64748B;
+    font-size: 11px;
+}
+
+.arrival-balance {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 9px 11px;
+    border-radius: 9px;
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+}
+
+.arrival-balance.paid {
+    background: #F0FDF4;
+    border-color: #BBF7D0;
+}
+
+.arrival-balance-amount {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.arrival-balance-state {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.arrival-balance-deadline {
+    color: #64748B;
+    font-size: 10px;
+}
+
+.arrival-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    max-width: 132px;
+}
+
+.arrival-actions form {
+    display: block !important;
+}
+
+.arrival-actions .btn-checkin,
+.arrival-actions .btn-noshow {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-checkin {
+    background-color: #2E7D32;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.btn-checkin:hover {
+    background-color: #1B5E20;
+}
+
+.btn-noshow {
+    background-color: #FFF1F2;
+    color: #BE123C;
+    border: 1px solid #FECDD3;
+    padding: 7px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    transition: all 0.15s ease;
+}
+
+.btn-noshow:hover {
+    background-color: #FFE4E6;
+    color: #9F1239;
+    border-color: #FDA4AF;
+}
+
+@media (max-width: 1050px) {
+    .reservations-table {
+        table-layout: auto;
+    }
+
+    .reservations-table th:nth-child(1),
+    .reservations-table th:nth-child(2),
+    .reservations-table th:nth-child(3),
+    .reservations-table th:nth-child(4) {
+        width: auto;
+    }
+}
+
+.badge-overdue {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FCA5A5;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.badge-today {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.alert-success {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.alert-warning {
+    background-color: #FFFBEB;
+    color: #B45309;
+    border: 1px solid #FDE68A;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.specific-checkin-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.specific-checkin-card {
+    background: #ffffff;
+    border-radius: 22px;
+    width: 100%;
+    max-width: 440px;
+    padding: 34px 28px 26px;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.28), 0 0 1px rgba(15, 23, 42, 0.1);
+    position: relative;
+    text-align: center;
+    animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sc-close-link {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    color: #64748B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.sc-close-link:hover {
+    background: #E2E8F0;
+    color: #0F172A;
+}
+
+.sc-logo-ring {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    overflow: hidden;
+    border: 3px solid #EFE4D6;
+    box-shadow: 0 10px 25px -5px rgba(200, 153, 111, 0.4);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sc-confirm-btn {
+    width: 100%;
+    padding: 13px 0;
+    background: linear-gradient(135deg, #15803D, #166534);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(22, 101, 52, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sc-confirm-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(22, 101, 52, 0.45);
+}
+
+.btn-walkin-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #7C533C;
+    color: #ffffff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(124, 83, 60, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-walkin-primary:hover {
+    background: #5C3D2B;
+}
+
+.btn-walkin-submit {
+    width: 100%;
+    background: #7C533C;
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(124, 83, 60, 0.3);
+}
+
+.btn-walkin-submit:hover {
+    background: #5C3D2B;
+}
+
+.btn-noshow-confirm {
+    flex: 1;
+    background: #DC2626;
+    color: #fff;
+    border: none;
+    padding: 11px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-noshow-confirm:hover {
+    background: #B91C1C;
+}
+
+/* Balance payment modal and method selector */
+.gcash-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.gcash-overlay.active {
+    display: flex;
+}
+
+.gcash-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 36px;
+    max-width: 440px;
+    width: 90%;
+    text-align: left;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+    animation: popIn 0.22s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@keyframes popIn {
+    from { transform: scale(0.88); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.btn-receipt {
+    background-color: transparent;
+    color: #666;
+    border: 1px solid #ccc;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-receipt:hover {
+    background-color: #f5f5f5;
+}
+
+.pay-method-card {
+    cursor: pointer;
+    display: block;
+}
+
+.pay-method-card input:checked + .pay-card-inner {
+    border-color: #2E7D32;
+    background: #E8F5E9;
+    color: #1B5E20;
+}
+
+.pay-card-inner {
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.pay-card-inner:hover {
+    border-color: #BDC3C7;
+    background: #FAFAFA;
+}
+
+.pay-card-inner .icon {
+    font-size: 20px;
+}
+
+.pay-card-inner .label {
+    font-size: 12px;
+}

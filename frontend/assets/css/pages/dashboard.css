@@ -1,0 +1,280 @@
+/* Reception Dashboard interactive room modal & overdue checkout dialog */
+.room-block {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.room-block:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.stay-pill-btn {
+    background: var(--input-bg, #F8FAFC);
+    border: 1px solid var(--border, #E2E8F0);
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-main, #334155);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.stay-pill-btn:hover {
+    background: var(--primary, #84563C);
+    color: #FFFFFF;
+    border-color: var(--primary, #84563C);
+}
+
+.room-detail-modal-box {
+    background: var(--card-bg, #FFFFFF);
+    border-radius: 18px;
+    padding: 26px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Overdue Check-out Warning Modal */
+#overdueCheckoutModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 20px;
+    animation: ocm-fadein 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes ocm-fadein { from { opacity: 0; } to { opacity: 1; } }
+
+.ocm-card {
+    background: #FFFFFF;
+    width: min(100%, 500px);
+    border-radius: 20px;
+    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+    animation: ocm-slidein 0.32s cubic-bezier(0.34, 1.25, 0.64, 1);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+@keyframes ocm-slidein { from { transform: translateY(24px) scale(0.95); } to { transform: translateY(0) scale(1); } }
+
+.ocm-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 26px;
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    border-bottom: 3px solid #D97706;
+    color: #fff;
+    position: relative;
+}
+
+.ocm-logo-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #FFFFFF;
+    padding: 3px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ocm-logo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 9px;
+}
+
+.ocm-header-text {
+    flex: 1;
+    min-width: 0;
+}
+.ocm-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #F59E0B;
+    margin-bottom: 2px;
+}
+.ocm-header-text h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: -0.2px;
+}
+.ocm-header-text p {
+    margin: 3px 0 0;
+    font-size: 12px;
+    color: #94A3B8;
+}
+
+.ocm-close-x {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #94A3B8;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 16px;
+    line-height: 1;
+}
+.ocm-close-x:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+}
+
+.ocm-body {
+    padding: 22px 26px 14px;
+    background: #FAFAFA;
+}
+
+.ocm-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #FEF3C7;
+    border: 1px solid #FCD34D;
+    border-radius: 12px;
+    padding: 11px 14px;
+    margin-bottom: 16px;
+}
+.ocm-banner-icon {
+    font-size: 17px;
+    line-height: 1.2;
+}
+.ocm-banner-text {
+    font-size: 12.5px;
+    color: #92400E;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.ocm-list-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #64748B;
+    margin-bottom: 8px;
+}
+
+.ocm-guest-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+.ocm-guest-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-left: 4px solid #EA580C;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1E293B;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.ocm-guest-name {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+.ocm-guest-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    background: #FEE2E2;
+    color: #DC2626;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+}
+
+.ocm-timestamp {
+    font-size: 11.5px;
+    color: #94A3B8;
+    margin: 14px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ocm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 26px 20px;
+    background: #FFFFFF;
+    border-top: 1px solid #F1F5F9;
+}
+
+.ocm-btn-dismiss {
+    padding: 10px 18px;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+    color: #475569;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+.ocm-btn-dismiss:hover {
+    background: #F1F5F9;
+    color: #1E293B;
+    border-color: #CBD5E1;
+}
+
+.ocm-btn-go {
+    padding: 10px 22px;
+    border: none;
+    background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+    color: #FFFFFF;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+.ocm-btn-go:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(217, 119, 6, 0.45);
+    filter: brightness(1.05);
+}

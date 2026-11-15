@@ -1,10 +1,14 @@
 <?php
 $helper = file_get_contents(__DIR__ . '/../backend/helpers/admin_session_helper.php');
-$otp = file_get_contents(__DIR__ . '/../frontend/verify_otp.php');
+$otp = file_get_contents(__DIR__ . '/../frontend/verify_otp.php')
+    . "\n" . file_get_contents(__DIR__ . '/../backend/controllers/auth_controller.php');
 $refund = file_get_contents(__DIR__ . '/../backend/api/refund_request_api.php');
 $manual = file_get_contents(__DIR__ . '/../backend/api/manual_refund_api.php');
-$settings = file_get_contents(__DIR__ . '/../frontend/settings.php');
-$sessions = file_get_contents(__DIR__ . '/../frontend/admin_sessions.php');
+$settings = file_get_contents(__DIR__ . '/../frontend/settings.php')
+    . "\n" . file_get_contents(__DIR__ . '/../backend/controllers/settings_controller.php')
+    . "\n" . file_get_contents(__DIR__ . '/../frontend/views/settings/_tab_property.php');
+$sessions = file_get_contents(__DIR__ . '/../frontend/admin_sessions.php')
+    . "\n" . file_get_contents(__DIR__ . '/../backend/controllers/admin_sessions_controller.php');
 $migration = file_get_contents(__DIR__ . '/../backend/database/migrations/202609260007_admin_session_security.php');
 
 $checks = [

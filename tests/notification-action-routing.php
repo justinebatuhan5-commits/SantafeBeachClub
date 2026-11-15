@@ -13,8 +13,10 @@ function check_notification_route(bool $condition, string $message): void
 }
 
 $root = dirname(__DIR__);
-$header = file_get_contents($root . '/frontend/partials/_page_header.php');
-$payments = file_get_contents($root . '/frontend/payments.php');
+$header = file_get_contents($root . '/frontend/partials/_page_header.php')
+    . file_get_contents($root . '/frontend/assets/js/components/page-header.js');
+$payments = file_get_contents($root . '/frontend/payments.php')
+    . file_get_contents($root . '/frontend/assets/js/pages/payments.js');
 
 check_notification_route(str_contains($header, 'resolveNotificationAction(data)'), 'Notification actions use centralized contextual routing');
 check_notification_route(str_contains($header, "label: 'Review Payment'") && str_contains($header, "url: 'payments'"), 'Payment notifications open Payments');

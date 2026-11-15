@@ -1,10 +1,19 @@
 <?php
 $api = file_get_contents(__DIR__ . '/../backend/api/manual_refund_api.php');
-$admin = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php');
-$guest = file_get_contents(__DIR__ . '/../frontend/refund_details.php');
+$admin = file_get_contents(__DIR__ . '/../frontend/admin_refunds.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/admin_refunds_controller.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/admin_refunds/_refund_cards.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/admin_refunds/_modals.php')
+    . file_get_contents(__DIR__ . '/../frontend/assets/js/pages/admin-refunds.js');
+$guest = file_get_contents(__DIR__ . '/../frontend/refund_details.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/refund_details_controller.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/refund_details/_card.php')
+    . file_get_contents(__DIR__ . '/../frontend/assets/js/pages/refund-details.js');
 $migration = file_get_contents(__DIR__ . '/../backend/database/migrations/202609260001_manual_refund_workflow.php');
 $confirmationMigration = file_get_contents(__DIR__ . '/../backend/database/migrations/202609260003_refund_guest_confirmation.php');
-$confirmationPage = file_get_contents(__DIR__ . '/../frontend/refund_confirmation.php');
+$confirmationPage = file_get_contents(__DIR__ . '/../frontend/refund_confirmation.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/refund_confirmation_controller.php')
+    . file_get_contents(__DIR__ . '/../frontend/views/refund_confirmation/_card.php');
 $mailer = file_get_contents(__DIR__ . '/../backend/services/mailer.php');
 $mfaMigration = file_get_contents(__DIR__ . '/../backend/database/migrations/202609260004_refund_phone_mfa.php');
 $emailOtpMigration = file_get_contents(__DIR__ . '/../backend/database/migrations/202609260005_refund_email_otp.php');

@@ -532,6 +532,48 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    body .main-footer {
+        padding: 44px 20px 96px;
+    }
+
+    .main-footer .footer-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 26px 20px;
+    }
+
+    .footer-brand-col {
+        grid-column: 1 / -1;
+    }
+
+    .footer-social-link {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .footer-links-col h4 {
+        margin-bottom: 12px;
+    }
+
+    .footer-links-col ul li {
+        margin-bottom: 4px;
+    }
+
+    .footer-links-col ul li a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 4px 0;
+    }
+
+    .footer-bottom {
+        margin-top: 22px;
+        line-height: 1.6;
+    }
+}
+
 /* Luxury resort homepage overrides */
 body.home-page {
     background:

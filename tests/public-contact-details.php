@@ -13,7 +13,8 @@ function check_public_contact(bool $condition, string $message): void
 }
 
 $root = dirname(__DIR__);
-$contact = file_get_contents($root . '/frontend/contact.php');
+$contact = file_get_contents($root . '/frontend/contact.php')
+    . "\n" . file_get_contents($root . '/frontend/views/contact/_content.php');
 $mailer = file_get_contents($root . '/backend/services/mailer.php');
 $terms = file_get_contents($root . '/terms.php');
 $schema = file_get_contents($root . '/backend/database/migrations/202609220001_request_schema.php');

@@ -16,6 +16,7 @@ $nav_base = $nav_base ?? '';
     <div class="brand-logo">
         <a href="<?php echo htmlspecialchars($nav_base . 'index', ENT_QUOTES, 'UTF-8'); ?>" class="logo-link">
             <img src="<?php echo htmlspecialchars($nav_base . 'assets/logo.jpg', ENT_QUOTES, 'UTF-8'); ?>" alt="Santa Fe Beach Club logo" class="logo-mark" width="56" height="56">
+            <span class="logo-brand-name">Santa Fe Beach Club</span>
         </a>
     </div>
     <nav class="nav-menu" id="siteNavigation" aria-label="Main navigation">
@@ -27,6 +28,9 @@ $nav_base = $nav_base ?? '';
             <li<?php echo $active_nav === 'contact'    ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'contact', ENT_QUOTES, 'UTF-8'); ?>">Contact</a></li>
             <li<?php echo $active_nav === 'my_booking' ? ' class="active"' : ''; ?>><a href="<?php echo htmlspecialchars($nav_base . 'my_booking', ENT_QUOTES, 'UTF-8'); ?>">Manage Booking</a></li>
         </ul>
+        <div class="nav-drawer-cta">
+            <a href="<?php echo htmlspecialchars($nav_base . 'rooms#room-choice', ENT_QUOTES, 'UTF-8'); ?>" class="nav-drawer-book">Book Your Stay <span aria-hidden="true">&rarr;</span></a>
+        </div>
     </nav>
     <div class="navbar-actions">
         <a href="<?php echo htmlspecialchars($nav_base . 'rooms#room-choice', ENT_QUOTES, 'UTF-8'); ?>" class="navbar-book">Book your stay <span aria-hidden="true">&rarr;</span></a>

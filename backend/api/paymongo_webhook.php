@@ -49,6 +49,7 @@ if (!is_array($event) || json_last_error() !== JSON_ERROR_NONE) {
 }
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../helpers/url_helper.php';
 require_once __DIR__ . '/../services/mailer.php';
 
 $eventType = $event['data']['attributes']['type'] ?? '';
@@ -87,7 +88,7 @@ if ($eventType === 'checkout_session.payment.paid') {
         if ($bData && !empty($bData['guest_email']) && empty($bData['confirmation_email_sent_at'])) {
             { // The mailer serializes sends and records successful delivery.
                 $bRef = 'REF-' . str_pad($bookingId, 3, '0', STR_PAD_LEFT);
-                $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/SantaBeachClub-BookingSystem/frontend';
+                $baseUrl = sfbc_public_frontend_url();
                 $cancellationUrl = rtrim($baseUrl, '/') . '/cancel_booking?token=' . urlencode($bData['cancellation_token'] ?? '');
                 $checkinUrl = rtrim($baseUrl, '/') . '/checkin?ref=' . urlencode($bRef) . '&token=' . urlencode($bData['checkin_token'] ?? '');
 

@@ -23,8 +23,11 @@ function assertTrue(bool $cond, string $msg): void {
 
 echo "=== Phase 4 · Advanced (Intelligent Assistance) Verification ===\n";
 
-$widgetContent = (string)file_get_contents(__DIR__ . '/../frontend/partials/_chatbot_widget.php');
-$adminContent  = (string)file_get_contents(__DIR__ . '/../frontend/admin_chatbot.php');
+$widgetContent = (string)file_get_contents(__DIR__ . '/../frontend/partials/_chatbot_widget.php')
+    . "\n"
+    . (string)file_get_contents(__DIR__ . '/../frontend/assets/js/components/chatbot-widget.js');
+$adminContent  = (string)file_get_contents(__DIR__ . '/../frontend/admin_chatbot.php')
+    . "\n" . (string)file_get_contents(__DIR__ . '/../frontend/views/admin_chatbot/_tab_analytics.php');
 $apiContent    = (string)file_get_contents(__DIR__ . '/../backend/api/chatbot_api.php');
 
 // 1. Multilingual Support Verification

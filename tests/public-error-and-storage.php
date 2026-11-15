@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 $availability = file_get_contents(__DIR__ . '/../backend/api/availability.php');
-$booking = file_get_contents(__DIR__ . '/../frontend/book.php');
+$booking = file_get_contents(__DIR__ . '/../frontend/book.php')
+    . file_get_contents(__DIR__ . '/../backend/controllers/booking_controller.php');
 $storage = file_get_contents(__DIR__ . '/../backend/helpers/private_storage_helper.php');
 if ($availability === false || $booking === false || $storage === false) throw new RuntimeException('Unable to read implementation files.');
 

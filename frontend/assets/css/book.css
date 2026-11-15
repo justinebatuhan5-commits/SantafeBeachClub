@@ -1222,12 +1222,16 @@ body {
 
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 860px) {
-    /* The shared mobile navigation stacks full site menus. The booking header has
-       only one link, so keep it beside the logo instead of creating an empty row. */
     .booking-flow-page .main-header {
-        flex-wrap: nowrap;
-        min-height: 64px;
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 60px;
+        padding: 10px 16px;
+        gap: 8px 14px;
     }
+    .booking-flow-page .bk-secure-pill { display: none; }
+    .booking-flow-page .logo-link { font-size: 16.5px; }
+    .booking-flow-page .bk-brand-logo-img { width: 34px; height: 34px; }
     .booking-flow-page .main-header .nav-menu {
         order: initial;
         width: auto;
@@ -1237,38 +1241,47 @@ body {
     }
     .booking-flow-page .main-header .nav-menu ul {
         width: auto;
-        gap: 0;
+        gap: 14px;
+        flex-wrap: wrap;
     }
     .booking-flow-page .main-header .nav-menu a {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
-        padding: 8px 10px;
+        min-height: 36px;
+        padding: 6px 4px;
         border: 0;
-        border-radius: 8px;
+        border-radius: 6px;
         background: transparent;
+        font-size: 13px;
     }
     .bk-columns {
         display: flex;
         flex-direction: column;
+        grid-template-columns: minmax(0, 1fr);
         gap: 20px;
+        width: 100%;
     }
+    .bk-main,
     .bk-main-col {
         order: 1;
         width: 100%;
+        min-width: 0;
+        max-width: 100%;
     }
     .bk-sidebar {
         order: 2;
         position: static;
         width: 100%;
-        margin-top: 10px;
+        min-width: 0;
+        max-width: 100%;
+        margin-top: 4px;
     }
     .bk-form-grid { grid-template-columns: 1fr; }
-    .bk-progress { max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
-    .bk-step { flex: 1; min-width: 0; flex-direction: column; text-align: center; gap: 8px; }
-    .bk-step-label { display: block; white-space: normal; font-size: 11px; letter-spacing: 0; line-height: 1.4; }
-    .bk-line { flex: 0 0 16px; margin: 15px 4px 0; align-self: flex-start; }
-    .bk-layout { margin-top: 20px; }
+    .bk-progress { max-width: 100%; width: 100%; border-radius: 18px; padding: 12px 14px; overflow: hidden; }
+    .bk-step { flex: 1; min-width: 0; flex-direction: column; text-align: center; gap: 6px; }
+    .bk-step-label { display: block; white-space: normal; word-break: break-word; font-size: 10.5px; letter-spacing: 0.3px; line-height: 1.35; }
+    .bk-line { flex: 0 0 14px; margin: 15px 4px 0; align-self: flex-start; }
+    .bk-layout { margin-top: 20px; width: 100%; max-width: 100%; }
 }
 
 @media (max-width: 768px) {
@@ -1299,7 +1312,6 @@ body {
 }
 
 @media (max-width: 640px) {
-    .bk-secure-pill { display: none; }
     .bk-policy-grid { grid-template-columns: 1fr; }
     .bk-card-form { margin-left: 0; }
     .bk-pay-radio { align-items: flex-start; flex-wrap: wrap; }
@@ -1307,46 +1319,61 @@ body {
 
 @media (max-width: 480px) {
     .bk-layout { padding: 0 12px; }
-    .bk-progress { margin-bottom: 24px; align-items: flex-start; }
-    .bk-card { padding: 18px 14px; border-radius: 14px; }
+    .bk-progress { margin-bottom: 20px; align-items: flex-start; padding: 10px 10px; }
+    .bk-card { padding: 18px 14px; border-radius: 14px; min-width: 0; max-width: 100%; }
     .bk-actions { flex-direction: column; gap: 10px; }
     .btn-bk-back { justify-content: center; width: 100%; }
     .btn-bk-next { width: 100%; }
     .booking-card { padding: 18px 14px; }
     .bk-room-summary-meta { font-size: 13px; }
+    .bk-schedule-row { flex-direction: column; gap: 6px; }
 }
 /* Discount requests share the booking form's spacing and mobile layout. */
 .bk-discount-card > label,
 #discountFields > label { display: block; margin: 14px 0 7px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.65px; color: var(--ink); }
 .bk-discount-card select,
 #discountFields input:not([type="checkbox"]) {
-    display: block;
     width: 100%;
     box-sizing: border-box;
     padding: 13px 16px;
     border: 1.5px solid var(--border);
     border-radius: 10px;
-    background: #FCF9F5;
-    font: inherit;
+    background-color: #FCF9F5;
+    font-family: 'Outfit', sans-serif;
     font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.4;
     color: var(--ink);
-    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+#discountFields input:not([type="checkbox"]) {
+    display: block;
 }
 .bk-discount-card select {
+    display: inline-block;
     appearance: none;
     -webkit-appearance: none;
-    padding-right: 38px;
+    -moz-appearance: none;
+    padding-right: 40px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237C533C' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: calc(100% - 15px) center;
     cursor: pointer;
 }
+.bk-discount-card select::picker-icon {
+    display: none;
+}
+.bk-discount-card select.is-valid {
+    border-color: var(--border) !important;
+    box-shadow: none !important;
+}
 .bk-discount-card select:focus,
+.bk-discount-card select.is-valid:focus,
 #discountFields input:not([type="checkbox"]):focus {
     outline: none;
-    border-color: var(--sand-dark);
-    background: #fff;
-    box-shadow: 0 0 0 3.5px rgba(200, 153, 111, 0.18);
+    border-color: var(--sand-dark) !important;
+    background-color: #fff;
+    box-shadow: 0 0 0 3.5px rgba(200, 153, 111, 0.18) !important;
 }
 #discountFields p { margin: 14px 0; line-height: 1.65; }
 #discountFields label:last-child { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; line-height: 1.65; }
@@ -1366,3 +1393,9 @@ body {
 .bk-id-sample dd { margin: 0; font-size: 12px; font-weight: 600; }
 .bk-id-sample-footer { padding: 8px 12px; border-top: 1px dashed #cbd8d0; font-size: 10px; text-align: center; }
 #discountFields .bk-id-help, #discountFields .bk-id-guide p { font-size: 13px; color: #53665e; }
+
+@media (max-width: 768px) {
+    body.booking-flow-page {
+        padding-bottom: 84px;
+    }
+}

@@ -13,9 +13,14 @@ function check_otp_auto_submit(bool $condition, string $message): void
 }
 
 $root = dirname(__DIR__);
-$staffOtp = file_get_contents($root . '/frontend/verify_otp.php');
-$guestOtp = file_get_contents($root . '/frontend/my_booking.php');
-$refundOtp = file_get_contents($root . '/frontend/refund_details.php');
+$staffOtp = file_get_contents($root . '/frontend/verify_otp.php')
+    . "\n" . file_get_contents($root . '/frontend/views/auth/_verify_otp.php')
+    . "\n" . file_get_contents($root . '/frontend/assets/js/pages/verify-otp.js');
+$guestOtp = file_get_contents($root . '/frontend/my_booking.php')
+    . "\n" . file_get_contents($root . '/frontend/assets/js/pages/my-booking.js');
+$refundOtp = file_get_contents($root . '/frontend/refund_details.php')
+    . "\n" . file_get_contents($root . '/frontend/views/refund_details/_card.php')
+    . "\n" . file_get_contents($root . '/frontend/assets/js/pages/refund-details.js');
 
 check_otp_auto_submit(
     str_contains($staffOtp, 'maybeAutoSubmitOtp();')

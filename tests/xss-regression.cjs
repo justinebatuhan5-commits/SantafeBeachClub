@@ -40,9 +40,9 @@ assert.equal(security.safeURL('payments?id=1'), 'https://example.test/frontend/p
 assert.equal(security.safeURL('https://example.test/a'), 'https://example.test/a');
 
 // Verify AI Concierge widget safe Markdown renderer strips XSS and unsafe links
-const widgetSrc = fs.readFileSync('frontend/partials/_chatbot_widget.php', 'utf8');
+const widgetSrc = fs.readFileSync('frontend/assets/js/components/chatbot-widget.js', 'utf8');
 const fnMatch = widgetSrc.match(/function sfbcEscapeHtml[\s\S]*?window\.sfbcFormatSafeReply\s*=\s*sfbcFormatSafeReply;/);
-assert(fnMatch, 'sfbcFormatSafeReply must be present in _chatbot_widget.php');
+assert(fnMatch, 'sfbcFormatSafeReply must be present in chatbot-widget.js');
 const chatCtx = { window: {} };
 vm.runInNewContext(fnMatch[0], chatCtx);
 for (const payload of payloads) {

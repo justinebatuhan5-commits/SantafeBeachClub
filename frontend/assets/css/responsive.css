@@ -117,9 +117,32 @@
     .home-page .main-header, .site-navbar {
         position: fixed !important; top: 8px !important; left: 50% !important;
         transform: translateX(-50%) !important; margin: 0; height: auto;
+        transition: none !important;
+    }
+    body .site-navbar.is-scrolled {
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 8px 14px !important;
+        border: 1px solid rgba(138, 90, 58, 0.16) !important;
+        border-top: 0 !important;
+        border-radius: 0 0 18px 18px !important;
+        background: #FCF9F4 !important;
+        background-color: #FCF9F4 !important;
+        box-shadow: 0 10px 26px rgba(43, 36, 32, 0.12) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        transition: none !important;
+    }
+    section[id], h1[id], h2[id], .sf-cal-section, .rooms-catalog,
+    .location-map-section, .location-guide-section, .contact-form-panel {
+        scroll-margin-top: 84px;
     }
     .home-page .hero-section { padding-top: 60px; min-height: 70svh; }
-    .booking-lookup-page .lookup-section { padding-top: 40px; }
+    .booking-lookup-page .lookup-section { padding-top: 96px; }
     .booking-lookup-page .lookup-card { width: 100%; min-width: 0; }
     :is(.bk-layout, .booking-page-container) { min-width: 0; max-width: 100%; }
     .bk-columns > * { min-width: 0; width: 100%; }
@@ -148,7 +171,7 @@
     .daily-summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     .mobile-form-grid { grid-template-columns: minmax(0, 1fr) !important; }
     .mobile-form-grid > [style*="grid-column"] { grid-column: 1 / -1 !important; }
-    :is(.photo-grid, .rp-grid) { grid-template-columns: minmax(0, 1fr); }
+    :is(.photo-grid:not(.is-uniform), .rp-grid) { grid-template-columns: minmax(0, 1fr); }
     :is(.btn-row, .button-group, .success-card .btn-group) { flex-direction: column; }
     :is(.btn-row, .button-group, .success-card .btn-group) > * { width: 100%; }
     .resort-name { font-size: 19px; }
@@ -156,8 +179,8 @@
     .ticket-qr { justify-self: center; }
     .bk-room-box { flex-direction: column; align-items: stretch; }
     .bk-room-name { overflow-wrap: anywhere; }
-    .be-field--dates { flex-direction: column; align-items: stretch; gap: 8px; }
-    .be-date-segment { padding: 0; }
+    .be-field--dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .be-date-segment { padding: 0; min-width: 0; }
     .be-date-arrow { display: none; }
 }
 

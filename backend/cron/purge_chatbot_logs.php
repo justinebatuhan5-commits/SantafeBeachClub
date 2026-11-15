@@ -16,10 +16,11 @@ if (!$isCli) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    $secret = getenv('CRON_SECRET') ?: 'sfbc_cron_secret_2026';
-    $provided = $_GET['key'] ?? '';
+    $secret = trim((string) (getenv('CRON_SECRET') ?: ($_ENV['CRON_SECRET'] ?? '')));
+    $provided = (string) ($_GET['key'] ?? '');
     $isAdmin = !empty($_SESSION['admin_logged_in']) && ($_SESSION['admin_role'] ?? '') === 'admin';
-    if (!$isAdmin && $provided !== $secret) {
+    $keyValid = $secret !== '' && $provided !== '' && hash_equals($secret, $provided);
+    if (!$isAdmin && !$keyValid) {
         http_response_code(403);
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'error' => 'Forbidden']);
