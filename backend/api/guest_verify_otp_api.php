@@ -9,6 +9,8 @@ require_once __DIR__ . '/../../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../../backend/helpers/guest_auth_helper.php';
 require_once __DIR__ . '/../../backend/helpers/otp_helper.php';
+require_once __DIR__ . '/../../backend/helpers/recaptcha_helper.php';
+require_once __DIR__ . '/../../backend/helpers/security_logger.php';
 require_once __DIR__ . '/../../backend/services/mailer.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -41,6 +43,21 @@ $guestEmail = $pending['guest_email'];
 $guestName  = $pending['booking']['guest_name'] ?? 'Guest';
 
 $action = $_POST['action'] ?? 'verify';
+$recaptchaAction = ($action === 'resend') ? 'guest_otp_resend' : 'guest_otp_verify';
+$recaptchaToken  = is_string($_POST['g-recaptcha-response'] ?? null) ? $_POST['g-recaptcha-response'] : '';
+$recaptchaResult = recaptcha_verify($recaptchaToken, $recaptchaAction, true);
+if (!$recaptchaResult['success']) {
+    SecurityLogger::log(
+        $conn,
+        'RECAPTCHA_FAIL',
+        'reCAPTCHA failed on ' . $recaptchaAction . ' (score: ' . $recaptchaResult['score'] . ')',
+        SecurityLogger::LEVEL_WARNING,
+        $guestEmail
+    );
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => $recaptchaResult['error'] ?: 'Security check failed. Please try again.']);
+    exit;
+}
 
 if ($action === 'resend') {
     $lastSent = $pending['otp_sent_at'] ?? 0;

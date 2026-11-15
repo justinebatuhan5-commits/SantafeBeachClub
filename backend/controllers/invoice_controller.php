@@ -31,13 +31,7 @@ function sfbc_handle_invoice_page(mysqli $conn): array
     $stmt = $conn->prepare("
         SELECT b.*,
                DATEDIFF(b.check_out, b.check_in)  AS nights_calc,
-               (SELECT COALESCE(SUM(paid.amount), 0) FROM payments paid
-                WHERE paid.booking_id = b.id AND paid.status = 'verified') AS deposit_paid,
                COALESCE(r.price_per_night, rt.price, 0) AS nightly_rate,
-               p.status                            AS payment_status,
-               p.payment_method                    AS payment_method_detail,
-               p.transaction_id,
-               p.paid_at,
                d.category AS discount_category,
                d.state AS discount_state,
                d.original_centavos,
@@ -46,11 +40,6 @@ function sfbc_handle_invoice_page(mysqli $conn): array
         LEFT JOIN rooms r ON r.id = b.room_id
         LEFT JOIN room_types rt ON rt.id = b.room_type_id
             OR (b.room_type_id IS NULL AND rt.name = b.accommodation_name)
-        LEFT JOIN payments p ON p.id = (
-            SELECT latest.id FROM payments latest
-            WHERE latest.booking_id = b.id AND latest.status = 'verified'
-            ORDER BY latest.id DESC LIMIT 1
-        )
         LEFT JOIN booking_discounts d ON d.booking_id = b.id
         WHERE b.id = ?
         LIMIT 1
@@ -74,6 +63,25 @@ function sfbc_handle_invoice_page(mysqli $conn): array
             die("Unauthorized access to this invoice.");
         }
     }
+
+    // Load verified payment totals and latest payment details separately for TiDB compatibility.
+    $sum_stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) AS deposit_paid FROM payments WHERE booking_id = ? AND status = 'verified'");
+    $sum_stmt->bind_param("i", $booking_id);
+    $sum_stmt->execute();
+    $sum_row = $sum_stmt->get_result()->fetch_assoc();
+    $sum_stmt->close();
+
+    $pay_stmt = $conn->prepare("SELECT status AS payment_status, payment_method AS payment_method_detail, transaction_id, paid_at FROM payments WHERE booking_id = ? AND status = 'verified' ORDER BY id DESC LIMIT 1");
+    $pay_stmt->bind_param("i", $booking_id);
+    $pay_stmt->execute();
+    $latest_payment = $pay_stmt->get_result()->fetch_assoc();
+    $pay_stmt->close();
+
+    $booking['deposit_paid'] = $sum_row['deposit_paid'] ?? 0;
+    $booking['payment_status'] = $latest_payment['payment_status'] ?? null;
+    $booking['payment_method_detail'] = $latest_payment['payment_method_detail'] ?? null;
+    $booking['transaction_id'] = $latest_payment['transaction_id'] ?? null;
+    $booking['paid_at'] = $latest_payment['paid_at'] ?? null;
 
     $booking_ref   = 'REF-' . str_pad($booking['id'], 3, '0', STR_PAD_LEFT);
     $nights        = max(1, (int)($booking['nights_calc'] ?? $booking['nights'] ?? 1));

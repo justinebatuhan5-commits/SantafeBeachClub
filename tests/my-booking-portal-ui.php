@@ -85,8 +85,12 @@ check_portal_ui(
     'Guest name and special requests escape raw HTML/script payloads'
 );
 check_portal_ui(
-    str_contains($renderedConfirmed, 'site-navbar') && str_contains($renderedConfirmed, 'portal-grid'),
-    'Logged-in dashboard includes shared site navbar and two-column stay workspace'
+    !str_contains($renderedConfirmed, 'site-navbar')
+        && str_contains($renderedConfirmed, 'btn-portal-home')
+        && str_contains($renderedConfirmed, 'portal-hero-badge')
+        && str_contains($renderedConfirmed, 'First Visit')
+        && str_contains($renderedConfirmed, 'portal-grid'),
+    'Logged-in dashboard omits public site navbar, renders Resort Home action, guest badge, and two-column stay workspace'
 );
 check_portal_ui(
     str_contains($renderedConfirmed, '2:00 PM') && !str_contains($renderedConfirmed, '<span>14:00</span>'),

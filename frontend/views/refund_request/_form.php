@@ -32,19 +32,19 @@
                         <div class="info-box">
                             <div class="info-row">
                                 <span class="info-label">Accommodation</span>
-                                <span class="info-value"><?php echo htmlspecialchars($booking['accommodation_name']); ?></span>
+                                <span class="info-value"><?php echo htmlspecialchars((string)($booking['accommodation_name'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Check-in Date</span>
-                                <span class="info-value"><?php echo date('M j, Y', strtotime($booking['check_in'])); ?></span>
+                                <span class="info-value"><?php echo date('M j, Y', strtotime((string)($booking['check_in'] ?? 'now'))); ?></span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Check-out Date</span>
-                                <span class="info-value"><?php echo date('M j, Y', strtotime($booking['check_out'])); ?></span>
+                                <span class="info-value"><?php echo date('M j, Y', strtotime((string)($booking['check_out'] ?? 'now'))); ?></span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Booking Reference</span>
-                                <span class="info-value" style="font-family: 'Courier New', monospace;">REF-<?php echo str_pad($booking['id'], 3, '0', STR_PAD_LEFT); ?></span>
+                                <span class="info-value" style="font-family: 'Courier New', monospace;">REF-<?php echo str_pad((string)($booking['id'] ?? ''), 3, '0', STR_PAD_LEFT); ?></span>
                             </div>
                         </div>
 
@@ -87,7 +87,7 @@
                     </form>
                 <?php else: ?>
                     <div class="alert error">
-                        <?php echo $error_message ?: 'Unable to load booking information. Please check your booking confirmation email for the correct link.'; ?>
+                        <?php echo htmlspecialchars((string)($error_message ?: 'Unable to load booking information. Please check your booking confirmation email for the correct link.'), ENT_QUOTES, 'UTF-8'); ?>
                     </div>
                     <div style="text-align: center; padding: 20px 0;">
                         <a href="/" class="btn btn-secondary" style="max-width: 200px;">Back to Home</a>

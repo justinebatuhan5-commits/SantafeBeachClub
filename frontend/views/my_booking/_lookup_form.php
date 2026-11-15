@@ -52,8 +52,9 @@
                     <span>We sent a 6-digit verification code to your email.</span>
                 </div>
 
-                <form id="guestOtpForm" novalidate>
+                <form id="guestOtpForm" data-recaptcha-site-key="<?php echo htmlspecialchars(RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>" novalidate>
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
+                    <input type="hidden" name="g-recaptcha-response" id="guest-otp-recaptcha-response">
                     <input type="hidden" id="guestFullOtp" name="otp" value="">
 
                     <div class="otp-box-group">

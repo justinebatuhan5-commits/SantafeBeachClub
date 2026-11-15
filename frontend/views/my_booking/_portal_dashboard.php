@@ -1,7 +1,4 @@
 <?php
-$active_nav = 'my_booking';
-require __DIR__ . '/../../partials/_navbar.php';
-
 $etaRaw = trim((string)($booking['eta'] ?? '14:00'));
 $etaTs = $etaRaw !== '' ? strtotime($etaRaw) : false;
 $etaDisplay = $eta_display ?? ($etaTs !== false ? date('g:i A', $etaTs) : ($etaRaw !== '' ? $etaRaw : '2:00 PM'));
@@ -29,7 +26,7 @@ if ($initialTimerSeconds >= 3600) {
     <!-- Coastal Espresso Stay Hero -->
     <div class="portal-top-bar">
         <div class="portal-identity">
-            <p class="portal-greeting">Your stay, at a glance</p>
+            <p class="portal-greeting">Santa Fe Beach Club &middot; Your stay, at a glance</p>
             <h1 class="portal-welcome"><?php echo htmlspecialchars((string)$booking['guest_name'], ENT_QUOTES, 'UTF-8'); ?></h1>
             <div class="portal-hero-meta">
                 <div class="portal-reference">
@@ -41,9 +38,16 @@ if ($initialTimerSeconds >= 3600) {
                     &bull;
                     <?php echo htmlspecialchars($checkin_fmt . ' — ' . $checkout_fmt, ENT_QUOTES, 'UTF-8'); ?>
                 </span>
+                <?php if (!empty($booking['guest_type'])): ?>
+                <span class="portal-hero-badge"><?php echo htmlspecialchars((string)$booking['guest_type'], ENT_QUOTES, 'UTF-8'); ?></span>
+                <?php endif; ?>
             </div>
         </div>
         <div class="portal-top-actions">
+            <a href="index" class="btn-portal-home">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Resort Home
+            </a>
             <a href="my_booking?logout=1" class="btn-portal-logout">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 Look up another booking
@@ -134,12 +138,6 @@ if ($initialTimerSeconds >= 3600) {
                             <label>Estimated Arrival</label>
                             <span><?php echo htmlspecialchars((string)$etaDisplay, ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
-                        <?php if (!empty($booking['guest_type'])): ?>
-                        <div class="info-item">
-                            <label>Guest Type</label>
-                            <span><?php echo htmlspecialchars((string)$booking['guest_type'], ENT_QUOTES, 'UTF-8'); ?></span>
-                        </div>
-                        <?php endif; ?>
                         <?php if ($discountBooking): ?>
                         <div class="info-item">
                             <label>Discount</label>
@@ -289,7 +287,7 @@ if ($initialTimerSeconds >= 3600) {
                         <a href="invoice.php?ref=<?php echo urlencode($bookingRef); ?>&token=<?php echo urlencode((string)($booking['checkin_token'] ?? '')); ?>"
                            target="_blank"
                            rel="noopener noreferrer"
-                           class="btn-action btn-action-primary">
+                           class="btn-action btn-pass-outline">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                             Print / PDF Invoice
                         </a>

@@ -18,7 +18,63 @@
         const guestResendTimer = document.getElementById('guestResendTimer');
         const guestSeconds = document.getElementById('guestSeconds');
         const guestBackBtn = document.getElementById('guestBackBtn');
+        const recaptchaSiteKey = lookupForm.dataset.recaptchaSiteKey
+            || (guestOtpForm && guestOtpForm.dataset.recaptchaSiteKey)
+            || '6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT';
         let guestOtpVerificationPending = false;
+
+        function waitForGrecaptcha(timeoutMs) {
+            if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.ready === 'function') {
+                return Promise.resolve();
+            }
+            return new Promise((resolve, reject) => {
+                const start = Date.now();
+                const timer = setInterval(() => {
+                    if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.ready === 'function') {
+                        clearInterval(timer);
+                        resolve();
+                    } else if (Date.now() - start >= timeoutMs) {
+                        clearInterval(timer);
+                        reject(new Error('reCAPTCHA script unavailable'));
+                    }
+                }, 100);
+            });
+        }
+
+        async function executeRecaptcha(action) {
+            await waitForGrecaptcha(6000);
+            let timeoutId;
+            try {
+                const token = await Promise.race([
+                    new Promise((resolve, reject) => {
+                        grecaptcha.ready(() => {
+                            try {
+                                grecaptcha.execute(recaptchaSiteKey, { action: action }).then(resolve, reject);
+                            } catch (err) {
+                                reject(err);
+                            }
+                        });
+                    }),
+                    new Promise((_, reject) => {
+                        timeoutId = setTimeout(() => reject(new Error('reCAPTCHA timeout')), 10000);
+                    })
+                ]);
+                if (!token) throw new Error('Missing reCAPTCHA token');
+                return token;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            waitForGrecaptcha(6000)
+                .then(() => {
+                    grecaptcha.ready(() => {
+                        grecaptcha.execute(recaptchaSiteKey, { action: 'guest_lookup' }).catch(() => {});
+                    });
+                })
+                .catch(() => {});
+        });
 
         function showError(msg) {
             errorMsg.textContent = msg;
@@ -51,14 +107,14 @@
             lookupSpin.style.display = 'block';
 
             try {
-                const recaptchaSiteKey = lookupForm.dataset.recaptchaSiteKey || '6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT';
-                const recaptchaToken = await Promise.race([
-                    grecaptcha.execute(recaptchaSiteKey, { action: 'guest_lookup' }),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('reCAPTCHA timeout')), 5000))
-                ]);
+                const recaptchaToken = await executeRecaptcha('guest_lookup');
                 document.getElementById('g-recaptcha-response').value = recaptchaToken;
             } catch (err) {
-                console.warn('reCAPTCHA failed to load, proceeding anyway.');
+                showError('Security check could not complete. Please refresh or allow Google reCAPTCHA and try again.');
+                lookupBtn.disabled = false;
+                lookupText.textContent = 'Find Reservation';
+                lookupSpin.style.display = 'none';
+                return;
             }
 
             const formData = new FormData(lookupForm);
@@ -163,6 +219,19 @@
             guestVerifyText.textContent = 'Verifying...';
             guestVerifySpin.style.display = 'inline-block';
 
+            try {
+                const otpCaptchaToken = await executeRecaptcha('guest_otp_verify');
+                const otpCaptchaInput = document.getElementById('guest-otp-recaptcha-response');
+                if (otpCaptchaInput) otpCaptchaInput.value = otpCaptchaToken;
+            } catch (err) {
+                guestOtpVerificationPending = false;
+                showError('Security check could not complete. Please refresh or allow Google reCAPTCHA and try again.');
+                guestVerifyBtn.disabled = false;
+                guestVerifyText.textContent = 'Verify & View Booking';
+                guestVerifySpin.style.display = 'none';
+                return;
+            }
+
             const formData = new FormData(guestOtpForm);
 
             try {
@@ -220,13 +289,23 @@
         }
 
         guestResendBtn.addEventListener('click', async () => {
-            if (guestCooldown > 0) return;
+            if (guestCooldown > 0 || guestResendBtn.disabled) return;
             hideError();
+            guestResendBtn.disabled = true;
 
             const formData = new FormData();
             formData.append('action', 'resend');
-            const token = document.querySelector('input[name="csrf_token"]').value;
-            formData.append('csrf_token', token);
+            const csrfInput = guestOtpForm ? guestOtpForm.querySelector('input[name="csrf_token"]') : document.querySelector('input[name="csrf_token"]');
+            formData.append('csrf_token', csrfInput ? csrfInput.value : '');
+
+            try {
+                const resendCaptchaToken = await executeRecaptcha('guest_otp_resend');
+                formData.append('g-recaptcha-response', resendCaptchaToken);
+            } catch (err) {
+                guestResendBtn.disabled = false;
+                showError('Security check could not complete. Please refresh or allow Google reCAPTCHA and try again.');
+                return;
+            }
 
             try {
                 const response = await fetch('../backend/api/guest_verify_otp_api.php', {
@@ -239,9 +318,11 @@
                     startGuestCooldown(60);
                     SiteDialog.alert(data.message || 'New code sent to your email.');
                 } else {
+                    guestResendBtn.disabled = false;
                     showError(data.error || 'Failed to resend code.');
                 }
             } catch (err) {
+                guestResendBtn.disabled = false;
                 showError('Network error resending code.');
             }
         });

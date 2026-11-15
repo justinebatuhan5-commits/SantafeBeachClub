@@ -568,19 +568,9 @@
 .booking-account-page .booking-slideshow { display: none; }
 .booking-account-page .grecaptcha-badge { display: none !important; }
 
-/* Account page navbar sits in normal flow instead of floating over the hero card */
-.booking-account-page .site-navbar {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    transform: none !important;
-    max-width: 1072px;
-    margin: 18px auto 0 !important;
-}
-
 .booking-account-page .portal-section {
     max-width: 1120px;
-    padding: 28px 24px 72px;
+    padding: 38px 24px 72px;
 }
 
 /* ── Coastal Espresso Stay Hero ── */
@@ -650,9 +640,49 @@
     padding-left: 14px;
     border-left: 1px solid rgba(255, 245, 228, 0.25);
 }
+.booking-account-page .portal-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #FFF4E4;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 245, 228, 0.24);
+}
 .booking-account-page .portal-top-actions {
     position: relative;
     z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+.booking-account-page .btn-portal-home {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    text-decoration: none;
+    color: #FFF6E8;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 245, 228, 0.28);
+    transition: all 0.2s;
+}
+.booking-account-page .btn-portal-home:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 245, 228, 0.48);
+    transform: translateY(-1px);
+}
+.booking-account-page .btn-portal-home:focus-visible {
+    outline: 3px solid #E7C9A6;
+    outline-offset: 2px;
 }
 .booking-account-page .btn-portal-logout {
     background: #FFFDF8;
@@ -1091,21 +1121,16 @@
         width: 100%;
     }
 }
-@media (max-width: 768px) {
-    /* Mobile responsive.css pins .site-navbar.is-scrolled at top:0; reserve space above hero */
-    .booking-account-page .portal-section {
-        padding-top: 86px;
-    }
-}
 @media (max-width: 640px) {
     .booking-account-page .portal-section {
-        padding: 86px 14px 48px;
+        padding: 22px 14px 48px;
     }
     .booking-account-page .portal-top-bar {
         padding: 24px 20px;
         border-radius: 18px;
     }
     .booking-account-page .portal-top-actions,
+    .booking-account-page .btn-portal-home,
     .booking-account-page .btn-portal-logout {
         width: 100%;
     }

@@ -5,7 +5,7 @@
 
 function sfbc_handle_refund_request_page(mysqli $conn): array
 {
-    if (session_status() === PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         session_start();
     }
 
@@ -15,12 +15,26 @@ function sfbc_handle_refund_request_page(mysqli $conn): array
     $submitted_email = '';
     $booking = null;
 
-    $schema_name = $conn->query('SELECT DATABASE()')->fetch_row()[0];
-    $preference_check = $conn->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name='preferred_refund_method'");
-    $preference_check->bind_param('s', $schema_name);
-    $preference_check->execute();
-    $refund_preference_ready = ((int)$preference_check->get_result()->fetch_row()[0] === 1);
-    $preference_check->close();
+    $schema_name = '';
+    if ($schema_result = $conn->query('SELECT DATABASE()')) {
+        $schema_row = $schema_result->fetch_row();
+        $schema_name = is_array($schema_row) ? (string)($schema_row[0] ?? '') : '';
+    }
+    $refund_preference_ready = false;
+    if ($schema_name !== '') {
+        try {
+            $preference_check = $conn->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=? AND table_name='refund_requests' AND column_name='preferred_refund_method'");
+            if ($preference_check) {
+                $preference_check->bind_param('s', $schema_name);
+                $preference_check->execute();
+                $pref_row = $preference_check->get_result()->fetch_row();
+                $refund_preference_ready = ((int)($pref_row[0] ?? 0) >= 1);
+                $preference_check->close();
+            }
+        } catch (\Throwable $e) {
+            $refund_preference_ready = false;
+        }
+    }
     $refund_methods = sf_refund_method_settings($conn);
 
     // Get booking from token (same as cancel_booking.php)
@@ -28,22 +42,36 @@ function sfbc_handle_refund_request_page(mysqli $conn): array
 
     if ($token) {
         $stmt = $conn->prepare("
-            SELECT b.id, b.guest_name, b.guest_email, b.accommodation_name,
-                   b.check_in, b.check_out, b.status, b.cancellation_token,
-                   p.id as payment_id, p.amount, p.payment_method
-            FROM bookings b
-            LEFT JOIN payments p ON p.id = (
-                SELECT p2.id FROM payments p2
-                WHERE p2.booking_id = b.id AND p2.status = 'verified'
-                ORDER BY p2.paid_at DESC, p2.id DESC LIMIT 1
-            )
-            WHERE b.cancellation_token = ?
+            SELECT id, guest_name, guest_email, accommodation_name,
+                   check_in, check_out, status, cancellation_token
+            FROM bookings
+            WHERE cancellation_token = ?
             LIMIT 1
         ");
         $stmt->bind_param("s", $token);
         $stmt->execute();
         $booking = $stmt->get_result()->fetch_assoc();
         $stmt->close();
+
+        if ($booking) {
+            // Query latest verified payment separately to avoid correlated LEFT JOIN subquery failures on TiDB.
+            $pay_stmt = $conn->prepare("
+                SELECT id AS payment_id, amount, payment_method
+                FROM payments
+                WHERE booking_id = ? AND status = 'verified'
+                ORDER BY paid_at DESC, id DESC
+                LIMIT 1
+            ");
+            $booking_id = (int)$booking['id'];
+            $pay_stmt->bind_param("i", $booking_id);
+            $pay_stmt->execute();
+            $latest_payment = $pay_stmt->get_result()->fetch_assoc();
+            $pay_stmt->close();
+
+            $booking['payment_id'] = $latest_payment['payment_id'] ?? null;
+            $booking['amount'] = $latest_payment['amount'] ?? null;
+            $booking['payment_method'] = $latest_payment['payment_method'] ?? null;
+        }
 
         if (!$booking) {
             $error_message = 'Invalid or expired booking link. Please access this page using the link provided in your booking confirmation email.';

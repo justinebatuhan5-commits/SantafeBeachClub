@@ -16,6 +16,7 @@ require_once __DIR__ . '/../../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../../backend/helpers/rate_limiter.php';
 require_once __DIR__ . '/../../backend/helpers/guest_auth_helper.php';
 require_once __DIR__ . '/../../backend/helpers/recaptcha_helper.php';
+require_once __DIR__ . '/../../backend/helpers/security_logger.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -38,9 +39,15 @@ if (!verify_csrf_token()) {
 }
 
 // ── reCAPTCHA v3 Verification ────────────────────────────
-$recaptchaToken  = $_POST['g-recaptcha-response'] ?? '';
-$recaptchaResult = recaptcha_verify($recaptchaToken, 'guest_lookup');
+$recaptchaToken  = is_string($_POST['g-recaptcha-response'] ?? null) ? $_POST['g-recaptcha-response'] : '';
+$recaptchaResult = recaptcha_verify($recaptchaToken, 'guest_lookup', true);
 if (!$recaptchaResult['success']) {
+    SecurityLogger::log(
+        $conn,
+        'RECAPTCHA_FAIL',
+        'reCAPTCHA failed on guest lookup (score: ' . $recaptchaResult['score'] . ')',
+        SecurityLogger::LEVEL_WARNING
+    );
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => $recaptchaResult['error'] ?: 'Security check failed. Please try again.']);
     exit;
