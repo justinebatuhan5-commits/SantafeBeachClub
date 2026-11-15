@@ -556,60 +556,575 @@
     background: #DC2626;
 }
 
-/* Guest account: calm coastal surfaces, independent of the lookup screen. */
+/* ═══════════════════════════════════════════════════════════════
+   Guest Account Portal — Coastal Espresso & Warm Sand Aesthetic
+   ═══════════════════════════════════════════════════════════════ */
 .booking-account-page .portal-wrapper {
-    background: radial-gradient(ellipse at 0 0, #dceae4 0, transparent 48%),
-                radial-gradient(ellipse at 100% 80%, #eee0ce 0, transparent 48%), #f6f3ed;
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(212, 181, 148, 0.24) 0%, transparent 52%),
+        radial-gradient(ellipse at 100% 85%, rgba(169, 134, 102, 0.16) 0%, transparent 50%),
+        #FAF5EE;
 }
 .booking-account-page .booking-slideshow { display: none; }
-.booking-account-page .portal-section { max-width: 1040px; padding: 40px 24px 64px; }
+.booking-account-page .grecaptcha-badge { display: none !important; }
+
+/* Account page navbar sits in normal flow instead of floating over the hero card */
+.booking-account-page .site-navbar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    max-width: 1072px;
+    margin: 18px auto 0 !important;
+}
+
+.booking-account-page .portal-section {
+    max-width: 1120px;
+    padding: 28px 24px 72px;
+}
+
+/* ── Coastal Espresso Stay Hero ── */
 .booking-account-page .portal-top-bar {
-    position: relative; overflow: hidden; padding: 32px; margin-bottom: 24px;
-    background: linear-gradient(120deg, #173d3a, #2b5951);
-    border: 1px solid #38665e; border-radius: 24px;
-    box-shadow: 0 12px 32px #173d3a18;
+    position: relative;
+    overflow: hidden;
+    padding: 32px 34px;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #3E271C 0%, #5C3D2B 58%, #7C533C 100%);
+    border: 1px solid #6D4B37;
+    border-radius: 22px;
+    box-shadow: 0 16px 38px rgba(52, 33, 22, 0.16);
 }
 .booking-account-page .portal-top-bar::after {
-    content: ''; position: absolute; width: 260px; height: 260px; right: -110px; top: -160px;
-    border: 35px solid #ffffff07; border-radius: 50%; pointer-events: none;
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    right: -115px;
+    top: -165px;
+    border: 36px solid rgba(255, 245, 228, 0.06);
+    border-radius: 50%;
+    pointer-events: none;
 }
-.booking-account-page .portal-greeting { color: #c9ddd0; letter-spacing: 2.4px; }
-.booking-account-page .portal-welcome { color: #fffaf0; font-size: clamp(25px, 4vw, 34px); }
-.booking-account-page .portal-reference { color: #d0e0d8; }
-.booking-account-page .portal-reference strong { color: #fff5df; background: #ffffff0d; border-color: #ffffff38; }
-.booking-account-page .btn-portal-logout { background: #fffaf0; color: #21483f; border-color: #fffaf0; padding: 13px 18px; }
-.booking-account-page .btn-portal-logout:hover { background: #e4eee6; border-color: #e4eee6; }
-.booking-account-page .portal-card { border: 1px solid #e1e5dd; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px #243e3010; }
-.booking-account-page .portal-card-header { padding: 19px 24px; background: #fcfdf9; border-bottom-color: #edf0e8; flex-wrap: wrap; }
-.booking-account-page .portal-card-header h2 { color: #21463e; font-size: 16px; }
-.booking-account-page .portal-card-icon { display: grid; place-items: center; width: 34px; height: 34px; background: #edf3eb; border-radius: 10px; }
-.booking-account-page .info-grid { gap: 12px; }
-.booking-account-page .info-item { min-width: 0; padding: 14px; background: #f6f8f3; border: 1px solid #edf0e8; border-radius: 12px; }
-.booking-account-page .info-item label { color: #65786d; letter-spacing: .8px; margin-bottom: 8px; font-size: 10px; }
-.booking-account-page .info-item span { color: #233d33; overflow-wrap: anywhere; }
-.booking-account-page .payment-row { gap: 20px; padding-top: 13px; padding-bottom: 13px; border-bottom-color: #edf0e8; }
-.booking-account-page .payment-row label { color: #65756c; }
-.booking-account-page .payment-row strong { text-align: right; overflow-wrap: anywhere; min-width: 0; }
-.booking-account-page .portal-actions { gap: 10px; }
-.booking-account-page .btn-action { min-height: 44px; border-radius: 10px; justify-content: center; }
-.booking-account-page .btn-action-primary { background: #28574b; }
-.booking-account-page .btn-action-primary:hover { background: #173d3a; }
-.booking-account-page .btn-action:focus-visible { outline: 3px solid #7f9f87; outline-offset: 3px; }
-@media (max-width: 540px) {
-    .booking-account-page .portal-section { padding: 20px 14px 40px; }
-    .booking-account-page .portal-top-bar { padding: 24px 20px; border-radius: 20px; }
-    .booking-account-page .portal-card-body { padding: 20px 24px; }
-    .booking-account-page .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-    .booking-account-page .info-item { padding: 11px; }
-    .booking-account-page .portal-actions .btn-action { flex: 1 1 180px; }
+.booking-account-page .portal-greeting {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.6px;
+    text-transform: uppercase;
+    color: #E7C9A6;
+    margin: 0 0 8px;
 }
-/* Account page: navbar sits in normal document flow (not absolute/fixed).
-   Lookup page: navbar is positioned absolute over the hero image. */
-.booking-account-page .site-navbar {
+.booking-account-page .portal-welcome {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    color: #FFFBF4;
+    font-size: clamp(26px, 4vw, 35px);
+    margin: 0 0 14px;
+    line-height: 1.2;
+}
+.booking-account-page .portal-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+}
+.booking-account-page .portal-reference {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #EBD8C5;
+}
+.booking-account-page .portal-reference strong {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12.5px;
+    color: #FFFDF8;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 245, 228, 0.34);
+    border-radius: 8px;
+    padding: 4px 10px;
+    letter-spacing: 0.7px;
+}
+.booking-account-page .portal-hero-stay {
+    font-size: 13px;
+    color: #F4E6D6;
+    padding-left: 14px;
+    border-left: 1px solid rgba(255, 245, 228, 0.25);
+}
+.booking-account-page .portal-top-actions {
     position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
+    z-index: 1;
+}
+.booking-account-page .btn-portal-logout {
+    background: #FFFDF8;
+    color: #4A3022;
+    border: 1px solid #FFFDF8;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(24, 14, 9, 0.16);
+}
+.booking-account-page .btn-portal-logout:hover {
+    background: #F4E8DA;
+    border-color: #F4E8DA;
+    color: #3A2418;
+    transform: translateY(-1px);
+}
+
+/* ── Responsive Two-Column Workspace Grid ── */
+.booking-account-page .portal-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.48fr) minmax(300px, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+.booking-account-page .portal-main-col,
+.booking-account-page .portal-side-col {
+    min-width: 0;
+}
+@media (min-width: 940px) {
+    .booking-account-page .portal-side-col {
+        position: sticky;
+        top: 24px;
+    }
+}
+
+/* ── Shared Account Cards ── */
+.booking-account-page .portal-card {
+    background: #FFFDF9;
+    border: 1px solid #EAE0D5;
+    border-radius: 20px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 26px rgba(43, 36, 32, 0.05);
+}
+.booking-account-page .portal-card-header {
+    padding: 18px 24px;
+    background: linear-gradient(180deg, #FDF9F4 0%, #FAF5EE 100%);
+    border-bottom: 1px solid #EDE3D8;
+    flex-wrap: wrap;
+}
+.booking-account-page .portal-card-header h2 {
+    color: #3E271C;
+    font-size: 15.5px;
+    font-weight: 700;
+}
+.booking-account-page .portal-card-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background: #EFE4D6;
+    color: #7C533C;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+.booking-account-page .portal-card-body {
+    padding: 22px 24px;
+}
+.booking-account-page .portal-card-body--flush {
+    padding: 0;
+}
+
+/* ── Booking Summary Tiles ── */
+.booking-account-page .info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.booking-account-page .info-item {
+    min-width: 0;
+    padding: 14px 15px;
+    background: #FAF6F0;
+    border: 1px solid #ECE2D6;
+    border-radius: 12px;
+}
+.booking-account-page .info-item label {
+    color: #827162;
+    letter-spacing: 0.9px;
+    margin-bottom: 6px;
+    font-size: 10.5px;
+}
+.booking-account-page .info-item span {
+    display: block;
+    color: #2B2420;
+    font-size: 14.5px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.booking-account-page .info-sub {
+    display: block;
+    margin-top: 3px;
+    font-size: 11.5px;
+    color: #8A7A6B;
+    font-weight: 500;
+}
+.booking-account-page .special-requests-callout {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #FAF6F0;
+    border: 1px solid #ECE2D6;
+    border-left: 3.5px solid #9A6B4D;
+    border-radius: 10px;
+}
+.booking-account-page .special-requests-label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: #827162;
+    margin-bottom: 5px;
+}
+.booking-account-page .special-requests-callout p {
+    margin: 0;
+    font-size: 13.5px;
+    color: #3E271C;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+/* ── Payment Ledger ── */
+.booking-account-page .payment-ledger {
+    padding: 6px 24px 8px;
+}
+.booking-account-page .payment-row {
+    gap: 18px;
+    padding: 13px 0;
+    border-bottom: 1px solid #F1EAE1;
+}
+.booking-account-page .payment-row label {
+    color: #6E6259;
+    font-size: 13.5px;
+}
+.booking-account-page .payment-row strong {
+    color: #2B2420;
+    text-align: right;
+    overflow-wrap: anywhere;
+    min-width: 0;
+}
+.booking-account-page .tx-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #5C3D2B;
+    background: #F5ECE2;
+    border: 1px solid #E5D5C3;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+.booking-account-page .amount-discount {
+    color: #15803D;
+}
+.booking-account-page .amount-deposit {
+    color: #0F766E;
+}
+.booking-account-page .balance-row {
+    margin: 0;
+    padding: 16px 24px;
+    background: #FFF9EB;
+    border-top: 1px solid #F3E2BA;
+    border-bottom: none;
+    border-radius: 0;
+    align-items: center;
+}
+.booking-account-page .balance-label-group label {
+    display: block;
+    color: #9A5513;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+.booking-account-page .balance-label-group small {
+    display: block;
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: #A66E38;
+}
+.booking-account-page .balance-row strong {
+    color: #9A5513;
+    font-size: 17px;
+    font-weight: 800;
+}
+.booking-account-page .balance-row.is-settled {
+    background: #F0FDF4;
+    border-top-color: #BBF7D0;
+}
+.booking-account-page .balance-row.is-settled label,
+.booking-account-page .balance-row.is-settled strong {
+    color: #166534;
+}
+.booking-account-page .balance-row.is-settled small {
+    color: #15803D;
+}
+
+/* ── Side Rail: Check-In QR Pass Card ── */
+.booking-account-page .qr-pass-card {
+    overflow: hidden;
+}
+.booking-account-page .qr-pass-top {
+    padding: 16px 22px;
+    background: linear-gradient(135deg, #4A3022 0%, #6D4732 100%);
+    color: #FFFDF8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.booking-account-page .qr-pass-kicker {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #E7C9A6;
+    margin-bottom: 2px;
+}
+.booking-account-page .qr-pass-top h2 {
+    margin: 0;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #FFFDF8;
+}
+.booking-account-page .qr-pass-ref {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: #FFF7EA;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 245, 228, 0.34);
+    padding: 5px 10px;
+    border-radius: 8px;
+}
+.booking-account-page .qr-pass-body {
+    padding: 20px 22px 22px;
+    text-align: center;
+}
+.booking-account-page .qr-pass-frame {
+    display: inline-flex;
+    padding: 12px;
+    background: #FFFFFF;
+    border: 1px solid #EAE0D5;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(43, 36, 32, 0.06);
+}
+.booking-account-page .qr-pass-frame img {
+    display: block;
+    width: 148px;
+    height: 148px;
+}
+.booking-account-page .qr-pass-caption {
+    margin: 12px 0 16px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #6E6259;
+}
+.booking-account-page .qr-pass-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.booking-account-page .btn-pass-primary {
+    background: #2B211B;
+    color: #FFFDF8;
+}
+.booking-account-page .btn-pass-primary:hover {
+    background: #1A130F;
+}
+.booking-account-page .btn-pass-outline {
+    background: #FAF5EE;
+    color: #5C3D2B;
+    border: 1.5px solid #DECBB8;
+}
+.booking-account-page .btn-pass-outline:hover {
+    background: #F2E7D9;
+    border-color: #7C533C;
+}
+
+/* ── Quick Actions Stack & Policy Box ── */
+.booking-account-page .portal-actions-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.booking-account-page .btn-action {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    justify-content: center;
+    font-size: 13px;
+}
+.booking-account-page .btn-action-primary {
+    background: #7C533C;
+    color: #FFFDF8;
+}
+.booking-account-page .btn-action-primary:hover {
+    background: #5C3D2B;
+}
+.booking-account-page .btn-action-pay {
+    background: #15803D;
+    color: #FFFFFF;
+}
+.booking-account-page .btn-action-pay:hover {
+    background: #166534;
+}
+.booking-account-page .btn-action-teal {
+    background: #0F766E;
+    color: #FFFFFF;
+}
+.booking-account-page .btn-action-teal:hover {
+    background: #115E59;
+}
+.booking-account-page .btn-action-refund {
+    background: #FFFBEB;
+    color: #92400E;
+    border: 1.5px solid #FCD34D;
+}
+.booking-account-page .btn-action-refund:hover {
+    background: #FEF3C7;
+}
+.booking-account-page .btn-action-refund.is-status {
+    cursor: default;
+    opacity: 0.88;
+}
+.booking-account-page .btn-action-refund.is-completed {
+    background: #DCFCE7;
+    color: #15803D;
+    border-color: #BBF7D0;
+    cursor: default;
+}
+.booking-account-page .btn-action:focus-visible {
+    outline: 3px solid #B78B67;
+    outline-offset: 2px;
+}
+
+.booking-account-page .portal-policy-box {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.booking-account-page .portal-policy-box svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.booking-account-page .portal-policy-box strong {
+    display: block;
+    margin-bottom: 2px;
+}
+.booking-account-page .portal-policy-box p {
+    margin: 0;
+}
+.booking-account-page .portal-policy-box.is-danger {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #991B1B;
+}
+.booking-account-page .portal-policy-box.is-info {
+    background: #FAF6F0;
+    border: 1px solid #E5D6C5;
+    color: #5C493A;
+}
+.booking-account-page .portal-policy-box.is-warning {
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    color: #92400E;
+}
+
+/* ── Front Desk Help Card & Footer ── */
+.booking-account-page .portal-help-card {
+    background: #FFFDF9;
+    border: 1px solid #EAE0D5;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.booking-account-page .portal-help-card strong {
+    display: block;
+    font-size: 13.5px;
+    color: #3E271C;
+    margin-bottom: 3px;
+}
+.booking-account-page .portal-help-card p {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #6E6259;
+}
+.booking-account-page .portal-help-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #7C533C;
+    text-decoration: none;
+}
+.booking-account-page .portal-help-link:hover {
+    color: #5C3D2B;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.portal-footer {
+    background: #241811;
+    color: #C7B8A8;
+    text-align: center;
+    padding: 20px 16px;
+    font-size: 12px;
+}
+.portal-footer strong {
+    color: #F4EAE0;
+}
+
+/* ── Responsive Breakpoints ── */
+@media (max-width: 939px) {
+    .booking-account-page .portal-grid {
+        grid-template-columns: 1fr;
+    }
+    .booking-account-page .portal-hero-stay {
+        padding-left: 0;
+        border-left: none;
+        width: 100%;
+    }
+}
+@media (max-width: 768px) {
+    /* Mobile responsive.css pins .site-navbar.is-scrolled at top:0; reserve space above hero */
+    .booking-account-page .portal-section {
+        padding-top: 86px;
+    }
+}
+@media (max-width: 640px) {
+    .booking-account-page .portal-section {
+        padding: 86px 14px 48px;
+    }
+    .booking-account-page .portal-top-bar {
+        padding: 24px 20px;
+        border-radius: 18px;
+    }
+    .booking-account-page .portal-top-actions,
+    .booking-account-page .btn-portal-logout {
+        width: 100%;
+    }
+    .booking-account-page .portal-card-body {
+        padding: 18px 18px;
+    }
+    .booking-account-page .payment-ledger {
+        padding: 4px 18px 6px;
+    }
+    .booking-account-page .balance-row {
+        padding: 14px 18px;
+    }
+    .booking-account-page .info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+    .booking-account-page .qr-pass-buttons {
+        grid-template-columns: 1fr;
+    }
 }
 
 @keyframes sfbcSlideUp {

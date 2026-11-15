@@ -73,7 +73,9 @@ function sfbc_handle_my_booking_page(mysqli $conn): array {
     $can_cancel = false;
     $is_pending_payment = false;
     $seconds_remaining = 0;
+    $hold_window_seconds = 1800;
     $is_payment_expired = false;
+    $eta_display = '2:00 PM';
 
     // If a verified session exists, compute extra display values
     if ($booking) {
@@ -94,6 +96,10 @@ function sfbc_handle_my_booking_page(mysqli $conn): array {
         $remaining = max(0, $total_amount - $deposit_paid);
         $checkin_fmt   = date('D, d M Y', strtotime($booking['check_in']));
         $checkout_fmt  = date('D, d M Y', strtotime($booking['check_out']));
+
+        $eta_raw = trim((string)($booking['eta'] ?? '14:00'));
+        $eta_ts  = $eta_raw !== '' ? strtotime($eta_raw) : false;
+        $eta_display = $eta_ts !== false ? date('g:i A', $eta_ts) : ($eta_raw !== '' ? $eta_raw : '2:00 PM');
 
         $status_colors = [
             'Pending Payment' => ['bg' => '#FFF3CD', 'color' => '#856404', 'icon' => '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'],
@@ -153,6 +159,7 @@ function sfbc_handle_my_booking_page(mysqli $conn): array {
             ? strtotime($discountBooking['hold_until'])
             : false;
         $expiry_timestamp   = $discount_hold_timestamp ?: ($created_timestamp + (30 * 60));
+        $hold_window_seconds = max(1800, $expiry_timestamp - $created_timestamp);
         $seconds_remaining  = max(0, $expiry_timestamp - time());
         $is_payment_expired = ($seconds_remaining <= 0);
     }
@@ -174,6 +181,7 @@ function sfbc_handle_my_booking_page(mysqli $conn): array {
         'remaining',
         'checkin_fmt',
         'checkout_fmt',
+        'eta_display',
         'bk_status',
         'status_style',
         'pay_status',
@@ -192,6 +200,7 @@ function sfbc_handle_my_booking_page(mysqli $conn): array {
         'can_cancel',
         'is_pending_payment',
         'seconds_remaining',
+        'hold_window_seconds',
         'is_payment_expired',
         'csrf_token'
     );

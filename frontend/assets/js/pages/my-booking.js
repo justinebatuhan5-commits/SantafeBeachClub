@@ -307,5 +307,96 @@
         overlay.onclick = function(e) { if (e.target === overlay) overlay.style.display = 'none'; };
     }
 
+    function formatTimerDuration(totalSec) {
+        var sec = Math.max(0, Math.floor(totalSec));
+        var hours = Math.floor(sec / 3600);
+        var mins = Math.floor((sec % 3600) / 60);
+        var remSec = sec % 60;
+        var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+        return hours > 0 ? pad(hours) + ':' + pad(mins) + ':' + pad(remSec) : pad(mins) + ':' + pad(remSec);
+    }
+
+    function initPaymentTimer() {
+        var timerCard = document.getElementById('paymentTimerCard');
+        if (!timerCard) return;
+
+        var digitsEl = document.getElementById('timerDigits');
+        var fillEl = document.getElementById('timerProgressFill');
+        var titleEl = document.getElementById('timerTitle');
+        var descEl = document.getElementById('timerDesc');
+        var subEl = document.getElementById('timerSub');
+
+        var remaining = parseInt(timerCard.dataset.remaining || '0', 10);
+        if (isNaN(remaining) || remaining < 0) remaining = 0;
+        var totalWindow = parseInt(timerCard.dataset.window || '1800', 10);
+        if (isNaN(totalWindow) || totalWindow <= 0) totalWindow = 1800;
+
+        function renderTick() {
+            if (digitsEl) digitsEl.textContent = formatTimerDuration(remaining);
+            if (fillEl) {
+                var pct = Math.min(100, Math.max(0, Math.round((remaining / totalWindow) * 100)));
+                fillEl.style.width = pct + '%';
+            }
+            if (remaining <= 0) {
+                timerCard.classList.add('timer-expired');
+                if (titleEl) titleEl.textContent = 'Payment Window Expired';
+                if (descEl) descEl.textContent = 'Your provisional reservation hold has expired. Please contact front desk if you have already sent payment.';
+                if (subEl) subEl.textContent = 'Expired';
+            }
+        }
+
+        renderTick();
+        if (remaining <= 0) return;
+
+        var timerId = setInterval(function () {
+            remaining = Math.max(0, remaining - 1);
+            renderTick();
+            if (remaining <= 0) clearInterval(timerId);
+        }, 1000);
+    }
+
+    function initPortalActionConfirmations() {
+        document.addEventListener('click', function (e) {
+            var cancelBtn = e.target.closest('.js-cancel-booking-btn');
+            if (cancelBtn) {
+                e.preventDefault();
+                var targetUrl = cancelBtn.dataset.cancelUrl || '';
+                if (!targetUrl) return;
+                showConfirm({
+                    title: 'Cancel Booking',
+                    message: 'Are you sure you want to cancel this booking? This cannot be undone.',
+                    icon: 'cancel',
+                    iconBg: '#FEE2E2',
+                    confirmText: 'Yes, Cancel It',
+                    onConfirm: function () {
+                        window.location.href = targetUrl;
+                    }
+                });
+                return;
+            }
+
+            var lockedBtn = e.target.closest('.js-cancel-locked-btn');
+            if (lockedBtn) {
+                e.preventDefault();
+                var deadline = lockedBtn.dataset.deadline || '';
+                var windowLabel = lockedBtn.dataset.window || '';
+                var nights = lockedBtn.dataset.nights || '1';
+                showConfirm({
+                    title: 'Cancellation Locked',
+                    message: 'Self-service cancellation closed on ' + deadline + ' (' + windowLabel + ' prior to arrival for a ' + nights + '-night stay).\n\nTo cancel or reschedule your reservation, please reach out to our Front Desk directly.',
+                    icon: 'lock',
+                    iconBg: '#FEF3C7',
+                    confirmText: 'Contact Front Desk',
+                    confirmColor: '#7C533C',
+                    onConfirm: function () {
+                        window.location.href = 'contact';
+                    }
+                });
+            }
+        });
+    }
+
+    initPaymentTimer();
+    initPortalActionConfirmations();
     window.showConfirm = showConfirm;
 })();

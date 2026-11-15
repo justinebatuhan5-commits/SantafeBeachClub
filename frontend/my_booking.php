@@ -26,7 +26,9 @@ extract(sfbc_handle_my_booking_page($conn), EXTR_SKIP);
     <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
+    <?php if (!$booking): ?>
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode(RECAPTCHA_SITE_KEY); ?>" async defer></script>
+    <?php endif; ?>
     <link rel="stylesheet" href="assets/css/my-booking.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/my-booking.css'); ?>">
     <link rel="stylesheet" href="assets/css/pages/my-booking.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/pages/my-booking.css'); ?>">
     <script src="assets/js/site-dialog.js?v=1"></script>
@@ -50,8 +52,8 @@ extract(sfbc_handle_my_booking_page($conn), EXTR_SKIP);
 
 </div><!-- /.portal-wrapper -->
 
-<footer style="background:#1E293B; color:#94A3B8; text-align:center; padding:20px 16px; font-size:12px;">
-    &copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved. &bull; Developed by <strong style="color:#CBD5E1;">Justine Batuhan</strong>
+<footer class="portal-footer">
+    &copy; <?php echo date('Y'); ?> Santa Fe Beach Club. All rights reserved. &bull; Developed by <strong>Justine Batuhan</strong>
 </footer>
 
 <?php require __DIR__ . '/views/my_booking/_confirm_modal.php'; ?>
