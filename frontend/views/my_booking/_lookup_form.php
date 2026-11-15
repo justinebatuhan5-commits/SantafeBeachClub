@@ -22,7 +22,7 @@
             </div>
 
             <!-- Step 1: Lookup Form -->
-            <form id="lookupForm" novalidate>
+            <form id="lookupForm" data-recaptcha-site-key="<?php echo htmlspecialchars(RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>" novalidate>
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
 

@@ -24,7 +24,7 @@ extract(sfbc_handle_forgot_password_page($conn), EXTR_SKIP);
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/pages/auth-recovery.css?v=<?php echo filemtime(__DIR__ . '/assets/css/pages/auth-recovery.css'); ?>">
     <script src="assets/js/security.js" defer></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode(RECAPTCHA_SITE_KEY); ?>" async defer></script>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body class="recovery-forgot">

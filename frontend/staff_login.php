@@ -36,7 +36,7 @@ extract(sfbc_handle_portal_login_page($conn, 'staff'), EXTR_SKIP);
     <meta name="apple-mobile-web-app-title" content="Beach Club">
     <meta name="description" content="Staff and Reception Portal for Santa Fe Beach Club Booking System">
     <script src="assets/js/security.js" defer></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode(RECAPTCHA_SITE_KEY); ?>" async defer></script>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
 <body class="portal-staff">

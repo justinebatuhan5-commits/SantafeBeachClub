@@ -9,6 +9,7 @@ require_once __DIR__ . '/../backend/config/db.php';
 require_once __DIR__ . '/../backend/helpers/security_headers.php';
 require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 require_once __DIR__ . '/../backend/helpers/guest_auth_helper.php';
+require_once __DIR__ . '/../backend/helpers/recaptcha_helper.php';
 require_once __DIR__ . '/../backend/libs/phpqrcode/phpqrcode.php';
 require_once __DIR__ . '/../backend/controllers/my_booking_controller.php';
 
@@ -25,7 +26,7 @@ extract(sfbc_handle_my_booking_page($conn), EXTR_SKIP);
     <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <link rel="stylesheet" href="assets/css/styles.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/styles.css'); ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?php echo (int)@filemtime(__DIR__ . '/assets/css/navbar.css'); ?>">
-    <script src="https://www.google.com/recaptcha/api.js?render=6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo rawurlencode(RECAPTCHA_SITE_KEY); ?>" async defer></script>
     <link rel="stylesheet" href="assets/css/my-booking.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/my-booking.css'); ?>">
     <link rel="stylesheet" href="assets/css/pages/my-booking.css?v=<?php echo (int) filemtime(__DIR__ . '/assets/css/pages/my-booking.css'); ?>">
     <script src="assets/js/site-dialog.js?v=1"></script>

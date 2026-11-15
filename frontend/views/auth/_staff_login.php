@@ -22,7 +22,7 @@
         <p class="loader-caption">Verifying Staff Credentials...</p>
     </div>
 
-    <main class="portal-container" data-portal="staff" data-endpoint="staff_login" data-recaptcha-action="staff_login" data-dynamic-greeting="1">
+    <main class="portal-container" data-portal="staff" data-endpoint="staff_login" data-recaptcha-action="staff_login" data-recaptcha-site-key="<?php echo htmlspecialchars(RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>" data-dynamic-greeting="1">
         <!-- ── Left Architectural Showcase ──────────────── -->
         <section class="hero-section" aria-label="Front Desk Information">
             <div class="hero-content">

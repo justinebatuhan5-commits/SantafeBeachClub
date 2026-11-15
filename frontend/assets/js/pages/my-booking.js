@@ -51,8 +51,9 @@
             lookupSpin.style.display = 'block';
 
             try {
+                const recaptchaSiteKey = lookupForm.dataset.recaptchaSiteKey || '6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT';
                 const recaptchaToken = await Promise.race([
-                    grecaptcha.execute('6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT', { action: 'guest_lookup' }),
+                    grecaptcha.execute(recaptchaSiteKey, { action: 'guest_lookup' }),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('reCAPTCHA timeout')), 5000))
                 ]);
                 document.getElementById('g-recaptcha-response').value = recaptchaToken;

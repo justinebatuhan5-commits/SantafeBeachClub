@@ -24,7 +24,7 @@
         <p class="loader-caption">Authenticating Credentials...</p>
     </div>
 
-    <main class="portal-container" data-portal="admin" data-endpoint="admin_login" data-recaptcha-action="admin_login" data-dynamic-greeting="0">
+    <main class="portal-container" data-portal="admin" data-endpoint="admin_login" data-recaptcha-action="admin_login" data-recaptcha-site-key="<?php echo htmlspecialchars(RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>" data-dynamic-greeting="0">
         <!-- ── Left Architectural Showcase ──────────────── -->
         <section class="hero-section" aria-label="Resort Information">
             <div class="hero-content">

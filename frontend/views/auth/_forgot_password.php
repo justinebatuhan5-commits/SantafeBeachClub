@@ -30,7 +30,7 @@
             <?php endif; ?>
         </div>
 
-        <form id="forgotForm" method="POST" action="forgot_password<?php echo $portal === 'admin' ? '?portal=admin' : '?portal=staff'; ?>" data-recaptcha-site-key="6LfE7bEtAAAAAKWR7cu0DZaBeVem3ZIuHOyJ7zWT" novalidate>
+        <form id="forgotForm" method="POST" action="forgot_password<?php echo $portal === 'admin' ? '?portal=admin' : '?portal=staff'; ?>" data-recaptcha-site-key="<?php echo htmlspecialchars(RECAPTCHA_SITE_KEY, ENT_QUOTES, 'UTF-8'); ?>" novalidate>
             <?php echo csrf_field(); ?>
             <input type="hidden" name="ajax" value="1">
             <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
