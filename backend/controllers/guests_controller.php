@@ -66,22 +66,70 @@ function sfbc_guests_booking_room_type(array $booking): string
 }
 
 /**
+ * Builds a normalized lookup key preferring guest email, falling back to name when email is blank.
+ */
+function sfbc_guests_lookup_key(?string $email, ?string $name): string
+{
+    $cleanEmail = trim((string)$email);
+    if ($cleanEmail !== '') {
+        return strtolower($cleanEmail);
+    }
+
+    return strtolower(trim((string)$name));
+}
+
+/**
+ * Resolves a guest's effective tier across their bookings ordered newest-first.
+ */
+function sfbc_guests_resolve_type(array $bookings, string $fallbackType = 'First Visit'): string
+{
+    $priority = [
+        'VIP Member'      => 4,
+        'Corporate'       => 3,
+        'Returning Guest' => 2,
+    ];
+
+    $bestType = '';
+    $bestScore = 0;
+
+    foreach ($bookings as $booking) {
+        $candidate = trim((string)($booking['guest_type'] ?? ''));
+        if ($candidate === '') {
+            continue;
+        }
+        $score = $priority[$candidate] ?? 1;
+        if ($score > $bestScore) {
+            $bestScore = $score;
+            $bestType = $candidate;
+        }
+    }
+
+    if ($bestType !== '') {
+        return $bestType;
+    }
+
+    $fallback = trim($fallbackType);
+    return $fallback !== '' ? $fallback : 'First Visit';
+}
+
+/**
  * Prepares the guest directory summary, per-guest booking history, and tier KPI counts.
  */
 function sfbc_handle_guests_page(mysqli $conn): array
 {
+    // Aggregate non-grouped columns so TiDB / MySQL ONLY_FULL_GROUP_BY accepts the query.
     $guestsResult = $conn->query("
         SELECT
-            guest_name,
-            guest_email,
-            guest_type,
+            MIN(TRIM(guest_name)) AS guest_name,
+            COALESCE(MIN(NULLIF(TRIM(guest_email), '')), '') AS guest_email,
+            COALESCE(MIN(NULLIF(TRIM(guest_type), '')), 'First Visit') AS guest_type,
             COUNT(id) AS total_bookings,
             MIN(check_in) AS first_visit,
             MAX(check_in) AS last_visit,
             SUM(CASE WHEN status = 'Cancelled' THEN 0 ELSE 1 END) AS confirmed_bookings
         FROM bookings
-        GROUP BY guest_email, guest_name
-        ORDER BY guest_name ASC
+        GROUP BY LOWER(TRIM(COALESCE(guest_email, ''))), LOWER(TRIM(COALESCE(guest_name, '')))
+        ORDER BY MIN(TRIM(guest_name)) ASC
     ");
 
     $rawGuests = [];
@@ -93,7 +141,7 @@ function sfbc_handle_guests_page(mysqli $conn): array
 
     $bookingsResult = $conn->query("
         SELECT
-            b.id, b.guest_email, b.guest_name,
+            b.id, b.guest_email, b.guest_name, b.guest_type,
             b.accommodation_name, b.check_in, b.check_out,
             b.guests_count, b.status, b.payment_method,
             b.guest_phone, b.guest_country, b.guest_special_requests,
@@ -101,13 +149,13 @@ function sfbc_handle_guests_page(mysqli $conn): array
             DATEDIFF(b.check_out, b.check_in) AS nights
         FROM bookings b
         LEFT JOIN rooms r ON b.room_id = r.id
-        ORDER BY b.check_in DESC
+        ORDER BY b.check_in DESC, b.id DESC
     ");
 
     $bookingsByEmail = [];
     if ($bookingsResult) {
         while ($booking = $bookingsResult->fetch_assoc()) {
-            $key = strtolower(trim((string)($booking['guest_email'] ?? $booking['guest_name'])));
+            $key = sfbc_guests_lookup_key($booking['guest_email'] ?? null, $booking['guest_name'] ?? null);
             $bookingsByEmail[$key][] = $booking;
         }
     }
@@ -119,7 +167,17 @@ function sfbc_handle_guests_page(mysqli $conn): array
     $guestRows = [];
 
     foreach ($rawGuests as $row) {
-        $type = (string)($row['guest_type'] ?? 'First Visit');
+        $name = (string)($row['guest_name'] ?? '');
+        $email = (string)($row['guest_email'] ?? '');
+        $total = (int)$row['total_bookings'];
+        $lastVisit = (string)($row['last_visit'] ?? '');
+        $firstVisit = (string)($row['first_visit'] ?? '');
+        $initials = sfbc_guests_initials($name);
+
+        $key = sfbc_guests_lookup_key($email, $name);
+        $bookings = $bookingsByEmail[$key] ?? [];
+
+        $type = sfbc_guests_resolve_type($bookings, (string)($row['guest_type'] ?? 'First Visit'));
         if ($type === 'VIP Member') {
             $vipCount++;
         } elseif ($type === 'Corporate') {
@@ -130,16 +188,7 @@ function sfbc_handle_guests_page(mysqli $conn): array
             $firstVisitCount++;
         }
 
-        $name = (string)$row['guest_name'];
-        $email = (string)($row['guest_email'] ?? '');
-        $total = (int)$row['total_bookings'];
-        $lastVisit = (string)($row['last_visit'] ?? '');
-        $firstVisit = (string)($row['first_visit'] ?? '');
-        $initials = sfbc_guests_initials($name);
         [$avatarBg, $avatarText] = sfbc_guests_avatar_colors($type);
-
-        $key = strtolower(trim($email !== '' ? $email : $name));
-        $bookings = $bookingsByEmail[$key] ?? [];
 
         $totalSpend = 0.0;
         foreach ($bookings as $bk) {
@@ -203,7 +252,7 @@ function sfbc_handle_guests_page(mysqli $conn): array
             'avatarText'       => $avatarText,
             'book_again_url'   => $bookAgainUrl,
             'bookings'         => $mappedBookings,
-        ]);
+        ], JSON_INVALID_UTF8_SUBSTITUTE);
 
         $guestRows[] = [
             'name'        => $name,

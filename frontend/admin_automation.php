@@ -1,9 +1,14 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/csrf_helper.php';
 
 $page_title = 'Automation & Scheduler';
 $page_subtitle = 'Monitor background jobs, scheduled tasks, and automated operations';
+$automation_config = [
+    'apiBase' => '../backend/api/automation_api.php',
+    'csrfToken' => get_csrf_token(),
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,6 +33,9 @@ $page_subtitle = 'Monitor background jobs, scheduled tasks, and automated operat
         </div>
     </main>
 
+    <script>
+        window.SFBC_AUTOMATION_CONFIG = <?php echo json_encode($automation_config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    </script>
     <script src="assets/js/pages/admin-automation.js?v=<?php echo filemtime(__DIR__ . '/assets/js/pages/admin-automation.js'); ?>"></script>
 </body>
 </html>
