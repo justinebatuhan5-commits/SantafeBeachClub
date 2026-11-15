@@ -1,5 +1,5 @@
 <?php
-/** Administrator navigation for guest feedback, contact inquiries, live chats, and AI concierge. */
+/** Administrator navigation for guest reviews, contact inquiries, and AI concierge. */
 $guest_communications_active = $guest_communications_active ?? ($active_page ?? 'reviews');
 ?>
 <nav class="guest-communications-tabs" aria-label="Guest communications sections">
@@ -12,11 +12,6 @@ $guest_communications_active = $guest_communications_active ?? ($active_page ?? 
        class="guest-communications-tab <?php echo $guest_communications_active === 'inquiries' ? 'active' : ''; ?>"
        <?php echo $guest_communications_active === 'inquiries' ? 'aria-current="page"' : ''; ?>>
         Inquiries
-    </a>
-    <a href="admin_live_support"
-       class="guest-communications-tab <?php echo $guest_communications_active === 'live_support' ? 'active' : ''; ?>"
-       <?php echo $guest_communications_active === 'live_support' ? 'aria-current="page"' : ''; ?>>
-        Live Chats
     </a>
     <a href="admin_chatbot"
        class="guest-communications-tab <?php echo $guest_communications_active === 'chatbot' ? 'active' : ''; ?>"

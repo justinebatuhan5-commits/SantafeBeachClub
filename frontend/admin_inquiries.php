@@ -43,7 +43,7 @@ $inquiryThreads = sf_inquiry_get_threads($conn, $inquiryIds);
         $is_admin_communications = ($_SESSION['admin_role'] ?? '') === 'admin';
         $page_title = $is_admin_communications ? 'Reviews & Inquiries' : 'Guest Inquiries';
         $page_subtitle = $is_admin_communications
-            ? 'Review Contact page messages and reply via email. Chatbot "Need a human?" chats appear in Live Chats.'
+            ? 'Review Contact page messages and reply via email. Chatbot "Need a human?" chats have their own Live Support Chats page.'
             : 'Review and reply to guest messages submitted through the Contact Us page.';
         $header_extra_html = '
             <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);">

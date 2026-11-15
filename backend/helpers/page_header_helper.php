@@ -47,7 +47,7 @@ if (!function_exists('sf_header_context')) {
             'reports'           => ['section' => 'Insights & Updates', 'icon' => $icons['chart']],
             'notifications'     => ['section' => 'Insights & Updates', 'icon' => $icons['bell']],
             'inquiries'         => ['section' => 'Guest Feedback',     'icon' => $icons['chat']],
-            'live_support'      => ['section' => 'Guest Feedback',     'icon' => $icons['chat']],
+            'live_support'      => ['section' => 'Live Support',       'icon' => $icons['chat']],
             'reviews'           => ['section' => 'Guest Feedback',     'icon' => $icons['chat']],
             'staff'             => ['section' => 'System & Access',    'icon' => $icons['users']],
             'logs'              => ['section' => 'System & Access',    'icon' => $icons['shield']],

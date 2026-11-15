@@ -40,7 +40,6 @@ $liveChatThreads = sf_inquiry_get_threads($conn, $liveChatIds);
     ?>
     <div class="admin-main">
         <?php
-        $is_admin_communications = ($_SESSION['admin_role'] ?? '') === 'admin';
         $page_title = 'Live Support Chats';
         $page_subtitle = 'Chat live with guests who requested Reception Staff through "Need a human?" in the AI Concierge.';
         $header_extra_html = '
@@ -53,10 +52,6 @@ $liveChatThreads = sf_inquiry_get_threads($conn, $liveChatIds);
         ?>
 
         <div class="admin-body">
-            <?php if ($is_admin_communications): ?>
-                <?php $guest_communications_active = 'live_support'; include __DIR__ . '/partials/_guest_communications_tabs.php'; ?>
-            <?php endif; ?>
-
             <?php sf_reply_ui_render_ticket_cards($liveChatList, $liveChatThreads, [
                 'channel' => 'live_chat',
                 'show_filters' => true,
