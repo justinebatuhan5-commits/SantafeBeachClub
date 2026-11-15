@@ -38,8 +38,10 @@ check_guest_recaptcha(
 check_guest_recaptcha(
     str_contains($cssSource, '.booking-lookup-page .grecaptcha-badge')
         && str_contains($cssSource, 'visibility: visible !important;')
-        && str_contains($cssSource, 'opacity: 1 !important;'),
-    'Lookup page displays the reCAPTCHA v3 badge cleanly without hiding it'
+        && str_contains($cssSource, 'opacity: 1 !important;')
+        && !str_contains($cssSource, 'overflow: visible !important;')
+        && !preg_match('/\.booking-lookup-page\s+\.grecaptcha-badge\s*\{[^}]*\bright\s*:\s*0\b/s', $cssSource),
+    'Lookup page displays Google compact reCAPTCHA v3 badge cleanly without stretching it open'
 );
 check_guest_recaptcha(
     str_contains($jsSource, 'grecaptcha.ready')
