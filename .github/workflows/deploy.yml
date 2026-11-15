@@ -1,9 +1,8 @@
 name: Deploy to Agila Hosting via FTP
 
+# Auto-deploy on push paused while Agila Hosting is expired; run manually when ready.
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
