@@ -13,9 +13,7 @@
  *    (Requires 2-Step Verification to be enabled on the Gmail account.)
  */
 
-require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
-require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
-require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/../helpers/mail_transport.php';
 require_once __DIR__ . '/../helpers/private_storage_helper.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -34,26 +32,13 @@ if (!defined('GMAIL_APP_PASSWORD')) define('GMAIL_APP_PASSWORD', str_replace(' '
 if (!defined('MAIL_FROM_NAME'))     define('MAIL_FROM_NAME',     getenv('MAIL_FROM_NAME')     ?: 'Santa Fe Beach Club');
 
 /**
- * Creates and configures a PHPMailer instance with Gmail SMTP, UTF-8 charset, and base64 encoding.
- * Ensures emojis and special characters in subjects and email bodies display properly without mojibake.
+ * Creates and configures a SantafeMailer (PHPMailer subclass supporting
+ * both HTTPS mail webhook relay on port 443 and Gmail SMTP on port 587).
  *
  * @return PHPMailer
  */
 function createMailer(): PHPMailer {
-    $mail = new PHPMailer(true);
-    $mail->CharSet     = PHPMailer::CHARSET_UTF8;
-    $mail->Encoding    = PHPMailer::ENCODING_BASE64;
-    $mail->isSMTP();
-    $mail->Host        = 'smtp.gmail.com';
-    $mail->SMTPAuth    = true;
-    $mail->Username    = GMAIL_USER;
-    $mail->Password    = GMAIL_APP_PASSWORD;
-    $mail->SMTPSecure  = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port        = 587;
-    $mail->Timeout     = 8; // 8 seconds max timeout so page doesn't hang forever
-    $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-    $mail->setFrom(GMAIL_USER, MAIL_FROM_NAME);
-    return $mail;
+    return sf_create_mailer();
 }
 
 /**

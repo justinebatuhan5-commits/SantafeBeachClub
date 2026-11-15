@@ -201,33 +201,15 @@ function pwd_reset_complete(string $rawToken, string $newPassword, string $confi
 // ---------------------------------------------------------------------------
 
 function _pwd_mailer_smtp_send(string $toEmail, string $name, string $subject, string $htmlBody, string $plainBody): bool {
-    if (!defined('GMAIL_USER')) {
+    require_once __DIR__ . '/mail_transport.php';
+    if (!defined('GMAIL_USER') && file_exists(__DIR__ . '/../services/mailer.php')) {
         require_once __DIR__ . '/../services/mailer.php';
     }
-    $smtpFiles = [
-        __DIR__ . '/../libs/PHPMailer/src/Exception.php',
-        __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php',
-        __DIR__ . '/../libs/PHPMailer/src/SMTP.php',
-    ];
-    if (!array_reduce($smtpFiles, fn($c, $f) => $c && file_exists($f), true)) return false;
-    if (!defined('GMAIL_APP_PASSWORD')) return false;
-    foreach ($smtpFiles as $f) { require_once $f; }
-    // Strip spaces: Google shows App Passwords with spaces in their UI but SMTP needs 16 chars without
-    $clean_pass = str_replace(' ', '', defined('GMAIL_APP_PASSWORD') ? GMAIL_APP_PASSWORD : getenv('GMAIL_APP_PASSWORD'));
-    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-    $mail->CharSet  = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
-    $mail->Encoding = \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64;
+    if (sf_mail_env('MAIL_WEBHOOK_URL') === '' && sf_mail_env('GMAIL_APP_PASSWORD') === '') {
+        return false;
+    }
+    $mail = sf_create_mailer(8);
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = GMAIL_USER;
-        $mail->Password   = $clean_pass;
-        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->Timeout    = 8;
-        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
-        $mail->setFrom(GMAIL_USER, defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Santa Fe Beach Club');
         $mail->addAddress($toEmail, $name);
         $mail->isHTML(true);
         $mail->Subject = $subject;
@@ -236,7 +218,7 @@ function _pwd_mailer_smtp_send(string $toEmail, string $name, string $subject, s
         $mail->send();
         return true;
     } catch (\PHPMailer\PHPMailer\Exception $e) {
-        error_log("[PWD_RESET] SMTP failed: " . $mail->ErrorInfo);
+        error_log("[PWD_RESET] Primary mail transport failed: " . $mail->ErrorInfo);
         return false;
     }
 }

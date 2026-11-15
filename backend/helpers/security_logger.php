@@ -75,28 +75,19 @@ class SecurityLogger {
         string $timestamp
     ): void {
         try {
+            require_once __DIR__ . '/mail_transport.php';
             $mailerPath = __DIR__ . '/../services/mailer.php';
-            if (!file_exists($mailerPath)) {
+            if (file_exists($mailerPath)) {
+                require_once $mailerPath;
+            }
+            if (sf_mail_env('MAIL_WEBHOOK_URL') === '' && sf_mail_env('GMAIL_APP_PASSWORD') === '') {
                 return;
             }
-            require_once $mailerPath;
 
-            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-            $mail->CharSet  = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
-            $mail->Encoding = \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64;
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = defined('GMAIL_USER') ? GMAIL_USER : 'Justinebatuhan017@gmail.com';
-            $mail->Password   = defined('GMAIL_APP_PASSWORD') ? GMAIL_APP_PASSWORD : '';
-            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port       = 587;
-            $mail->Timeout    = 5;
+            $adminEmail = sf_mail_env('GMAIL_USER', 'Justinebatuhan017@gmail.com');
+            $fromName   = sf_mail_env('MAIL_FROM_NAME', 'Santa Fe Beach Club Security');
 
-            $adminEmail = defined('GMAIL_USER') ? GMAIL_USER : 'Justinebatuhan017@gmail.com';
-            $fromName   = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Santa Fe Beach Club Security';
-
-            $mail->setFrom($adminEmail, $fromName . ' Alert System');
+            $mail = sf_create_mailer(5, $fromName . ' Alert System', $adminEmail);
             $mail->addAddress($adminEmail, 'Security Administrator');
 
             $mail->isHTML(true);

@@ -248,9 +248,11 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
         require_once __DIR__ . '/../services/mailer.php';
     }
 
+    require_once __DIR__ . '/mail_transport.php';
+
     $expiryMin = defined('OTP_EXPIRY_MINUTES') ? OTP_EXPIRY_MINUTES : 10;
-    $fromName  = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Santa Fe Beach Club';
-    $fromEmail = defined('GMAIL_USER')     ? GMAIL_USER     : 'noreply@santafebeachclub.com';
+    $fromName  = sf_mail_env('MAIL_FROM_NAME', 'Santa Fe Beach Club');
+    $fromEmail = sf_mail_env('GMAIL_USER', 'noreply@santafebeachclub.com');
 
     $subject = 'Your Verification Code - Santa Fe Beach Club';
     $htmlBody = "
@@ -277,42 +279,20 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
     $plainBody = "Hi {$name}, your Santa Fe Beach Club verification code is: {$rawOtp}. "
         . "It expires in {$expiryMin} minutes. Do not share this code.";
 
-    // ── Attempt 1: PHPMailer via Gmail SMTP ──────────────────────────────────
-    $smtpFiles = [
-        __DIR__ . '/../libs/PHPMailer/src/Exception.php',
-        __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php',
-        __DIR__ . '/../libs/PHPMailer/src/SMTP.php',
-    ];
-    $smtpAvailable = array_reduce($smtpFiles, fn($c, $f) => $c && file_exists($f), true);
-
-    if ($smtpAvailable && defined('GMAIL_APP_PASSWORD')) {
-        foreach ($smtpFiles as $f) { require_once $f; }
-        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-        $mail->CharSet  = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
-        $mail->Encoding = \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64;
+    // ── Attempt 1: HTTPS webhook relay (if configured) or PHPMailer Gmail SMTP ──
+    if (sf_mail_env('MAIL_WEBHOOK_URL') !== '' || sf_mail_env('GMAIL_APP_PASSWORD') !== '') {
+        $mail = sf_create_mailer(8, $fromName, $fromEmail);
         try {
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = GMAIL_USER;
-            $mail->Password   = GMAIL_APP_PASSWORD;
-            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port       = 587;
-            $mail->Timeout    = 8;
-            $mail->SMTPOptions = ['ssl' => [
-                'verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true
-            ]];
-            $mail->setFrom($fromEmail, $fromName);
             $mail->addAddress($toEmail, $name);
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body    = $htmlBody;
             $mail->AltBody = $plainBody;
             $mail->send();
-            error_log("[OTP] Email sent via SMTP.");
+            error_log("[OTP] Email sent via SantafeMailer.");
             return ['success' => true, 'error' => null];
         } catch (\PHPMailer\PHPMailer\Exception $e) {
-            error_log("[OTP] SMTP failed (" . $mail->ErrorInfo . "), trying PHP mail() fallback.");
+            error_log("[OTP] Primary transport failed (" . $mail->ErrorInfo . "), trying PHP mail() fallback.");
         }
     }
 
