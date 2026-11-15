@@ -68,13 +68,14 @@
             footer.appendChild(theme);
         }
 
-        // Complete route groups — includes automation, sessions, chatbot & catch-all
+        // Route groups ordered by operational priority — high-frequency pages right after Front Desk
         var groups = [
             { name: 'Front Desk', routes: ['dashboard', 'reservations', 'checkin', 'checkout', 'javascript:'] },
-            { name: 'Property & Guests', routes: ['guests', 'accommodations', 'calendar', 'promotions', 'gallery', 'room_types', 'inquiries', 'live_support', 'chatbot'] },
-            { name: 'Finance', routes: ['discount_requests', 'payments', 'refunds'] },
-            { name: 'Insights & Updates', routes: ['reports', 'reviews', 'notifications', 'logs'] },
-            { name: 'System', routes: ['automation', 'backups', 'staff', 'sessions'] }
+            { name: 'Daily Priority', routes: ['payments', 'notifications', 'live_support', 'reports'] },
+            { name: 'Finance', routes: ['discount_requests', 'refunds'] },
+            { name: 'Property & Guests', routes: ['guests', 'accommodations', 'calendar', 'reviews', 'inquiries', 'chatbot'] },
+            { name: 'Content & Offers', routes: ['promotions', 'gallery', 'room_types'] },
+            { name: 'System', routes: ['logs', 'automation', 'backups', 'staff', 'sessions'] }
         ];
 
         var placedLinks = new Set();
