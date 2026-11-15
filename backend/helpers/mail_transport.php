@@ -32,6 +32,21 @@ if (!function_exists('sf_mail_env')) {
     }
 }
 
+if (!function_exists('sf_mail_log')) {
+    /**
+     * Write non-PII mail transport diagnostics to error_log and container stderr
+     * so cloud hosts (e.g. Render Logs) surface delivery failures even when
+     * app error_log() is routed to a local file.
+     */
+    function sf_mail_log(string $message): void
+    {
+        @error_log($message);
+        if (PHP_SAPI !== 'cli') {
+            @file_put_contents('php://stderr', '[' . gmdate('Y-m-d\TH:i:s\Z') . '] ' . $message . PHP_EOL);
+        }
+    }
+}
+
 if (!class_exists('SantafeMailer')) {
     /**
      * PHPMailer subclass that dispatches over an HTTPS webhook relay when
@@ -42,10 +57,11 @@ if (!class_exists('SantafeMailer')) {
     {
         public function send(): bool
         {
-            $webhookUrl = trim(sf_mail_env('MAIL_WEBHOOK_URL'));
+            $webhookUrl = trim(sf_mail_env('MAIL_WEBHOOK_URL'), " \t\n\r\0\x0B\"'");
             if ($webhookUrl !== '') {
                 return $this->sendViaWebhook($webhookUrl);
             }
+            sf_mail_log('[MailWebhook] MAIL_WEBHOOK_URL is not set; attempting SMTP ' . $this->Host . ':' . $this->Port);
             return parent::send();
         }
 
@@ -101,7 +117,7 @@ if (!class_exists('SantafeMailer')) {
                 }
 
                 $payload = [
-                    'secret'       => sf_mail_env('MAIL_WEBHOOK_SECRET'),
+                    'secret'       => trim(sf_mail_env('MAIL_WEBHOOK_SECRET')),
                     'to'           => $mapAddresses($to),
                     'cc'           => $mapAddresses($this->getCcAddresses()),
                     'bcc'          => $mapAddresses($this->getBccAddresses()),
@@ -119,29 +135,58 @@ if (!class_exists('SantafeMailer')) {
                     throw new \PHPMailer\PHPMailer\Exception('Failed to encode mail webhook payload.');
                 }
 
-                if (!function_exists('curl_init')) {
-                    throw new \PHPMailer\PHPMailer\Exception('cURL extension is required for MAIL_WEBHOOK_URL.');
-                }
+                $timeoutSec = max(20, (int) $this->Timeout ?: 20);
+                $rawResp = false;
+                $httpCode = 0;
 
-                $ch = curl_init($webhookUrl);
-                curl_setopt_array($ch, [
-                    CURLOPT_POST           => true,
-                    CURLOPT_POSTFIELDS     => $jsonBody,
-                    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_FOLLOWLOCATION => true,
-                    CURLOPT_MAXREDIRS      => 5,
-                    CURLOPT_TIMEOUT        => max(8, (int) $this->Timeout ?: 12),
-                    CURLOPT_SSL_VERIFYPEER => true,
-                    CURLOPT_SSL_VERIFYHOST => 2,
-                ]);
-                $rawResp = curl_exec($ch);
-                $curlErr = curl_error($ch);
-                $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
+                if (function_exists('curl_init')) {
+                    $ch = curl_init($webhookUrl);
+                    curl_setopt_array($ch, [
+                        CURLOPT_POST           => true,
+                        CURLOPT_POSTFIELDS     => $jsonBody,
+                        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_FOLLOWLOCATION => true,
+                        CURLOPT_MAXREDIRS      => 5,
+                        CURLOPT_TIMEOUT        => $timeoutSec,
+                        CURLOPT_SSL_VERIFYPEER => true,
+                        CURLOPT_SSL_VERIFYHOST => 2,
+                    ]);
+                    $rawResp = curl_exec($ch);
+                    $curlErr = curl_error($ch);
+                    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
 
-                if ($rawResp === false) {
-                    throw new \PHPMailer\PHPMailer\Exception('Mail webhook request failed: ' . $curlErr);
+                    if ($rawResp === false) {
+                        throw new \PHPMailer\PHPMailer\Exception('Mail webhook request failed: ' . $curlErr);
+                    }
+                } else {
+                    $ctx = stream_context_create([
+                        'http' => [
+                            'method'          => 'POST',
+                            'header'          => "Content-Type: application/json\r\nContent-Length: " . strlen($jsonBody) . "\r\n",
+                            'content'         => $jsonBody,
+                            'timeout'         => $timeoutSec,
+                            'follow_location' => 1,
+                            'max_redirects'   => 5,
+                            'ignore_errors'   => true,
+                        ],
+                        'ssl' => [
+                            'verify_peer'      => true,
+                            'verify_peer_name' => true,
+                        ],
+                    ]);
+                    $rawResp = @file_get_contents($webhookUrl, false, $ctx);
+                    if (isset($http_response_header) && is_array($http_response_header)) {
+                        foreach ($http_response_header as $hdr) {
+                            if (preg_match('#^HTTP/\S+\s+(\d{3})#i', $hdr, $m)) {
+                                $httpCode = (int) $m[1];
+                            }
+                        }
+                    }
+                    if ($rawResp === false) {
+                        throw new \PHPMailer\PHPMailer\Exception('Mail webhook stream request failed.');
+                    }
                 }
 
                 $decoded = json_decode((string) $rawResp, true);
@@ -153,10 +198,11 @@ if (!class_exists('SantafeMailer')) {
                     throw new \PHPMailer\PHPMailer\Exception('Mail webhook rejected delivery: ' . $detail);
                 }
 
+                sf_mail_log('[MailWebhook] Delivery accepted via HTTPS relay (HTTP ' . $httpCode . ').');
                 return true;
             } catch (\PHPMailer\PHPMailer\Exception $exc) {
                 $this->setError($exc->getMessage());
-                @error_log('[MailWebhook] ' . $exc->getMessage());
+                sf_mail_log('[MailWebhook] ' . $exc->getMessage());
                 if ($this->exceptions) {
                     throw $exc;
                 }

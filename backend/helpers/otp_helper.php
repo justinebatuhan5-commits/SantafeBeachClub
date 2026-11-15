@@ -280,7 +280,7 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
         . "It expires in {$expiryMin} minutes. Do not share this code.";
 
     // ── Attempt 1: HTTPS webhook relay (if configured) or PHPMailer Gmail SMTP ──
-    if (sf_mail_env('MAIL_WEBHOOK_URL') !== '' || sf_mail_env('GMAIL_APP_PASSWORD') !== '') {
+    if (trim(sf_mail_env('MAIL_WEBHOOK_URL'), " \t\n\r\0\x0B\"'") !== '' || sf_mail_env('GMAIL_APP_PASSWORD') !== '') {
         $mail = sf_create_mailer(8, $fromName, $fromEmail);
         try {
             $mail->addAddress($toEmail, $name);
@@ -289,10 +289,10 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
             $mail->Body    = $htmlBody;
             $mail->AltBody = $plainBody;
             $mail->send();
-            error_log("[OTP] Email sent via SantafeMailer.");
+            sf_mail_log("[OTP] Email sent via SantafeMailer.");
             return ['success' => true, 'error' => null];
         } catch (\PHPMailer\PHPMailer\Exception $e) {
-            error_log("[OTP] Primary transport failed (" . $mail->ErrorInfo . "), trying PHP mail() fallback.");
+            sf_mail_log("[OTP] Primary transport failed (" . $mail->ErrorInfo . "), trying PHP mail() fallback.");
         }
     }
 
@@ -311,10 +311,10 @@ function otp_send_email(string $toEmail, string $rawOtp, string $name): array {
     $body .= "--{$boundary}--";
 
     if (@mail($toEmail, $subject, $body, $headers)) {
-        error_log("[OTP] Email sent via PHP mail() fallback.");
+        sf_mail_log("[OTP] Email sent via PHP mail() fallback.");
         return ['success' => true, 'error' => null];
     }
 
-    error_log("[OTP] Both SMTP and PHP mail() failed for OTP delivery.");
+    sf_mail_log("[OTP] Both SMTP and PHP mail() failed for OTP delivery.");
     return ['success' => false, 'error' => 'Could not send OTP email. Please contact the administrator.'];
 }
