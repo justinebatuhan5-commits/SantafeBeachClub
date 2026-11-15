@@ -583,6 +583,37 @@ function showFileError(input, errorDiv, message) {
         });
     }
 
+    document.querySelectorAll('.bk-qr-img').forEach(function(img) {
+        img.addEventListener('error', function() {
+            var panel = img.closest('.ticket-qr-panel');
+            if (panel) panel.classList.add('is-missing');
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        var copyBtn = e.target.closest('.bk-copy-cancel-btn[data-copy-url]');
+        if (!copyBtn) return;
+        var url = copyBtn.getAttribute('data-copy-url') || '';
+        if (!url) return;
+
+        var setCopiedState = function() {
+            copyBtn.textContent = 'Copied!';
+            copyBtn.classList.add('is-copied');
+            window.setTimeout(function() {
+                copyBtn.textContent = 'Copy Link';
+                copyBtn.classList.remove('is-copied');
+            }, 2200);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(setCopiedState).catch(function() {
+                window.prompt('Copy this cancellation link:', url);
+            });
+            return;
+        }
+        window.prompt('Copy this cancellation link:', url);
+    });
+
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             if (editModal && editModal.style.display === 'flex') {

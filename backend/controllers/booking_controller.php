@@ -4,6 +4,8 @@
  */
 
 require_once dirname(__DIR__) . '/helpers/private_storage_helper.php';
+require_once dirname(__DIR__) . '/helpers/business_time_helper.php';
+require_once dirname(__DIR__) . '/helpers/date_helper.php';
 require_once dirname(__DIR__) . '/helpers/sms_helper.php';
 require_once dirname(__DIR__) . '/helpers/room_status_helper.php';
 require_once dirname(__DIR__) . '/helpers/country_codes.php';
@@ -175,10 +177,13 @@ if (!function_exists('sfbc_handle_book_page')) {
         }
 
         $step = isset($_REQUEST['step']) ? (int) $_REQUEST['step'] : 1;
+        $businessNow      = sf_get_current_business_datetime($conn);
+        $businessToday    = $businessNow->format('Y-m-d');
+        $businessTomorrow = $businessNow->modify('+1 day')->format('Y-m-d');
 
         // Grab values from homepage search, chatbot pre-filled link, or session/request
-        $checkin   = $_REQUEST['checkin'] ?? ($_REQUEST['check_in'] ?? ($_SESSION['book_checkin'] ?? date('Y-m-d')));
-        $checkout  = $_REQUEST['checkout'] ?? ($_REQUEST['check_out'] ?? ($_SESSION['book_checkout'] ?? date('Y-m-d', strtotime('+1 day'))));
+        $checkin   = $_REQUEST['checkin'] ?? ($_REQUEST['check_in'] ?? ($_SESSION['book_checkin'] ?? $businessToday));
+        $checkout  = $_REQUEST['checkout'] ?? ($_REQUEST['check_out'] ?? ($_SESSION['book_checkout'] ?? $businessTomorrow));
         $guests    = isset($_REQUEST['guests']) ? (int) $_REQUEST['guests'] : (isset($_SESSION['book_guests']) ? (int) $_SESSION['book_guests'] : 2);
         $room_type = $_REQUEST['room_type'] ?? ($_REQUEST['room'] ?? ($_SESSION['book_room_type'] ?? 'beachview_duplex'));
         if (!in_array($room_type, $allowed_room_types, true)) {
@@ -214,14 +219,20 @@ if (!function_exists('sfbc_handle_book_page')) {
         $checkin_token      = '';
         $cancel_token       = '';
         $cancel_url         = '';
-        $booking_eta        = '14:00';
+        $booking_eta        = sf_default_booking_eta((string) $checkin, $businessNow) ?: '14:00';
 
         // Reject malformed or impossible calendar dates before pricing constructs
         // DateTime objects. Reset to a safe range so the page can render the error.
         if (!isValidDateRange((string)$checkin, (string)$checkout)) {
             $error    = 'Please select valid check-in and check-out dates. Check-out must be later than check-in.';
-            $checkin  = date('Y-m-d');
-            $checkout = date('Y-m-d', strtotime('+1 day'));
+            $checkin  = $businessToday;
+            $checkout = $businessTomorrow;
+            $_SESSION['book_checkin']  = $checkin;
+            $_SESSION['book_checkout'] = $checkout;
+        } elseif (!isset($_GET['success']) && (string) $checkin < $businessToday) {
+            $error    = 'Check-in date cannot be in the past. Please choose today or an upcoming date.';
+            $checkin  = $businessToday;
+            $checkout = $businessTomorrow;
             $_SESSION['book_checkin']  = $checkin;
             $_SESSION['book_checkout'] = $checkout;
         }
@@ -396,10 +407,20 @@ if (!function_exists('sfbc_handle_book_page')) {
                     $_SESSION['guest_phone']      = $_POST['phone'] ?? '';
                     $_SESSION['guest_country']    = $_POST['country'] ?? '';
                     $_SESSION['guest_comments']   = $_POST['comments'] ?? '';
-                    $_SESSION['guest_eta']        = $_POST['eta'] ?? '14:00';
+
+                    $postedEta = trim((string) ($_POST['eta'] ?? ''));
+                    $etaValid  = sf_is_valid_booking_eta($postedEta, (string) $checkin, $businessNow);
+                    if ($etaValid) {
+                        $_SESSION['guest_eta'] = $postedEta;
+                    } else {
+                        $_SESSION['guest_eta'] = sf_default_booking_eta((string) $checkin, $businessNow);
+                    }
 
                     if (empty($_SESSION['guest_first_name']) || empty($_SESSION['guest_last_name']) || empty($_SESSION['guest_email'])) {
                         $error = "Please fill out required fields.";
+                        $step  = 2;
+                    } elseif (!$etaValid) {
+                        $error = "The selected arrival time has already passed for today's check-in. Please choose an upcoming arrival time.";
                         $step  = 2;
                     } else {
                         header('Location: book?step=3');
@@ -413,6 +434,11 @@ if (!function_exists('sfbc_handle_book_page')) {
                         if (empty($_SESSION['discount_request_nonce']) || !hash_equals($_SESSION['discount_request_nonce'], (string) ($_POST['discount_request_nonce'] ?? ''))) {
                             throw new RuntimeException('This form was already submitted or has expired. Please refresh.');
                         }
+                        $discountEta = trim((string) ($_SESSION['guest_eta'] ?? ''));
+                        if (!sf_is_valid_booking_eta($discountEta, (string) $checkin, $businessNow)) {
+                            $_SESSION['guest_eta'] = sf_default_booking_eta((string) $checkin, $businessNow);
+                            throw new RuntimeException("Your selected arrival time has already passed for today's check-in. Please return to Guest Details and choose an upcoming arrival time.");
+                        }
                         require_once dirname(__DIR__) . '/helpers/rate_limiter.php';
                         RateLimiter::enforce($conn, 'discount_request', 5, 3600);
                         $request = discount_create($conn, [
@@ -421,7 +447,7 @@ if (!function_exists('sfbc_handle_book_page')) {
                             'name'           => trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? '')),
                             'email'          => $_SESSION['guest_email'] ?? '',
                             'phone'          => $_SESSION['guest_phone'] ?? '',
-                            'eta'            => $_SESSION['guest_eta'] ?? '14:00',
+                            'eta'            => $discountEta,
                             'room_type'      => $room_type,
                             'checkin'        => $checkin,
                             'checkout'       => $checkout,
@@ -451,6 +477,13 @@ if (!function_exists('sfbc_handle_book_page')) {
 
                     $guest_name  = ($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? '');
                     $guest_email = $_SESSION['guest_email'] ?? '';
+
+                    $submittedEta = trim((string) ($_SESSION['guest_eta'] ?? ''));
+                    if (!sf_is_valid_booking_eta($submittedEta, (string) $checkin, $businessNow)) {
+                        $_SESSION['guest_eta'] = sf_default_booking_eta((string) $checkin, $businessNow);
+                        $error = "Your selected arrival time has already passed for today's check-in. Please choose an upcoming arrival time.";
+                        $step  = 2;
+                    }
 
                     $prev_stmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM bookings WHERE guest_email = ? AND status NOT IN ('Cancelled','Pending Payment')");
                     $prev_stmt->bind_param("s", $guest_email);
@@ -635,7 +668,7 @@ if (!function_exists('sfbc_handle_book_page')) {
                             $guest_phone            = sf_normalize_e164($guest_phone_raw, (string) ($_SESSION['guest_phone_code'] ?? '+63')) ?? $guest_phone_raw;
                             $guest_country          = $_SESSION['guest_country'] ?? '';
                             $guest_special_requests = $_SESSION['guest_comments'] ?? '';
-                            $eta                    = $_SESSION['guest_eta'] ?? '14:00';
+                            $eta                    = sf_default_booking_eta((string) $checkin, $businessNow, $submittedEta);
 
                             $room_value = $room_id === null ? "NULL" : (string) $room_id;
                             $sql = "INSERT INTO bookings (guest_name, guest_email, guest_type, check_in, check_out, guests_count, extra_adults, extra_children, room_id, accommodation_name, eta, status, checkin_token, cancellation_token, payment_method, guest_phone, guest_country, guest_special_requests, promo_code, discount_amount)
@@ -806,9 +839,12 @@ if (!function_exists('sfbc_handle_book_page')) {
         }
 
         // Formatting helpers
-        $checkin_fmt  = date('D, d M Y', strtotime($checkin));
-        $checkout_fmt = date('D, d M Y', strtotime($checkout));
-        $full_name    = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? ''));
+        $checkin_fmt         = date('D, d M Y', strtotime($checkin));
+        $checkout_fmt        = date('D, d M Y', strtotime($checkout));
+        $full_name           = trim(($_SESSION['guest_first_name'] ?? '') . ' ' . ($_SESSION['guest_last_name'] ?? ''));
+        $is_same_day_checkin = ((string) $checkin === $businessToday);
+        $eta_options         = sf_available_eta_options((string) $checkin, $businessNow);
+        $selected_eta        = sf_default_booking_eta((string) $checkin, $businessNow, $_SESSION['guest_eta'] ?? null);
         if ($step === 3 && empty($_SESSION['discount_request_nonce'])) {
             $_SESSION['discount_request_nonce'] = bin2hex(random_bytes(24));
         }
@@ -846,6 +882,9 @@ if (!function_exists('sfbc_handle_book_page')) {
             'cancel_token'           => $cancel_token,
             'cancel_url'             => $cancel_url,
             'booking_eta'            => $booking_eta,
+            'eta_options'            => $eta_options,
+            'selected_eta'           => $selected_eta,
+            'is_same_day_checkin'    => $is_same_day_checkin,
             'gcash_number'           => $gcash_number,
             'gcash_name'             => $gcash_name,
             'has_breakfast'          => $has_breakfast,

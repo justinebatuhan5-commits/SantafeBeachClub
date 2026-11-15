@@ -27,13 +27,14 @@ $v = $notifData['versions'];
         <?php
         $page_title = 'Notifications';
         $page_subtitle = 'Front desk alerts & updates';
+        $hasUnread = ((int)($notifData['unreadCount'] ?? 0)) > 0;
         $header_extra_html = '
             <form method="POST" action="notifications" style="margin: 0;">
                 ' . $notifData['csrfField'] . '
                 <input type="hidden" name="action" value="mark_all_read">
-                <button type="submit" class="header-icon-btn" title="Mark All as Read" style="width: auto; padding: 0 15px; gap: 8px; font-weight: 600; font-size: 13px;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Mark All Read
+                <button type="submit" class="header-icon-btn notif-mark-all-header" title="Mark All as Read"' . ($hasUnread ? '' : ' disabled') . '>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>
+                    <span>' . ($hasUnread ? 'Mark All Read' : 'All Caught Up') . '</span>
                 </button>
             </form>
         ';

@@ -55,15 +55,30 @@
 
         <div class="bk-form-group">
             <label>Estimated Arrival Time (ETA) <span class="req">*</span></label>
+            <?php
+                $renderEtaOptions = (!empty($eta_options) && is_array($eta_options))
+                    ? $eta_options
+                    : (function_exists('sf_booking_eta_catalog') ? sf_booking_eta_catalog() : [
+                        '14:00' => '02:00 PM (Standard Check-in)',
+                        '15:00' => '03:00 PM',
+                        '16:00' => '04:00 PM',
+                        '17:00' => '05:00 PM',
+                        '18:00' => '06:00 PM',
+                        '20:00' => '08:00 PM (Late Arrival)',
+                        '22:00' => '10:00 PM+ (Late Night Arrival)',
+                    ]);
+                $renderSelectedEta = (isset($selected_eta) && isset($renderEtaOptions[$selected_eta]))
+                    ? (string) $selected_eta
+                    : (string) array_key_first($renderEtaOptions);
+            ?>
             <select name="eta" required data-label="Estimated Arrival Time">
-                <option value="14:00" <?php echo (($_SESSION['guest_eta'] ?? '14:00') === '14:00') ? 'selected' : ''; ?>>02:00 PM (Standard Check-in)</option>
-                <option value="15:00" <?php echo (($_SESSION['guest_eta'] ?? '') === '15:00') ? 'selected' : ''; ?>>03:00 PM</option>
-                <option value="16:00" <?php echo (($_SESSION['guest_eta'] ?? '') === '16:00') ? 'selected' : ''; ?>>04:00 PM</option>
-                <option value="17:00" <?php echo (($_SESSION['guest_eta'] ?? '') === '17:00') ? 'selected' : ''; ?>>05:00 PM</option>
-                <option value="18:00" <?php echo (($_SESSION['guest_eta'] ?? '') === '18:00') ? 'selected' : ''; ?>>06:00 PM</option>
-                <option value="20:00" <?php echo (($_SESSION['guest_eta'] ?? '') === '20:00') ? 'selected' : ''; ?>>08:00 PM (Late Arrival)</option>
-                <option value="22:00" <?php echo (($_SESSION['guest_eta'] ?? '') === '22:00') ? 'selected' : ''; ?>>10:00 PM+ (Late Night Arrival)</option>
+                <?php foreach ($renderEtaOptions as $etaValue => $etaLabel): ?>
+                    <option value="<?php echo htmlspecialchars((string) $etaValue, ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($renderSelectedEta === (string) $etaValue) ? 'selected' : ''; ?>><?php echo htmlspecialchars((string) $etaLabel, ENT_QUOTES, 'UTF-8'); ?></option>
+                <?php endforeach; ?>
             </select>
+            <?php if (!empty($is_same_day_checkin)): ?>
+                <small style="display:block; margin-top:0.35rem; color:#6b7280; font-size:0.78rem;">Same-day check-in: past arrival times for today are hidden.</small>
+            <?php endif; ?>
         </div>
 
         <div class="bk-form-group" style="grid-column: 1 / -1;">

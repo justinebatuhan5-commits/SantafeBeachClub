@@ -23,6 +23,7 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
             $stmt->close();
         } elseif ($action === 'mark_all_read') {
             $conn->query('UPDATE notifications SET is_read = 1');
+            $_SESSION['notif_flash'] = 'All notifications marked as read.';
         } elseif ($action === 'delete' && isset($_POST['notif_id'])) {
             $id   = (int)$_POST['notif_id'];
             $stmt = $conn->prepare('DELETE FROM notifications WHERE id = ?');
@@ -32,13 +33,15 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
         } elseif ($includeAdminStats && $action === 'create_notif') {
             $title   = trim((string)($_POST['title'] ?? ''));
             $message = trim((string)($_POST['message'] ?? ''));
-            $type    = (string)($_POST['type'] ?? 'info');
+            $rawType = strtolower(trim((string)($_POST['type'] ?? 'info')));
+            $type    = in_array($rawType, ['info', 'success', 'warning', 'alert'], true) ? $rawType : 'info';
 
             if ($title !== '' && $message !== '') {
                 $stmt = $conn->prepare('INSERT INTO notifications (title, message, type) VALUES (?, ?, ?)');
                 $stmt->bind_param('sss', $title, $message, $type);
                 $stmt->execute();
                 $stmt->close();
+                $_SESSION['notif_flash'] = 'Broadcast alert posted to the team feed.';
             }
         } elseif ($action === 'accept_booking' && isset($_POST['notif_id'], $_POST['booking_id'])) {
             $notifId = (int)$_POST['notif_id'];
@@ -53,18 +56,31 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
         exit;
     }
 
-    $notifications = [];
-    $notifsQuery   = $conn->query('SELECT * FROM notifications ORDER BY created_at DESC');
+    $notifications     = [];
+    $urgentCount       = 0;
+    $urgentUnreadCount = 0;
+    $notifsQuery       = $conn->query('SELECT * FROM notifications ORDER BY created_at DESC');
     if ($notifsQuery) {
         while ($row = $notifsQuery->fetch_assoc()) {
-            $timeFormatted = date('M d, Y h:i A', strtotime((string)$row['created_at']));
-            $type          = (string)$row['type'];
-            $detailJson    = json_encode([
+            $timeFormatted = date('M j, Y · g:i A', strtotime((string)$row['created_at']));
+            $rawType       = strtolower(trim((string)$row['type']));
+            $type          = in_array($rawType, ['info', 'success', 'warning', 'alert'], true) ? $rawType : 'info';
+            $isRead        = !empty($row['is_read']);
+            $bookingId     = (int)($row['booking_id'] ?? 0);
+
+            if ($type === 'alert' || $type === 'warning') {
+                $urgentCount++;
+                if (!$isRead) {
+                    $urgentUnreadCount++;
+                }
+            }
+
+            $detailJson = json_encode([
                 'id'         => (int)$row['id'],
                 'title'      => (string)$row['title'],
                 'message'    => (string)$row['message'],
                 'type'       => $type,
-                'booking_id' => (int)($row['booking_id'] ?? 0),
+                'booking_id' => $bookingId,
                 'time'       => $timeFormatted,
             ]);
             $notifications[] = [
@@ -72,7 +88,8 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
                 'title'      => (string)$row['title'],
                 'message'    => (string)$row['message'],
                 'type'       => $type,
-                'is_read'    => !empty($row['is_read']),
+                'booking_id' => $bookingId,
+                'is_read'    => $isRead,
                 'time'       => $timeFormatted,
                 'badgeClass' => 'badge-' . $type,
                 'detailJson' => $detailJson ?: '{}',
@@ -99,12 +116,15 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
     $frontendDir = __DIR__ . '/../../frontend';
 
     return [
-        'notifications' => $notifications,
-        'unreadCount'   => $unreadCount,
-        'pendingCount'  => $pendingCount,
-        'maintCount'    => $maintCount,
-        'notifFlash'    => $notifFlash,
-        'csrfField'     => csrf_field(),
+        'notifications'     => $notifications,
+        'totalCount'        => count($notifications),
+        'unreadCount'       => $unreadCount,
+        'urgentCount'       => $urgentCount,
+        'urgentUnreadCount' => $urgentUnreadCount,
+        'pendingCount'      => $pendingCount,
+        'maintCount'        => $maintCount,
+        'notifFlash'        => $notifFlash,
+        'csrfField'         => csrf_field(),
         'versions'      => [
             'adminCss'     => filemtime($frontendDir . '/assets/css/admin.css'),
             'dashboardCss' => filemtime($frontendDir . '/assets/css/dashboard.css'),

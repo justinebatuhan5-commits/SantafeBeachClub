@@ -203,9 +203,14 @@
         if (scannedOverlay) scannedOverlay.style.display = 'flex';
     }
 
-    async function handleCheckinClick(event, bookingId, guestName, accName, totalCost, balanceDue, discountCategory = '', scheduledCheckin = '') {
+    async function handleCheckinClick(event, bookingId, guestName, accName, totalCost, balanceDue, discountCategory = '', scheduledCheckin = '', checkinBtn = null) {
         event.preventDefault();
-        const checkinForm = event.currentTarget.closest('form');
+        const triggerBtn = (checkinBtn && typeof checkinBtn.closest === 'function')
+            ? checkinBtn
+            : ((event.currentTarget && typeof event.currentTarget.closest === 'function')
+                ? event.currentTarget
+                : event.target?.closest?.('.js-checkin-btn'));
+        const checkinForm = triggerBtn ? triggerBtn.closest('form') : null;
         const scheduledLabel = scheduledCheckin
             ? new Date(scheduledCheckin + 'T00:00:00').toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
             : 'Not specified';
@@ -216,17 +221,17 @@
         const timingWarning = isEarly
             ? 'The guest is checking in before the scheduled date. Confirm that the room is ready.'
             : (isOverdue ? 'The scheduled check-in date has already passed.' : 'The guest is checking in on the scheduled date.');
-        const accepted = await SiteDialog.confirm(
-            `${timingLabel}\n\n${timingWarning}\n\nGuest: ${guestName}\nRoom: ${accName}\nScheduled check-in: ${scheduledLabel}` +
+        const confirmPrompt = `${timingLabel}\n\n${timingWarning}\n\nGuest: ${guestName}\nRoom: ${accName}\nScheduled check-in: ${scheduledLabel}` +
             (hasBalance ? `\nBalance to collect: ₱${balanceDue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\nPayment status: Paid in full') +
-            (hasBalance ? '\n\nContinue to review and collect the payment?' : '\n\nContinuing will mark the guest as Checked In and the room as occupied.'),
-            {
+            (hasBalance ? '\n\nContinue to review and collect the payment?' : '\n\nContinuing will mark the guest as Checked In and the room as occupied.');
+        const accepted = window.SiteDialog && typeof window.SiteDialog.confirm === 'function'
+            ? await window.SiteDialog.confirm(confirmPrompt, {
                 title: isEarly ? 'Early check-in warning' : 'Confirm guest check-in',
                 confirmText: hasBalance ? 'Continue to payment' : 'Yes, check in guest',
                 danger: isEarly,
                 icon: isEarly ? '!' : (isOverdue ? '!' : 'i')
-            }
-        );
+            })
+            : window.confirm(confirmPrompt);
         if (!accepted) return;
 
         if (hasBalance) {
@@ -278,7 +283,8 @@
                 parseFloat(checkinBtn.dataset.total || '0'),
                 parseFloat(checkinBtn.dataset.balance || '0'),
                 checkinBtn.dataset.discount || '',
-                checkinBtn.dataset.checkin || ''
+                checkinBtn.dataset.checkin || '',
+                checkinBtn
             );
             return;
         }
