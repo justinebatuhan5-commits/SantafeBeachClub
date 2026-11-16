@@ -4,71 +4,93 @@
     padding: 0;
 }
 
+:root {
+    --brand-wood: #5C4033;
+    --brand-wood-dark: #422D23;
+    --brand-teal: #0D9488;
+    --gold-primary: #F59E0B;
+    --gold-gradient: linear-gradient(135deg, #D97706, #F59E0B, #B45309);
+    --gold-glow: 0 0 24px rgba(245, 158, 11, 0.32);
+}
+
 body {
     font-family: 'Outfit', sans-serif;
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(-45deg, #f0e5d8, #e6d3c4, #b9c7c9, #d0dbdb);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    overflow: hidden;
-}
-
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.bg-shape {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    z-index: 0;
-    animation: floatShape 20s infinite alternate;
-}
-
-.shape-1 {
-    width: 400px;
-    height: 400px;
-    background: rgba(197, 168, 142, 0.4);
-    top: -100px;
-    left: -100px;
-}
-
-.shape-2 {
-    width: 500px;
-    height: 500px;
-    background: rgba(130, 168, 160, 0.3);
-    bottom: -150px;
-    right: -100px;
-    animation-delay: -5s;
-}
-
-@keyframes floatShape {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    100% { transform: translate(100px, 50px) rotate(20deg); }
-}
-
-.otp-wrapper {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-    max-width: 460px;
-    width: 90%;
+    padding: 24px 16px;
+    background: #0D1B2A;
+    color: #1E293B;
     position: relative;
+    overflow-x: hidden;
+}
+
+body.portal-admin {
+    background: #0B0F17;
+    color: #F8FAFC;
+}
+
+/* ── Santa Fe Beach Club Resort Backdrop ────────────────── */
+.bg-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url('../../hero-slide-4-hd.png');
+    transform: scale(1.03);
+    animation: backdropDrift 18s ease-in-out infinite alternate;
+}
+
+body.portal-admin .bg-backdrop {
+    background-image: url('../../images/admin-bg-resort-dusk.png');
+}
+
+@keyframes backdropDrift {
+    from { transform: scale(1.01) translateX(0); }
+    to   { transform: scale(1.07) translateX(-10px); }
+}
+
+.bg-overlay {
+    position: fixed;
+    inset: 0;
     z-index: 1;
-    padding: 45px 35px;
-    text-align: center;
+    pointer-events: none;
+    background: radial-gradient(circle at 30% 30%, rgba(15, 23, 42, 0.28) 0%, rgba(15, 23, 42, 0.62) 100%);
+}
+
+body.portal-admin .bg-overlay {
+    background: radial-gradient(circle at 30% 25%, rgba(11, 15, 23, 0.48) 0%, rgba(11, 15, 23, 0.88) 100%);
+}
+
+/* ── Centered Frosted Glass Card ────────────────────────── */
+.otp-wrapper {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 460px;
+    border-radius: 26px;
+    padding: 34px 34px 30px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
-    animation: cardEnter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    transform: translateY(20px) scale(0.98);
+    animation: cardEnter 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+body.portal-admin .otp-wrapper {
+    background: rgba(15, 23, 42, 0.64);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
 }
 
 @keyframes cardEnter {
@@ -78,163 +100,549 @@ body {
     }
 }
 
-.icon-badge {
-    width: 70px;
-    height: 70px;
-    background: rgba(100, 75, 57, 0.1);
-    color: #644B39;
-    border-radius: 50%;
+/* ── Brand Header Row ───────────────────────────────────── */
+.otp-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid rgba(92, 64, 51, 0.12);
+}
+
+body.portal-admin .otp-brand-row {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.otp-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.otp-brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(92, 64, 51, 0.22);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+body.portal-admin .otp-brand-logo {
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.otp-brand-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    min-width: 0;
+}
+
+.otp-brand-name {
+    font-family: 'Cinzel', serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--brand-wood-dark);
+    line-height: 1.2;
+}
+
+body.portal-admin .otp-brand-name {
+    color: #F8FAFC;
+}
+
+.otp-brand-sub {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--brand-teal);
+    margin-top: 2px;
+}
+
+body.portal-admin .otp-brand-sub {
+    color: var(--gold-primary);
+}
+
+.otp-portal-pill {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+    background: rgba(92, 64, 51, 0.08);
+    border: 1px solid rgba(92, 64, 51, 0.2);
+    color: var(--brand-wood);
+}
+
+body.portal-admin .otp-portal-pill {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.34);
+    color: #FCD34D;
+}
+
+/* ── Card Title & Subtitle ──────────────────────────────── */
+.otp-header {
+    text-align: center;
+    margin-bottom: 18px;
 }
 
 .form-title {
+    font-family: 'Cinzel', serif;
     font-size: 24px;
-    font-weight: 800;
-    color: #2D3748;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--brand-wood-dark);
     margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+body.portal-admin .form-title {
+    color: #FFFFFF;
 }
 
 .form-subtitle {
     font-size: 14px;
-    color: #718096;
-    margin-bottom: 25px;
-    line-height: 1.5;
+    color: #64748B;
+    line-height: 1.55;
+}
+
+body.portal-admin .form-subtitle {
+    color: #94A3B8;
 }
 
 .email-highlight {
     font-weight: 600;
-    color: #4A5568;
+    color: #1E293B;
 }
 
-/* 6 Digit Input Group */
+body.portal-admin .email-highlight {
+    color: #F8FAFC;
+}
+
+/* ── Verification Code Expiry Timer Banner ──────────────── */
+.otp-expiry-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 11px 14px;
+    margin-bottom: 20px;
+    border-radius: 14px;
+    background: rgba(250, 247, 242, 0.92);
+    border: 1px solid rgba(92, 64, 51, 0.16);
+    color: var(--brand-wood);
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+body.portal-admin .otp-expiry-banner {
+    background: rgba(30, 41, 59, 0.66);
+    border: 1px solid rgba(245, 158, 11, 0.24);
+    color: #CBD5E1;
+}
+
+.otp-expiry-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.otp-expiry-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.otp-expiry-icon {
+    flex-shrink: 0;
+}
+
+.otp-expiry-timer {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.6px;
+    color: var(--brand-wood-dark);
+}
+
+body.portal-admin .otp-expiry-timer {
+    color: #FBBF24;
+}
+
+.otp-expiry-track {
+    display: block;
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(92, 64, 51, 0.12);
+    overflow: hidden;
+}
+
+body.portal-admin .otp-expiry-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.otp-expiry-progress {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--brand-wood);
+    transition: width 0.5s linear, background-color 0.25s ease;
+}
+
+body.portal-admin .otp-expiry-progress {
+    background: var(--gold-primary);
+}
+
+/* Warning State (<= 60s remaining) */
+.otp-expiry-banner.is-warning {
+    background: #FFFBEB;
+    border-color: #FCD34D;
+    color: #B45309;
+}
+
+.otp-expiry-banner.is-warning .otp-expiry-timer {
+    color: #92400E;
+}
+
+.otp-expiry-banner.is-warning .otp-expiry-progress {
+    background: #D97706;
+}
+
+body.portal-admin .otp-expiry-banner.is-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(251, 191, 36, 0.45);
+    color: #FDE68A;
+}
+
+body.portal-admin .otp-expiry-banner.is-warning .otp-expiry-timer {
+    color: #FCD34D;
+}
+
+body.portal-admin .otp-expiry-banner.is-warning .otp-expiry-progress {
+    background: #FBBF24;
+}
+
+/* Expired State (00:00) */
+.otp-expiry-banner.is-expired {
+    background: #FEF2F2;
+    border-color: #FECACA;
+    color: #B91C1C;
+}
+
+.otp-expiry-banner.is-expired .otp-expiry-timer {
+    color: #DC2626;
+}
+
+.otp-expiry-banner.is-expired .otp-expiry-progress {
+    background: #EF4444;
+}
+
+body.portal-admin .otp-expiry-banner.is-expired {
+    background: rgba(239, 68, 68, 0.14);
+    border-color: rgba(248, 113, 113, 0.42);
+    color: #FCA5A5;
+}
+
+body.portal-admin .otp-expiry-banner.is-expired .otp-expiry-timer {
+    color: #FCA5A5;
+}
+
+body.portal-admin .otp-expiry-banner.is-expired .otp-expiry-progress {
+    background: #EF4444;
+}
+
+/* ── Alerts ─────────────────────────────────────────────── */
+.error,
+.success-box {
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.error {
+    color: #B91C1C;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-left: 4px solid #EF4444;
+    font-weight: 500;
+}
+
+body.portal-admin .error {
+    color: #FECACA;
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(248, 113, 113, 0.32);
+    border-left: 4px solid #EF4444;
+}
+
+.success-box {
+    color: #166534;
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-left: 4px solid #16A34A;
+    font-weight: 500;
+}
+
+body.portal-admin .success-box {
+    color: #A7F3D0;
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(52, 211, 153, 0.34);
+    border-left: 4px solid #10B981;
+}
+
+/* ── 6-Digit OTP Input Boxes ────────────────────────────── */
 .otp-inputs {
     display: flex;
-    gap: 8px;
+    gap: 9px;
     justify-content: center;
-    margin-bottom: 25px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
 }
 
 .otp-digit {
-    width: 50px;
-    height: 58px;
+    width: 54px;
+    height: 62px;
+    font-family: 'Outfit', sans-serif;
     font-size: 24px;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
     text-align: center;
-    border: 2px solid #E2E8F0;
-    border-radius: 12px;
-    background: #fff;
-    color: #2D3748;
+    border: 1.5px solid rgba(92, 64, 51, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #1E293B;
     outline: none;
     transition: all 0.2s ease;
 }
 
 .otp-digit:focus {
-    border-color: #644B39;
-    box-shadow: 0 0 0 4px rgba(100, 75, 57, 0.15);
+    background: #FFFFFF;
+    border-color: var(--brand-wood);
+    box-shadow: 0 0 0 4px rgba(92, 64, 51, 0.15);
+    transform: translateY(-1px);
 }
 
+.otp-digit:disabled {
+    background: #F1F5F9;
+    border-color: #E2E8F0;
+    color: #94A3B8;
+    cursor: not-allowed;
+    opacity: 0.72;
+    transform: none;
+}
+
+body.portal-admin .otp-digit {
+    background: rgba(15, 23, 42, 0.56);
+    border: 1.5px solid rgba(255, 255, 255, 0.18);
+    color: #FFFFFF;
+}
+
+body.portal-admin .otp-digit:focus {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2), var(--gold-glow);
+}
+
+body.portal-admin .otp-digit:disabled {
+    background: rgba(15, 23, 42, 0.34);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #64748B;
+}
+
+/* Keep security.js inline validation centered beneath all 6 boxes */
+.otp-inputs .security-field-error {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+body.portal-staff .otp-inputs .security-field-error {
+    color: #DC2626;
+}
+
+body.portal-admin .otp-inputs .security-field-error {
+    color: #F87171;
+}
+
+/* ── Verify Submit Button ───────────────────────────────── */
 .btn-verify {
     width: 100%;
-    background: linear-gradient(135deg, #644B39, #4a3527);
-    color: white;
+    padding: 15px 22px;
     border: none;
-    padding: 15px;
-    border-radius: 12px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #5C4033, #3F2B22);
+    color: #FFFFFF;
     font-family: 'Outfit', sans-serif;
-    font-size: 16px;
+    font-size: 15.5px;
     font-weight: 600;
+    letter-spacing: 0.4px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(100, 75, 57, 0.3);
-    margin-bottom: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 6px 20px rgba(92, 64, 51, 0.3);
 }
 
-.btn-verify:hover {
+.btn-verify:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(100, 75, 57, 0.4);
+    box-shadow: 0 10px 26px rgba(92, 64, 51, 0.42);
+    background: linear-gradient(135deg, #4E362B, #33231B);
+}
+
+.btn-verify:disabled {
+    background: #CBD5E1;
+    color: #FFFFFF;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+body.portal-admin .btn-verify {
+    background: var(--gold-gradient);
+    box-shadow: 0 6px 24px rgba(217, 119, 6, 0.38);
+}
+
+body.portal-admin .btn-verify:hover:not(:disabled) {
+    filter: brightness(1.08);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.48);
+    background: var(--gold-gradient);
+}
+
+body.portal-admin .btn-verify:disabled {
+    background: rgba(148, 163, 184, 0.2);
+    color: rgba(226, 232, 240, 0.48);
+    filter: none;
+    box-shadow: none;
+}
+
+/* ── Footer Actions ─────────────────────────────────────── */
+.otp-footer {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(92, 64, 51, 0.12);
+    text-align: center;
+}
+
+body.portal-admin .otp-footer {
+    border-top-color: rgba(255, 255, 255, 0.1);
 }
 
 .resend-section {
-    font-size: 14px;
-    color: #718096;
-    margin-top: 15px;
+    font-size: 13.5px;
+    color: #64748B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+body.portal-admin .resend-section {
+    color: #94A3B8;
 }
 
 .btn-link {
     background: none;
     border: none;
-    color: #644B39;
+    color: var(--brand-wood);
     font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
     padding: 0;
     font-family: 'Outfit', sans-serif;
-    font-size: 14px;
+    font-size: 13.5px;
+    transition: color 0.2s ease;
+}
+
+.btn-link:hover:not(:disabled) {
+    color: var(--brand-wood-dark);
 }
 
 .btn-link:disabled {
-    color: #A0AEC0;
+    color: #94A3B8;
     cursor: not-allowed;
     text-decoration: none;
 }
 
+body.portal-admin .btn-link {
+    color: #FBBF24;
+}
+
+body.portal-admin .btn-link:hover:not(:disabled) {
+    color: #FDE68A;
+}
+
+body.portal-admin .btn-link:disabled {
+    color: #64748B;
+}
+
 .countdown-text {
     display: none;
+    font-variant-numeric: tabular-nums;
 }
 
 .back-link {
     display: inline-block;
-    margin-top: 20px;
+    margin-top: 14px;
     font-size: 13px;
-    color: #718096;
+    color: #64748B;
     text-decoration: none;
+    transition: color 0.2s ease;
 }
 
 .back-link:hover {
-    color: #2D3748;
+    color: #1E293B;
 }
 
-.error {
-    color: #E53E3E;
-    background: #FFF5F5;
-    border-left: 4px solid #E53E3E;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    margin-bottom: 20px;
-    text-align: left;
+body.portal-admin .back-link {
+    color: #94A3B8;
 }
 
-.success-box {
-    color: #276749;
-    background: #F0FFF4;
-    border-left: 4px solid #38A169;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    margin-bottom: 20px;
-    text-align: left;
+body.portal-admin .back-link:hover {
+    color: #F8FAFC;
 }
 
-/* Loading Screen */
+/* ── Fullscreen Auth Loader ─────────────────────────────── */
 .auth-loader-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(255, 255, 255, 0.85);
+    inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 18px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
     z-index: 999999;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+body.portal-admin .auth-loader-screen {
+    background: rgba(11, 15, 23, 0.88);
+    backdrop-filter: blur(10px);
 }
 
 .auth-loader-screen.active {
@@ -243,22 +651,60 @@ body {
     pointer-events: all;
 }
 
-.auth-loader-box {
+.loader-ring-box {
     position: relative;
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.auth-loader-spinner {
+.loader-ring {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     border-radius: 50%;
-    border: 3px solid transparent;
-    border-top-color: #644B39;
+    border: 2.5px solid rgba(92, 64, 51, 0.15);
+    border-top-color: var(--brand-wood);
     animation: spin 1s linear infinite;
+}
+
+body.portal-admin .loader-ring {
+    border: 2.5px solid rgba(245, 158, 11, 0.16);
+    border-top-color: var(--gold-primary);
+}
+
+.loader-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.loader-caption {
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--brand-wood-dark);
+    font-weight: 600;
+}
+
+body.portal-admin .loader-caption {
+    color: #FCD34D;
+    font-weight: 500;
 }
 
 @keyframes spin {
     100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .otp-brand-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .form-title {
+        font-size: 21px;
+    }
 }

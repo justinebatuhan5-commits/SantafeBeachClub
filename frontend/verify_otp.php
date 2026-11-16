@@ -12,6 +12,7 @@ require_once __DIR__ . '/../backend/controllers/auth_controller.php';
 
 /** @var mysqli $conn */
 extract(sfbc_handle_verify_otp_page($conn), EXTR_SKIP);
+$portalBodyClass = (($loginSource ?? 'staff') === 'admin') ? 'portal-admin' : 'portal-staff';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,12 +23,14 @@ extract(sfbc_handle_verify_otp_page($conn), EXTR_SKIP);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Two-Factor Authentication - Santa Fe Beach Club</title>
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/pages/verify-otp.css?v=<?php echo filemtime(__DIR__ . '/assets/css/pages/verify-otp.css'); ?>">
     <script src="assets/js/security.js" defer></script>
 <?php require __DIR__ . '/partials/_responsive.php'; ?>
 </head>
-<body>
+<body class="<?php echo $portalBodyClass; ?>">
 <?php require __DIR__ . '/views/auth/_verify_otp.php'; ?>
 <script src="assets/js/pages/verify-otp.js?v=<?php echo filemtime(__DIR__ . '/assets/js/pages/verify-otp.js'); ?>" defer></script>
 </body>

@@ -175,6 +175,34 @@ function otp_verify_admin(int $adminId, string $submittedCode, mysqli $conn, str
     return ['success' => true, 'reason' => 'ok'];
 }
 
+/**
+ * Get remaining validity (in seconds) for the latest unused, non-locked OTP
+ * belonging to an admin or receptionist. Returns 0 if missing or expired.
+ */
+function otp_get_admin_remaining_seconds(int $adminId, mysqli $conn, string $userType = 'admin'): int {
+    $stmt = $conn->prepare(
+        "SELECT TIMESTAMPDIFF(SECOND, NOW(), expires_at) AS remaining_seconds
+         FROM admin_otps
+         WHERE admin_id = ? AND user_type = ? AND used = 0 AND attempts < ?
+         ORDER BY created_at DESC, id DESC
+         LIMIT 1"
+    );
+    if (!$stmt) {
+        return 0;
+    }
+    $maxAttempts = OTP_MAX_ATTEMPTS;
+    $stmt->bind_param('isi', $adminId, $userType, $maxAttempts);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$row) {
+        return 0;
+    }
+
+    return max(0, (int) $row['remaining_seconds']);
+}
+
 // ---------------------------------------------------------------------------
 // Verification (Guest)
 // ---------------------------------------------------------------------------

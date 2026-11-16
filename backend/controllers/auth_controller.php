@@ -276,17 +276,24 @@ function sfbc_handle_verify_otp_page(mysqli $conn): array
     $emailHint = $_SESSION['mfa_pending_email_hint'] ?? 'your registered email';
 
     $error = '';
+    $isOtpExpired = false;
     $is_ajax = sfbc_is_ajax_request();
+    $otpExpiryTotalSeconds = (defined('OTP_EXPIRY_MINUTES') ? (int)OTP_EXPIRY_MINUTES : 10) * 60;
+    $resendCooldownTotalSeconds = defined('OTP_RESEND_COOLDOWN') ? (int)OTP_RESEND_COOLDOWN : 60;
 
     if (isset($_POST['action']) && $_POST['action'] === 'resend') {
         if (!verify_csrf_token()) {
             $res = ['success' => false, 'message' => 'Security token invalid. Please refresh.'];
         } else {
-            $lastSent = $_SESSION['otp_sent_at'] ?? 0;
+            $lastSent = (int)($_SESSION['otp_sent_at'] ?? 0);
             $elapsed = time() - $lastSent;
-            if ($elapsed < OTP_RESEND_COOLDOWN) {
-                $wait = OTP_RESEND_COOLDOWN - $elapsed;
-                $res = ['success' => false, 'message' => "Please wait {$wait} seconds before requesting a new code."];
+            if ($elapsed < $resendCooldownTotalSeconds) {
+                $wait = $resendCooldownTotalSeconds - $elapsed;
+                $res = [
+                    'success' => false,
+                    'message' => "Please wait {$wait} seconds before requesting a new code.",
+                    'resend_cooldown' => $wait,
+                ];
             } else {
                 $stmt = $conn->prepare("SELECT email FROM `{$userTable}` WHERE id = ?");
                 $stmt->bind_param('i', $adminId);
@@ -304,7 +311,13 @@ function sfbc_handle_verify_otp_page(mysqli $conn): array
                 SecurityLogger::log($conn, 'MFA_OTP_RESEND', "User requested OTP resend ({$userType})", SecurityLogger::LEVEL_INFO, $username);
 
                 if ($sendRes['success']) {
-                    $res = ['success' => true, 'message' => 'A new 6-digit code has been sent to your email.'];
+                    $freshRemaining = otp_get_admin_remaining_seconds($adminId, $conn, $userType);
+                    $res = [
+                        'success' => true,
+                        'message' => 'A new 6-digit code has been sent to your email.',
+                        'expires_in' => $freshRemaining > 0 ? $freshRemaining : $otpExpiryTotalSeconds,
+                        'resend_cooldown' => $resendCooldownTotalSeconds,
+                    ];
                 } else {
                     $res = ['success' => false, 'message' => 'Failed to send email. Please try again later.'];
                 }
@@ -373,6 +386,7 @@ function sfbc_handle_verify_otp_page(mysqli $conn): array
                         header("Location: $loginPage");
                         exit;
                     } elseif ($verify['reason'] === 'expired_or_not_found') {
+                        $isOtpExpired = true;
                         $error = 'Verification code expired or not found. Please click "Resend Code".';
                     } else {
                         $rem = $verify['remaining'] ?? 0;
@@ -384,11 +398,30 @@ function sfbc_handle_verify_otp_page(mysqli $conn): array
         }
 
         if ($is_ajax) {
-            sfbc_send_json_and_exit(['success' => false, 'message' => $error]);
+            sfbc_send_json_and_exit([
+                'success' => false,
+                'message' => $error,
+                'expired' => $isOtpExpired,
+            ]);
         }
     }
 
-    return compact('loginSource', 'loginPage', 'emailHint', 'error');
+    $otpRemainingSeconds = otp_get_admin_remaining_seconds($adminId, $conn, $userType);
+    $lastSentAt = (int)($_SESSION['otp_sent_at'] ?? 0);
+    $resendRemainingSeconds = $lastSentAt > 0
+        ? max(0, $resendCooldownTotalSeconds - (time() - $lastSentAt))
+        : 0;
+
+    return compact(
+        'loginSource',
+        'loginPage',
+        'emailHint',
+        'error',
+        'otpRemainingSeconds',
+        'otpExpiryTotalSeconds',
+        'resendRemainingSeconds',
+        'resendCooldownTotalSeconds'
+    );
 }
 
 function sfbc_handle_forgot_password_page(mysqli $conn): array
