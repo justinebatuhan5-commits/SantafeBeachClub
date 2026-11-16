@@ -59,14 +59,22 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
     $notifications     = [];
     $urgentCount       = 0;
     $urgentUnreadCount = 0;
+    $todayCount        = 0;
+    $todayDate         = date('Y-m-d');
     $notifsQuery       = $conn->query('SELECT * FROM notifications ORDER BY created_at DESC');
     if ($notifsQuery) {
         while ($row = $notifsQuery->fetch_assoc()) {
-            $timeFormatted = date('M j, Y · g:i A', strtotime((string)$row['created_at']));
+            $createdTs     = strtotime((string)$row['created_at']);
+            $timeFormatted = date('M j, Y · g:i A', $createdTs);
+            $isToday       = ($createdTs !== false && date('Y-m-d', $createdTs) === $todayDate);
             $rawType       = strtolower(trim((string)$row['type']));
             $type          = in_array($rawType, ['info', 'success', 'warning', 'alert'], true) ? $rawType : 'info';
             $isRead        = !empty($row['is_read']);
             $bookingId     = (int)($row['booking_id'] ?? 0);
+
+            if ($isToday) {
+                $todayCount++;
+            }
 
             if ($type === 'alert' || $type === 'warning') {
                 $urgentCount++;
@@ -90,6 +98,7 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
                 'type'       => $type,
                 'booking_id' => $bookingId,
                 'is_read'    => $isRead,
+                'is_today'   => $isToday,
                 'time'       => $timeFormatted,
                 'badgeClass' => 'badge-' . $type,
                 'detailJson' => $detailJson ?: '{}',
@@ -118,6 +127,7 @@ function sfbc_handle_notifications_page(mysqli $conn, string $redirectRoute, boo
     return [
         'notifications'     => $notifications,
         'totalCount'        => count($notifications),
+        'todayCount'        => $todayCount,
         'unreadCount'       => $unreadCount,
         'urgentCount'       => $urgentCount,
         'urgentUnreadCount' => $urgentUnreadCount,

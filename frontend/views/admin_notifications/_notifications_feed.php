@@ -9,6 +9,7 @@
 $notifActionRoute = $notifActionRoute ?? 'admin_notifications';
 $allNotifs = $notifData['notifications'] ?? [];
 $totalCount = (int)($notifData['totalCount'] ?? count($allNotifs));
+$todayCount = (int)($notifData['todayCount'] ?? 0);
 $unreadCount = (int)($notifData['unreadCount'] ?? 0);
 $urgentCount = (int)($notifData['urgentCount'] ?? 0);
 $infoSuccessCount = max(0, $totalCount - $urgentCount);
@@ -45,6 +46,10 @@ $renderNotifIcon = static function (string $type): string {
                 <span>All</span>
                 <span class="notif-pill-count"><?php echo $totalCount; ?></span>
             </button>
+            <button type="button" class="notif-filter-pill" data-notif-filter="today">
+                <span>Today</span>
+                <span class="notif-pill-count" id="notifTabTodayCount"><?php echo $todayCount; ?></span>
+            </button>
             <button type="button" class="notif-filter-pill" data-notif-filter="unread">
                 <span>Unread</span>
                 <span class="notif-pill-count" id="notifTabUnreadCount"><?php echo $unreadCount; ?></span>
@@ -78,6 +83,7 @@ $renderNotifIcon = static function (string $type): string {
                      data-id="<?php echo (int)$n['id']; ?>"
                      data-type="<?php echo htmlspecialchars($n['type'], ENT_QUOTES, 'UTF-8'); ?>"
                      data-unread="<?php echo $n['is_read'] ? '0' : '1'; ?>"
+                     data-today="<?php echo !empty($n['is_today']) ? '1' : '0'; ?>"
                      data-search="<?php echo htmlspecialchars($searchHaystack, ENT_QUOTES, 'UTF-8'); ?>">
                     <div class="notif-leading-icon" aria-hidden="true">
                         <?php echo $renderNotifIcon($n['type']); ?>

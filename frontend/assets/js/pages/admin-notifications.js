@@ -17,6 +17,8 @@
     function matchesFilter(item, filterKey) {
         const type = (item.dataset.type || 'info').toLowerCase();
         const isUnread = item.dataset.unread === '1';
+        const isToday = item.dataset.today === '1';
+        if (filterKey === 'today') return isToday;
         if (filterKey === 'unread') return isUnread;
         if (filterKey === 'urgent') return type === 'alert' || type === 'warning';
         if (filterKey === 'updates') return type === 'info' || type === 'success';
