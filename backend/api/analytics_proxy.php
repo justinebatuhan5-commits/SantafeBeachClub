@@ -18,6 +18,10 @@ require_api_auth($conn, 'admin');
 RateLimiter::enforce($conn, 'analytics_proxy', 120, 60);
 
 $action = $_GET['action'] ?? '';
+$forwardParams = $_GET;
+unset($forwardParams['action']);
+$forwardQueryString = http_build_query($forwardParams);
+$forwardSuffix = $forwardQueryString !== '' ? ('?' . $forwardQueryString) : '';
 $requirePython = filter_var(getenv('ANALYTICS_REQUIRE_PYTHON') ?: false, FILTER_VALIDATE_BOOLEAN);
 $pythonFailure = 'The Python analytics service is not configured or unavailable.';
 
@@ -33,7 +37,7 @@ if (function_exists('curl_init')) {
         $local_test = @fsockopen('127.0.0.1', 5000, $errno, $errstr, 0.2);
         if ($local_test) {
             fclose($local_test);
-            $python_url = "http://127.0.0.1:5000/api/" . urlencode($action);
+            $python_url = "http://127.0.0.1:5000/api/" . urlencode($action) . $forwardSuffix;
         }
         // If local Flask is not running, $python_url stays null → skip to PHP fallback instantly.
     } else {
@@ -42,7 +46,7 @@ if (function_exists('curl_init')) {
         $analyticsBaseUrl = rtrim((string)(getenv('ANALYTICS_SERVICE_URL') ?: ''), '/');
         $analyticsApiKey = (string)(getenv('ANALYTICS_API_KEY') ?: '');
         if ($analyticsBaseUrl !== '' && $analyticsApiKey !== '') {
-            $python_url = $analyticsBaseUrl . '/api/' . urlencode($action);
+            $python_url = $analyticsBaseUrl . '/api/' . urlencode($action) . $forwardSuffix;
         } elseif ($requirePython) {
             $pythonFailure = 'Python analytics is required but its service URL or API key is missing.';
         }

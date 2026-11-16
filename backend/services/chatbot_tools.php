@@ -1170,78 +1170,155 @@ function sf_staff_channel_sql(mysqli $conn, string $channel): string
     return '1=1';
 }
 
+function sf_staff_current_date(mysqli $conn): string
+{
+    if (function_exists('sf_get_current_business_datetime')) {
+        try {
+            return sf_get_current_business_datetime($conn)->format('Y-m-d');
+        } catch (Throwable $e) {
+            // Fall back to PHP configured timezone
+        }
+    }
+    return date('Y-m-d');
+}
+
+function sf_staff_resolve_room_slug(?int $roomTypeId, string $accommodationName, array $rtIdToSlug, array $knownSlugs): ?string
+{
+    if ($roomTypeId !== null && $roomTypeId > 0 && isset($rtIdToSlug[$roomTypeId])) {
+        return $rtIdToSlug[$roomTypeId];
+    }
+    $accLower = strtolower(trim($accommodationName));
+    if ($accLower === '') {
+        return null;
+    }
+    // Sort known slugs longest-first so 'beach_villa' / 'beach villa' matches before 'villa'
+    $sorted = $knownSlugs;
+    usort($sorted, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
+    foreach ($sorted as $slug) {
+        $label = strtolower(str_replace('_', ' ', $slug));
+        if (str_contains($accLower, $label) || str_contains($accLower, strtolower($slug))) {
+            return $slug;
+        }
+    }
+    if (str_contains($accLower, 'family') || str_contains($accLower, 'king')) {
+        return in_array('standard_king', $knownSlugs, true) ? 'standard_king' : null;
+    }
+    return null;
+}
+
 /**
  * Staff Tool 1: Front desk operations, in-house guests, and overdue check-outs.
+ * Aligned directly with admin_dashboard.php (occupancy_kpi.js + analytics_api.php) and dashboard.php.
  */
 function sf_staff_tool_today_operations(mysqli $conn, ?string $date = null, string $role = 'receptionist'): array
 {
-    $targetDate = ($date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) ? $date : date('Y-m-d');
+    $todayIso = sf_staff_current_date($conn);
+    $targetDate = ($date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) ? $date : $todayIso;
+    $nextDate = date('Y-m-d', strtotime($targetDate . ' +1 day'));
     $routes = sf_staff_assistant_routes($role);
 
+    // Fetch ALL non-cancelled arrivals on $targetDate so counts are never truncated by LIMIT
     $arrStmt = $conn->prepare("
         SELECT b.id, b.guest_name, b.guest_email, b.accommodation_name, b.eta, b.status, b.guests_count,
-               r.room_number
+               b.room_id, r.room_number
         FROM bookings b
         LEFT JOIN rooms r ON r.id = b.room_id
-        WHERE b.check_in = ? AND LOWER(COALESCE(b.status, '')) NOT IN ('cancelled', 'canceled')
+        WHERE DATE(b.check_in) = ? AND LOWER(COALESCE(b.status, '')) NOT IN ('cancelled', 'canceled')
         ORDER BY b.eta ASC, b.id ASC
-        LIMIT 25
     ");
     $arrStmt->bind_param('s', $targetDate);
     $arrStmt->execute();
     $arrRes = $arrStmt->get_result();
     $arrivals = [];
+    $arrivalsDueCount = 0;
+    $arrivalsCheckedInCount = 0;
+    $arrivalsCheckedOutSameDayCount = 0;
     while ($row = $arrRes->fetch_assoc()) {
-        $arrivals[] = [
-            'booking_ref' => 'REF-' . str_pad((string)$row['id'], 3, '0', STR_PAD_LEFT),
-            'guest_name' => $row['guest_name'],
-            'guest_email_masked' => mask_email($row['guest_email']),
-            'accommodation' => $row['accommodation_name'],
-            'room_number' => $row['room_number'] ?: null,
-            'eta' => $row['eta'],
-            'guests' => (int)$row['guests_count'],
-            'status' => $row['status'],
-        ];
+        $stLower = strtolower(trim((string)($row['status'] ?? '')));
+        if ($stLower === 'checked out') {
+            $arrivalsCheckedOutSameDayCount++;
+            continue; // Matches Dashboard "Arrivals Today" strip (excludes Checked Out)
+        }
+        if ($stLower === 'checked in') {
+            $arrivalsCheckedInCount++;
+        } else {
+            $arrivalsDueCount++;
+        }
+        if (count($arrivals) < 25) {
+            $arrivals[] = [
+                'booking_ref' => 'REF-' . str_pad((string)$row['id'], 3, '0', STR_PAD_LEFT),
+                'guest_name' => $row['guest_name'],
+                'guest_email_masked' => mask_email((string)($row['guest_email'] ?? '')),
+                'accommodation' => $row['accommodation_name'],
+                'room_number' => $row['room_number'] ?: null,
+                'eta' => $row['eta'],
+                'guests' => (int)$row['guests_count'],
+                'status' => $row['status'],
+            ];
+        }
     }
     $arrStmt->close();
+    $arrivalsCount = $arrivalsDueCount + $arrivalsCheckedInCount;
 
+    // Fetch ALL non-cancelled departures on $targetDate
     $depStmt = $conn->prepare("
         SELECT b.id, b.guest_name, b.accommodation_name, b.status, r.room_number
         FROM bookings b
         LEFT JOIN rooms r ON r.id = b.room_id
-        WHERE b.check_out = ? AND b.status IN ('Checked In', 'Confirmed')
-        ORDER BY b.id ASC
-        LIMIT 25
+        WHERE DATE(b.check_out) = ? AND LOWER(COALESCE(b.status, '')) NOT IN ('cancelled', 'canceled')
+        ORDER BY (b.status = 'Checked In') DESC, b.id ASC
     ");
     $depStmt->bind_param('s', $targetDate);
     $depStmt->execute();
     $depRes = $depStmt->get_result();
     $departures = [];
+    $departuresDueCount = 0;
+    $departuresCheckedOutCount = 0;
+    $departuresUncheckedInCount = 0;
     while ($row = $depRes->fetch_assoc()) {
-        $departures[] = [
-            'booking_ref' => 'REF-' . str_pad((string)$row['id'], 3, '0', STR_PAD_LEFT),
-            'guest_name' => $row['guest_name'],
-            'accommodation' => $row['accommodation_name'],
-            'room_number' => $row['room_number'] ?: null,
-            'status' => $row['status'],
-        ];
+        $stLower = strtolower(trim((string)($row['status'] ?? '')));
+        if ($stLower === 'checked in') {
+            $departuresDueCount++;
+        } elseif ($stLower === 'checked out') {
+            $departuresCheckedOutCount++;
+        } else {
+            $departuresUncheckedInCount++;
+        }
+        if (count($departures) < 25) {
+            $departures[] = [
+                'booking_ref' => 'REF-' . str_pad((string)$row['id'], 3, '0', STR_PAD_LEFT),
+                'guest_name' => $row['guest_name'],
+                'accommodation' => $row['accommodation_name'],
+                'room_number' => $row['room_number'] ?: null,
+                'status' => $row['status'],
+            ];
+        }
     }
     $depStmt->close();
+    $departuresCount = $departuresDueCount + $departuresCheckedOutCount + $departuresUncheckedInCount;
 
+    // Fetch ALL currently Checked In guests (no LIMIT truncating overdue or pax counts)
     $inHouseGuests = [];
     $overdueCheckouts = [];
-    $todayIso = date('Y-m-d');
+    $checkedInRoomSet = [];
+    $checkedInCount = 0;
+    $inHouseGuestsPax = 0;
     $inHouseRes = $conn->query("
         SELECT b.id, b.guest_name, b.accommodation_name, b.check_in, b.check_out, b.guests_count, b.balance_status,
-               r.room_number
+               b.room_id, r.room_number
         FROM bookings b
         LEFT JOIN rooms r ON r.id = b.room_id
         WHERE b.status = 'Checked In'
         ORDER BY b.check_out ASC, b.id ASC
-        LIMIT 15
     ");
     if ($inHouseRes) {
         while ($row = $inHouseRes->fetch_assoc()) {
+            $checkedInCount++;
+            $inHouseGuestsPax += (int)$row['guests_count'];
+            if (!empty($row['room_id'])) {
+                $checkedInRoomSet[(int)$row['room_id']] = true;
+            }
+            $isOverdue = (!empty($row['check_out']) && $row['check_out'] < $todayIso);
             $item = [
                 'booking_ref' => 'REF-' . str_pad((string)$row['id'], 3, '0', STR_PAD_LEFT),
                 'guest_name' => $row['guest_name'],
@@ -1251,114 +1328,256 @@ function sf_staff_tool_today_operations(mysqli $conn, ?string $date = null, stri
                 'check_out' => $row['check_out'],
                 'guests' => (int)$row['guests_count'],
                 'balance_status' => (string)($row['balance_status'] ?? ''),
+                'is_overdue' => $isOverdue,
             ];
-            $inHouseGuests[] = $item;
-            if (!empty($row['check_out']) && $row['check_out'] < $todayIso) {
+            if (count($inHouseGuests) < 15) {
+                $inHouseGuests[] = $item;
+            }
+            if ($isOverdue) {
                 $overdueCheckouts[] = $item;
             }
         }
     }
 
-    $checkedInCount = (int)($conn->query("SELECT COUNT(*) FROM bookings WHERE status = 'Checked In'")->fetch_row()[0] ?? 0);
+    // Check active Pending/Confirmed bookings that started before $targetDate and overlap $targetDate (overdue check-ins)
+    $overdueArrivalsCount = 0;
+    $ovArrStmt = $conn->prepare("
+        SELECT COUNT(*)
+        FROM bookings
+        WHERE LOWER(COALESCE(status, '')) IN ('pending', 'pending payment', 'confirmed')
+          AND DATE(check_in) < ?
+          AND DATE(check_out) >= ?
+    ");
+    if ($ovArrStmt) {
+        $ovArrStmt->bind_param('ss', $targetDate, $targetDate);
+        $ovArrStmt->execute();
+        $overdueArrivalsCount = (int)($ovArrStmt->get_result()->fetch_row()[0] ?? 0);
+        $ovArrStmt->close();
+    }
+
     $pendingBookings = (int)($conn->query("SELECT COUNT(*) FROM bookings WHERE status IN ('Pending', 'Pending Payment')")->fetch_row()[0] ?? 0);
+    $pendingBookingsOnly = (int)($conn->query("SELECT COUNT(*) FROM bookings WHERE status = 'Pending'")->fetch_row()[0] ?? 0);
+    $pendingPayments = (int)($conn->query("SELECT COUNT(*) FROM payments WHERE LOWER(COALESCE(status, '')) = 'pending'")->fetch_row()[0] ?? 0);
+    $totalBookingsAll = (int)($conn->query("SELECT COUNT(*) FROM bookings")->fetch_row()[0] ?? 0);
+
+    $newBookingsStmt = $conn->prepare("SELECT COUNT(*) FROM bookings WHERE DATE(created_at) = ?");
+    $newBookingsOnDate = 0;
+    if ($newBookingsStmt) {
+        $newBookingsStmt->bind_param('s', $targetDate);
+        $newBookingsStmt->execute();
+        $newBookingsOnDate = (int)($newBookingsStmt->get_result()->fetch_row()[0] ?? 0);
+        $newBookingsStmt->close();
+    }
+
+    $occ = sf_staff_tool_occupancy_summary($conn, $targetDate, $nextDate);
 
     return [
         'success' => true,
         'date' => $targetDate,
-        'arrivals_count' => count($arrivals),
+        'arrivals_count' => $arrivalsCount,
+        'arrivals_due_count' => $arrivalsDueCount,
+        'arrivals_checked_in_count' => $arrivalsCheckedInCount,
+        'arrivals_checked_out_same_day_count' => $arrivalsCheckedOutSameDayCount,
         'arrivals' => $arrivals,
-        'departures_count' => count($departures),
+        'departures_count' => $departuresCount,
+        'departures_due_count' => $departuresDueCount,
+        'departures_checked_out_count' => $departuresCheckedOutCount,
+        'departures_unchecked_in_count' => $departuresUncheckedInCount,
         'departures' => $departures,
         'currently_checked_in_total' => $checkedInCount,
+        'currently_checked_in_rooms' => count($checkedInRoomSet),
+        'in_house_guests_pax' => $inHouseGuestsPax,
         'in_house_guests' => $inHouseGuests,
         'overdue_checkouts_count' => count($overdueCheckouts),
         'overdue_checkouts' => $overdueCheckouts,
+        'overdue_arrivals_count' => $overdueArrivalsCount,
         'pending_bookings_total' => $pendingBookings,
+        'pending_bookings_pending_only' => $pendingBookingsOnly,
+        'pending_payments_total' => $pendingPayments,
+        'total_bookings_all' => $totalBookingsAll,
+        'new_bookings_on_date' => $newBookingsOnDate,
+        'occupied_today_units' => $occ['booked_or_occupied_units'],
+        'total_physical_rooms' => $occ['total_physical_rooms'],
+        'occupied_today_percent' => $occ['occupancy_rate_percent'],
+        'dashboard_occupied_today_percent' => $occ['dashboard_occupied_today_percent'],
+        'available_units' => $occ['available_units'],
+        'checked_in_occupancy_percent' => $occ['checked_in_occupancy_percent'],
+        'reserved_rooms_total' => $occ['reserved_rooms_total'],
         'checkin_desk_url' => $routes['checkin'],
         'reservations_url' => $routes['reservations'],
     ];
 }
 
 /**
- * Staff Tool 2: Accurate occupancy summary across ALL physical rooms and room_types.
+ * Staff Tool 2: Accurate occupancy summary across ALL physical rooms and room_types,
+ * aligned directly with admin_dashboard.php (occupancy_kpi.js + analytics_api.php).
  */
 function sf_staff_tool_occupancy_summary(mysqli $conn, ?string $startDate = null, ?string $endDate = null): array
 {
-    $start = ($startDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) ? $startDate : date('Y-m-d');
+    $todayIso = sf_staff_current_date($conn);
+    $start = ($startDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) ? $startDate : $todayIso;
     $end = ($endDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate) && $endDate > $start)
         ? $endDate
         : date('Y-m-d', strtotime($start . ' +1 day'));
 
-    $totalRooms = (int)($conn->query("SELECT COUNT(*) FROM rooms")->fetch_row()[0] ?? 0);
-    $maintenanceRooms = (int)($conn->query("SELECT COUNT(*) FROM rooms WHERE LOWER(COALESCE(status, '')) = 'maintenance'")->fetch_row()[0] ?? 0);
+    // 1. Load all physical rooms directly (source of truth for total_rooms, maintenance, and room-type inventory)
+    $roomTypeById = [];
+    $roomMaintById = [];
+    $totalByType = [];
+    $usableByType = [];
+    $maintByType = [];
+    $maintenanceList = [];
+    $totalRooms = 0;
+
+    $rRes = $conn->query("SELECT id, room_number, name, type, status FROM rooms ORDER BY type ASC, room_number ASC, id ASC");
+    if ($rRes) {
+        while ($row = $rRes->fetch_assoc()) {
+            $totalRooms++;
+            $rid = (int)$row['id'];
+            $slug = (string)($row['type'] ?? '');
+            $stLower = strtolower(trim((string)($row['status'] ?? '')));
+            $isMaint = in_array($stLower, ['maintenance', 'out of order'], true);
+
+            $roomTypeById[$rid] = $slug;
+            $roomMaintById[$rid] = $isMaint;
+            $totalByType[$slug] = ($totalByType[$slug] ?? 0) + 1;
+
+            if ($isMaint) {
+                $maintByType[$slug] = ($maintByType[$slug] ?? 0) + 1;
+                if (count($maintenanceList) < 15) {
+                    $maintenanceList[] = [
+                        'room_number' => (string)($row['room_number'] ?? ''),
+                        'name' => (string)($row['name'] ?? ''),
+                        'display_type' => sf_staff_human_room_label($slug),
+                    ];
+                }
+            } else {
+                $usableByType[$slug] = ($usableByType[$slug] ?? 0) + 1;
+            }
+        }
+    }
+
+    $maintenanceRooms = array_sum($maintByType);
     $usableRooms = max(0, $totalRooms - $maintenanceRooms);
 
-    $maintenanceList = [];
-    $mRes = $conn->query("SELECT room_number, name, type FROM rooms WHERE LOWER(COALESCE(status, '')) = 'maintenance' ORDER BY room_number ASC LIMIT 15");
-    if ($mRes) {
-        while ($mRow = $mRes->fetch_assoc()) {
-            $maintenanceList[] = [
-                'room_number' => (string)($mRow['room_number'] ?? ''),
-                'name' => (string)($mRow['name'] ?? ''),
-                'display_type' => sf_staff_human_room_label((string)($mRow['type'] ?? '')),
-            ];
-        }
-    }
-
-    $pdo = getPdoConnection();
-    $roomBreakdown = [];
-    $totalAvailable = 0;
-
-    $physicalByType = [];
-    $pRes = $conn->query("
-        SELECT type,
-               SUM(CASE WHEN LOWER(COALESCE(status, '')) <> 'maintenance' THEN 1 ELSE 0 END) AS usable_cnt
-        FROM rooms
-        GROUP BY type
-    ");
-    if ($pRes) {
-        while ($pRow = $pRes->fetch_assoc()) {
-            $physicalByType[(string)$pRow['type']] = (int)$pRow['usable_cnt'];
-        }
-    }
-
+    // 2. Map room_types IDs -> slugs in canonical order
+    $rtIdToSlug = [];
+    $orderedSlugs = [];
     $rtRes = $conn->query("SELECT id, name FROM room_types ORDER BY id ASC");
-    $coveredSlugs = [];
     if ($rtRes) {
         while ($rt = $rtRes->fetch_assoc()) {
             $rtId = (int)$rt['id'];
             $slug = (string)$rt['name'];
-            $coveredSlugs[$slug] = true;
-            $usableForType = $physicalByType[$slug] ?? 0;
-            if ($usableForType <= 0 && !isset($physicalByType[$slug])) {
-                continue;
+            $rtIdToSlug[$rtId] = $slug;
+            if (isset($totalByType[$slug]) && !in_array($slug, $orderedSlugs, true)) {
+                $orderedSlugs[] = $slug;
             }
-            $availableForType = getAvailableRooms($pdo, $rtId, $start, $end);
-            $totalAvailable += $availableForType;
-            $roomBreakdown[] = [
-                'room_type' => $slug,
-                'display_name' => sf_staff_human_room_label($slug),
-                'usable_units' => $usableForType,
-                'available_units' => $availableForType,
-            ];
+        }
+    }
+    foreach (array_keys($totalByType) as $slug) {
+        if (!in_array($slug, $orderedSlugs, true)) {
+            $orderedSlugs[] = $slug;
         }
     }
 
-    // Account for any physical rooms whose type slug is absent from room_types
-    foreach ($physicalByType as $slug => $usableCnt) {
-        if (!isset($coveredSlugs[$slug]) && $usableCnt > 0) {
-            $totalAvailable += $usableCnt;
-            $roomBreakdown[] = [
-                'room_type' => $slug,
-                'display_name' => sf_staff_human_room_label($slug),
-                'usable_units' => $usableCnt,
-                'available_units' => $usableCnt,
-            ];
+    // 3. Query overlapping active bookings (matching occupancy_kpi.js: not Cancelled, not Checked Out, check_in < $end AND check_out > $start)
+    $occupiedRoomIds = [];
+    $checkedInOnDateIds = [];
+    $reservedOnDateIds = [];
+    $unassignedByType = [];
+
+    $occStmt = $conn->prepare("
+        SELECT b.id, b.room_id, b.room_type_id, b.accommodation_name, b.status
+        FROM bookings b
+        WHERE LOWER(COALESCE(b.status, '')) IN ('confirmed', 'checked in', 'pending payment', 'pending')
+          AND DATE(b.check_in) < ?
+          AND DATE(b.check_out) > ?
+    ");
+    if ($occStmt) {
+        $occStmt->bind_param('ss', $end, $start);
+        $occStmt->execute();
+        $occRes = $occStmt->get_result();
+        while ($b = $occRes->fetch_assoc()) {
+            $rid = !empty($b['room_id']) ? (int)$b['room_id'] : 0;
+            $stLower = strtolower(trim((string)($b['status'] ?? '')));
+            if ($rid > 0 && isset($roomTypeById[$rid])) {
+                $occupiedRoomIds[$rid] = true;
+                if ($stLower === 'checked in') {
+                    $checkedInOnDateIds[$rid] = true;
+                } else {
+                    $reservedOnDateIds[$rid] = true;
+                }
+            } else {
+                $rtId = !empty($b['room_type_id']) ? (int)$b['room_type_id'] : null;
+                $slug = sf_staff_resolve_room_slug($rtId, (string)($b['accommodation_name'] ?? ''), $rtIdToSlug, $orderedSlugs);
+                if ($slug !== null) {
+                    $unassignedByType[$slug] = ($unassignedByType[$slug] ?? 0) + 1;
+                }
+            }
         }
+        $occStmt->close();
     }
 
-    $occupiedUnits = max(0, $usableRooms - $totalAvailable);
-    $occupancyPct = $usableRooms > 0 ? round(($occupiedUnits / $usableRooms) * 100, 1) : 0.0;
+    // Partition assigned occupied rooms cleanly between Checked In vs Reserved on date
+    foreach (array_keys($checkedInOnDateIds) as $cid) {
+        unset($reservedOnDateIds[$cid]);
+    }
+
+    // Count occupied & available rooms per type accurately (distinct physical rooms + unassigned holds)
+    $occupiedByType = [];
+    foreach ($occupiedRoomIds as $rid => $_) {
+        $slug = $roomTypeById[$rid];
+        $occupiedByType[$slug] = ($occupiedByType[$slug] ?? 0) + 1;
+    }
+
+    $roomBreakdown = [];
+    $totalAvailable = 0;
+    $totalOccupied = 0;
+
+    foreach ($orderedSlugs as $slug) {
+        $typeTotal = $totalByType[$slug] ?? 0;
+        $typeMaint = $maintByType[$slug] ?? 0;
+        $typeUsable = $usableByType[$slug] ?? 0;
+        if ($typeTotal <= 0) {
+            continue;
+        }
+
+        // Count assigned rooms of this type that are occupied (including if a maintenance room has an active booking)
+        $assignedOcc = $occupiedByType[$slug] ?? 0;
+        // Count how many usable rooms of this type are occupied
+        $assignedUsableOcc = 0;
+        foreach ($occupiedRoomIds as $rid => $_) {
+            if ($roomTypeById[$rid] === $slug && empty($roomMaintById[$rid])) {
+                $assignedUsableOcc++;
+            }
+        }
+        $unassignedOcc = $unassignedByType[$slug] ?? 0;
+        $typeAvail = max(0, $typeUsable - $assignedUsableOcc - $unassignedOcc);
+        $typeOccupied = min($typeTotal, $assignedOcc + $unassignedOcc);
+
+        $totalAvailable += $typeAvail;
+        $totalOccupied += $typeOccupied;
+
+        $roomBreakdown[] = [
+            'room_type' => $slug,
+            'display_name' => sf_staff_human_room_label($slug),
+            'total_units' => $typeTotal,
+            'maintenance_units' => $typeMaint,
+            'usable_units' => $typeUsable,
+            'occupied_units' => $typeOccupied,
+            'available_units' => $typeAvail,
+            'occupancy_percent' => $typeTotal > 0 ? round(($typeOccupied / $typeTotal) * 100, 1) : 0.0,
+        ];
+    }
+
+    // Match admin_dashboard.php Occupied Today (denominator = totalRooms) and executive-stats Occupancy Rate (Checked In / totalRooms)
+    $occupancyPct = $totalRooms > 0 ? round(($totalOccupied / $totalRooms) * 100, 1) : 0.0;
+    $dashboardOccupiedPct = $totalRooms > 0 ? (int)round(($totalOccupied / $totalRooms) * 100) : 0;
+    $usableOccupancyPct = $usableRooms > 0 ? round(($totalOccupied / $usableRooms) * 100, 1) : 0.0;
+
+    $checkedInRoomsTotal = count(sf_get_checked_in_room_ids($conn));
+    $checkedInOccupancyPct = $totalRooms > 0 ? round(($checkedInRoomsTotal / $totalRooms) * 100, 1) : 0.0;
+    $reservedRoomsTotal = count(sf_get_reserved_room_ids($conn));
 
     return [
         'success' => true,
@@ -1368,9 +1587,16 @@ function sf_staff_tool_occupancy_summary(mysqli $conn, ?string $startDate = null
         'maintenance_rooms' => $maintenanceRooms,
         'maintenance_list' => $maintenanceList,
         'usable_rooms' => $usableRooms,
-        'booked_or_occupied_units' => $occupiedUnits,
+        'booked_or_occupied_units' => $totalOccupied,
+        'checked_in_units_on_date' => count($checkedInOnDateIds),
+        'reserved_units_on_date' => count($reservedOnDateIds) + array_sum($unassignedByType),
         'available_units' => $totalAvailable,
         'occupancy_rate_percent' => $occupancyPct,
+        'dashboard_occupied_today_percent' => $dashboardOccupiedPct,
+        'usable_occupancy_rate_percent' => $usableOccupancyPct,
+        'checked_in_rooms_total' => $checkedInRoomsTotal,
+        'checked_in_occupancy_percent' => $checkedInOccupancyPct,
+        'reserved_rooms_total' => $reservedRoomsTotal,
         'by_room_type' => $roomBreakdown,
         'calendar_url' => 'admin_calendar',
     ];
@@ -1382,10 +1608,11 @@ function sf_staff_tool_occupancy_summary(mysqli $conn, ?string $startDate = null
 function sf_staff_tool_pending_actions(mysqli $conn, string $role = 'receptionist'): array
 {
     $routes = sf_staff_assistant_routes($role);
-    $pendingPayments = (int)($conn->query("SELECT COUNT(*) FROM payments WHERE status = 'pending'")->fetch_row()[0] ?? 0);
+    $pendingPayments = (int)($conn->query("SELECT COUNT(*) FROM payments WHERE LOWER(COALESCE(status, '')) = 'pending'")->fetch_row()[0] ?? 0);
     $pendingRefunds = (int)($conn->query("SELECT COUNT(*) FROM refund_requests WHERE status = 'requested'")->fetch_row()[0] ?? 0);
-    $pendingDiscounts = (int)($conn->query("SELECT COUNT(*) FROM booking_discounts WHERE state = 'Awaiting ID verification'")->fetch_row()[0] ?? 0);
+    $pendingDiscounts = (int)($conn->query("SELECT COUNT(*) FROM booking_discounts WHERE state IN ('Awaiting ID verification', 'More information needed', 'Payment Under Review')")->fetch_row()[0] ?? 0);
     $pendingBookings = (int)($conn->query("SELECT COUNT(*) FROM bookings WHERE status IN ('Pending', 'Pending Payment')")->fetch_row()[0] ?? 0);
+    $pendingBookingsOnly = (int)($conn->query("SELECT COUNT(*) FROM bookings WHERE status = 'Pending'")->fetch_row()[0] ?? 0);
 
     $contactCond = sf_staff_channel_sql($conn, 'contact');
     $liveCond = sf_staff_channel_sql($conn, 'live_chat');
@@ -1401,7 +1628,7 @@ function sf_staff_tool_pending_actions(mysqli $conn, string $role = 'receptionis
 
     $pendingReviews = 0;
     if (sf_staff_table_exists($conn, 'reviews')) {
-        $pendingReviews = (int)($conn->query("SELECT COUNT(*) FROM reviews WHERE is_approved = 0")->fetch_row()[0] ?? 0);
+        $pendingReviews = (int)($conn->query("SELECT COUNT(*) FROM reviews WHERE is_approved IS NULL OR is_approved <> 1")->fetch_row()[0] ?? 0);
     }
 
     return [
@@ -1413,6 +1640,7 @@ function sf_staff_tool_pending_actions(mysqli $conn, string $role = 'receptionis
         'pending_discount_verifications_count' => $pendingDiscounts,
         'pending_discounts_url' => $routes['discounts'],
         'pending_bookings_count' => $pendingBookings,
+        'pending_bookings_pending_only' => $pendingBookingsOnly,
         'reservations_url' => $routes['reservations'],
         'unread_inquiries_count' => $unreadContactInquiries,
         'inquiries_url' => $routes['inquiries'],
@@ -1429,6 +1657,7 @@ function sf_staff_tool_pending_actions(mysqli $conn, string $role = 'receptionis
 
 /**
  * Staff Tool 4: Revenue summary (strictly restricted to 'admin' role).
+ * Calendar-day aligned with analytics_api.php (Daily = today 00:00+, Weekly = CURDATE - 6 days 00:00+).
  */
 function sf_staff_tool_revenue_summary(mysqli $conn, string $role, int $days = 30): array
 {
@@ -1439,33 +1668,55 @@ function sf_staff_tool_revenue_summary(mysqli $conn, string $role, int $days = 3
         ];
     }
 
-    $days = max(1, min(365, $days));
-    $sinceDate = date('Y-m-d H:i:s', strtotime("-{$days} days"));
-
-    $stmt = $conn->prepare("
-        SELECT
-            COALESCE(SUM(CASE WHEN status = 'verified' THEN amount ELSE 0 END), 0) AS verified_revenue,
-            COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) AS pending_revenue,
-            COALESCE(SUM(CASE WHEN status = 'refunded' THEN amount ELSE 0 END), 0) AS refunded_amount,
-            COUNT(*) AS payment_records
-        FROM payments
-        WHERE paid_at >= ?
-    ");
-    $stmt->bind_param('s', $sinceDate);
+    $todayIso = sf_staff_current_date($conn);
+    $isAllTime = ($days === 0);
+    if (!$isAllTime) {
+        $days = max(1, min(365, $days));
+        $offsetDays = $days - 1;
+        $sinceDate = date('Y-m-d 00:00:00', strtotime($todayIso . " -{$offsetDays} days"));
+        $stmt = $conn->prepare("
+            SELECT
+                COALESCE(SUM(CASE WHEN status = 'verified' THEN amount ELSE 0 END), 0) AS verified_revenue,
+                COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) AS pending_revenue,
+                COALESCE(SUM(CASE WHEN status = 'refunded' THEN amount ELSE 0 END), 0) AS refunded_amount,
+                COUNT(*) AS payment_records
+            FROM payments
+            WHERE paid_at >= ?
+        ");
+        $stmt->bind_param('s', $sinceDate);
+    } else {
+        $sinceDate = 'All time';
+        $stmt = $conn->prepare("
+            SELECT
+                COALESCE(SUM(CASE WHEN status = 'verified' THEN amount ELSE 0 END), 0) AS verified_revenue,
+                COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) AS pending_revenue,
+                COALESCE(SUM(CASE WHEN status = 'refunded' THEN amount ELSE 0 END), 0) AS refunded_amount,
+                COUNT(*) AS payment_records
+            FROM payments
+        ");
+    }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
+    // Dashboard Daily Revenue & Weekly Revenue (exact match to analytics_api.php)
+    $dailyRev = (float)($conn->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'verified' AND DATE(paid_at) = CURDATE()")->fetch_row()[0] ?? 0);
+    $weeklyRev = (float)($conn->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'verified' AND paid_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)")->fetch_row()[0] ?? 0);
+    $allTimeRev = (float)($conn->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'verified'")->fetch_row()[0] ?? 0);
     $overdueBalancesCount = (int)($conn->query("SELECT COUNT(*) FROM bookings WHERE balance_status IN ('overdue', 'unpaid', 'pending') AND LOWER(COALESCE(status, '')) NOT IN ('cancelled', 'canceled', 'checked out')")->fetch_row()[0] ?? 0);
 
     return [
         'success' => true,
         'period_days' => $days,
+        'is_all_time' => $isAllTime,
         'since' => $sinceDate,
         'verified_revenue_php' => (float)($row['verified_revenue'] ?? 0),
         'pending_verification_php' => (float)($row['pending_revenue'] ?? 0),
         'refunded_total_php' => (float)($row['refunded_amount'] ?? 0),
         'payment_records_count' => (int)($row['payment_records'] ?? 0),
+        'daily_revenue_php' => $dailyRev,
+        'weekly_revenue_php' => $weeklyRev,
+        'all_time_verified_revenue_php' => $allTimeRev,
         'overdue_or_pending_balances_count' => $overdueBalancesCount,
         'reports_url' => 'admin_reports',
     ];
@@ -1554,7 +1805,7 @@ function sf_staff_tool_rooms_and_promotions(mysqli $conn, string $role = 'recept
     $res = $conn->query("
         SELECT r.type,
                COUNT(*) AS total_units,
-               SUM(CASE WHEN LOWER(COALESCE(r.status, '')) = 'maintenance' THEN 1 ELSE 0 END) AS maintenance_units,
+               SUM(CASE WHEN LOWER(COALESCE(r.status, '')) IN ('maintenance', 'out of order') THEN 1 ELSE 0 END) AS maintenance_units,
                MAX(r.price_per_night) AS room_price,
                MAX(rt.price) AS catalog_price
         FROM rooms r
@@ -1576,7 +1827,7 @@ function sf_staff_tool_rooms_and_promotions(mysqli $conn, string $role = 'recept
     }
 
     $maintenanceRooms = [];
-    $mRes = $conn->query("SELECT room_number, name, type FROM rooms WHERE LOWER(COALESCE(status, '')) = 'maintenance' ORDER BY room_number ASC LIMIT 15");
+    $mRes = $conn->query("SELECT room_number, name, type FROM rooms WHERE LOWER(COALESCE(status, '')) IN ('maintenance', 'out of order') ORDER BY room_number ASC LIMIT 15");
     if ($mRes) {
         while ($row = $mRes->fetch_assoc()) {
             $maintenanceRooms[] = [
@@ -1634,6 +1885,9 @@ function sf_staff_tool_guest_comms_summary(mysqli $conn, string $focus = 'all', 
     $liveCond = sf_staff_channel_sql($conn, 'live_chat');
     $contactCond = sf_staff_channel_sql($conn, 'contact');
 
+    $openLiveChatsCount = (int)($conn->query("SELECT COUNT(*) FROM inquiries i WHERE {$liveCond} AND i.status <> 'Resolved'")->fetch_row()[0] ?? 0);
+    $openContactInquiriesCount = (int)($conn->query("SELECT COUNT(*) FROM inquiries i WHERE {$contactCond} AND i.status <> 'Resolved'")->fetch_row()[0] ?? 0);
+
     $waitingLiveChats = [];
     $lRes = $conn->query("
         SELECT i.id, i.guest_name, i.status, i.created_at
@@ -1683,7 +1937,7 @@ function sf_staff_tool_guest_comms_summary(mysqli $conn, string $focus = 'all', 
         $agg = $conn->query("
             SELECT COUNT(*) AS total_cnt,
                    COALESCE(AVG(rating), 0) AS avg_rating,
-                   SUM(CASE WHEN is_approved = 0 THEN 1 ELSE 0 END) AS pending_cnt
+                   SUM(CASE WHEN is_approved IS NULL OR is_approved <> 1 THEN 1 ELSE 0 END) AS pending_cnt
             FROM reviews
         ");
         if ($agg && ($rRow = $agg->fetch_assoc())) {
@@ -1707,9 +1961,9 @@ function sf_staff_tool_guest_comms_summary(mysqli $conn, string $focus = 'all', 
     return [
         'success' => true,
         'focus' => $focus,
-        'open_live_chats_count' => count($waitingLiveChats),
+        'open_live_chats_count' => $openLiveChatsCount,
         'waiting_live_chats' => $waitingLiveChats,
-        'open_contact_inquiries_count' => count($waitingInquiries),
+        'open_contact_inquiries_count' => $openContactInquiriesCount,
         'waiting_contact_inquiries' => $waitingInquiries,
         'reviews' => $reviewsSummary,
         'routes' => $routes,
@@ -1728,8 +1982,10 @@ function sf_staff_tool_admin_audit_summary(mysqli $conn, string $role): array
         ];
     }
 
+    $activeSessionsCount = 0;
     $activeSessions = [];
     if (sf_staff_table_exists($conn, 'admin_sessions')) {
+        $activeSessionsCount = (int)($conn->query("SELECT COUNT(*) FROM admin_sessions WHERE revoked_at IS NULL")->fetch_row()[0] ?? 0);
         $sRes = $conn->query("
             SELECT user_type, username, ip_address, last_seen_at
             FROM admin_sessions
@@ -1778,11 +2034,34 @@ function sf_staff_tool_admin_audit_summary(mysqli $conn, string $role): array
 
     return [
         'success' => true,
-        'active_sessions_count' => count($activeSessions),
+        'active_sessions_count' => $activeSessionsCount,
         'active_sessions' => $activeSessions,
         'recent_activity' => $recentActivity,
         'security_events_24h' => $security24hCount,
         'logs_url' => 'admin_logs',
         'sessions_url' => 'admin_sessions',
+    ];
+}
+
+/**
+ * Staff Tool 9: Unified Dashboard KPI Snapshot aligned with admin_dashboard.php & dashboard.php.
+ */
+function sf_staff_tool_dashboard_summary(mysqli $conn, string $role = 'receptionist'): array
+{
+    $todayIso = sf_staff_current_date($conn);
+    $ops = sf_staff_tool_today_operations($conn, $todayIso, $role);
+    $occ = sf_staff_tool_occupancy_summary($conn, $todayIso, date('Y-m-d', strtotime($todayIso . ' +1 day')));
+    $pend = sf_staff_tool_pending_actions($conn, $role);
+    $rev = ($role === 'admin') ? sf_staff_tool_revenue_summary($conn, $role, 7) : null;
+
+    return [
+        'success' => true,
+        'date' => $todayIso,
+        'role' => $role,
+        'operations' => $ops,
+        'occupancy' => $occ,
+        'pending' => $pend,
+        'revenue' => $rev,
+        'routes' => sf_staff_assistant_routes($role),
     ];
 }

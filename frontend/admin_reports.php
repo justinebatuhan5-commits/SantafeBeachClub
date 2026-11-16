@@ -4,6 +4,7 @@ require_once __DIR__ . '/../backend/helpers/admin_auth_check.php';
 $admin = $_SESSION['admin_username'] ?? 'Admin';
 $adminCssVersion = file_exists(__DIR__ . '/assets/css/admin.css') ? filemtime(__DIR__ . '/assets/css/admin.css') : 1;
 $cssVersion = file_exists(__DIR__ . '/assets/css/pages/admin-reports.css') ? filemtime(__DIR__ . '/assets/css/pages/admin-reports.css') : 1;
+$securityJsVersion = file_exists(__DIR__ . '/assets/js/security.js') ? filemtime(__DIR__ . '/assets/js/security.js') : 1;
 $jsVersion = file_exists(__DIR__ . '/assets/js/pages/admin-reports.js') ? filemtime(__DIR__ . '/assets/js/pages/admin-reports.js') : 1;
 ?>
 <!DOCTYPE html>
@@ -28,11 +29,11 @@ $jsVersion = file_exists(__DIR__ . '/assets/js/pages/admin-reports.js') ? filemt
         $page_subtitle = 'Audit trails, income performance, and guest volume metrics';
         $header_extra_html = '
             <div style="display:flex; gap:8px; align-items:center;">
-                <a href="../backend/api/availability.php?action=export_report_csv&type=bookings" class="header-icon-btn" style="width:auto; padding:0 14px; height:40px; font-size:12.5px; font-weight:700; text-decoration:none; gap:6px; color:#334155;" title="Export Bookings CSV">
+                <a id="exportBookingsCsvLink" href="../backend/api/availability.php?action=export_report_csv&type=bookings" class="header-icon-btn" style="width:auto; padding:0 14px; height:40px; font-size:12.5px; font-weight:700; text-decoration:none; gap:6px; color:#334155;" title="Export Bookings CSV">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span>Bookings CSV</span>
                 </a>
-                <a href="../backend/api/availability.php?action=export_report_csv&type=payments" class="header-icon-btn" style="width:auto; padding:0 14px; height:40px; font-size:12.5px; font-weight:700; text-decoration:none; gap:6px; color:#059669; border-color:#A7F3D0; background:#ECFDF5;" title="Export Payments CSV">
+                <a id="exportPaymentsCsvLink" href="../backend/api/availability.php?action=export_report_csv&type=payments" class="header-icon-btn" style="width:auto; padding:0 14px; height:40px; font-size:12.5px; font-weight:700; text-decoration:none; gap:6px; color:#059669; border-color:#A7F3D0; background:#ECFDF5;" title="Export Payments CSV">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span>Payments CSV</span>
                 </a>
@@ -50,6 +51,7 @@ $jsVersion = file_exists(__DIR__ . '/assets/js/pages/admin-reports.js') ? filemt
         </div>
     </main>
 
+    <script src="assets/js/security.js?v=<?php echo $securityJsVersion; ?>"></script>
     <script src="assets/js/pages/admin-reports.js?v=<?php echo $jsVersion; ?>"></script>
 </body>
 </html>

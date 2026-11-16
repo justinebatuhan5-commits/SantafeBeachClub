@@ -359,12 +359,33 @@ function sfbc_handle_payments_page(mysqli $conn): array
                 $bookingTotal = $rawAmount;
             }
 
+            $bookingIdInt = (int)($row['booking_id'] ?? 0);
+            $checkInRaw = (string)($row['check_in'] ?? '');
+            $checkOutRaw = (string)($row['check_out'] ?? '');
+            $stayDatesDisplay = '';
+            if ($checkInRaw !== '' && $checkOutRaw !== '') {
+                $ciTs = strtotime($checkInRaw);
+                $coTs = strtotime($checkOutRaw);
+                if ($ciTs && $coTs) {
+                    $stayDatesDisplay = date('M j', $ciTs) . ' – ' . date('M j, Y', $coTs);
+                }
+            }
+            $paidAtRaw = (string)($row['paid_at'] ?? '');
+            $paidAtDisplay = ($paidAtRaw !== '' && strtotime($paidAtRaw))
+                ? date('M j, Y • g:i A', strtotime($paidAtRaw))
+                : '';
+
             $payments[] = [
                 'pay_id' => $payIdInt,
                 'invoice_code' => 'INV-100' . $payIdInt,
-                'booking_id' => (int)($row['booking_id'] ?? 0),
+                'booking_id' => $bookingIdInt,
+                'booking_ref' => $bookingIdInt > 0 ? ('REF-' . str_pad((string)$bookingIdInt, 3, '0', STR_PAD_LEFT)) : '',
                 'guest_name' => (string)$row['guest_name'],
+                'guest_email' => (string)($row['guest_email'] ?? ''),
                 'room_name' => (string)($row['accommodation_name'] ?: 'Standard Room'),
+                'stay_dates_display' => $stayDatesDisplay,
+                'nights' => $nights,
+                'paid_at_display' => $paidAtDisplay,
                 'method' => (string)$methodRaw,
                 'txn' => (string)$txnRaw,
                 'is_gcash_ref' => ($methodRaw === 'GCash QR' || $methodRaw === 'GCash (Manual QR)') && !str_starts_with($txnRaw, 'TXN-'),
@@ -388,6 +409,35 @@ function sfbc_handle_payments_page(mysqli $conn): array
         }
     }
 
+    $summary = [
+        'total_count' => count($payments),
+        'verified_count' => 0,
+        'verified_total' => 0.0,
+        'pending_count' => 0,
+        'pending_total' => 0.0,
+        'refunded_count' => 0,
+        'refunded_total' => 0.0,
+        'rejected_count' => 0,
+        'rejected_total' => 0.0,
+    ];
+    foreach ($payments as $pItem) {
+        $st = $pItem['status_display'];
+        $amt = (float)$pItem['amount_raw'];
+        if ($st === 'verified' || $st === 'paid') {
+            $summary['verified_count']++;
+            $summary['verified_total'] += $amt;
+        } elseif ($st === 'pending') {
+            $summary['pending_count']++;
+            $summary['pending_total'] += $amt;
+        } elseif ($st === 'refunded') {
+            $summary['refunded_count']++;
+            $summary['refunded_total'] += $amt;
+        } elseif ($st === 'rejected') {
+            $summary['rejected_count']++;
+            $summary['rejected_total'] += $amt;
+        }
+    }
+
     $sendBookingId = 0;
     $sendBooking = null;
     if (isset($_GET['send_booking_id']) && (int)$_GET['send_booking_id'] > 0) {
@@ -405,6 +455,7 @@ function sfbc_handle_payments_page(mysqli $conn): array
         'csrfToken' => get_csrf_token(),
         'receptionistName' => $_SESSION['admin_username'] ?? 'Administrator',
         'payments' => $payments,
+        'summary' => $summary,
         'breakdownMap' => $breakdown_map,
         'sendBookingId' => $sendBookingId,
         'sendBooking' => $sendBooking,

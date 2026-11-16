@@ -3057,6 +3057,56 @@ function sf_staff_extract_lookup_term(string $question): string
     return $cleaned;
 }
 
+function sf_staff_extract_date_range(mysqli $conn, string $text): ?array
+{
+    $range = sf_chatbot_extract_dates($text);
+    if ($range !== null) {
+        return $range;
+    }
+
+    $todayIso = sf_staff_current_date($conn);
+    $lower = strtolower($text);
+
+    // Single ISO date (e.g. "arrivals 2026-11-18" or "occupancy on 2026-11-20")
+    if (preg_match('/\b(20\d{2}-\d{2}-\d{2})\b/', $text, $m)) {
+        $d = $m[1];
+        return [$d, date('Y-m-d', strtotime($d . ' +1 day'))];
+    }
+
+    // Relative single days
+    if (preg_match('/\b(yesterday|kahapon|gahapon)\b/i', $lower)) {
+        $d = date('Y-m-d', strtotime($todayIso . ' -1 day'));
+        return [$d, $todayIso];
+    }
+    if (preg_match('/\b(today|ngayon|karon)\b/i', $lower)) {
+        return [$todayIso, date('Y-m-d', strtotime($todayIso . ' +1 day'))];
+    }
+
+    // Single named month date (e.g. "Nov 18", "November 18, 2026")
+    $months = 'jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?';
+    if (preg_match("/\\b({$months})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:\\s*,?\\s*(20\\d{2}))?\\b/i", $text, $m)) {
+        $year = !empty($m[3]) ? (int)$m[3] : (int)date('Y', strtotime($todayIso));
+        $ts = strtotime("{$m[1]} {$m[2]} {$year}");
+        if ($ts !== false) {
+            $d = date('Y-m-d', $ts);
+            return [$d, date('Y-m-d', strtotime($d . ' +1 day'))];
+        }
+    }
+
+    return null;
+}
+
+function sf_staff_format_occupancy_pct(array $occ): string
+{
+    $exactPct = (float)($occ['occupancy_rate_percent'] ?? 0);
+    $dashPct = (int)($occ['dashboard_occupied_today_percent'] ?? round($exactPct));
+    $exactFmt = rtrim(rtrim(number_format($exactPct, 1), '0'), '.');
+    if (abs($exactPct - $dashPct) >= 0.05) {
+        return "{$exactFmt}% (Dashboard card: {$dashPct}%)";
+    }
+    return "{$dashPct}%";
+}
+
 function sf_staff_format_help_reply(string $role): array
 {
     $routes = sf_staff_assistant_routes($role);
@@ -3065,11 +3115,11 @@ function sf_staff_format_help_reply(string $role): array
         "**Staff Operations Assistant — Available Modules (" . ($isAdmin ? 'Administrator' : 'Reception Desk') . "):**",
         "- **Front Desk:** Arrivals, departures, in-house guests, overdue check-outs (e.g. `Show today arrivals and departures`, `Who is checked in?`)",
         "- **Booking & Guest Lookup:** Search by `REF-012`, guest name, email, or phone (e.g. `Find booking Justine`, `Lookup REF-001`)",
-        "- **Occupancy & Rooms:** True occupancy across all 30 rooms/7 types, room rates, maintenance rooms, active promos (e.g. `Occupancy rate today`, `Rooms and promos`)",
+        "- **Occupancy & Rooms:** Dashboard-aligned Occupied Today %, Checked-In Occupancy Rate, Units Available, Reserved Rooms, rates, maintenance & promos (e.g. `How many occupied today?`, `Occupancy rate today`, `Rooms and promos`)",
         "- **Queues & Guest Comms:** Unverified payments, refunds, Senior/PWD IDs, Contact Inquiries, Live Support Chats, Reviews (e.g. `Pending queue`, `Live chats and inquiries`)",
     ];
     if ($isAdmin) {
-        $lines[] = "- **Finance & Audits (Admin Only):** 30-day revenue summary, active staff sessions, activity & security logs (e.g. `Show 30 days revenue`, `Staff activity logs`)";
+        $lines[] = "- **Finance & Audits (Admin Only):** Daily, weekly & 30-day revenue summary, active staff sessions, activity & security logs (e.g. `Daily revenue`, `Show 30 days revenue`, `Staff activity logs`)";
     } else {
         $lines[] = "- *Note: Financial totals and staff audit logs are restricted to Administrator accounts.*";
     }
@@ -3091,7 +3141,7 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
 
     $lookupTerm = sf_staff_extract_lookup_term($question);
     $looksLikeRefSearch = (bool)(preg_match('/\bref[-\s]*\d+\b/i', $question) || preg_match('/#\d{1,7}\b/', $question) || preg_match('/\b(?:booking|reservation)\s+#?\d+\b/i', $question));
-    $hasOpsTopicKeyword = (bool)preg_match('/\b(pending|payments?|refunds?|discounts?|inquir(?:y|ies)|live\s*chats?|reviews?|promos?|promotions?|revenue|income|occupancy|vacant|available|audit|sessions?|logs?|arrivals?|departures?)\b/i', $lower);
+    $hasOpsTopicKeyword = (bool)preg_match('/\b(pending|payments?|refunds?|discounts?|inquir(?:y|ies)|live\s*chats?|reviews?|promos?|promotions?|revenue|income|occupancy|occupied|vacant|available|ready|reserved|units?|rooms?|rates?|percent(?:age)?|audit|sessions?|logs?|arrivals?|departures?|check-?ins?|check-?outs?|in-?house|overdue|dashboard|summary|overview|stats?|kpi|metrics?|daily|weekly)\b/i', $lower);
     $looksLikeLookupVerb = !$hasOpsTopicKeyword && (bool)preg_match('/\b(find|search|look\s*up|lookup|locate|who is booking|guest details?|booking status|reservation for|booking for)\b/i', $lower);
 
     if (preg_match('/^(help|commands?|hello|hi|modules?)[\s?!.]*$/i', $lower) || preg_match('/\b(what can you do|what do you cover|how to use|capabilities)\b/i', $lower)) {
@@ -3126,22 +3176,26 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
                 $audit['sessions_url']
             );
         }
-    } elseif (preg_match('/\b(in-house|in\s+house|currently\s+checked\s*in|checked-in\s*guests?|staying\s*(?:now|today|tonight)|overdue\s*check-?outs?|not\s+checked\s*out)\b/i', $lower)) {
+    } elseif (preg_match('/\b(in-house|in\s+house|currently\s+checked\s*in|checked-in\s*guests?|who\s+(?:is|are)\s+checked[\s-]*in|staying\s*(?:now|today|tonight)|overdue\s*check-?outs?|not\s+checked\s*out)\b/i', $lower)) {
         $toolUsed = 'in_house_guests';
-        $ops = sf_staff_tool_today_operations($conn, date('Y-m-d'), $role);
+        $ops = sf_staff_tool_today_operations($conn, null, $role);
         $inLines = [];
         foreach (array_slice($ops['in_house_guests'], 0, 8) as $g) {
             $roomTag = $g['room_number'] ? " · Room {$g['room_number']}" : '';
             $balTag = ($g['balance_status'] !== '' && $g['balance_status'] !== 'paid') ? " · Balance: {$g['balance_status']}" : '';
-            $inLines[] = "- `{$g['booking_ref']}` **{$g['guest_name']}** — {$g['accommodation']}{$roomTag} ({$g['check_in']} to {$g['check_out']}{$balTag})";
+            $overdueMark = !empty($g['is_overdue']) ? ' · **OVERDUE**' : '';
+            $inLines[] = "- `{$g['booking_ref']}` **{$g['guest_name']}** — {$g['accommodation']}{$roomTag} ({$g['check_in']} to {$g['check_out']}{$balTag}{$overdueMark})";
         }
         $links = [
             ['label' => 'Check-in / Check-out Desk', 'url' => $ops['checkin_desk_url']],
             ['label' => 'Reservations', 'url' => $ops['reservations_url']],
         ];
         $reply = sprintf(
-            "**In-House & Overdue Stay Snapshot:**\n- **Currently Checked In:** %d\n- **Overdue Check-outs:** %d\n%s\n\nManage stays in [Check-in / Check-out Desk](%s) or [Reservations](%s).",
+            "**In-House & Overdue Stay Snapshot:**\n- **Currently Checked In:** %d booking(s) (%d room(s), %d guest(s) · %s%% Checked-In Occupancy)\n- **Overdue Check-outs:** %d\n%s\n\nManage stays in [Check-in / Check-out Desk](%s) or [Reservations](%s).",
             $ops['currently_checked_in_total'],
+            $ops['currently_checked_in_rooms'],
+            $ops['in_house_guests_pax'],
+            rtrim(rtrim(number_format((float)$ops['checked_in_occupancy_percent'], 1), '0'), '.'),
             $ops['overdue_checkouts_count'],
             !empty($inLines) ? implode("\n", $inLines) : "  *(No guests currently checked in)*",
             $ops['checkin_desk_url'],
@@ -3229,7 +3283,7 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
             !empty($inqLines) ? implode("\n", $inqLines) : "  *(No open Contact Us inquiries)*",
             $revSection
         );
-    } elseif (preg_match('/\b(promo|promos|promotion|promotions|voucher|discount\s*codes?|coupons?|room\s*rates?|room\s*prices?|pricing\s*rules?|maintenance\s*(?:list|rooms?)|which\s*rooms?|room\s*inventory)\b/i', $lower)) {
+    } elseif (preg_match('/\b(promo|promos|promotion|promotions|voucher|discount\s*codes?|coupons?|room\s*rates?|room\s*prices?|pricing\s*rules?|maintenance\s*(?:list|rooms?)|rooms?\s+(?:in|under)\s+maintenance|which\s+rooms?\s+(?:are\s+)?(?:in|under)\s+maintenance|room\s*inventory)\b/i', $lower)) {
         $toolUsed = 'rooms_and_promotions';
         $rp = sf_staff_tool_rooms_and_promotions($conn, $role);
         $rtLines = [];
@@ -3244,7 +3298,8 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
         }
         $promoLines = [];
         foreach ($rp['active_promotions'] as $pr) {
-            $val = ($pr['discount_type'] === 'percentage')
+            $isPercent = in_array(strtolower((string)$pr['discount_type']), ['percent', 'percentage'], true);
+            $val = $isPercent
                 ? rtrim(rtrim(number_format((float)$pr['discount_value'], 2), '0'), '.') . '%'
                 : '₱' . number_format((float)$pr['discount_value'], 2);
             $codeTag = $pr['code'] !== '' ? "`{$pr['code']}` " : '';
@@ -3273,9 +3328,11 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
     } elseif (preg_match('/\b(revenue|income|sales|earnings|financial|money|collection|billing\s*total)\b/i', $lower)) {
         $toolUsed = 'revenue_summary';
         $days = 30;
-        if (preg_match('/\b(\d+)\s*days?\b/', $lower, $m)) {
+        if (preg_match('/\b(all[\s-]*time|overall|total\s+revenue)\b/i', $lower)) {
+            $days = 0;
+        } elseif (preg_match('/\b(\d+)\s*days?\b/', $lower, $m)) {
             $days = max(1, min(365, (int)$m[1]));
-        } elseif (str_contains($lower, 'today')) {
+        } elseif (str_contains($lower, 'today') || str_contains($lower, 'daily')) {
             $days = 1;
         } elseif (str_contains($lower, 'week')) {
             $days = 7;
@@ -3285,26 +3342,34 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
             $reply = "**Access Restricted:** " . ($data['error'] ?? 'Revenue data is restricted to Administrator accounts.');
         } else {
             $links[] = ['label' => 'Open Reports & Analytics', 'url' => $routes['reports']];
+            $periodTitle = !empty($data['is_all_time'])
+                ? 'All-Time'
+                : ($data['period_days'] === 1 ? 'Today / Daily' : "Last {$data['period_days']} day(s)");
             $reply = sprintf(
-                "**Revenue Summary (Last %d day(s)):**\n- **Verified Revenue:** ₱%s\n- **Pending Verification:** ₱%s\n- **Refunded Total:** ₱%s\n- **Payment Transactions:** %d\n- **Active Bookings with Unpaid/Overdue Balance:** %d\n\nView detailed charts in [Reports & Analytics](%s).",
-                $data['period_days'],
+                "**Revenue Summary (%s):**\n- **Verified Revenue:** ₱%s\n- **Dashboard Daily Revenue (Today):** ₱%s\n- **Dashboard Weekly Revenue (7 Days):** ₱%s\n- **Pending Verification:** ₱%s\n- **Refunded Total:** ₱%s\n- **Payment Transactions (%s):** %d\n- **Active Bookings with Unpaid/Overdue Balance:** %d\n\nView detailed charts in [Reports & Analytics](%s).",
+                $periodTitle,
                 number_format((float)$data['verified_revenue_php'], 2),
+                number_format((float)$data['daily_revenue_php'], 2),
+                number_format((float)$data['weekly_revenue_php'], 2),
                 number_format((float)$data['pending_verification_php'], 2),
                 number_format((float)$data['refunded_total_php'], 2),
+                $periodTitle,
                 $data['payment_records_count'],
                 $data['overdue_or_pending_balances_count'],
                 $routes['reports']
             );
         }
-    } elseif (preg_match('/\b(occupancy|vacant|available|calendar|maintenance|how\s+many\s+rooms|how\s+full)\b/i', $lower)) {
+    } elseif (preg_match('/\b(occupancy|occupied|vacant|available|ready\s*(?:rooms?|units?)|open\s+for\s+tonight|reserved\s*(?:rooms?|units?)|calendar|maintenance|how\s+many\s+(?:rooms?|units?|occupied|available)|how\s+full)\b/i', $lower)
+        || preg_match('/(?:rooms?|units?|occupancy|occupied|full)\b.*\bpercent(?:age)?\b|\bpercent(?:age)?\b.*\b(?:rooms?|units?|occupancy|occupied|full)/i', $lower)) {
         $toolUsed = 'occupancy_summary';
-        $dates = sf_chatbot_extract_dates($question);
-        $start = $dates[0] ?? date('Y-m-d');
+        $dates = sf_staff_extract_date_range($conn, $question);
+        $todayIso = sf_staff_current_date($conn);
+        $start = $dates[0] ?? $todayIso;
         $end = $dates[1] ?? date('Y-m-d', strtotime($start . ' +1 day'));
         $occ = sf_staff_tool_occupancy_summary($conn, $start, $end);
         $roomLines = [];
         foreach ($occ['by_room_type'] as $r) {
-            $roomLines[] = "- **{$r['display_name']}**: {$r['available_units']} of {$r['usable_units']} available";
+            $roomLines[] = "- **{$r['display_name']}**: {$r['occupied_units']} occupied · {$r['available_units']} of {$r['usable_units']} available";
         }
         $maintNote = '';
         if (!empty($occ['maintenance_list'])) {
@@ -3312,20 +3377,28 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
             $maintNote = "\n- **Under Maintenance:** " . implode(', ', $mTags);
         }
         $links[] = ['label' => 'Availability Calendar', 'url' => $routes['calendar']];
+        $occPctText = sf_staff_format_occupancy_pct($occ);
+        $checkedInPctFmt = rtrim(rtrim(number_format((float)$occ['checked_in_occupancy_percent'], 1), '0'), '.');
         $reply = sprintf(
-            "**Occupancy Summary (%s to %s):**\n- **Occupancy Rate:** %s%% (%d of %d usable rooms booked/occupied; %d in maintenance)\n- **Available Units:** %d%s\n%s\n\nManage room blocks in [Availability Calendar](%s).",
+            "**Occupancy Summary (%s to %s):**\n- **Occupied Today / Active Holds:** %s (%d of %d total rooms — %d checked in, %d reserved)\n- **Checked-In Occupancy Rate (In-House):** %s%% (%d of %d total rooms currently checked in)\n- **Units Available (Open for Tonight):** %d (%d in maintenance)\n- **Reserved Rooms (Active Holds):** %d%s\n\n**By Room Type:**\n%s\n\nManage room blocks in [Availability Calendar](%s).",
             $occ['start_date'],
             $occ['end_date'],
-            $occ['occupancy_rate_percent'],
+            $occPctText,
             $occ['booked_or_occupied_units'],
-            $occ['usable_rooms'],
-            $occ['maintenance_rooms'],
+            $occ['total_physical_rooms'],
+            $occ['checked_in_units_on_date'],
+            $occ['reserved_units_on_date'],
+            $checkedInPctFmt,
+            $occ['checked_in_rooms_total'],
+            $occ['total_physical_rooms'],
             $occ['available_units'],
+            $occ['maintenance_rooms'],
+            $occ['reserved_rooms_total'],
             $maintNote,
             implode("\n", $roomLines),
             $routes['calendar']
         );
-    } elseif (preg_match('/\b(pending|payments?|refunds?|discounts?|inquir(?:y|ies)|todo|queues?|unverified)\b/i', $lower)) {
+    } elseif (preg_match('/\b(pending|payments?|refunds?|discounts?|inquir(?:y|ies)|todo|queues?|unverified|rsvps?)\b/i', $lower)) {
         $toolUsed = 'pending_actions';
         $pend = sf_staff_tool_pending_actions($conn, $role);
         $links = [
@@ -3340,7 +3413,7 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
         }
         $extraSuffix = !empty($extraLines) ? "\n" . implode("\n", $extraLines) : '';
         $reply = sprintf(
-            "**Pending Staff Action Queue:**\n- **Unverified Payments:** %d ([Open Payments](%s))\n- **Pending Refund Requests:** %d ([Open Refunds](%s))\n- **Senior/PWD ID Verifications:** %d ([Open Discounts](%s))\n- **Pending Reservations:** %d ([Open Reservations](%s))\n- **Unread Contact Inquiries:** %d ([Open Inquiries](%s))\n- **Open Live Support Chats:** %d unread / %d open ([Open Live Chats](%s))%s",
+            "**Pending Staff Action Queue:**\n- **Unverified Payments:** %d ([Open Payments](%s))\n- **Pending Refund Requests:** %d ([Open Refunds](%s))\n- **Senior/PWD Discount Queue:** %d ([Open Discounts](%s))\n- **Pending Reservations:** %d ([Open Reservations](%s))\n- **Unread Contact Inquiries:** %d ([Open Inquiries](%s))\n- **Open Live Support Chats:** %d unread / %d open ([Open Live Chats](%s))%s",
             $pend['pending_payments_count'],
             $routes['payments'],
             $pend['pending_refund_requests_count'],
@@ -3356,14 +3429,62 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
             $routes['live_support'],
             $extraSuffix
         );
+    } elseif (preg_match('/\b(dashboard|daily\s+summary|daily\s+activity|system\s+(?:overview|summary|stats)|all\s+stats|kpi|metrics?)\b/i', $lower)) {
+        $toolUsed = 'dashboard_summary';
+        $dash = sf_staff_tool_dashboard_summary($conn, $role);
+        $ops = $dash['operations'];
+        $occ = $dash['occupancy'];
+        $pend = $dash['pending'];
+        $rev = $dash['revenue'];
+        $occPctText = sf_staff_format_occupancy_pct($occ);
+        $checkedInPctFmt = rtrim(rtrim(number_format((float)$occ['checked_in_occupancy_percent'], 1), '0'), '.');
+
+        $revSection = '';
+        if ($rev !== null && !empty($rev['success'])) {
+            $revSection = sprintf(
+                "- **Daily Revenue:** ₱%s · **Weekly Revenue:** ₱%s\n",
+                number_format((float)$rev['daily_revenue_php'], 2),
+                number_format((float)$rev['weekly_revenue_php'], 2)
+            );
+        }
+        $links = [
+            ['label' => 'Availability Calendar', 'url' => $routes['calendar']],
+            ['label' => 'Check-in / Check-out Desk', 'url' => $routes['checkin']],
+            ['label' => 'Reservations', 'url' => $routes['reservations']],
+        ];
+        $reply = sprintf(
+            "**System Dashboard Snapshot (%s):**\n%s- **Occupied Today:** %s (%d of %d rooms) · **Units Available:** %d\n- **Occupancy Rate (Checked In):** %s%% (%d of %d rooms · %d reserved rooms)\n- **Arrivals Today:** %d (%d due · %d checked in) · **Departures Today:** %d (%d due out · %d checked out)\n- **Total Bookings:** %d (%d new today) · **Pending Bookings:** %d · **Pending Payments:** %d\n\nOpen [Availability Calendar](%s) or [Reservations](%s).",
+            $dash['date'],
+            $revSection,
+            $occPctText,
+            $occ['booked_or_occupied_units'],
+            $occ['total_physical_rooms'],
+            $occ['available_units'],
+            $checkedInPctFmt,
+            $occ['checked_in_rooms_total'],
+            $occ['total_physical_rooms'],
+            $occ['reserved_rooms_total'],
+            $ops['arrivals_count'],
+            $ops['arrivals_due_count'],
+            $ops['arrivals_checked_in_count'],
+            $ops['departures_count'],
+            $ops['departures_due_count'],
+            $ops['departures_checked_out_count'],
+            $ops['total_bookings_all'],
+            $ops['new_bookings_on_date'],
+            $ops['pending_bookings_total'],
+            $pend['pending_payments_count'],
+            $routes['calendar'],
+            $routes['reservations']
+        );
     } elseif (preg_match('/\b(arrival|arrivals|departure|departures|check-?in|check-?out|desk|today|tomorrow|yesterday|weekend|tonight|reservation|reservations|booking|bookings|\d{4}-\d{2}-\d{2})\b/i', $lower)) {
         $toolUsed = 'today_operations';
-        $dates = sf_chatbot_extract_dates($question);
-        $targetDate = $dates[0] ?? date('Y-m-d');
+        $dates = sf_staff_extract_date_range($conn, $question);
+        $targetDate = $dates[0] ?? sf_staff_current_date($conn);
         $ops = sf_staff_tool_today_operations($conn, $targetDate, $role);
         $arrLines = [];
         foreach (array_slice($ops['arrivals'], 0, 5) as $a) {
-            $roomTag = $a['room_number'] ? " · Room {$a['room_number']}" : '';
+            $roomTag = $a['room_number'] ? " · Room {$a['room_number']}" : ' · Unassigned';
             $arrLines[] = "- `{$a['booking_ref']}` **{$a['guest_name']}** — {$a['accommodation']}{$roomTag} (ETA {$a['eta']}, {$a['status']})";
         }
         $depLines = [];
@@ -3374,18 +3495,36 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
         $links = [
             ['label' => 'Check-in / Check-out Desk', 'url' => $ops['checkin_desk_url']],
             ['label' => 'Reservations', 'url' => $ops['reservations_url']],
+            ['label' => 'Availability Calendar', 'url' => $routes['calendar']],
         ];
         $overdueTag = $ops['overdue_checkouts_count'] > 0 ? " ({$ops['overdue_checkouts_count']} overdue)" : '';
+        $overdueArrTag = $ops['overdue_arrivals_count'] > 0 ? " ({$ops['overdue_arrivals_count']} overdue check-in)" : '';
+        $occPctExact = rtrim(rtrim(number_format((float)$ops['occupied_today_percent'], 1), '0'), '.');
+        $occPctLabel = abs((float)$ops['occupied_today_percent'] - (int)$ops['dashboard_occupied_today_percent']) >= 0.05
+            ? "{$occPctExact}% (~{$ops['dashboard_occupied_today_percent']}%)"
+            : "{$ops['dashboard_occupied_today_percent']}%";
         $reply = sprintf(
-            "**Front Desk Operations for %s:**\n- **Scheduled Arrivals:** %d\n%s\n- **Scheduled Departures:** %d\n%s\n- **Currently Checked In:** %d%s\n- **Pending Bookings:** %d\n\nOpen [Check-in / Check-out Desk](%s) or [Reservations](%s).",
+            "**Front Desk Operations for %s:**\n- **Occupied Today:** %s (%d of %d rooms · %d units available)\n- **Arrivals Today:** %d (%d due · %d checked in)%s\n%s\n- **Departures Today:** %d (%d due out · %d checked out)\n%s\n- **Currently Checked In:** %d booking(s) (%d room(s), %d guest(s))%s\n- **Pending Bookings:** %d · **Pending Payments:** %d\n\nOpen [Check-in / Check-out Desk](%s) or [Reservations](%s).",
             $ops['date'],
+            $occPctLabel,
+            $ops['occupied_today_units'],
+            $ops['total_physical_rooms'],
+            $ops['available_units'],
             $ops['arrivals_count'],
+            $ops['arrivals_due_count'],
+            $ops['arrivals_checked_in_count'],
+            $overdueArrTag,
             !empty($arrLines) ? implode("\n", $arrLines) : "  *(No arrivals scheduled)*",
             $ops['departures_count'],
+            $ops['departures_due_count'],
+            $ops['departures_checked_out_count'],
             !empty($depLines) ? implode("\n", $depLines) : "  *(No departures scheduled)*",
             $ops['currently_checked_in_total'],
+            $ops['currently_checked_in_rooms'],
+            $ops['in_house_guests_pax'],
             $overdueTag,
             $ops['pending_bookings_total'],
+            $ops['pending_payments_total'],
             $ops['checkin_desk_url'],
             $ops['reservations_url']
         );
@@ -3393,9 +3532,13 @@ function sf_staff_assistant_send_message(mysqli $conn, string $question, string 
         $toolUsed = 'system_overview';
         [$helpText, $helpLinks] = sf_staff_format_help_reply($role);
         $pend = sf_staff_tool_pending_actions($conn, $role);
+        $occ = sf_staff_tool_occupancy_summary($conn, null, null);
         $links = $helpLinks;
         $reply = sprintf(
-            "**Quick Live Status:** %d pending booking(s) · %d unverified payment(s) · %d open live chat(s) · %d unread inquiry(s)\n\n%s",
+            "**Quick Live Status:** %s occupied (%d/%d rooms) · %d pending booking(s) · %d unverified payment(s) · %d open live chat(s) · %d unread inquiry(s)\n\n%s",
+            sf_staff_format_occupancy_pct($occ),
+            $occ['booked_or_occupied_units'],
+            $occ['total_physical_rooms'],
             $pend['pending_bookings_count'],
             $pend['pending_payments_count'],
             $pend['open_live_chats_count'],

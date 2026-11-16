@@ -61,6 +61,7 @@ include __DIR__ . '/partials/_sidebar.php';
 </div>
 
 <?php include __DIR__ . '/views/admin_dashboard/_overdue_modal.php'; ?>
+<?php include __DIR__ . '/views/admin_dashboard/_revenue_modal.php'; ?>
 
 <script id="adminDashboardPageData" type="application/json"><?php echo json_encode([
     'overdueGuestNames' => $pageData['overdueGuestNames'],

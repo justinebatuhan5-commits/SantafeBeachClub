@@ -32,7 +32,8 @@
             if (href.indexOf('..') !== -1) return label;
             return '<a href="' + staffEscape(href) + '" style="color:#0284C7;font-weight:700;text-decoration:underline;">' + label + ' &rarr;</a>';
         });
-        out = out.replace(/\*\*([^*]{1,120})\*\*/g, '<strong>$1</strong>');
+        out = out.replace(/\*\*([^*]{1,200})\*\*/g, '<strong>$1</strong>');
+        out = out.replace(/(^|[\s(>])\*([^*\n]{1,200})\*(?=$|[\s).,;:!?<])/g, '$1<em>$2</em>');
         out = out.replace(/`([^`]{1,60})`/g, '<code>$1</code>');
         return out.replace(/\r?\n/g, '<br>');
     }

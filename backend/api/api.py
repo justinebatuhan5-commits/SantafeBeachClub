@@ -10,6 +10,8 @@ from functools import wraps
 import datetime
 from dateutil.relativedelta import relativedelta
 
+# DEPRECATED MIRROR: backend/api/analytics_api.php is the authoritative analytics engine.
+# Keep ANALYTICS_SERVICE_URL unset unless this service is brought to full schema parity.
 app = Flask(__name__)
 # This service is called by the PHP backend, not directly by browsers.
 CORS(app, origins=[])

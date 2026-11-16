@@ -47,8 +47,9 @@
     <div class="stat-card" style="flex-direction:column; padding-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
             <div>
-                <div class="stat-card-label">Occupancy Rate</div>
+                <div class="stat-card-label">Checked-In Now</div>
                 <div class="stat-card-value"><span id="kpi-occupancy-rate">...</span></div>
+                <div class="stat-card-sub"><span id="kpi-occupied-rooms">0</span> of <span id="kpi-total-rooms">0</span> rooms checked in</div>
             </div>
             <div class="stat-icon blue">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -78,7 +79,7 @@
         <div>
             <div class="stat-card-label">Reserved Rooms</div>
             <div class="stat-card-value" id="kpi-reserved-rooms">...</div>
-            <div class="stat-card-sub">Rooms held by active bookings</div>
+            <div class="stat-card-sub">Upcoming &amp; active room holds</div>
         </div>
         <div class="stat-icon blue">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -103,7 +104,7 @@
         <div class="chart-card-header">
             <div>
                 <h3>Revenue Trajectory (Last 7 Days)</h3>
-                <p>Verified daily receipts &amp; guest settlements</p>
+                <p>Verified daily receipts &amp; guest settlements &bull; Click any day to view details</p>
             </div>
             <a href="admin_reports" class="btn-view-all">Full Report &rarr;</a>
         </div>

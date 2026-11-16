@@ -18,10 +18,11 @@ function sf_get_checked_in_room_ids(mysqli $conn): array
     return $room_ids;
 }
 
-function sf_get_reserved_room_ids(mysqli $conn): array
+function sf_get_reserved_room_ids(mysqli $conn, bool $excludePastStays = false): array
 {
     $room_ids = [];
-    $result = $conn->query("SELECT DISTINCT room_id FROM bookings WHERE room_id IS NOT NULL AND status IN ('Pending', 'Pending Payment', 'Confirmed')");
+    $sql = "SELECT DISTINCT room_id FROM bookings WHERE room_id IS NOT NULL AND status IN ('Pending', 'Pending Payment', 'Confirmed')" . ($excludePastStays ? " AND check_out > CURDATE()" : "");
+    $result = $conn->query($sql);
 
     if (!$result) {
         return $room_ids;

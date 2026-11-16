@@ -395,22 +395,52 @@
     document.addEventListener('DOMContentLoaded', function () {
         var searchInput = document.getElementById('paymentSearch');
         var statusFilter = document.getElementById('paymentStatusFilter');
-        var tableRows = document.querySelectorAll('.reservations-table tbody tr');
+        var methodFilter = document.getElementById('paymentMethodFilter');
+        var resultsCounter = document.getElementById('paymentsResultsCounter');
+        var statusPills = document.querySelectorAll('.pay-status-pill');
+        var tableRows = document.querySelectorAll('.reservations-table tbody tr.payment-row');
+        if (!tableRows.length) {
+            tableRows = document.querySelectorAll('.reservations-table tbody tr');
+        }
+
+        function syncStatusPills(activeVal) {
+            var norm = (activeVal || '').toLowerCase();
+            statusPills.forEach(function (pill) {
+                var pillVal = (pill.getAttribute('data-status-pill') || '').toLowerCase();
+                pill.classList.toggle('active', pillVal === norm);
+            });
+        }
 
         function filterTable() {
-            var searchVal = searchInput ? searchInput.value.toLowerCase() : '';
-            var statusVal = statusFilter ? statusFilter.value.toLowerCase() : '';
+            var searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            var statusVal = statusFilter ? statusFilter.value.toLowerCase().trim() : '';
+            var methodVal = methodFilter ? methodFilter.value.toLowerCase().trim() : '';
+            var visibleCount = 0;
 
             tableRows.forEach(function (row) {
+                if (row.querySelector('.payment-empty-row')) {
+                    return;
+                }
                 var text = row.innerText.toLowerCase();
                 var statusBadge = row.querySelector('.status-badge');
                 var rowStatus = statusBadge ? statusBadge.innerText.toLowerCase() : '';
+                var rowMethod = (row.getAttribute('data-method') || text).toLowerCase();
 
-                var matchesSearch = text.includes(searchVal);
+                var matchesSearch = searchVal === '' || text.includes(searchVal);
                 var matchesStatus = statusVal === '' || rowStatus.includes(statusVal);
+                var matchesMethod = methodVal === '' || rowMethod.includes(methodVal);
 
-                row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+                var show = matchesSearch && matchesStatus && matchesMethod;
+                row.style.display = show ? '' : 'none';
+                if (show) {
+                    visibleCount++;
+                }
             });
+
+            syncStatusPills(statusVal);
+            if (resultsCounter) {
+                resultsCounter.textContent = 'Showing ' + visibleCount + ' of ' + tableRows.length + ' bill' + (tableRows.length === 1 ? '' : 's');
+            }
         }
 
         if (searchInput) {
@@ -419,12 +449,34 @@
         if (statusFilter) {
             statusFilter.addEventListener('change', filterTable);
         }
+        if (methodFilter) {
+            methodFilter.addEventListener('change', filterTable);
+        }
 
-        var requestedSearch = new URLSearchParams(window.location.search).get('search');
+        document.querySelectorAll('[data-status-pill]').forEach(function (trigger) {
+            trigger.addEventListener('click', function () {
+                var targetStatus = (this.getAttribute('data-status-pill') || '').toLowerCase();
+                if (statusFilter) {
+                    statusFilter.value = targetStatus;
+                }
+                filterTable();
+            });
+        });
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var requestedSearch = new URLSearchParams(window.location.search).get('search') || urlParams.get('search');
+        var requestedStatus = urlParams.get('status');
+        if (statusFilter && requestedStatus) {
+            statusFilter.value = requestedStatus.toLowerCase();
+        }
         if (searchInput && requestedSearch) {
             searchInput.value = requestedSearch;
+        }
+        if ((searchInput && requestedSearch) || (statusFilter && requestedStatus)) {
             filterTable();
-            searchInput.focus();
+            if (searchInput && requestedSearch) {
+                searchInput.focus();
+            }
         }
 
         var refundSelect = document.getElementById('refundReasonSelect');

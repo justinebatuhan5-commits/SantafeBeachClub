@@ -204,8 +204,33 @@ try {
         require_once __DIR__ . '/../config/db.php';
         require_once __DIR__ . '/../helpers/admin_auth_check.php';
 
-        $type = $_GET['type'] ?? 'bookings';
-        $filename = "santafe_{$type}_report_" . date('Ymd_His') . ".csv";
+        $type = ($_GET['type'] ?? 'bookings') === 'payments' ? 'payments' : 'bookings';
+        $rawStart = trim((string)($_GET['start_date'] ?? ''));
+        $rawEnd = trim((string)($_GET['end_date'] ?? ''));
+        $validStart = null;
+        $validEnd = null;
+        if ($rawStart !== '' && $rawEnd !== '') {
+            $dtStart = DateTimeImmutable::createFromFormat('!Y-m-d', $rawStart);
+            $errStart = DateTimeImmutable::getLastErrors();
+            $dtEnd = DateTimeImmutable::createFromFormat('!Y-m-d', $rawEnd);
+            $errEnd = DateTimeImmutable::getLastErrors();
+            if (
+                $dtStart && $dtEnd
+                && ($errStart === false || ($errStart['warning_count'] === 0 && $errStart['error_count'] === 0))
+                && ($errEnd === false || ($errEnd['warning_count'] === 0 && $errEnd['error_count'] === 0))
+                && $dtStart->format('Y-m-d') === $rawStart
+                && $dtEnd->format('Y-m-d') === $rawEnd
+                && $dtStart <= $dtEnd
+            ) {
+                $validStart = $rawStart;
+                $validEnd = $rawEnd;
+            }
+        }
+
+        $rangeSuffix = ($validStart !== null && $validEnd !== null)
+            ? ('_' . str_replace('-', '', $validStart) . '_to_' . str_replace('-', '', $validEnd))
+            : '';
+        $filename = "santafe_{$type}_report{$rangeSuffix}_" . date('Ymd_His') . ".csv";
 
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -213,24 +238,56 @@ try {
         $out = fopen('php://output', 'w');
 
         if ($type === 'payments') {
-            fputcsv($out, ['Payment ID', 'Booking Ref', 'Guest Name', 'Email', 'Amount (PHP)', 'Payment Method', 'Transaction Ref', 'Status', 'Date Paid']);
-            $res = $conn->query("
-                SELECT p.id, CONCAT('REF-', LPAD(p.booking_id, 3, '0')) AS booking_ref, p.guest_name, p.guest_email, p.amount, p.payment_method, p.transaction_id, p.status, p.paid_at 
-                FROM payments p 
-                ORDER BY p.id DESC
-            ");
-            while ($row = $res->fetch_assoc()) {
-                fputcsv($out, $row);
+            fputcsv($out, ['Payment ID', 'Booking Ref', 'Guest Name', 'Email', 'Amount (PHP)', 'Payment Method', 'Transaction Ref', 'Status', 'Accounting Status', 'Date Paid']);
+            if ($validStart !== null && $validEnd !== null) {
+                $stmt = $conn->prepare("
+                    SELECT p.id, CONCAT('REF-', LPAD(p.booking_id, 3, '0')) AS booking_ref, p.guest_name, p.guest_email, p.amount, p.payment_method, p.transaction_id, p.status, COALESCE(p.accounting_status, 'deferred') AS accounting_status, p.paid_at
+                    FROM payments p
+                    WHERE DATE(p.paid_at) BETWEEN ? AND ?
+                    ORDER BY p.id DESC
+                ");
+                $stmt->bind_param('ss', $validStart, $validEnd);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                while ($res && ($row = $res->fetch_assoc())) {
+                    fputcsv($out, $row);
+                }
+                $stmt->close();
+            } else {
+                $res = $conn->query("
+                    SELECT p.id, CONCAT('REF-', LPAD(p.booking_id, 3, '0')) AS booking_ref, p.guest_name, p.guest_email, p.amount, p.payment_method, p.transaction_id, p.status, COALESCE(p.accounting_status, 'deferred') AS accounting_status, p.paid_at
+                    FROM payments p
+                    ORDER BY p.id DESC
+                ");
+                while ($res && ($row = $res->fetch_assoc())) {
+                    fputcsv($out, $row);
+                }
             }
         } else {
-            fputcsv($out, ['Booking ID', 'Booking Ref', 'Guest Name', 'Guest Type', 'Email', 'Phone', 'Room / Accommodation', 'Check-in', 'Check-out', 'Guests', 'Status', 'Promo Code', 'Discount (PHP)', 'Booked On']);
-            $res = $conn->query("
-                SELECT b.id, CONCAT('REF-', LPAD(b.id, 3, '0')) AS booking_ref, b.guest_name, b.guest_type, b.guest_email, b.guest_phone, b.accommodation_name, b.check_in, b.check_out, b.guests_count, b.status, b.promo_code, b.discount_amount, b.created_at 
-                FROM bookings b 
-                ORDER BY b.id DESC
-            ");
-            while ($row = $res->fetch_assoc()) {
-                fputcsv($out, $row);
+            fputcsv($out, ['Booking ID', 'Booking Ref', 'Guest Name', 'Guest Type', 'Email', 'Phone', 'Room / Accommodation', 'Check-in', 'Check-out', 'Guests', 'Status', 'Balance Status', 'Promo Code', 'Discount (PHP)', 'Booked On']);
+            if ($validStart !== null && $validEnd !== null) {
+                $stmt = $conn->prepare("
+                    SELECT b.id, CONCAT('REF-', LPAD(b.id, 3, '0')) AS booking_ref, b.guest_name, b.guest_type, b.guest_email, b.guest_phone, b.accommodation_name, b.check_in, b.check_out, b.guests_count, b.status, COALESCE(b.balance_status, 'deposit_pending') AS balance_status, b.promo_code, b.discount_amount, b.created_at
+                    FROM bookings b
+                    WHERE DATE(b.created_at) BETWEEN ? AND ?
+                    ORDER BY b.id DESC
+                ");
+                $stmt->bind_param('ss', $validStart, $validEnd);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                while ($res && ($row = $res->fetch_assoc())) {
+                    fputcsv($out, $row);
+                }
+                $stmt->close();
+            } else {
+                $res = $conn->query("
+                    SELECT b.id, CONCAT('REF-', LPAD(b.id, 3, '0')) AS booking_ref, b.guest_name, b.guest_type, b.guest_email, b.guest_phone, b.accommodation_name, b.check_in, b.check_out, b.guests_count, b.status, COALESCE(b.balance_status, 'deposit_pending') AS balance_status, b.promo_code, b.discount_amount, b.created_at
+                    FROM bookings b
+                    ORDER BY b.id DESC
+                ");
+                while ($res && ($row = $res->fetch_assoc())) {
+                    fputcsv($out, $row);
+                }
             }
         }
 

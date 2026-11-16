@@ -17,10 +17,18 @@
         }
     }
 
-    async function fetchAPI(endpoint) {
+    async function fetchAPI(endpoint, params) {
         try {
             const action = endpoint.replace('/api/', '').replace('/', '');
-            const res = await fetch(`../backend/api/analytics_proxy.php?action=${encodeURIComponent(action)}`, {
+            const qs = new URLSearchParams({ action: action });
+            if (params && typeof params === 'object') {
+                Object.entries(params).forEach(([k, v]) => {
+                    if (v !== undefined && v !== null && v !== '') {
+                        qs.set(k, String(v));
+                    }
+                });
+            }
+            const res = await fetch(`../backend/api/analytics_proxy.php?${qs.toString()}`, {
                 method: 'GET',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
@@ -29,6 +37,113 @@
         } catch (error) {
             console.error('Fetch error:', error);
             throw error;
+        }
+    }
+
+    function resolveTrajectoryDates(revData, count) {
+        if (revData && Array.isArray(revData.dates) && revData.dates.length === count) {
+            return revData.dates;
+        }
+        const dates = [];
+        const now = new Date();
+        for (let i = count - 1; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${day}`);
+        }
+        return dates;
+    }
+
+    let revenueDrilldownSeq = 0;
+
+    function closeRevenueDrilldown() {
+        const modal = document.getElementById('revenueDrilldownModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    async function openRevenueDrilldown(dateStr, dayLabel, chartAmount) {
+        const modal = document.getElementById('revenueDrilldownModal');
+        if (!modal || !dateStr) return;
+
+        const titleEl = document.getElementById('rdmTitle');
+        const subEl = document.getElementById('rdmDateSubtitle');
+        const totalEl = document.getElementById('rdmTotalAmount');
+        const countEl = document.getElementById('rdmTxnCount');
+        const bodyEl = document.getElementById('rdmBodyContent');
+
+        const safeDay = dayLabel ? `${dayLabel} · ${dateStr}` : dateStr;
+        if (titleEl) titleEl.textContent = 'Verified Receipts';
+        if (subEl) subEl.textContent = safeDay;
+        if (totalEl) totalEl.textContent = '₱' + Number(chartAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (countEl) countEl.textContent = '…';
+        if (bodyEl) bodyEl.innerHTML = '<div class="rdm-state">Loading daily receipts…</div>';
+        modal.style.display = 'flex';
+
+        const seq = ++revenueDrilldownSeq;
+        try {
+            const details = await fetchAPI('/api/daily-revenue-details', { date: dateStr });
+            if (seq !== revenueDrilldownSeq) return;
+
+            if (subEl) subEl.textContent = details.date_display || safeDay;
+            if (totalEl) totalEl.textContent = '₱' + Number(details.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (countEl) countEl.textContent = String(details.transaction_count ?? 0);
+
+            const txns = Array.isArray(details.transactions) ? details.transactions : [];
+            if (!bodyEl) return;
+
+            if (txns.length === 0) {
+                bodyEl.innerHTML = `<div class="rdm-state">No verified receipts were recorded on <strong>${Security.escapeHTML(details.date_display || dateStr)}</strong>.</div>`;
+                return;
+            }
+
+            const rowsHtml = txns.map(t => {
+                const refPart = t.booking_ref ? `${Security.escapeHTML(t.booking_ref)}` : '—';
+                const accPart = t.accommodation_name ? ` · ${Security.escapeHTML(t.accommodation_name)}` : '';
+                const timePart = t.paid_time_display ? Security.escapeHTML(t.paid_time_display) : Security.escapeHTML(t.paid_at || '');
+                const amtFmt = Number(t.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return `
+                    <tr>
+                        <td>
+                            <strong>${Security.escapeHTML(t.guest_name || 'Guest')}</strong>
+                            <span class="rdm-sub">${refPart}${accPart}</span>
+                        </td>
+                        <td>
+                            <span class="rdm-pill">${Security.escapeHTML(t.purpose_label || 'Payment')}</span>
+                            <span class="rdm-sub">${Security.escapeHTML(t.payment_method || '')}</span>
+                        </td>
+                        <td>
+                            <strong>${Security.escapeHTML(t.invoice_code || '')}</strong>
+                            <span class="rdm-sub">${Security.escapeHTML(t.transaction_id || '')}</span>
+                        </td>
+                        <td>${timePart}</td>
+                        <td class="rdm-amount" style="text-align:right;">₱${amtFmt}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            bodyEl.innerHTML = `
+                <div class="table-responsive">
+                    <table class="rdm-table">
+                        <thead>
+                            <tr>
+                                <th>Guest &amp; Stay</th>
+                                <th>Type &amp; Method</th>
+                                <th>Reference</th>
+                                <th>Time</th>
+                                <th style="text-align:right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+            `;
+        } catch (err) {
+            if (seq !== revenueDrilldownSeq) return;
+            console.error('Daily revenue drill-down error:', err);
+            if (countEl) countEl.textContent = '0';
+            if (bodyEl) bodyEl.innerHTML = '<div class="rdm-state rdm-state-error">Could not load verified receipts for this day.</div>';
         }
     }
 
@@ -65,14 +180,17 @@
             if (loadingRev) loadingRev.style.display = 'none';
             const rCanvas = document.getElementById('revenueChart');
             if (rCanvas && typeof Chart !== 'undefined') {
+                const labels = revData.labels || [];
+                const values = revData.data || [];
+                const trajectoryDates = resolveTrajectoryDates(revData, labels.length);
                 rCanvas.style.display = 'block';
                 new Chart(rCanvas.getContext('2d'), {
                     type: 'line',
                     data: {
-                        labels: revData.labels || [],
+                        labels: labels,
                         datasets: [{
                             label: 'Verified Revenue (₱)',
-                            data: revData.data || [],
+                            data: values,
                             borderColor: primaryColor,
                             backgroundColor: primaryGradColor,
                             borderWidth: 3,
@@ -88,22 +206,49 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        onHover: (event, elements, chart) => {
+                            if (chart && chart.canvas) {
+                                chart.canvas.style.cursor = (elements && elements.length > 0) ? 'pointer' : 'default';
+                            }
+                        },
+                        onClick: (event, elements, chart) => {
+                            const hits = chart.getElementsAtEventForMode(event, 'index', { intersect: false }, true);
+                            if (!hits || hits.length === 0) return;
+                            const idx = hits[0].index;
+                            const clickedDate = trajectoryDates[idx];
+                            if (clickedDate) {
+                                openRevenueDrilldown(clickedDate, labels[idx] || '', values[idx] || 0);
+                            }
+                        },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
                                 backgroundColor: 'rgba(15, 23, 42, 0.9)',
                                 titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
                                 bodyFont: { family: 'Plus Jakarta Sans', size: 13, weight: '700' },
+                                footerFont: { family: 'Plus Jakarta Sans', size: 11, weight: '500' },
+                                footerColor: '#cbd5e1',
                                 padding: 10,
                                 cornerRadius: 8,
                                 callbacks: {
-                                    label: context => ' ₱' + Number(context.parsed.y).toLocaleString()
+                                    title: items => {
+                                        if (!items || !items.length) return '';
+                                        const idx = items[0].dataIndex;
+                                        const d = trajectoryDates[idx];
+                                        return d ? `${items[0].label} (${d})` : items[0].label;
+                                    },
+                                    label: context => ' ₱' + Number(context.parsed.y).toLocaleString(),
+                                    afterBody: () => ['Click to view verified receipts']
                                 }
                             }
                         },
                         scales: {
                             x: { grid: { color: gridColor }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor } },
-                            y: { grid: { color: gridColor }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor, callback: v => '₱' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v) }, beginAtZero: true }
+                            y: { grid: { color: gridColor }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11.5 }, color: tickColor, callback: v => '₱' + (v >= 1000 ? Number((v / 1000).toFixed(1)) + 'k' : v) }, beginAtZero: true }
                         }
                     }
                 });
@@ -424,6 +569,19 @@
         if (closeOverdueBtn) {
             const modal = document.getElementById('overdueCheckoutModal');
             if (modal) modal.style.display = 'none';
+            return;
+        }
+
+        const closeRevBtn = e.target.closest('[data-close-revenue-modal]');
+        const revModal = document.getElementById('revenueDrilldownModal');
+        if (closeRevBtn || (revModal && e.target === revModal)) {
+            closeRevenueDrilldown();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeRevenueDrilldown();
         }
     });
 })();
