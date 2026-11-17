@@ -9,6 +9,8 @@ class BookingStatusTestPdo extends PDO {
     public function __construct() {}
     public function beginTransaction(): bool { return true; }
     public function commit(): bool { return true; }
+    public function inTransaction(): bool { return true; }
+    public function rollBack(): bool { return true; }
     public function lastInsertId(?string $name = null): string|false { return '1'; }
     public function prepare(string $query, array $options = []): PDOStatement|false {
         return new BookingStatusTestStatement($this, $query);
@@ -27,6 +29,9 @@ class BookingStatusTestStatement extends PDOStatement {
     public function fetchColumn(int $column = 0): mixed {
         return str_starts_with($this->sql, 'SELECT name') ? 'Test Room' : 0;
     }
+    public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array {
+        return [['id' => 1], ['id' => 2]];
+    }
 }
 function checkBookingStatus(bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
@@ -41,6 +46,9 @@ foreach ([null, 'Confirmed', 'Checked In', 'Cancelled', 'confirmed', '', ['Check
 $db = new BookingStatusTestPdo();
 createBooking($db, $data);
 checkBookingStatus($db->inserted[':status'] === 'Pending', 'Omitted status must be Pending');
+$db = new BookingStatusTestPdo();
+createBooking($db, $data + ['guest_phone' => '09171234567']);
+checkBookingStatus($db->inserted[':guest_phone'] === '09171234567', 'Optional guest_phone must be stored when provided');
 $db = new BookingStatusTestPdo();
 createBooking($db, $data, 'Checked In');
 checkBookingStatus($db->inserted[':status'] === 'Checked In' && $db->occupied, 'Authorized staff check-in must occupy room');

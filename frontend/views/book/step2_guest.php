@@ -22,7 +22,7 @@
         </div>
 
         <div class="bk-form-group">
-            <label>Contact phone <span class="req">*</span></label>
+            <label>Contact Number <span class="req">*</span></label>
             <div class="bk-input-combo">
                 <select name="phone_code" class="bk-select-phone" aria-label="Country Code">
                     <?php
@@ -36,7 +36,7 @@
                     endforeach;
                     ?>
                 </select>
-                <input type="tel" name="phone" placeholder="<?php echo ($selected_phone_code === '+63') ? '09171234567' : 'e.g. 12345678'; ?>" required data-validate="phone" data-label="Phone number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
+                <input type="tel" name="phone" placeholder="<?php echo ($selected_phone_code === '+63') ? '09171234567' : 'e.g. 12345678'; ?>" required data-validate="phone" data-label="Contact Number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
             </div>
         </div>
         <div class="bk-form-group">

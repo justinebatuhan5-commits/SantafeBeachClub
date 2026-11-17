@@ -39,6 +39,13 @@
                     <input type="email" id="newGuestEmail" placeholder="guest@example.com">
                 </div>
                 <div class="admin-form-group">
+                    <label for="newGuestPhone">Contact Number <span style="font-weight:500; opacity:0.65;">(Optional)</span></label>
+                    <input type="tel" id="newGuestPhone" placeholder="0917 123 4567 (Optional)">
+                </div>
+            </div>
+
+            <div class="admin-form-row">
+                <div class="admin-form-group">
                     <label for="newGuestType">Guest Tier</label>
                     <select id="newGuestType">
                         <option value="First Visit">First Visit</option>
@@ -47,17 +54,16 @@
                         <option value="Corporate">Corporate</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="admin-form-group">
-                <label for="newRoomType">Accommodation Type</label>
-                <select id="newRoomType">
-                    <?php foreach ($dashboardData['roomTypes'] as $rt): ?>
-                        <option value="<?php echo (int)$rt['id']; ?>">
-                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string)$rt['name']))); ?> (₱<?php echo number_format((float)($rt['base_price'] ?? 3000), 0); ?>/night)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="admin-form-group">
+                    <label for="newRoomType">Accommodation Type</label>
+                    <select id="newRoomType">
+                        <?php foreach ($dashboardData['roomTypes'] as $rt): ?>
+                            <option value="<?php echo (int)$rt['id']; ?>">
+                                <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string)$rt['name']))); ?> (₱<?php echo number_format((float)($rt['base_price'] ?? 3000), 0); ?>/night)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
 
             <!-- Stay Duration Quick Pick -->

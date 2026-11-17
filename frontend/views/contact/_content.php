@@ -130,9 +130,15 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="subject">Subject</label>
-                            <input type="text" id="subject" name="subject" maxlength="200" class="form-control" required placeholder="e.g. Beach Villa Inquiry for November" data-label="Subject" value="<?php echo inquiry_value('subject'); ?>">
+                        <div class="contact-form-row">
+                            <div class="form-group">
+                                <label for="guest_phone">Contact Number <span style="font-weight:500; opacity:0.65;">(Optional)</span></label>
+                                <input type="tel" id="guest_phone" name="guest_phone" maxlength="30" class="form-control" placeholder="0917 123 4567" data-label="Contact number" value="<?php echo inquiry_value('guest_phone'); ?>">
+                            </div>
+                            <div class="form-group">
+                                <label for="subject">Subject</label>
+                                <input type="text" id="subject" name="subject" maxlength="200" class="form-control" required placeholder="e.g. Beach Villa Inquiry for November" data-label="Subject" value="<?php echo inquiry_value('subject'); ?>">
+                            </div>
                         </div>
 
                         <div class="form-group">

@@ -1,7 +1,7 @@
 <?php
 /** Contact-form checks. No third-party service or browser JavaScript required. */
 function inquiry_validate(array $input, array $tokens, int $now): string {
-    foreach (['guest_name', 'guest_email', 'subject', 'message', 'website', 'inquiry_token'] as $field) {
+    foreach (['guest_name', 'guest_email', 'guest_phone', 'subject', 'message', 'website', 'inquiry_token'] as $field) {
         if (isset($input[$field]) && !is_string($input[$field])) {
             return 'Invalid form submission. Please refresh and try again.';
         }
@@ -25,6 +25,10 @@ function inquiry_validate(array $input, array $tokens, int $now): string {
     }
     if (!filter_var(trim($input['guest_email']), FILTER_VALIDATE_EMAIL)) {
         return 'Please enter a valid email address.';
+    }
+    $guestPhone = trim($input['guest_phone'] ?? '');
+    if ($guestPhone !== '' && preg_match('/\A[0-9+\-\s()]{7,30}\z/', $guestPhone) !== 1) {
+        return 'Please enter a valid contact number.';
     }
     return '';
 }

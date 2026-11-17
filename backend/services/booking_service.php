@@ -83,6 +83,7 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
     $checkOut = $data['check_out'] ?? '';
     $guestName = trim((string) ($data['guest_name'] ?? ''));
     $guestEmail = trim((string) ($data['guest_email'] ?? ''));
+    $guestPhone = trim((string) ($data['guest_phone'] ?? ''));
     if (!in_array($staffStatus, ['Pending', 'Checked In'], true)) {
         throw new InvalidArgumentException('Invalid initial booking status.');
     }
@@ -193,8 +194,8 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
         $resolvedGuestType = ($data['guest_type'] ?? '') !== '' ? $data['guest_type'] : $autoGuestType;
 
         $insertStmt = $pdo->prepare(
-            'INSERT INTO bookings (room_type_id, guest_type, check_in, check_out, guests_count, room_id, accommodation_name, eta, status, guest_name, guest_email)
-             VALUES (:room_type_id, :guest_type, :check_in, :check_out, :guests_count, :room_id, :accommodation_name, :eta, :status, :guest_name, :guest_email)'
+            'INSERT INTO bookings (room_type_id, guest_type, check_in, check_out, guests_count, room_id, accommodation_name, eta, status, guest_name, guest_email, guest_phone)
+             VALUES (:room_type_id, :guest_type, :check_in, :check_out, :guests_count, :room_id, :accommodation_name, :eta, :status, :guest_name, :guest_email, :guest_phone)'
         );
         $insertStmt->execute([
             ':room_type_id' => $roomTypeId,
@@ -208,6 +209,7 @@ function createBooking(PDO $pdo, array $data, string $staffStatus = 'Pending'): 
             ':status' => ($status === 'checked in') ? 'Checked In' : (($status === 'pending') ? 'Pending' : ucwords($status)),
             ':guest_name' => $guestName,
             ':guest_email' => $guestEmail !== '' ? $guestEmail : null,
+            ':guest_phone' => $guestPhone !== '' ? substr($guestPhone, 0, 20) : null,
         ]);
 
         $bookingId = (int) $pdo->lastInsertId();

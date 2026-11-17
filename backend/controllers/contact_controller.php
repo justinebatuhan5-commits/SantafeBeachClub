@@ -24,8 +24,10 @@ function sfbc_handle_contact_page(mysqli $conn): array
         if ($error === '') {
             $guest_name = trim($_POST['guest_name']);
             $guest_email = trim($_POST['guest_email']);
+            $guest_phone = trim((string)($_POST['guest_phone'] ?? ''));
             $subject = trim($_POST['subject']);
             $message = trim($_POST['message']);
+            $stored_message = $guest_phone !== '' ? ("Contact Number: {$guest_phone}\n\n" . $message) : $message;
             unset($_SESSION['inquiry_tokens'][$_POST['inquiry_token']]);
             try {
                 $token = $_POST['g-recaptcha-response'] ?? '';
@@ -44,7 +46,7 @@ function sfbc_handle_contact_page(mysqli $conn): array
         if ($error === '') {
             try {
                 $stmt = $conn->prepare("INSERT INTO inquiries (guest_name, guest_email, subject, message) VALUES (?, ?, ?, ?)");
-                $stmt->bind_param("ssss", $guest_name, $guest_email, $subject, $message);
+                $stmt->bind_param("ssss", $guest_name, $guest_email, $subject, $stored_message);
                 if ($stmt->execute()) {
                     $message_sent = true;
                 } else {

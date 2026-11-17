@@ -105,6 +105,7 @@
             return;
         }
         const email = document.getElementById('newGuestEmail').value;
+        const phone = (document.getElementById('newGuestPhone')?.value || '').trim();
         const type = document.getElementById('newGuestType').value;
         const roomTypeId = document.getElementById('newRoomType').value;
         const checkin = document.getElementById('newCheckin').value;
@@ -115,6 +116,7 @@
         const formData = new FormData();
         formData.append('guest_name', name);
         formData.append('guest_email', email);
+        formData.append('guest_phone', phone);
         formData.append('guest_type', type);
         formData.append('room_type_id', roomTypeId);
         formData.append('check_in', checkin);
