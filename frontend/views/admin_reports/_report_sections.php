@@ -253,7 +253,7 @@
 <div class="admin-card" style="margin-bottom:24px;">
     <div class="admin-card-header">
         <div>
-            <h3>Guest Origin &amp; Nationality Leaderboard</h3>
+            <h3>Guest Country / Region Leaderboard</h3>
             <p>All recorded non-cancelled origins included; top 10 shown first and additional countries are scrollable</p>
         </div>
     </div>
@@ -261,7 +261,7 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Country / Nationality</th>
+                    <th>Country / Region</th>
                     <th>Bookings</th>
                     <th>Unique Customers</th>
                     <th>Booked Guests</th>

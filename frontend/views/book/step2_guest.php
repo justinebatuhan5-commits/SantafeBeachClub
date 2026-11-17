@@ -40,9 +40,9 @@
             </div>
         </div>
         <div class="bk-form-group">
-            <label>Country <span class="req">*</span></label>
-            <select name="country" required data-label="Country">
-                <option value="">--Select--</option>
+            <label>Country / Region <span class="req">*</span></label>
+            <select name="country" required data-label="Country / Region">
+                <option value="">Select country / region</option>
                 <?php
                 foreach (sfbc_get_booking_countries() as $country):
                     $sel  = ($selected_country === $country) ? 'selected' : '';
