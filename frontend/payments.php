@@ -98,7 +98,7 @@ $summary = $pageData['summary'] ?? [
         include __DIR__ . '/partials/_page_header.php';
         ?>
 
-        <section class="dashboard-grid" style="grid-template-columns: 1fr;">
+        <div class="admin-body">
             <?php if ($flash['success']): ?>
                 <div class="alert-success">
                     Payment verified successfully! Booking has been confirmed.
@@ -126,7 +126,7 @@ $summary = $pageData['summary'] ?? [
             <?php endif; ?>
 
             <?php include __DIR__ . '/views/payments/_payments_table.php'; ?>
-        </section>
+        </div>
     </main>
 
     <?php include __DIR__ . '/views/payments/_payments_modals.php'; ?>

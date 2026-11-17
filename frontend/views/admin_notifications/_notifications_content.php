@@ -6,42 +6,6 @@
         </div>
     <?php endif; ?>
 
-    <!-- Summary Widgets -->
-    <div class="summary-banner">
-        <button type="button" class="summary-card summary-card--interactive" id="summaryUnreadCard" title="Filter feed to unread notifications">
-            <div class="summary-icon" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            </div>
-            <div class="summary-body">
-                <div class="summary-value" id="summaryUnreadValue"><?php echo (int)$notifData['unreadCount']; ?></div>
-                <div class="summary-label">Unread Alerts</div>
-                <div class="summary-sub"><?php echo (int)($notifData['urgentUnreadCount'] ?? 0); ?> urgent &middot; <?php echo (int)($notifData['totalCount'] ?? count($notifData['notifications'])); ?> total</div>
-            </div>
-        </button>
-
-        <a href="admin_checkin" class="summary-card summary-card--link">
-            <div class="summary-icon" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            </div>
-            <div class="summary-body">
-                <div class="summary-value"><?php echo (int)$notifData['pendingCount']; ?></div>
-                <div class="summary-label">Pending Check-ins</div>
-                <div class="summary-sub">Open Arrivals &rarr;</div>
-            </div>
-        </a>
-
-        <a href="accommodations" class="summary-card summary-card--link">
-            <div class="summary-icon" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            </div>
-            <div class="summary-body">
-                <div class="summary-value"><?php echo (int)$notifData['maintCount']; ?></div>
-                <div class="summary-label">Rooms in Maintenance</div>
-                <div class="summary-sub">View Accommodations &rarr;</div>
-            </div>
-        </a>
-    </div>
-
     <section class="dashboard-grid">
         <?php
         $notifActionRoute = 'admin_notifications';

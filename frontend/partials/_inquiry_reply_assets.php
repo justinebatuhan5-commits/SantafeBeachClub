@@ -208,6 +208,122 @@ if (!function_exists('sf_reply_ui_render_styles')) {
     }
 }
 
+if (!function_exists('sf_reply_ui_extract_first_name')) {
+    function sf_reply_ui_extract_first_name(?string $fullName): string
+    {
+        $clean = trim((string)$fullName);
+        if ($clean === '' || stripos($clean, 'Chat Session') === 0 || strtolower($clean) === 'guest') {
+            return 'there';
+        }
+        $parts = preg_split('/\s+/', $clean);
+        return !empty($parts[0]) ? $parts[0] : 'there';
+    }
+}
+
+if (!function_exists('sf_reply_ui_build_suggestions')) {
+    /**
+     * Build context-aware suggested staff replies based on the guest's latest message and handoff context.
+     */
+    function sf_reply_ui_build_suggestions(?string $guestName, string $contextText, array $replies = []): array
+    {
+        $firstName = sf_reply_ui_extract_first_name($guestName);
+        $latestGuestText = '';
+        for ($i = count($replies) - 1; $i >= 0; $i--) {
+            if (($replies[$i]['sender_type'] ?? '') === 'guest' && trim((string)($replies[$i]['message'] ?? '')) !== '') {
+                $latestGuestText = trim((string)$replies[$i]['message']);
+                break;
+            }
+        }
+        $combined = strtolower($latestGuestText . ' ' . $contextText);
+        $suggestions = [];
+
+        // 1. Room Rates / Pricing / Capacity
+        if (preg_match('/\b(rate|rates|price|prices|cost|how much|magkano|pila|tagpila|room|rooms|kwarto|villa|duplex|family)\b/i', $combined)) {
+            $suggestions[] = [
+                'label' => '💡 Room Rates & Options',
+                'text'  => "Hi {$firstName}! Here are our official nightly rates at Santa Fe Beach Club:\n• Standard Room (2 pax): ₱3,450/night\n• Standard Family Room (4 pax): ₱4,300/night\n• Beachview Duplex (2 pax): ₱6,900/night\n• Seaview Duplex (2 pax): ₱7,900/night\n• Beach Villa (4 pax): ₱7,900/night\nWould you like me to check availability for your preferred dates?",
+            ];
+        }
+
+        // 2. Availability / Booking / Dates
+        if (preg_match('/\b(avail|available|availability|book|booking|reserve|reservation|date|dates|bakante|vacant|stay)\b/i', $combined)) {
+            $suggestions[] = [
+                'label' => '📅 Check Dates & Availability',
+                'text'  => "Hi {$firstName}! I would be happy to check room availability for you. Could you please share your preferred check-in and check-out dates and how many guests will be staying?",
+            ];
+        }
+
+        // 3. Payment / 50% Deposit / GCash / Balance
+        if (preg_match('/\b(pay|payment|deposit|downpayment|gcash|maya|card|bank|balance|bayad|installment)\b/i', $combined)) {
+            $suggestions[] = [
+                'label' => '💳 50% Deposit & Payment Info',
+                'text'  => "Hi {$firstName}! A 50% deposit confirms your reservation, and the remaining 50% balance is due 24 hours before arrival. We accept GCash (0950 522 3146 — Santa Fe Beach Club), Maya, Cards via PayMongo, Bank Transfer, or Cash at check-in.",
+            ];
+        }
+
+        // 4. Cancellation / Refund / Reschedule / Weather
+        if (preg_match('/\b(cancel|cancellation|refund|reschedule|resched|typhoon|weather|storm|bagyo|ferry)\b/i', $combined)) {
+            $suggestions[] = [
+                'label' => '🔄 Cancellation & Refund Policy',
+                'text'  => "Hi {$firstName}! For a 100% full refund, cancellations must be made at least 48 hours before check-in for 1–3 night stays (5 days for 4–6 nights, or 7 days for 7+ nights). If sea travel is suspended by the Coast Guard due to weather, we gladly allow free rescheduling.",
+            ];
+        }
+
+        // 5. Location / Directions / Port
+        if (preg_match('/\b(where|location|direction|directions|port|bantayan|hagnaya|pantalan|saan|paano|asa|dapit)\b/i', $combined)) {
+            $suggestions[] = [
+                'label' => '📍 Directions from Santa Fe Port',
+                'text'  => "Hi {$firstName}! We are located in Pantalan, Santa Fe, Bantayan Island, Cebu — just a few minutes from Santa Fe Ferry Port (via Hagnaya Port ferry). Let us know your expected arrival time so our front desk can welcome you!",
+            ];
+        }
+
+        // 6. Check-in / Check-out / Amenities / Wi-Fi / Pets
+        if (preg_match('/\b(check-in|checkin|check-out|checkout|early|late|time|oras|wifi|wi-fi|pet|pets|amenity|amenities)\b/i', $combined)) {
+            $suggestions[] = [
+                'label' => '🕒 Check-in & Resort Info',
+                'text'  => "Hi {$firstName}! Standard check-in is at 2:00 PM and check-out is at 12:00 PM noon (early check-in is subject to room availability upon arrival). Free Wi-Fi and direct beachfront access are included with your stay!",
+            ];
+        }
+
+        // 7. Senior Citizen / PWD Discount
+        if (preg_match('/\b(senior|pwd|discount|id)\b/i', $combined)) {
+            $suggestions[] = [
+                'label' => '🪪 Senior / PWD 20% Discount',
+                'text'  => "Hi {$firstName}! Yes, we grant the statutory 20% Senior Citizen / PWD discount and VAT exemption for eligible guests with a valid government ID via our Discount Booking page.",
+            ];
+        }
+
+        // Always include helpful reception quick-replies up to 4 total chips
+        $defaults = [
+            [
+                'label' => '👋 Greet & Assist',
+                'text'  => "Hi {$firstName}! This is Reception Staff at Santa Fe Beach Club. I'm online now and reviewed your message — how may I best assist you today?",
+            ],
+            [
+                'label' => '📅 Ask Stay Dates & Pax',
+                'text'  => "Hi {$firstName}! To help me check the best available rooms and exact rates for you, may I know your target check-in date, check-out date, and total number of guests?",
+            ],
+            [
+                'label' => '💰 Share Room Rates',
+                'text'  => "Hi {$firstName}! Our rooms start at ₱3,450/night for a Standard Room (2 pax), ₱4,300/night for a Standard Family Room (4 pax), ₱6,900/night for a Beachview Duplex, and ₱7,900/night for our Seaview Duplex or Beach Villa. Which room type interests you?",
+            ],
+            [
+                'label' => '✅ Warm Closing',
+                'text'  => "Thank you for reaching out to us, {$firstName}! Please let us know if you need anything else — we look forward to welcoming you to Santa Fe Beach Club!",
+            ],
+        ];
+
+        foreach ($defaults as $def) {
+            if (count($suggestions) >= 4) {
+                break;
+            }
+            $suggestions[] = $def;
+        }
+
+        return array_slice($suggestions, 0, 4);
+    }
+}
+
 if (!function_exists('sf_reply_ui_render_panel')) {
     function sf_reply_ui_render_panel(int $inquiryId, ?string $guestEmail, string $status, array $thread, array $options = []): void
     {
@@ -218,6 +334,9 @@ if (!function_exists('sf_reply_ui_render_panel')) {
         $hasRealEmail = sf_reply_ui_has_real_email($guestEmail);
         $compactMode = !empty($options['compact']);
         $hideStatusBar = !empty($options['hide_status_bar']);
+        $guestName = (string)($options['guest_name'] ?? 'Guest');
+        $contextText = (string)($options['context_text'] ?? '');
+        $suggestions = sf_reply_ui_build_suggestions($guestName, $contextText, $replies);
         ?>
         <div class="sf-reply-box <?php echo $compactMode ? 'is-compact' : ''; ?>"
              data-reply-box
@@ -225,7 +344,9 @@ if (!function_exists('sf_reply_ui_render_panel')) {
              data-conversation-id="<?php echo $convId; ?>"
              data-live-active="<?php echo $liveActive ? '1' : '0'; ?>"
              data-has-chat="<?php echo $hasChat ? '1' : '0'; ?>"
-             data-has-email="<?php echo $hasRealEmail ? '1' : '0'; ?>">
+             data-has-email="<?php echo $hasRealEmail ? '1' : '0'; ?>"
+             data-guest-name="<?php echo htmlspecialchars($guestName, ENT_QUOTES, 'UTF-8'); ?>"
+             data-context-text="<?php echo htmlspecialchars(sf_reply_ui_truncate($contextText, 240), ENT_QUOTES, 'UTF-8'); ?>">
 
             <?php if (!$hideStatusBar): ?>
                 <div class="sf-reply-status-bar">
@@ -297,6 +418,20 @@ if (!function_exists('sf_reply_ui_render_panel')) {
             </div>
 
             <div class="sf-reply-composer">
+                <div class="sf-suggest-bar" data-suggest-bar>
+                    <span class="sf-suggest-label">Suggested Reply:</span>
+                    <div class="sf-suggest-chips" data-suggest-chips>
+                        <?php foreach ($suggestions as $sug): ?>
+                            <button type="button"
+                                    class="sf-suggest-chip"
+                                    data-suggest-reply="<?php echo htmlspecialchars($sug['text'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    title="<?php echo htmlspecialchars($sug['text'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($sug['label'], ENT_QUOTES, 'UTF-8'); ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
                 <textarea class="sf-reply-textarea"
                           data-reply-input
                           rows="2"
@@ -552,7 +687,11 @@ if (!function_exists('sf_reply_ui_render_ticket_cards')) {
                                         </details>
                                     <?php endif; ?>
 
-                                    <?php sf_reply_ui_render_panel($inqId, (string)($inq['guest_email'] ?? ''), $statusStr, $thread, ['hide_status_bar' => true]); ?>
+                                    <?php sf_reply_ui_render_panel($inqId, (string)($inq['guest_email'] ?? ''), $statusStr, $thread, [
+                                        'hide_status_bar' => true,
+                                        'guest_name'      => (string)($inq['guest_name'] ?? 'Guest'),
+                                        'context_text'    => (string)($inq['message'] ?? ''),
+                                    ]); ?>
                                 </article>
                             <?php endforeach; ?>
                         </section>
@@ -626,7 +765,12 @@ if (!function_exists('sf_reply_ui_render_ticket_cards')) {
                         <div class="inquiry-subject"><?php echo htmlspecialchars((string)$inq['subject'], ENT_QUOTES, 'UTF-8'); ?></div>
                         <div class="inquiry-message"><?php echo htmlspecialchars((string)$inq['message'], ENT_QUOTES, 'UTF-8'); ?></div>
 
-                        <?php sf_reply_ui_render_panel($inqId, (string)($inq['guest_email'] ?? ''), $statusStr, $thread, ['compact' => true, 'hide_status_bar' => true]); ?>
+                        <?php sf_reply_ui_render_panel($inqId, (string)($inq['guest_email'] ?? ''), $statusStr, $thread, [
+                            'compact'         => true,
+                            'hide_status_bar' => true,
+                            'guest_name'      => (string)($inq['guest_name'] ?? 'Guest'),
+                            'context_text'    => (string)($inq['subject'] ?? '') . ' ' . (string)($inq['message'] ?? ''),
+                        ]); ?>
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>

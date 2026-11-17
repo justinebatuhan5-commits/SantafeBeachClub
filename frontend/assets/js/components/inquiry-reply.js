@@ -89,6 +89,105 @@
         return clean.length > limit ? clean.slice(0, limit - 3) + '...' : clean;
     }
 
+    function extractFirstName(fullName) {
+        var clean = String(fullName || '').trim();
+        if (!clean || /^chat session/i.test(clean) || clean.toLowerCase() === 'guest') {
+            return 'there';
+        }
+        return clean.split(/\s+/)[0] || 'there';
+    }
+
+    function buildSmartSuggestions(guestName, messageText) {
+        var firstName = extractFirstName(guestName);
+        var combined = String(messageText || '').toLowerCase();
+        var list = [];
+
+        if (/\b(rate|rates|price|prices|cost|how much|magkano|pila|tagpila|room|rooms|kwarto|villa|duplex|family)\b/i.test(combined)) {
+            list.push({
+                label: '💡 Room Rates & Options',
+                text: 'Hi ' + firstName + '! Here are our official nightly rates at Santa Fe Beach Club:\n• Standard Room (2 pax): ₱3,450/night\n• Standard Family Room (4 pax): ₱4,300/night\n• Beachview Duplex (2 pax): ₱6,900/night\n• Seaview Duplex (2 pax): ₱7,900/night\n• Beach Villa (4 pax): ₱7,900/night\nWould you like me to check availability for your preferred dates?'
+            });
+        }
+        if (/\b(avail|available|availability|book|booking|reserve|reservation|date|dates|bakante|vacant|stay)\b/i.test(combined)) {
+            list.push({
+                label: '📅 Check Dates & Availability',
+                text: 'Hi ' + firstName + '! I would be happy to check room availability for you. Could you please share your preferred check-in and check-out dates and how many guests will be staying?'
+            });
+        }
+        if (/\b(pay|payment|deposit|downpayment|gcash|maya|card|bank|balance|bayad|installment)\b/i.test(combined)) {
+            list.push({
+                label: '💳 50% Deposit & Payment Info',
+                text: 'Hi ' + firstName + '! A 50% deposit confirms your reservation, and the remaining 50% balance is due 24 hours before arrival. We accept GCash (0950 522 3146 — Santa Fe Beach Club), Maya, Cards via PayMongo, Bank Transfer, or Cash at check-in.'
+            });
+        }
+        if (/\b(cancel|cancellation|refund|reschedule|resched|typhoon|weather|storm|bagyo|ferry)\b/i.test(combined)) {
+            list.push({
+                label: '🔄 Cancellation & Refund Policy',
+                text: 'Hi ' + firstName + '! For a 100% full refund, cancellations must be made at least 48 hours before check-in for 1–3 night stays (5 days for 4–6 nights, or 7 days for 7+ nights). If sea travel is suspended by the Coast Guard due to weather, we gladly allow free rescheduling.'
+            });
+        }
+        if (/\b(where|location|direction|directions|port|bantayan|hagnaya|pantalan|saan|paano|asa|dapit)\b/i.test(combined)) {
+            list.push({
+                label: '📍 Directions from Santa Fe Port',
+                text: 'Hi ' + firstName + '! We are located in Pantalan, Santa Fe, Bantayan Island, Cebu — just a few minutes from Santa Fe Ferry Port (via Hagnaya Port ferry). Let us know your expected arrival time so our front desk can welcome you!'
+            });
+        }
+        if (/\b(check-in|checkin|check-out|checkout|early|late|time|oras|wifi|wi-fi|pet|pets|amenity|amenities)\b/i.test(combined)) {
+            list.push({
+                label: '🕒 Check-in & Resort Info',
+                text: 'Hi ' + firstName + '! Standard check-in is at 2:00 PM and check-out is at 12:00 PM noon (early check-in is subject to room availability upon arrival). Free Wi-Fi and direct beachfront access are included with your stay!'
+            });
+        }
+        if (/\b(senior|pwd|discount|id)\b/i.test(combined)) {
+            list.push({
+                label: '🪪 Senior / PWD 20% Discount',
+                text: 'Hi ' + firstName + '! Yes, we grant the statutory 20% Senior Citizen / PWD discount and VAT exemption for eligible guests with a valid government ID via our Discount Booking page.'
+            });
+        }
+
+        var defaults = [
+            {
+                label: '👋 Greet & Assist',
+                text: 'Hi ' + firstName + '! This is Reception Staff at Santa Fe Beach Club. I\'m online now and reviewed your message — how may I best assist you today?'
+            },
+            {
+                label: '📅 Ask Stay Dates & Pax',
+                text: 'Hi ' + firstName + '! To help me check the best available rooms and exact rates for you, may I know your target check-in date, check-out date, and total number of guests?'
+            },
+            {
+                label: '💰 Share Room Rates',
+                text: 'Hi ' + firstName + '! Our rooms start at ₱3,450/night for a Standard Room (2 pax), ₱4,300/night for a Standard Family Room (4 pax), ₱6,900/night for a Beachview Duplex, and ₱7,900/night for our Seaview Duplex or Beach Villa. Which room type interests you?'
+            },
+            {
+                label: '✅ Warm Closing',
+                text: 'Thank you for reaching out to us, ' + firstName + '! Please let us know if you need anything else — we look forward to welcoming you to Santa Fe Beach Club!'
+            }
+        ];
+
+        for (var i = 0; i < defaults.length && list.length < 4; i++) {
+            list.push(defaults[i]);
+        }
+        return list.slice(0, 4);
+    }
+
+    function refreshSuggestedReplies(box, latestGuestMessage) {
+        var chipsWrap = box.querySelector('[data-suggest-chips]');
+        if (!chipsWrap) return;
+        var guestName = box.getAttribute('data-guest-name') || 'Guest';
+        var contextText = box.getAttribute('data-context-text') || '';
+        var suggestions = buildSmartSuggestions(guestName, (latestGuestMessage || '') + ' ' + contextText);
+        chipsWrap.innerHTML = '';
+        suggestions.forEach(function(sug) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'sf-suggest-chip';
+            btn.setAttribute('data-suggest-reply', sug.text);
+            btn.title = sug.text;
+            btn.textContent = sug.label;
+            chipsWrap.appendChild(btn);
+        });
+    }
+
     function updateQueueRowSummary(inquiryId, rep) {
         var row = document.querySelector('[data-select-chat="' + inquiryId + '"]');
         if (!row || !rep) return;
@@ -173,6 +272,9 @@
         var inqId = parseInt(box.getAttribute('data-inquiry-id') || '0', 10);
         if (inqId > 0) {
             updateQueueRowSummary(inqId, rep);
+        }
+        if (!isStaff && rep.message) {
+            refreshSuggestedReplies(box, rep.message);
         }
     }
 
@@ -390,6 +492,21 @@
     });
 
     document.addEventListener('click', function(e) {
+        var sugBtn = e.target.closest('[data-suggest-reply]');
+        if (sugBtn) {
+            var sugBox = sugBtn.closest('[data-reply-box]');
+            var sugInput = sugBox ? sugBox.querySelector('[data-reply-input]') : null;
+            if (sugInput) {
+                var replyText = sugBtn.getAttribute('data-suggest-reply') || '';
+                sugInput.value = replyText;
+                sugInput.focus();
+                if (typeof sugInput.setSelectionRange === 'function') {
+                    sugInput.setSelectionRange(replyText.length, replyText.length);
+                }
+            }
+            return;
+        }
+
         var rowBtn = e.target.closest('[data-select-chat]');
         if (rowBtn) {
             selectDeskConversation(rowBtn.getAttribute('data-select-chat'), true);

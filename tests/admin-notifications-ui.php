@@ -82,7 +82,7 @@ $notifData = [
 
 $adminHtml = $renderAdminContent($notifData);
 assertNotifUi(!str_contains($adminHtml, '<script>alert(1)</script>'), 'Notification titles escape raw HTML/script tags');
-assertNotifUi(str_contains($adminHtml, '<polyline points="10 17 15 12 10 7"/>'), 'Pending Check-ins KPI uses full check-in door+arrow SVG icon');
+assertNotifUi(!str_contains($adminHtml, 'class="summary-banner"'), 'Top summary KPI banner is removed from Admin Notifications');
 assertNotifUi(str_contains($adminHtml, 'data-notif-filter="unread"') && str_contains($adminHtml, 'data-notif-filter="urgent"'), 'Notification feed includes filter pills for unread and urgent items');
 assertNotifUi(str_contains($adminHtml, 'id="notifSearchInput"'), 'Notification feed includes instant search bar');
 assertNotifUi(str_contains($adminHtml, 'notif-unread-pill') && str_contains($adminHtml, 'REF-120001'), 'Unread alert renders inline unread indicator and booking ref chip');

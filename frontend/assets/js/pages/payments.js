@@ -397,7 +397,7 @@
         var statusFilter = document.getElementById('paymentStatusFilter');
         var methodFilter = document.getElementById('paymentMethodFilter');
         var resultsCounter = document.getElementById('paymentsResultsCounter');
-        var statusPills = document.querySelectorAll('.pay-status-pill');
+        var statusPills = document.querySelectorAll('.pay-status-pill, .payments-kpi-card');
         var tableRows = document.querySelectorAll('.reservations-table tbody tr.payment-row');
         if (!tableRows.length) {
             tableRows = document.querySelectorAll('.reservations-table tbody tr');
