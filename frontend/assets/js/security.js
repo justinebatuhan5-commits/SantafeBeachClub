@@ -21,11 +21,46 @@
             allowedImageExtensions: ['jpg', 'jpeg', 'png', 'webp'],
             patterns: {
                 email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                phone: /^(\+?63|0)?9\d{8,10}$/, // Philippine mobile: 09xxxxxxxxx, +639xxxxxxxxx, 9xxxxxxxxx (9-12 digits)
+                phone: /^(\+?63|0)?9\d{9}$/, // Philippine mobile: 09xxxxxxxxx, +639xxxxxxxxx, 9xxxxxxxxx (10-12 digits)
                 name: /^[a-zA-ZÀ-ÿ\s'-]{2,60}$/,
                 alphanumeric: /^[a-zA-Z0-9_ -]+$/,
                 price: /^\d+(\.\d{1,2})?$/,
                 positiveInteger: /^[1-9]\d*$/
+            },
+            phoneLengthsByDialCode: {
+                '+1': [10, 10],
+                '+7': [10, 10],
+                '+20': [10, 10],
+                '+27': [9, 9],
+                '+30': [10, 10],
+                '+31': [9, 9],
+                '+32': [8, 9],
+                '+33': [9, 9],
+                '+34': [9, 9],
+                '+39': [9, 10],
+                '+41': [9, 9],
+                '+44': [10, 10],
+                '+49': [6, 13],
+                '+55': [10, 11],
+                '+60': [9, 10],
+                '+61': [9, 9],
+                '+62': [8, 12],
+                '+64': [8, 10],
+                '+65': [8, 8],
+                '+66': [9, 9],
+                '+81': [9, 10],
+                '+82': [9, 10],
+                '+84': [9, 10],
+                '+86': [11, 11],
+                '+91': [10, 10],
+                '+852': [8, 8],
+                '+853': [8, 8],
+                '+855': [8, 9],
+                '+886': [9, 9],
+                '+966': [9, 9],
+                '+971': [9, 9],
+                '+974': [8, 8],
+                '+996': [9, 9]
             }
         },
 
@@ -69,19 +104,60 @@
                 }
                 // Phone validation
                 else if (type === 'tel' || patternType === 'phone') {
-                    const cleanPhone = value.replace(/[\s-]/g, '');
+                    const cleanPhone = value.replace(/[\s()-]/g, '');
                     const phoneCodeEl = input.form ? input.form.querySelector('select[name="phone_code"]') : document.querySelector('select[name="phone_code"]');
-                    const dialCode = phoneCodeEl ? phoneCodeEl.value : '+63';
 
-                    if (dialCode === '+63') {
-                        if (!this.config.patterns.phone.test(cleanPhone)) {
+                    if (!phoneCodeEl) {
+                        if (cleanPhone.startsWith('+')) {
+                            if (!/^\+[1-9]\d{7,14}$/.test(cleanPhone)) {
+                                isValid = false;
+                                errorMessage = 'Please enter a valid international number (e.g. +639171234567 or +14155550199).';
+                            }
+                        } else if (!this.config.patterns.phone.test(cleanPhone)) {
                             isValid = false;
-                            errorMessage = 'Please enter a valid mobile number (e.g. 09171234567 or +639171234567).';
+                            errorMessage = 'Please enter a valid mobile number (e.g. 09171234567 or +14155550199).';
                         }
                     } else {
-                        if (!/^\+?\d{5,15}$/.test(cleanPhone)) {
-                            isValid = false;
-                            errorMessage = 'Please enter a valid phone number (5 to 15 digits).';
+                        const dialCode = phoneCodeEl.value || '+63';
+                        const dialDigits = dialCode.replace(/\D/g, '');
+                        let nationalRaw = cleanPhone;
+
+                        if (cleanPhone.startsWith('+')) {
+                            if (!cleanPhone.startsWith(dialCode)) {
+                                isValid = false;
+                                errorMessage = `Country code mismatch. Enter digits without a country code or switch the selector from ${dialCode}.`;
+                            } else {
+                                nationalRaw = cleanPhone.slice(dialCode.length);
+                            }
+                        }
+
+                        if (isValid) {
+                            if (dialCode === '+63') {
+                                if (!this.config.patterns.phone.test(cleanPhone)) {
+                                    isValid = false;
+                                    errorMessage = 'Please enter a valid PH mobile number (e.g. 09171234567 or 9171234567).';
+                                }
+                            } else {
+                                if (!/^\d+$/.test(nationalRaw)) {
+                                    isValid = false;
+                                    errorMessage = 'Please enter digits only for the phone number.';
+                                } else {
+                                    const nationalDigits = nationalRaw.replace(/^0+/, '');
+                                    const bounds = this.config.phoneLengthsByDialCode[dialCode] || [6, 12];
+                                    const totalDigits = dialDigits.length + nationalDigits.length;
+
+                                    if (nationalDigits.length < bounds[0] || nationalDigits.length > bounds[1]) {
+                                        isValid = false;
+                                        const expectedLabel = bounds[0] === bounds[1]
+                                            ? `${bounds[0]} digits`
+                                            : `${bounds[0]} to ${bounds[1]} digits`;
+                                        errorMessage = `Please enter a valid phone number (${expectedLabel} for ${dialCode}).`;
+                                    } else if (totalDigits < 8 || totalDigits > 15) {
+                                        isValid = false;
+                                        errorMessage = 'Please enter a valid international phone number (8 to 15 digits total).';
+                                    }
+                                }
+                            }
                         }
                     }
                 }

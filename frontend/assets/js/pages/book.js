@@ -539,10 +539,33 @@ function showFileError(input, errorDiv, message) {
         });
     }
 
-    // Country change auto-syncs international calling code
+    // Country change auto-syncs international calling code without overwriting
+    // a guest's manually chosen dial code or an already-entered valid PH SIM.
     var countrySelect   = document.querySelector('select[name="country"]');
     var phoneCodeSelect = document.querySelector('select[name="phone_code"]');
     var phoneInput      = document.querySelector('input[name="phone"]');
+    var phoneCodeUserOverridden = false;
+
+    function syncPhonePlaceholder(dialCode) {
+        if (!phoneInput) return;
+        phoneInput.placeholder = (dialCode === '+63') ? '09171234567' : 'e.g. 12345678';
+    }
+
+    function revalidatePhoneInput() {
+        if (phoneInput && phoneInput.value.trim() !== '' && typeof Security !== 'undefined' && typeof Security.validateField === 'function') {
+            Security.validateField(phoneInput);
+        }
+    }
+
+    if (phoneCodeSelect) {
+        phoneCodeSelect.addEventListener('change', function(e) {
+            if (e && e.isTrusted) {
+                phoneCodeUserOverridden = true;
+            }
+            syncPhonePlaceholder(phoneCodeSelect.value);
+            revalidatePhoneInput();
+        });
+    }
 
     if (countrySelect && phoneCodeSelect) {
         countrySelect.addEventListener('change', function() {
@@ -551,6 +574,12 @@ function showFileError(input, errorDiv, message) {
             var dialCode = opt.getAttribute('data-dial-code');
             var flag = opt.getAttribute('data-flag') || '';
             if (!dialCode) return;
+
+            var rawPhone = phoneInput ? phoneInput.value.replace(/[\s()-]/g, '') : '';
+            var hasValidPhSim = (phoneCodeSelect.value === '+63' && /^(?:\+?63|0)?9\d{9}$/.test(rawPhone));
+            if (phoneCodeUserOverridden || (rawPhone !== '' && hasValidPhSim && dialCode !== '+63')) {
+                return;
+            }
 
             var found = false;
             for (var i = 0; i < phoneCodeSelect.options.length; i++) {
@@ -571,15 +600,8 @@ function showFileError(input, errorDiv, message) {
                 phoneCodeSelect.value = dialCode;
             }
 
-            if (phoneInput) {
-                if (dialCode === '+63') {
-                    phoneInput.placeholder = '09171234567';
-                } else {
-                    phoneInput.placeholder = 'e.g. 12345678';
-                }
-            }
-
-            phoneCodeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            syncPhonePlaceholder(dialCode);
+            revalidatePhoneInput();
         });
     }
 

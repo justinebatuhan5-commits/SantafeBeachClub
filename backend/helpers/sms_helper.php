@@ -16,6 +16,97 @@ function sf_normalize_e164(string $number, string $dialCode = '+63'): ?string
     return preg_match('/^\+[1-9]\d{7,14}$/', $number) ? $number : null;
 }
 
+function sf_get_phone_length_bounds(): array
+{
+    return [
+        '+1'   => [10, 10],
+        '+7'   => [10, 10],
+        '+20'  => [10, 10],
+        '+27'  => [9, 9],
+        '+30'  => [10, 10],
+        '+31'  => [9, 9],
+        '+32'  => [8, 9],
+        '+33'  => [9, 9],
+        '+34'  => [9, 9],
+        '+39'  => [9, 10],
+        '+41'  => [9, 9],
+        '+44'  => [10, 10],
+        '+49'  => [6, 13],
+        '+55'  => [10, 11],
+        '+60'  => [9, 10],
+        '+61'  => [9, 9],
+        '+62'  => [8, 12],
+        '+64'  => [8, 10],
+        '+65'  => [8, 8],
+        '+66'  => [9, 9],
+        '+81'  => [9, 10],
+        '+82'  => [9, 10],
+        '+84'  => [9, 10],
+        '+86'  => [11, 11],
+        '+91'  => [10, 10],
+        '+852' => [8, 8],
+        '+853' => [8, 8],
+        '+855' => [8, 9],
+        '+886' => [9, 9],
+        '+966' => [9, 9],
+        '+971' => [9, 9],
+        '+974' => [8, 8],
+        '+996' => [9, 9],
+    ];
+}
+
+function sf_validate_booking_phone(string $number, string $dialCode = '+63'): ?string
+{
+    $trimmed = trim($number);
+    if ($trimmed === '') {
+        return 'Contact Number is required.';
+    }
+
+    $clean = preg_replace('/[\s()-]/', '', $trimmed);
+    $dialCode = trim($dialCode);
+    if (!preg_match('/^\+[1-9]\d{0,3}$/', $dialCode)) {
+        return 'Please select a valid country calling code.';
+    }
+
+    if (str_starts_with($clean, '+')) {
+        if (!str_starts_with($clean, $dialCode)) {
+            return "Country code mismatch. Enter digits without a country code or switch the selector from {$dialCode}.";
+        }
+        $nationalRaw = substr($clean, strlen($dialCode));
+    } else {
+        $nationalRaw = $clean;
+    }
+
+    if ($dialCode === '+63') {
+        if (preg_match('/^(?:\+?63|0)?9\d{9}$/', $clean) !== 1) {
+            return 'Please enter a valid PH mobile number (e.g. 09171234567 or 9171234567).';
+        }
+        return null;
+    }
+
+    if (!preg_match('/^\d+$/', $nationalRaw)) {
+        return 'Please enter digits only for the phone number.';
+    }
+
+    $nationalDigits = ltrim($nationalRaw, '0');
+    $boundsMap = sf_get_phone_length_bounds();
+    [$minLen, $maxLen] = $boundsMap[$dialCode] ?? [6, 12];
+    $nationalLen = strlen($nationalDigits);
+
+    if ($nationalLen < $minLen || $nationalLen > $maxLen) {
+        $expectedLabel = ($minLen === $maxLen)
+            ? "{$minLen} digits"
+            : "{$minLen} to {$maxLen} digits";
+        return "Please enter a valid phone number ({$expectedLabel} for {$dialCode}).";
+    }
+
+    if (sf_normalize_e164($trimmed, $dialCode) === null) {
+        return 'Please enter a valid international phone number (8 to 15 digits total).';
+    }
+
+    return null;
+}
+
 function sf_mask_phone(string $number): string
 {
     $normalized = sf_normalize_e164($number);

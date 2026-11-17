@@ -416,8 +416,20 @@ if (!function_exists('sfbc_handle_book_page')) {
                         $_SESSION['guest_eta'] = sf_default_booking_eta((string) $checkin, $businessNow);
                     }
 
+                    $allowedCountries = sfbc_get_booking_countries();
+                    $phoneError = sf_validate_booking_phone(
+                        (string) $_SESSION['guest_phone'],
+                        (string) $_SESSION['guest_phone_code']
+                    );
+
                     if (empty($_SESSION['guest_first_name']) || empty($_SESSION['guest_last_name']) || empty($_SESSION['guest_email'])) {
                         $error = "Please fill out required fields.";
+                        $step  = 2;
+                    } elseif (empty($_SESSION['guest_country']) || !in_array($_SESSION['guest_country'], $allowedCountries, true)) {
+                        $error = "Please select your Country / Region.";
+                        $step  = 2;
+                    } elseif ($phoneError !== null) {
+                        $error = $phoneError;
                         $step  = 2;
                     } elseif (!$etaValid) {
                         $error = "The selected arrival time has already passed for today's check-in. Please choose an upcoming arrival time.";

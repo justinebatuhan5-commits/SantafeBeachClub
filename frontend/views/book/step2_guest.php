@@ -21,24 +21,12 @@
             <input type="email" name="email_confirm" placeholder="Retype email" required data-validate="email" data-label="Email confirmation" value="<?php echo htmlspecialchars($_SESSION['guest_email'] ?? ''); ?>">
         </div>
 
-        <div class="bk-form-group">
-            <label>Contact Number <span class="req">*</span></label>
-            <div class="bk-input-combo">
-                <select name="phone_code" class="bk-select-phone" aria-label="Country Code">
-                    <?php
-                    $country_calling_codes = sf_get_country_calling_codes();
-                    $phone_codes           = sf_get_distinct_calling_codes();
-                    $selected_country      = $_SESSION['guest_country'] ?? '';
-                    $selected_phone_code   = $_SESSION['guest_phone_code'] ?? ($selected_country && isset($country_calling_codes[$selected_country]) ? $country_calling_codes[$selected_country]['code'] : '+63');
-                    foreach ($phone_codes as $item):
-                        $sel = ($selected_phone_code === $item['code']) ? 'selected' : '';
-                        echo "<option value=\"" . htmlspecialchars($item['code']) . "\" data-flag=\"" . htmlspecialchars($item['flag']) . "\" {$sel}>" . htmlspecialchars($item['display']) . "</option>\n";
-                    endforeach;
-                    ?>
-                </select>
-                <input type="tel" name="phone" placeholder="<?php echo ($selected_phone_code === '+63') ? '09171234567' : 'e.g. 12345678'; ?>" required data-validate="phone" data-label="Contact Number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
-            </div>
-        </div>
+        <?php
+        $country_calling_codes = sf_get_country_calling_codes();
+        $phone_codes           = sf_get_distinct_calling_codes();
+        $selected_country      = $_SESSION['guest_country'] ?? '';
+        $selected_phone_code   = $_SESSION['guest_phone_code'] ?? ($selected_country && isset($country_calling_codes[$selected_country]) ? $country_calling_codes[$selected_country]['code'] : '+63');
+        ?>
         <div class="bk-form-group">
             <label>Country / Region <span class="req">*</span></label>
             <select name="country" required data-label="Country / Region">
@@ -51,6 +39,21 @@
                 endforeach;
                 ?>
             </select>
+        </div>
+        <div class="bk-form-group">
+            <label>Contact Number <span class="req">*</span></label>
+            <div class="bk-input-combo">
+                <select name="phone_code" class="bk-select-phone" aria-label="Country Code">
+                    <?php
+                    foreach ($phone_codes as $item):
+                        $sel = ($selected_phone_code === $item['code']) ? 'selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($item['code']) . "\" data-flag=\"" . htmlspecialchars($item['flag']) . "\" {$sel}>" . htmlspecialchars($item['display']) . "</option>\n";
+                    endforeach;
+                    ?>
+                </select>
+                <input type="tel" name="phone" placeholder="<?php echo ($selected_phone_code === '+63') ? '09171234567' : 'e.g. 12345678'; ?>" required data-validate="phone" data-label="Contact Number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
+            </div>
+            <small style="display:block; margin-top:0.35rem; color:#6b7280; font-size:0.78rem;">You may use your home number or a local PH (+63) SIM.</small>
         </div>
 
         <div class="bk-form-group">
