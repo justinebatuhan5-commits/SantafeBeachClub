@@ -2572,27 +2572,31 @@ function sf_chatbot_create_handoff(
     $convId = (int)($conv['id'] ?? 0);
     $history = sf_chatbot_load_history($conn, $convId, 8);
 
-    // Check for an existing open handoff ticket from the same guest email within 15 minutes
-    // to prevent impatient repeat clicks from flooding Live Support Chats with duplicates.
+    // Scope duplicate prevention strictly to the current session's active handoff ticket within
+    // 2 minutes so separate devices (mobile vs. laptop) or different names always get their own ticket.
     $normalizedEmail = strtolower($guestEmail);
+    $normalizedName = strtolower($guestName);
+    $currentConvInquiryId = (int)($conv['inquiry_id'] ?? 0);
     $existingInquiryId = 0;
-    $dupStmt = $conn->prepare("
-        SELECT id
-        FROM inquiries
-        WHERE LOWER(TRIM(guest_email)) = ?
-          AND subject LIKE '[AI Concierge Handoff]%'
-          AND status IN ('Unread', 'Read')
-          AND created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
-        ORDER BY id DESC
-        LIMIT 1
-    ");
-    if ($dupStmt) {
-        $dupStmt->bind_param('s', $normalizedEmail);
-        $dupStmt->execute();
-        $dupRow = $dupStmt->get_result()->fetch_assoc();
-        $dupStmt->close();
-        if ($dupRow) {
-            $existingInquiryId = (int)$dupRow['id'];
+    if ($currentConvInquiryId > 0) {
+        $dupStmt = $conn->prepare("
+            SELECT id
+            FROM inquiries
+            WHERE id = ?
+              AND LOWER(TRIM(guest_email)) = ?
+              AND LOWER(TRIM(guest_name)) = ?
+              AND status IN ('Unread', 'Read')
+              AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+            LIMIT 1
+        ");
+        if ($dupStmt) {
+            $dupStmt->bind_param('iss', $currentConvInquiryId, $normalizedEmail, $normalizedName);
+            $dupStmt->execute();
+            $dupRow = $dupStmt->get_result()->fetch_assoc();
+            $dupStmt->close();
+            if ($dupRow) {
+                $existingInquiryId = (int)$dupRow['id'];
+            }
         }
     }
 
@@ -3690,7 +3694,6 @@ function sf_inquiry_fetch_channel_tickets(mysqli $conn, string $channel = 'conta
             WHERE {$where}
             GROUP BY i.id
             ORDER BY CASE WHEN i.status = 'Unread' THEN 0 WHEN i.status = 'Read' THEN 1 ELSE 2 END ASC,
-                     GREATEST(COALESCE(MAX(c.last_message_at), i.created_at), i.created_at) DESC,
                      i.id DESC
         ";
     } else {

@@ -268,7 +268,11 @@
         if (!desk) return;
         var targetId = String(inquiryId || '');
         desk.querySelectorAll('[data-select-chat]').forEach(function(btn) {
-            btn.classList.toggle('is-selected', btn.getAttribute('data-select-chat') === targetId);
+            var isMatch = btn.getAttribute('data-select-chat') === targetId;
+            btn.classList.toggle('is-selected', isMatch);
+            if (isMatch && typeof btn.scrollIntoView === 'function') {
+                btn.scrollIntoView({ block: 'nearest' });
+            }
         });
         var selectedPane = null;
         desk.querySelectorAll('[data-inquiry-card]').forEach(function(pane) {
@@ -342,6 +346,13 @@
 
     window.addEventListener('hashchange', selectFromHashIfPresent);
     document.addEventListener('DOMContentLoaded', function() {
+        var hash = window.location.hash || '';
+        if (!/^#inquiry-(\d+)$/.test(hash)) {
+            var queueEl = document.querySelector('[data-chat-queue]');
+            if (queueEl) {
+                queueEl.scrollTop = 0;
+            }
+        }
         selectFromHashIfPresent();
         document.querySelectorAll('[data-thread-list]').forEach(function(el) {
             el.scrollTop = el.scrollHeight;
