@@ -25,7 +25,11 @@
         $country_calling_codes = sf_get_country_calling_codes();
         $phone_codes           = sf_get_distinct_calling_codes();
         $selected_country      = $_SESSION['guest_country'] ?? '';
-        $selected_phone_code   = $_SESSION['guest_phone_code'] ?? ($selected_country && isset($country_calling_codes[$selected_country]) ? $country_calling_codes[$selected_country]['code'] : '+63');
+        $is_foreign_country    = ($selected_country !== '' && $selected_country !== 'Philippines');
+        $selected_country_info = ($selected_country && isset($country_calling_codes[$selected_country]))
+            ? $country_calling_codes[$selected_country]
+            : ['code' => '+63', 'flag' => 'PH'];
+        $selected_phone_code   = $_SESSION['guest_phone_code'] ?? $selected_country_info['code'];
         ?>
         <div class="bk-form-group">
             <label>Country / Region <span class="req">*</span></label>
@@ -41,7 +45,7 @@
             </select>
         </div>
         <div class="bk-form-group">
-            <label>Contact Number <span class="req">*</span></label>
+            <label id="bkPhoneLabel"><?php if ($is_foreign_country): ?>Contact / WhatsApp Number <span style="font-weight:500; opacity:0.65;">(Optional)</span><?php else: ?>Contact Number <span class="req">*</span><?php endif; ?></label>
             <div class="bk-input-combo">
                 <select name="phone_code" class="bk-select-phone" aria-label="Country Code">
                     <?php
@@ -51,9 +55,9 @@
                     endforeach;
                     ?>
                 </select>
-                <input type="tel" name="phone" placeholder="<?php echo ($selected_phone_code === '+63') ? '09171234567' : 'e.g. 12345678'; ?>" required data-validate="phone" data-label="Contact Number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
+                <input type="tel" name="phone" placeholder="<?php echo ($selected_phone_code === '+63') ? '09171234567' : 'e.g. 12345678'; ?>" <?php echo $is_foreign_country ? '' : 'required'; ?> data-validate="phone" data-label="Contact Number" value="<?php echo htmlspecialchars($_SESSION['guest_phone'] ?? ''); ?>">
             </div>
-            <small style="display:block; margin-top:0.35rem; color:#6b7280; font-size:0.78rem;">You may use your home number or a local PH (+63) SIM.</small>
+            <small id="bkPhoneHint" style="display:block; margin-top:0.35rem; color:#6b7280; font-size:0.78rem;"><?php echo $is_foreign_country ? 'Optional if your SIM has no roaming in the Philippines (passes &amp; OTPs are sent by Email). You may enter a WhatsApp or local PH (+63) number.' : 'Required for local guests (e.g. 09171234567).'; ?></small>
         </div>
 
         <div class="bk-form-group">

@@ -108,6 +108,11 @@ function sfbc_handle_admin_checkin_page(mysqli $conn): array
         $guest_name = trim($_POST['guest_name'] ?? '');
         $guest_email = trim($_POST['guest_email'] ?? '');
         $guest_phone = trim($_POST['guest_phone'] ?? '');
+        $guest_country = trim($_POST['guest_country'] ?? 'Philippines');
+        if ($guest_country === '') {
+            $guest_country = 'Philippines';
+        }
+        $guest_country = substr($guest_country, 0, 100);
         $guest_type = trim($_POST['guest_type'] ?? 'Walk-in');
         $room_id = intval($_POST['room_id'] ?? 0);
         $check_in = trim($_POST['check_in'] ?? date('Y-m-d'));
@@ -142,14 +147,15 @@ function sfbc_handle_admin_checkin_page(mysqli $conn): array
                 $eta = date('H:i');
 
                 $b_stmt = $conn->prepare("
-                    INSERT INTO bookings (guest_name, guest_email, guest_phone, guest_type, room_type_id, room_id, accommodation_name, check_in, check_out, guests_count, eta, status, payment_method, checkin_token, cancellation_token)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Checked In', ?, ?, ?)
+                    INSERT INTO bookings (guest_name, guest_email, guest_phone, guest_country, guest_type, room_type_id, room_id, accommodation_name, check_in, check_out, guests_count, eta, status, payment_method, checkin_token, cancellation_token)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Checked In', ?, ?, ?)
                 ");
                 $b_stmt->bind_param(
-                    "ssssiisssissss",
+                    "sssssiisssissss",
                     $guest_name,
                     $guest_email,
                     $guest_phone,
+                    $guest_country,
                     $guest_type,
                     $room_type_id,
                     $room_id,

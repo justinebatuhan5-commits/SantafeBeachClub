@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../backend/helpers/auth_check.php';
 require_once __DIR__ . '/../backend/config/db.php';
+require_once __DIR__ . '/../backend/helpers/pii_masker.php';
 require_once __DIR__ . '/../backend/controllers/reservations_controller.php';
 
 $reservationsData = sfbc_handle_reservations_page($conn);

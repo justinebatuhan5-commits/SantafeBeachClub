@@ -201,10 +201,22 @@ function sfbc_handle_guests_page(mysqli $conn): array
         $guestPhone = '';
         $guestCountry = '';
         $guestSpecialRequests = '';
-        if (!empty($bookings)) {
-            $guestPhone = (string)($bookings[0]['guest_phone'] ?? '');
-            $guestCountry = (string)($bookings[0]['guest_country'] ?? '');
-            $guestSpecialRequests = (string)($bookings[0]['guest_special_requests'] ?? '');
+        foreach ($bookings as $bk) {
+            $bkPhone = trim((string)($bk['guest_phone'] ?? ''));
+            $bkCountry = trim((string)($bk['guest_country'] ?? ''));
+            $bkNotes = trim((string)($bk['guest_special_requests'] ?? ''));
+            if ($guestPhone === '' && $bkPhone !== '') {
+                $guestPhone = $bkPhone;
+            }
+            if ($guestCountry === '' && $bkCountry !== '') {
+                $guestCountry = $bkCountry;
+            }
+            if ($guestSpecialRequests === '' && $bkNotes !== '') {
+                $guestSpecialRequests = $bkNotes;
+            }
+            if ($guestPhone !== '' && $guestCountry !== '' && $guestSpecialRequests !== '') {
+                break;
+            }
         }
 
         [$guestFirstName, $guestLastName] = sfbc_guests_split_name($name);

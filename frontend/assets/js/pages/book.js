@@ -539,69 +539,112 @@ function showFileError(input, errorDiv, message) {
         });
     }
 
-    // Country change auto-syncs international calling code without overwriting
-    // a guest's manually chosen dial code or an already-entered valid PH SIM.
+    // Lock dial code to the selected Country / Region or PH +63 (for local tourist SIMs)
+    // and make Contact Number optional for foreign guests whose SIMs may lack PH roaming.
     var countrySelect   = document.querySelector('select[name="country"]');
     var phoneCodeSelect = document.querySelector('select[name="phone_code"]');
     var phoneInput      = document.querySelector('input[name="phone"]');
-    var phoneCodeUserOverridden = false;
+    var phoneLabel      = document.getElementById('bkPhoneLabel');
+    var phoneHint       = document.getElementById('bkPhoneHint');
 
     function syncPhonePlaceholder(dialCode) {
         if (!phoneInput) return;
         phoneInput.placeholder = (dialCode === '+63') ? '09171234567' : 'e.g. 12345678';
     }
 
-    function revalidatePhoneInput() {
-        if (phoneInput && phoneInput.value.trim() !== '' && typeof Security !== 'undefined' && typeof Security.validateField === 'function') {
+    function revalidatePhoneInput(forceOnEmpty) {
+        if (!phoneInput || typeof Security === 'undefined' || typeof Security.validateField !== 'function') {
+            return;
+        }
+        if (forceOnEmpty || phoneInput.value.trim() !== '' || (phoneInput.classList && phoneInput.classList.contains('is-invalid'))) {
             Security.validateField(phoneInput);
         }
     }
 
-    if (phoneCodeSelect) {
-        phoneCodeSelect.addEventListener('change', function(e) {
-            if (e && e.isTrusted) {
-                phoneCodeUserOverridden = true;
+    function setPhoneCodeOptions(allowedList, preferredCode) {
+        if (!phoneCodeSelect) return;
+        phoneCodeSelect.innerHTML = '';
+        allowedList.forEach(function(item) {
+            var opt = document.createElement('option');
+            opt.value = item.code;
+            opt.textContent = item.label;
+            if (item.flag) {
+                opt.setAttribute('data-flag', item.flag);
             }
+            phoneCodeSelect.appendChild(opt);
+        });
+        phoneCodeSelect.value = preferredCode;
+        if (phoneCodeSelect.value !== preferredCode && phoneCodeSelect.options.length > 0) {
+            phoneCodeSelect.selectedIndex = 0;
+        }
+    }
+
+    function syncCountryAndPhoneRules(isInitialLoad) {
+        if (!countrySelect || !phoneCodeSelect) return;
+        var opt = countrySelect.options[countrySelect.selectedIndex];
+        var countryName = (opt && opt.value) ? opt.value : '';
+        var dialCode = (opt && opt.value && opt.getAttribute('data-dial-code')) ? opt.getAttribute('data-dial-code') : '+63';
+        var flag = (opt && opt.value && opt.getAttribute('data-flag')) ? opt.getAttribute('data-flag') : 'PH';
+        var isForeign = (countryName !== '' && countryName !== 'Philippines');
+
+        if (phoneInput) {
+            if (isForeign) {
+                phoneInput.removeAttribute('required');
+            } else {
+                phoneInput.setAttribute('required', 'required');
+            }
+        }
+
+        if (phoneLabel) {
+            phoneLabel.innerHTML = isForeign
+                ? 'Contact / WhatsApp Number <span style="font-weight:500; opacity:0.65;">(Optional)</span>'
+                : 'Contact Number <span class="req">*</span>';
+        }
+        if (phoneHint) {
+            phoneHint.textContent = isForeign
+                ? 'Optional if your SIM has no roaming in the Philippines (passes & OTPs are sent by Email). You may enter a WhatsApp or local PH (+63) number.'
+                : 'Required for local guests (e.g. 09171234567).';
+        }
+
+        var prevDialCode = phoneCodeSelect.value || '+63';
+        var rawPhone = phoneInput ? phoneInput.value.replace(/[\s()-]/g, '') : '';
+        var hasValidPhSim = (prevDialCode === '+63' && /^(?:\+?63|0)?9\d{9}$/.test(rawPhone));
+
+        var allowedCodes = [];
+        if (!isForeign) {
+            allowedCodes.push({ code: '+63', flag: 'PH', label: 'PH +63' });
+            setPhoneCodeOptions(allowedCodes, '+63');
+        } else {
+            if (dialCode !== '+63') {
+                allowedCodes.push({
+                    code: dialCode,
+                    flag: flag,
+                    label: (flag ? flag + ' ' : '') + dialCode
+                });
+            }
+            allowedCodes.push({ code: '+63', flag: 'PH', label: 'PH +63' });
+
+            var preferredCode = (hasValidPhSim && rawPhone !== '') || (isInitialLoad && prevDialCode === '+63' && rawPhone !== '')
+                ? '+63'
+                : dialCode;
+            setPhoneCodeOptions(allowedCodes, preferredCode);
+        }
+
+        syncPhonePlaceholder(phoneCodeSelect.value);
+        revalidatePhoneInput(false);
+    }
+
+    if (phoneCodeSelect) {
+        phoneCodeSelect.addEventListener('change', function() {
             syncPhonePlaceholder(phoneCodeSelect.value);
-            revalidatePhoneInput();
+            revalidatePhoneInput(false);
         });
     }
 
     if (countrySelect && phoneCodeSelect) {
+        syncCountryAndPhoneRules(true);
         countrySelect.addEventListener('change', function() {
-            var opt = countrySelect.options[countrySelect.selectedIndex];
-            if (!opt || !opt.value) return;
-            var dialCode = opt.getAttribute('data-dial-code');
-            var flag = opt.getAttribute('data-flag') || '';
-            if (!dialCode) return;
-
-            var rawPhone = phoneInput ? phoneInput.value.replace(/[\s()-]/g, '') : '';
-            var hasValidPhSim = (phoneCodeSelect.value === '+63' && /^(?:\+?63|0)?9\d{9}$/.test(rawPhone));
-            if (phoneCodeUserOverridden || (rawPhone !== '' && hasValidPhSim && dialCode !== '+63')) {
-                return;
-            }
-
-            var found = false;
-            for (var i = 0; i < phoneCodeSelect.options.length; i++) {
-                if (phoneCodeSelect.options[i].value === dialCode) {
-                    phoneCodeSelect.selectedIndex = i;
-                    if (flag) {
-                        phoneCodeSelect.options[i].textContent = flag + ' ' + dialCode;
-                    }
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                var newOpt = document.createElement('option');
-                newOpt.value = dialCode;
-                newOpt.textContent = (flag ? flag + ' ' : '') + dialCode;
-                phoneCodeSelect.appendChild(newOpt);
-                phoneCodeSelect.value = dialCode;
-            }
-
-            syncPhonePlaceholder(dialCode);
-            revalidatePhoneInput();
+            syncCountryAndPhoneRules(false);
         });
     }
 

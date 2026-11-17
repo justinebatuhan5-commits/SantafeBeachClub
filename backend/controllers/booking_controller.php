@@ -419,7 +419,8 @@ if (!function_exists('sfbc_handle_book_page')) {
                     $allowedCountries = sfbc_get_booking_countries();
                     $phoneError = sf_validate_booking_phone(
                         (string) $_SESSION['guest_phone'],
-                        (string) $_SESSION['guest_phone_code']
+                        (string) $_SESSION['guest_phone_code'],
+                        (string) $_SESSION['guest_country']
                     );
 
                     if (empty($_SESSION['guest_first_name']) || empty($_SESSION['guest_last_name']) || empty($_SESSION['guest_email'])) {
@@ -676,8 +677,10 @@ if (!function_exists('sfbc_handle_book_page')) {
 
                     if (!$skip_insert && empty($error)) {
                         try {
-                            $guest_phone_raw        = (string) ($_SESSION['guest_phone'] ?? '');
-                            $guest_phone            = sf_normalize_e164($guest_phone_raw, (string) ($_SESSION['guest_phone_code'] ?? '+63')) ?? $guest_phone_raw;
+                            $guest_phone_raw        = trim((string) ($_SESSION['guest_phone'] ?? ''));
+                            $guest_phone            = $guest_phone_raw !== ''
+                                ? (sf_normalize_e164($guest_phone_raw, (string) ($_SESSION['guest_phone_code'] ?? '+63')) ?? $guest_phone_raw)
+                                : '';
                             $guest_country          = $_SESSION['guest_country'] ?? '';
                             $guest_special_requests = $_SESSION['guest_comments'] ?? '';
                             $eta                    = sf_default_booking_eta((string) $checkin, $businessNow, $submittedEta);

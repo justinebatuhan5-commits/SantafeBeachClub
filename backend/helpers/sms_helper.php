@@ -47,6 +47,7 @@ function sf_get_phone_length_bounds(): array
         '+852' => [8, 8],
         '+853' => [8, 8],
         '+855' => [8, 9],
+        '+880' => [10, 10],
         '+886' => [9, 9],
         '+966' => [9, 9],
         '+971' => [9, 9],
@@ -55,17 +56,42 @@ function sf_get_phone_length_bounds(): array
     ];
 }
 
-function sf_validate_booking_phone(string $number, string $dialCode = '+63'): ?string
+function sf_get_phone_prefix_patterns(): array
+{
+    return [
+        '+880' => '/^1[3-9]\d{8}$/',
+        '+91'  => '/^[6-9]\d{9}$/',
+        '+65'  => '/^[689]\d{7}$/',
+        '+852' => '/^[2-9]\d{7}$/',
+        '+853' => '/^[26]\d{7}$/',
+    ];
+}
+
+function sf_validate_booking_phone(string $number, string $dialCode = '+63', string $country = 'Philippines'): ?string
 {
     $trimmed = trim($number);
+    $country = trim($country);
+    $isForeign = ($country !== '' && strcasecmp($country, 'Philippines') !== 0);
+
     if ($trimmed === '') {
-        return 'Contact Number is required.';
+        return $isForeign ? null : 'Contact Number is required.';
     }
 
     $clean = preg_replace('/[\s()-]/', '', $trimmed);
     $dialCode = trim($dialCode);
     if (!preg_match('/^\+[1-9]\d{0,3}$/', $dialCode)) {
         return 'Please select a valid country calling code.';
+    }
+
+    if ($country !== '' && function_exists('sf_get_country_calling_codes')) {
+        $codes = sf_get_country_calling_codes();
+        $expectedDial = $codes[$country]['code'] ?? null;
+        if (strcasecmp($country, 'Philippines') === 0 && $dialCode !== '+63') {
+            return 'Please use PH +63 for Philippines contact numbers.';
+        }
+        if ($expectedDial !== null && $dialCode !== $expectedDial && $dialCode !== '+63') {
+            return "Dial code {$dialCode} does not match {$country} ({$expectedDial}). Please use {$expectedDial} or PH +63.";
+        }
     }
 
     if (str_starts_with($clean, '+')) {
@@ -98,6 +124,11 @@ function sf_validate_booking_phone(string $number, string $dialCode = '+63'): ?s
             ? "{$minLen} digits"
             : "{$minLen} to {$maxLen} digits";
         return "Please enter a valid phone number ({$expectedLabel} for {$dialCode}).";
+    }
+
+    $prefixMap = sf_get_phone_prefix_patterns();
+    if (isset($prefixMap[$dialCode]) && preg_match($prefixMap[$dialCode], $nationalDigits) !== 1) {
+        return "Please enter a valid mobile number for {$dialCode}.";
     }
 
     if (sf_normalize_e164($trimmed, $dialCode) === null) {

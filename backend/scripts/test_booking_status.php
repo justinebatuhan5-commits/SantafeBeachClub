@@ -46,9 +46,11 @@ foreach ([null, 'Confirmed', 'Checked In', 'Cancelled', 'confirmed', '', ['Check
 $db = new BookingStatusTestPdo();
 createBooking($db, $data);
 checkBookingStatus($db->inserted[':status'] === 'Pending', 'Omitted status must be Pending');
+checkBookingStatus($db->inserted[':guest_country'] === 'Philippines', 'Omitted guest_country must default to Philippines');
 $db = new BookingStatusTestPdo();
-createBooking($db, $data + ['guest_phone' => '09171234567']);
+createBooking($db, $data + ['guest_phone' => '09171234567', 'guest_country' => 'Japan']);
 checkBookingStatus($db->inserted[':guest_phone'] === '09171234567', 'Optional guest_phone must be stored when provided');
+checkBookingStatus($db->inserted[':guest_country'] === 'Japan', 'Provided guest_country must be stored');
 $db = new BookingStatusTestPdo();
 createBooking($db, $data, 'Checked In');
 checkBookingStatus($db->inserted[':status'] === 'Checked In' && $db->occupied, 'Authorized staff check-in must occupy room');

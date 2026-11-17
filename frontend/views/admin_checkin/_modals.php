@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../../../backend/helpers/country_codes.php';
+$walkinCountries = array_keys(sf_get_country_calling_codes());
+?>
     <!-- Walk-in / Express Check-in Modal -->
     <div class="gcash-overlay" id="walkinModalOverlay">
         <div class="gcash-modal" style="max-width: 580px;">
@@ -19,16 +23,27 @@
 
                 <!-- Guest Information -->
                 <div class="mobile-form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-                    <div style="grid-column: span 2;">
+                    <div>
                         <label style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Guest Full Name *</label>
                         <input type="text" name="guest_name" id="walkinGuestName" required placeholder="e.g. Maria Santos" style="width:100%; padding:10px 12px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:14px; box-sizing:border-box;">
                     </div>
                     <div>
-                        <label style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Contact Phone</label>
-                        <input type="tel" name="guest_phone" id="walkinGuestPhone" placeholder="0917 123 4567" style="width:100%; padding:10px 12px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                        <label for="walkinGuestCountry" style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Country / Region</label>
+                        <select name="guest_country" id="walkinGuestCountry" style="width:100%; padding:10px 12px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:14px; background:#fff; box-sizing:border-box;">
+                            <?php foreach ($walkinCountries as $wc): ?>
+                                <option value="<?php echo htmlspecialchars($wc, ENT_QUOTES, 'UTF-8'); ?>"<?php echo $wc === 'Philippines' ? ' selected' : ''; ?>><?php echo htmlspecialchars($wc, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                            <?php if (!in_array('Other', $walkinCountries, true)): ?>
+                                <option value="Other">Other</option>
+                            <?php endif; ?>
+                        </select>
                     </div>
                     <div>
-                        <label style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Email (Optional)</label>
+                        <label for="walkinGuestPhone" style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Contact Number <span style="font-weight:500; opacity:0.65;">(Optional)</span></label>
+                        <input type="tel" name="guest_phone" id="walkinGuestPhone" placeholder="0917 123 4567 or +CountryCode (Optional)" style="width:100%; padding:10px 12px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:14px; box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label for="walkinGuestEmail" style="display:block; font-size:11px; font-weight:700; color:#374151; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Email (Optional)</label>
                         <input type="email" name="guest_email" id="walkinGuestEmail" placeholder="guest@example.com" style="width:100%; padding:10px 12px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:14px; box-sizing:border-box;">
                     </div>
                 </div>

@@ -36,7 +36,7 @@
             <div class="modal-section-title">Contact Information</div>
             <div class="contact-grid">
                 <div>
-                    <div class="contact-label">Phone</div>
+                    <div class="contact-label">Contact Number</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <div class="contact-value" id="modalPhone" style="font-family:var(--font-mono, monospace);">—</div>
                         <button type="button" id="btnTogglePhone" data-action="toggle-phone" style="display:none; background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:12px; padding:3px 8px; border-radius:5px; border:1px solid var(--border); align-items:center; gap:5px;" title="Toggle Phone Mask">
@@ -46,7 +46,7 @@
                     </div>
                 </div>
                 <div>
-                    <div class="contact-label">Country</div>
+                    <div class="contact-label">Country / Region</div>
                     <div class="contact-value" id="modalCountry">—</div>
                 </div>
             </div>

@@ -63,16 +63,18 @@ $statusClasses = [
             <tbody>
                 <?php if (!empty($bookings)): ?>
                     <?php foreach ($bookings as $row):
-                        $id       = (int)$row['id'];
-                        $name     = htmlspecialchars($row['guest_name'] ?? '');
-                        $email    = htmlspecialchars($row['guest_email'] ?? '');
-                        $type     = htmlspecialchars($row['guest_type'] ?? '');
-                        $acc      = htmlspecialchars($row['accommodation_name'] ?? '');
-                        $cin      = date('M j, Y', strtotime($row['check_in']));
-                        $cout     = date('M j, Y', strtotime($row['check_out']));
-                        $status   = htmlspecialchars($row['status'] ?? '');
-                        $cls      = $statusClasses[$status] ?? 'badge-pending';
-                        $initials = strtoupper(substr((string)$row['guest_name'], 0, 1));
+                        $id         = (int)$row['id'];
+                        $name       = htmlspecialchars($row['guest_name'] ?? '');
+                        $email      = htmlspecialchars($row['guest_email'] ?? '');
+                        $phoneRaw   = trim((string)($row['guest_phone'] ?? ''));
+                        $countryRaw = trim((string)($row['guest_country'] ?? ''));
+                        $type       = htmlspecialchars($row['guest_type'] ?? '');
+                        $acc        = htmlspecialchars($row['accommodation_name'] ?? '');
+                        $cin        = date('M j, Y', strtotime($row['check_in']));
+                        $cout       = date('M j, Y', strtotime($row['check_out']));
+                        $status     = htmlspecialchars($row['status'] ?? '');
+                        $cls        = $statusClasses[$status] ?? 'badge-pending';
+                        $initials   = strtoupper(substr((string)$row['guest_name'], 0, 1));
                     ?>
                     <tr>
                         <td class="res-ref-cell">#<?php echo $id; ?></td>
@@ -84,7 +86,12 @@ $statusClasses = [
                                 </div>
                             </div>
                         </td>
-                        <td class="res-email-cell"><?php echo $email ? htmlspecialchars(mask_email($email)) : '—'; ?></td>
+                        <td class="res-email-cell">
+                            <div><?php echo $email ? htmlspecialchars(mask_email($email)) : '—'; ?></div>
+                            <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px; font-family:var(--font-body, sans-serif);">
+                                <?php echo htmlspecialchars($phoneRaw !== '' ? mask_phone($phoneRaw) : 'Email only'); ?><?php if ($countryRaw !== '' && strcasecmp($countryRaw, 'Philippines') !== 0): ?> &bull; <?php echo htmlspecialchars($countryRaw); ?><?php endif; ?>
+                            </div>
+                        </td>
                         <td><span class="res-tier-pill"><?php echo $type; ?></span></td>
                         <td class="res-acc-cell"><?php echo $acc; ?></td>
                         <td class="res-date-cell"><?php echo $cin; ?> &rarr; <?php echo $cout; ?></td>

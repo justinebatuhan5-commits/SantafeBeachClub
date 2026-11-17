@@ -56,11 +56,19 @@
                 '+852': [8, 8],
                 '+853': [8, 8],
                 '+855': [8, 9],
+                '+880': [10, 10],
                 '+886': [9, 9],
                 '+966': [9, 9],
                 '+971': [9, 9],
                 '+974': [8, 8],
                 '+996': [9, 9]
+            },
+            phonePrefixByDialCode: {
+                '+880': /^1[3-9]\d{8}$/,
+                '+91': /^[6-9]\d{9}$/,
+                '+65': /^[689]\d{7}$/,
+                '+852': /^[2-9]\d{7}$/,
+                '+853': /^[26]\d{7}$/
             }
         },
 
@@ -120,9 +128,25 @@
                     } else {
                         const dialCode = phoneCodeEl.value || '+63';
                         const dialDigits = dialCode.replace(/\D/g, '');
+                        const countryEl = input.form ? input.form.querySelector('select[name="country"]') : document.querySelector('select[name="country"]');
                         let nationalRaw = cleanPhone;
 
-                        if (cleanPhone.startsWith('+')) {
+                        if (countryEl && countryEl.value) {
+                            const countryOpt = countryEl.options ? countryEl.options[countryEl.selectedIndex] : null;
+                            const expectedDial = (countryOpt && typeof countryOpt.getAttribute === 'function')
+                                ? countryOpt.getAttribute('data-dial-code')
+                                : null;
+
+                            if (countryEl.value === 'Philippines' && dialCode !== '+63') {
+                                isValid = false;
+                                errorMessage = 'Please use PH +63 for Philippines contact numbers.';
+                            } else if (expectedDial && dialCode !== expectedDial && dialCode !== '+63') {
+                                isValid = false;
+                                errorMessage = `Dial code ${dialCode} does not match ${countryEl.value} (${expectedDial}). Please use ${expectedDial} or PH +63.`;
+                            }
+                        }
+
+                        if (isValid && cleanPhone.startsWith('+')) {
                             if (!cleanPhone.startsWith(dialCode)) {
                                 isValid = false;
                                 errorMessage = `Country code mismatch. Enter digits without a country code or switch the selector from ${dialCode}.`;
@@ -144,6 +168,7 @@
                                 } else {
                                     const nationalDigits = nationalRaw.replace(/^0+/, '');
                                     const bounds = this.config.phoneLengthsByDialCode[dialCode] || [6, 12];
+                                    const prefixRegex = this.config.phonePrefixByDialCode ? this.config.phonePrefixByDialCode[dialCode] : null;
                                     const totalDigits = dialDigits.length + nationalDigits.length;
 
                                     if (nationalDigits.length < bounds[0] || nationalDigits.length > bounds[1]) {
@@ -152,6 +177,9 @@
                                             ? `${bounds[0]} digits`
                                             : `${bounds[0]} to ${bounds[1]} digits`;
                                         errorMessage = `Please enter a valid phone number (${expectedLabel} for ${dialCode}).`;
+                                    } else if (prefixRegex && !prefixRegex.test(nationalDigits)) {
+                                        isValid = false;
+                                        errorMessage = `Please enter a valid mobile number for ${dialCode}.`;
                                     } else if (totalDigits < 8 || totalDigits > 15) {
                                         isValid = false;
                                         errorMessage = 'Please enter a valid international phone number (8 to 15 digits total).';

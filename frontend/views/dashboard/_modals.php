@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../../../backend/helpers/country_codes.php';
+$walkinCountries = array_keys(sf_get_country_calling_codes());
+?>
 <!-- MODAL 1: INTERACTIVE ROOM QUICK-DETAIL -->
 <div class="modal-overlay" id="roomDetailModal">
     <div class="room-detail-modal-box">
@@ -28,9 +32,22 @@
             <button type="button" class="modal-close" data-action="close-reservation-modal">&times;</button>
         </div>
         <form id="newReservationForm">
-            <div class="admin-form-group">
-                <label for="newGuestName">Full Guest Name <span class="req">*</span></label>
-                <input type="text" id="newGuestName" required placeholder="e.g. Maria Santos">
+            <div class="admin-form-row">
+                <div class="admin-form-group">
+                    <label for="newGuestName">Full Guest Name <span class="req">*</span></label>
+                    <input type="text" id="newGuestName" required placeholder="e.g. Maria Santos">
+                </div>
+                <div class="admin-form-group">
+                    <label for="newGuestCountry">Country / Region</label>
+                    <select id="newGuestCountry">
+                        <?php foreach ($walkinCountries as $wc): ?>
+                            <option value="<?php echo htmlspecialchars($wc, ENT_QUOTES, 'UTF-8'); ?>"<?php echo $wc === 'Philippines' ? ' selected' : ''; ?>><?php echo htmlspecialchars($wc, ENT_QUOTES, 'UTF-8'); ?></option>
+                        <?php endforeach; ?>
+                        <?php if (!in_array('Other', $walkinCountries, true)): ?>
+                            <option value="Other">Other</option>
+                        <?php endif; ?>
+                    </select>
+                </div>
             </div>
 
             <div class="admin-form-row">
@@ -40,7 +57,7 @@
                 </div>
                 <div class="admin-form-group">
                     <label for="newGuestPhone">Contact Number <span style="font-weight:500; opacity:0.65;">(Optional)</span></label>
-                    <input type="tel" id="newGuestPhone" placeholder="0917 123 4567 (Optional)">
+                    <input type="tel" id="newGuestPhone" placeholder="0917 123 4567 or +CountryCode (Optional)">
                 </div>
             </div>
 
