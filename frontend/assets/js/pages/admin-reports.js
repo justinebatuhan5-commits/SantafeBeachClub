@@ -137,7 +137,18 @@
         }
     }
 
-    async function fetchAPI(endpoint, extraParams = '') {
+    let loadAttemptStats = {
+        succeeded: 0,
+        failed: 0
+    };
+
+    function updateConnectionErrorBanner() {
+        const err = document.getElementById('api-connection-error');
+        if (!err) return;
+        err.style.display = (loadAttemptStats.failed > 0 && loadAttemptStats.succeeded === 0) ? 'flex' : 'none';
+    }
+
+    async function fetchAPI(endpoint, extraParams = '', isDrilldown = false) {
         try {
             const action = endpoint.replace('/api/', '').replace(/^\//, '');
             const filterQs = buildFilterQueryParams();
@@ -147,11 +158,18 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             if (!res.ok) throw new Error('API Error: ' + res.statusText);
-            return await res.json();
+            const data = await res.json();
+            if (!isDrilldown) {
+                loadAttemptStats.succeeded += 1;
+                updateConnectionErrorBanner();
+            }
+            return data;
         } catch (error) {
             console.error('Fetch error:', error);
-            const err = document.getElementById('api-connection-error');
-            if (err) err.style.display = 'block';
+            if (!isDrilldown) {
+                loadAttemptStats.failed += 1;
+                updateConnectionErrorBanner();
+            }
             throw error;
         }
     }
@@ -197,7 +215,7 @@
         }
 
         try {
-            const details = await fetchAPI('/api/monthly-revenue-details', `month=${encodeURIComponent(monthKey)}`);
+            const details = await fetchAPI('/api/monthly-revenue-details', `month=${encodeURIComponent(monthKey)}`, true);
             if (seq !== monthlyDrilldownSeq) return;
 
             setText('mrdmTitle', `Verified Receipts — ${details.month_display || monthLabel || monthKey}`);
@@ -274,6 +292,9 @@
     }
 
     async function loadReportsData() {
+        loadAttemptStats = { succeeded: 0, failed: 0 };
+        const errBanner = document.getElementById('api-connection-error');
+        if (errBanner) errBanner.style.display = 'none';
         syncCsvExportLinks();
 
         // 1. KPI Stats & Financial Health

@@ -27,6 +27,9 @@ console.log('PASS: Admin Dashboard occupancy and reserved room labels are clarif
 
 // 3. Proxy query forwarding & scoped CSV export support
 assert(analyticsProxyPhp.includes('http_build_query($forwardParams)'), 'analytics_proxy.php forwards full query parameters');
+assert(analyticsProxyPhp.includes('$pythonSupportedActions'), 'analytics_proxy.php restricts Python forwarding to supported legacy endpoints so Reports v3 endpoints use native PHP');
+assert(!analyticsApiPhp.includes('GROUP BY country\n'), 'country-demographics avoids TiDB-incompatible GROUP BY alias');
+assert(!analyticsApiPhp.includes('GROUP BY reason\n'), 'cancellation-insights avoids TiDB-incompatible GROUP BY alias');
 assert(availabilityPhp.includes('WHERE DATE(p.paid_at) BETWEEN ? AND ?'), 'Payments CSV export supports date range filtering');
 assert(availabilityPhp.includes('WHERE DATE(b.created_at) BETWEEN ? AND ?'), 'Bookings CSV export supports date range filtering');
 assert(adminReportsPage.includes('id="exportBookingsCsvLink"'), 'admin_reports.php exposes #exportBookingsCsvLink');
@@ -95,6 +98,7 @@ console.log('PASS: payments.js supports deep-linked status and search filters');
         'discounts-summary-container', 'cancellations-summary-container', 'reviews-summary-container',
         'exportBookingsCsvLink', 'exportPaymentsCsvLink', 'activeRangeLabel',
         'reportStartDate', 'reportEndDate',
+        'api-connection-error',
         'monthlyRevenueDrilldownModal', 'mrdmTitle', 'mrdmMonthSubtitle',
         'mrdmGrossAmount', 'mrdmRefundedAmount', 'mrdmNetAmount', 'mrdmTxnCount', 'mrdmBodyContent'
     ]) {
@@ -275,6 +279,7 @@ console.log('PASS: payments.js supports deep-linked status and search filters');
     await domReadyHandler();
 
     assert.equal(elements['kpi-revenue'].innerText, '₱13,000', 'Net revenue populates #kpi-revenue');
+    assert.equal(elements['api-connection-error'].style.display, 'none', '#api-connection-error stays hidden when primary analytics data loads');
     assert(elements['kpi-revenue-sub'].innerText.includes('Gross: ₱15,000'), 'Gross & Refunded breakdown populates #kpi-revenue-sub');
     assert.equal(elements['kpi-revenue-trend'].innerText, '▲ +18.4%', 'Trend badge populates #kpi-revenue-trend');
     assert.equal(elements['fin-earned-revenue'].innerText, '₱9,000', 'Earned revenue populates #fin-earned-revenue');

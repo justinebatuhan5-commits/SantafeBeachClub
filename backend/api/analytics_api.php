@@ -28,6 +28,47 @@ if (!function_exists('sf_analytics_percent_change')) {
     }
 }
 
+if (!function_exists('sf_analytics_column_exists')) {
+    function sf_analytics_column_exists(mysqli $conn, string $table, string $column): bool
+    {
+        static $cache = [];
+        $key = strtolower($table . '.' . $column);
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+        $safeTable = preg_replace('/[^a-zA-Z0-9_]/', '', $table);
+        $safeCol = $conn->real_escape_string($column);
+        try {
+            $res = $conn->query("SHOW COLUMNS FROM `{$safeTable}` LIKE '{$safeCol}'");
+            $exists = ($res && $res->num_rows > 0);
+        } catch (Throwable $e) {
+            $exists = false;
+        }
+        $cache[$key] = $exists;
+        return $exists;
+    }
+}
+
+if (!function_exists('sf_analytics_table_exists')) {
+    function sf_analytics_table_exists(mysqli $conn, string $table): bool
+    {
+        static $cache = [];
+        $key = strtolower($table);
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+        $safeTable = $conn->real_escape_string($table);
+        try {
+            $res = $conn->query("SHOW TABLES LIKE '{$safeTable}'");
+            $exists = ($res && $res->num_rows > 0);
+        } catch (Throwable $e) {
+            $exists = false;
+        }
+        $cache[$key] = $exists;
+        return $exists;
+    }
+}
+
 if (!function_exists('sf_analytics_allocate_percentages')) {
     /**
      * Allocate part-of-whole percentages using Largest Remainder so displayed shares sum to exactly 100%.
@@ -317,6 +358,8 @@ switch ($action) {
             break;
         }
 
+        $hasPurpose = sf_analytics_column_exists($conn, 'payments', 'purpose');
+        $purposeExpr = $hasPurpose ? "COALESCE(NULLIF(LOWER(TRIM(p.purpose)), ''), 'deposit')" : "'deposit'";
         $stmt = $conn->prepare("
             SELECT
                 p.id,
@@ -325,7 +368,7 @@ switch ($action) {
                 p.amount,
                 COALESCE(NULLIF(TRIM(p.payment_method), ''), 'Front Desk Cash') AS payment_method,
                 COALESCE(NULLIF(TRIM(p.transaction_id), ''), CONCAT('TXN-', p.id)) AS transaction_id,
-                COALESCE(NULLIF(LOWER(TRIM(p.purpose)), ''), 'deposit') AS purpose,
+                {$purposeExpr} AS purpose,
                 p.paid_at,
                 COALESCE(b.accommodation_name, '') AS accommodation_name,
                 COALESCE(b.status, '') AS booking_status
@@ -626,12 +669,18 @@ switch ($action) {
         $pending_verification_amount = round((float)($accRow['pending_verification_amount'] ?? 0), 2);
 
         // Outstanding guest balances on active stays/confirmed reservations
+        $hasDiscountAmt = sf_analytics_column_exists($conn, 'bookings', 'discount_amount');
+        $hasBalanceStatus = sf_analytics_column_exists($conn, 'bookings', 'balance_status');
+        $discExpr = $hasDiscountAmt ? 'COALESCE(b.discount_amount, 0)' : '0';
+        $balWhere = $hasBalanceStatus
+            ? "AND COALESCE(b.balance_status, 'deposit_pending') IN ('deposit_pending', 'balance_pending')"
+            : '';
         $bal_res = $conn->query("
             SELECT
                 COUNT(DISTINCT b.id) AS unpaid_bookings_count,
                 COALESCE(SUM(GREATEST(0,
                     (GREATEST(1, DATEDIFF(b.check_out, b.check_in)) * COALESCE(r.price_per_night, rt.price, 2900.00))
-                    - COALESCE(b.discount_amount, 0)
+                    - {$discExpr}
                     - COALESCE(p.paid_total, 0)
                 )), 0) AS unpaid_balance_estimate
             FROM bookings b
@@ -645,7 +694,7 @@ switch ($action) {
             ) p ON p.booking_id = b.id
             WHERE b.status IN ('Pending', 'Pending Payment', 'Confirmed', 'Checked In')
               AND b.check_out >= CURDATE()
-              AND COALESCE(b.balance_status, 'deposit_pending') IN ('deposit_pending', 'balance_pending')
+              {$balWhere}
         ");
         $balRow = $bal_res ? ($bal_res->fetch_assoc() ?: []) : [];
         $outstanding_balances_count  = (int)($balRow['unpaid_bookings_count'] ?? 0);
@@ -802,6 +851,11 @@ switch ($action) {
         $mStartTs = $parsedMonth->format('Y-m-01') . ' 00:00:00';
         $mEndTs   = $parsedMonth->modify('+1 month')->format('Y-m-01') . ' 00:00:00';
 
+        $hasPurpose = sf_analytics_column_exists($conn, 'payments', 'purpose');
+        $hasAccStatus = sf_analytics_column_exists($conn, 'payments', 'accounting_status');
+        $purposeExpr = $hasPurpose ? "COALESCE(NULLIF(LOWER(TRIM(p.purpose)), ''), 'deposit')" : "'deposit'";
+        $accExpr = $hasAccStatus ? "COALESCE(NULLIF(LOWER(TRIM(p.accounting_status)), ''), 'deferred')" : "'deferred'";
+
         $stmt = $conn->prepare("
             SELECT
                 p.id,
@@ -810,8 +864,8 @@ switch ($action) {
                 p.amount,
                 COALESCE(NULLIF(TRIM(p.payment_method), ''), 'Front Desk Cash') AS payment_method,
                 COALESCE(NULLIF(TRIM(p.transaction_id), ''), CONCAT('TXN-', p.id)) AS transaction_id,
-                COALESCE(NULLIF(LOWER(TRIM(p.purpose)), ''), 'deposit') AS purpose,
-                COALESCE(NULLIF(LOWER(TRIM(p.accounting_status)), ''), 'deferred') AS accounting_status,
+                {$purposeExpr} AS purpose,
+                {$accExpr} AS accounting_status,
                 p.paid_at,
                 COALESCE(b.accommodation_name, '') AS accommodation_name,
                 COALESCE(b.status, '') AS booking_status
@@ -1117,7 +1171,7 @@ switch ($action) {
                 ) p ON b.id = p.booking_id
                 WHERE b.status != 'Cancelled'
                   AND b.created_at >= ? AND b.created_at < ?
-                GROUP BY country
+                GROUP BY COALESCE(NULLIF(TRIM(b.guest_country), ''), 'Unknown / Not provided')
                 ORDER BY total_bookings DESC, total_revenue DESC
             ");
             $stmt->bind_param('ss', $dateRange['start_ts'], $dateRange['end_exclusive_ts']);
@@ -1140,7 +1194,7 @@ switch ($action) {
                     GROUP BY booking_id
                 ) p ON b.id = p.booking_id
                 WHERE b.status != 'Cancelled'
-                GROUP BY country
+                GROUP BY COALESCE(NULLIF(TRIM(b.guest_country), ''), 'Unknown / Not provided')
                 ORDER BY total_bookings DESC, total_revenue DESC
             ");
         }
@@ -1312,12 +1366,21 @@ switch ($action) {
 
     // ── 13c. Cancellations & Booking Lead-Time Insights ───────────────────────
     case 'cancellation-insights':
+        $hasNonpayCol = sf_analytics_column_exists($conn, 'bookings', 'cancelled_for_nonpayment_at');
+        $hasCancelReasonCol = sf_analytics_column_exists($conn, 'bookings', 'cancellation_reason');
+        $nonpaySumExpr = $hasNonpayCol ? "COALESCE(SUM(CASE WHEN cancelled_for_nonpayment_at IS NOT NULL THEN 1 ELSE 0 END), 0)" : "0";
+        $reasonExpr = $hasCancelReasonCol
+            ? ($hasNonpayCol
+                ? "COALESCE(NULLIF(TRIM(cancellation_reason), ''), CASE WHEN cancelled_for_nonpayment_at IS NOT NULL THEN 'Unpaid Balance / Expired Hold' ELSE 'Guest / Admin Cancellation (Unspecified)' END)"
+                : "COALESCE(NULLIF(TRIM(cancellation_reason), ''), 'Guest / Admin Cancellation (Unspecified)')")
+            : "'Guest / Admin Cancellation (Unspecified)'";
+
         if ($dateRange['is_filtered']) {
             $sumStmt = $conn->prepare("
                 SELECT
                     COUNT(*) AS total_bookings,
                     COALESCE(SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END), 0) AS cancelled_bookings,
-                    COALESCE(SUM(CASE WHEN cancelled_for_nonpayment_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS nonpayment_auto_cancelled,
+                    {$nonpaySumExpr} AS nonpayment_auto_cancelled,
                     ROUND(AVG(GREATEST(0, DATEDIFF(check_in, DATE(created_at)))), 1) AS avg_lead_days
                 FROM bookings
                 WHERE created_at >= ? AND created_at < ?
@@ -1329,12 +1392,12 @@ switch ($action) {
 
             $rsnStmt = $conn->prepare("
                 SELECT
-                    COALESCE(NULLIF(TRIM(cancellation_reason), ''), CASE WHEN cancelled_for_nonpayment_at IS NOT NULL THEN 'Unpaid Balance / Expired Hold' ELSE 'Guest / Admin Cancellation (Unspecified)' END) AS reason,
+                    {$reasonExpr} AS reason,
                     COUNT(*) AS cnt
                 FROM bookings
                 WHERE status = 'Cancelled'
                   AND created_at >= ? AND created_at < ?
-                GROUP BY reason
+                GROUP BY {$reasonExpr}
                 ORDER BY cnt DESC
                 LIMIT 6
             ");
@@ -1346,7 +1409,7 @@ switch ($action) {
                 SELECT
                     COUNT(*) AS total_bookings,
                     COALESCE(SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END), 0) AS cancelled_bookings,
-                    COALESCE(SUM(CASE WHEN cancelled_for_nonpayment_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS nonpayment_auto_cancelled,
+                    {$nonpaySumExpr} AS nonpayment_auto_cancelled,
                     ROUND(AVG(GREATEST(0, DATEDIFF(check_in, DATE(created_at)))), 1) AS avg_lead_days
                 FROM bookings
             ");
@@ -1355,11 +1418,11 @@ switch ($action) {
             $rsnStmt = null;
             $rsnRes = $conn->query("
                 SELECT
-                    COALESCE(NULLIF(TRIM(cancellation_reason), ''), CASE WHEN cancelled_for_nonpayment_at IS NOT NULL THEN 'Unpaid Balance / Expired Hold' ELSE 'Guest / Admin Cancellation (Unspecified)' END) AS reason,
+                    {$reasonExpr} AS reason,
                     COUNT(*) AS cnt
                 FROM bookings
                 WHERE status = 'Cancelled'
-                GROUP BY reason
+                GROUP BY {$reasonExpr}
                 ORDER BY cnt DESC
                 LIMIT 6
             ");

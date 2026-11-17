@@ -24,9 +24,17 @@ $forwardQueryString = http_build_query($forwardParams);
 $forwardSuffix = $forwardQueryString !== '' ? ('?' . $forwardQueryString) : '';
 $requirePython = filter_var(getenv('ANALYTICS_REQUIRE_PYTHON') ?: false, FILTER_VALIDATE_BOOLEAN);
 $pythonFailure = 'The Python analytics service is not configured or unavailable.';
+$pythonSupportedActions = [
+    'executive-stats',
+    'weekly-revenue-trajectory',
+    'status-breakdown',
+    'recent-bookings',
+    'recent-logs',
+    'daily-summary',
+];
 
 // ── Try Python service (local Flask or remote Render) ────────────────────────
-if (function_exists('curl_init')) {
+if (function_exists('curl_init') && ($requirePython || (in_array($action, $pythonSupportedActions, true) && $forwardQueryString === ''))) {
     $is_local_dev = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1', '::1']);
 
     $python_url = null;
