@@ -63,15 +63,17 @@ $csrfToken = $pageData['csrfToken'] ?? '';
 
 <!-- ═══ BILLS LEDGER CARD ═══ -->
 <div class="card payments-ledger-card">
-    <div class="card-header payments-ledger-header">
-        <div>
-            <h2>Outstanding &amp; Settled Bills</h2>
-            <p class="payments-ledger-subtitle">Verify GCash &amp; gateway references, issue official receipts, or manage refunds</p>
+    <div class="payments-sticky-head" id="paymentsStickyHead">
+        <div class="card-header payments-ledger-header">
+            <div>
+                <h2>Outstanding &amp; Settled Bills</h2>
+                <p class="payments-ledger-subtitle">Verify GCash &amp; gateway references, issue official receipts, or manage refunds</p>
+            </div>
         </div>
-    </div>
 
-    <div class="payments-toolbar">
-        <?php echo $payments_toolbar_html; ?>
+        <div class="payments-toolbar">
+            <?php echo $payments_toolbar_html; ?>
+        </div>
     </div>
 
     <div class="table-responsive">

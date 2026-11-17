@@ -392,7 +392,26 @@
         document.getElementById('rejectForm').submit();
     }
 
+    function initStickyLedgerHead() {
+        var head = document.getElementById('paymentsStickyHead');
+        if (!head) return;
+        var root = document.documentElement;
+        function measure() {
+            var pageHeader = document.querySelector('header.page-header');
+            var topOffset = pageHeader ? pageHeader.getBoundingClientRect().height : 0;
+            root.style.setProperty('--payments-sticky-top', Math.round(topOffset) + 'px');
+            root.style.setProperty('--payments-head-height', Math.round(head.getBoundingClientRect().height) + 'px');
+            var stuck = head.getBoundingClientRect().top <= topOffset + 1 && window.scrollY > 0;
+            head.classList.toggle('is-stuck', stuck);
+        }
+        measure();
+        window.addEventListener('scroll', measure, { passive: true });
+        window.addEventListener('resize', measure);
+        window.addEventListener('load', measure);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        initStickyLedgerHead();
         var searchInput = document.getElementById('paymentSearch');
         var statusFilter = document.getElementById('paymentStatusFilter');
         var methodFilter = document.getElementById('paymentMethodFilter');
