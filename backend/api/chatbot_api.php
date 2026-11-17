@@ -119,7 +119,7 @@ try {
     }
 
     if ($action === 'handoff') {
-        RateLimiter::enforce($conn, 'chatbot_handoff', 5, 600);
+        RateLimiter::enforce($conn, 'chatbot_handoff', 25, 600);
         $guestName = strip_tags(trim((string)($input['guest_name'] ?? '')));
         $guestEmail = trim((string)($input['guest_email'] ?? ''));
         $note = strip_tags(trim((string)($input['note'] ?? '')));

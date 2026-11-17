@@ -102,7 +102,9 @@ class RateLimiter {
             header("Retry-After: " . $status['retry_after']);
             
             $isJson = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
-                      (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+                      (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')) ||
+                      (isset($_SERVER['CONTENT_TYPE']) && str_contains(strtolower((string)$_SERVER['CONTENT_TYPE']), 'application/json')) ||
+                      str_contains((string)($_SERVER['SCRIPT_NAME'] ?? ''), '/api/');
 
             if ($isJson) {
                 header('Content-Type: application/json; charset=utf-8');

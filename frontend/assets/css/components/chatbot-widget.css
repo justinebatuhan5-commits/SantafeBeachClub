@@ -771,3 +771,42 @@
         gap: 6px !important;
     }
 }
+#sfbcChatWidget .sfbc-msg-time {
+    font-size: 10px !important;
+    color: #8B7366 !important;
+    margin-top: 3px !important;
+    padding: 0 4px !important;
+    line-height: 1.2 !important;
+    opacity: 0.85 !important;
+}
+#sfbcChatWidget .sfbc-handoff-hours-banner {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 9px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    margin-bottom: 8px !important;
+}
+#sfbcChatWidget .sfbc-handoff-hours-banner.is-online {
+    background: #ECFDF5 !important;
+    border: 1px solid #A7F3D0 !important;
+    color: #065F46 !important;
+}
+#sfbcChatWidget .sfbc-handoff-hours-banner.is-offline {
+    background: #FFFBEB !important;
+    border: 1px solid #FDE68A !important;
+    color: #92400E !important;
+}
+#sfbcChatWidget .sfbc-handoff-hours-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    background: #10B981 !important;
+}
+#sfbcChatWidget .sfbc-handoff-hours-banner.is-offline .sfbc-handoff-hours-dot {
+    background: #F59E0B !important;
+}

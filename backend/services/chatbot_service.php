@@ -978,6 +978,14 @@ function sf_chatbot_store_message(
         $stmt->execute();
         $msgId = (int)$stmt->insert_id;
         $stmt->close();
+
+        $touchStmt = $conn->prepare("UPDATE chatbot_conversations SET last_message_at = NOW() WHERE id = ?");
+        if ($touchStmt) {
+            $touchStmt->bind_param('i', $conversationId);
+            $touchStmt->execute();
+            $touchStmt->close();
+        }
+
         return $msgId;
     } catch (Throwable $e) {
         return 0;
@@ -2555,48 +2563,107 @@ function sf_chatbot_create_handoff(
         ];
     }
 
+    $phtHour = (int)(new DateTime('now', new DateTimeZone('Asia/Manila')))->format('G');
+    $hoursStart = (int)sf_chatbot_get_setting($conn, 'chatbot_live_hours_start', '8');
+    $hoursEnd = (int)sf_chatbot_get_setting($conn, 'chatbot_live_hours_end', '20');
+    $receptionOnline = ($phtHour >= $hoursStart && $phtHour < $hoursEnd);
+
     $conv = sf_chatbot_get_or_create_conversation($conn, 'English');
     $convId = (int)($conv['id'] ?? 0);
     $history = sf_chatbot_load_history($conn, $convId, 8);
 
-    $transcriptLines = [];
-    foreach ($history as $turn) {
-        $speaker = ($turn['role'] === 'user') ? 'Guest' : 'AI Concierge';
-        $transcriptLines[] = "{$speaker}: {$turn['content']}";
+    // Check for an existing open handoff ticket from the same guest email within 15 minutes
+    // to prevent impatient repeat clicks from flooding Live Support Chats with duplicates.
+    $normalizedEmail = strtolower($guestEmail);
+    $existingInquiryId = 0;
+    $dupStmt = $conn->prepare("
+        SELECT id
+        FROM inquiries
+        WHERE LOWER(TRIM(guest_email)) = ?
+          AND subject LIKE '[AI Concierge Handoff]%'
+          AND status IN ('Unread', 'Read')
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    if ($dupStmt) {
+        $dupStmt->bind_param('s', $normalizedEmail);
+        $dupStmt->execute();
+        $dupRow = $dupStmt->get_result()->fetch_assoc();
+        $dupStmt->close();
+        if ($dupRow) {
+            $existingInquiryId = (int)$dupRow['id'];
+        }
     }
-    $transcriptText = !empty($transcriptLines)
-        ? implode("\n\n", $transcriptLines)
-        : 'No prior chat messages in session.';
 
-    $subject = '[AI Concierge Handoff] Assistance requested by ' . $guestName;
-    $fullMessage = ($note !== '' ? "Guest Note: {$note}\n\n" : '')
-        . "--- Chat Transcript ---\n"
-        . $transcriptText;
+    if ($existingInquiryId > 0) {
+        $inquiryId = $existingInquiryId;
+        $uInq = $conn->prepare("UPDATE inquiries SET status = 'Unread' WHERE id = ?");
+        if ($uInq) {
+            $uInq->bind_param('i', $inquiryId);
+            $uInq->execute();
+            $uInq->close();
+        }
+        if ($note !== '' && sf_chatbot_has_live_chat_support($conn)) {
+            $convParam = $convId > 0 ? $convId : null;
+            $irStmt = $conn->prepare("
+                INSERT INTO inquiry_replies (inquiry_id, conversation_id, sender_type, sender_name, message, delivered_live, delivered_email)
+                VALUES (?, ?, 'guest', ?, ?, 1, 0)
+            ");
+            if ($irStmt) {
+                $irStmt->bind_param('iiss', $inquiryId, $convParam, $guestName, $note);
+                $irStmt->execute();
+                $irStmt->close();
+            }
+        }
+    } else {
+        // Isolate each new handoff into its own conversation row so a repeat "Need a human?"
+        // submission never overwrites or detaches an earlier ticket's inquiry_id.
+        if ($convId > 0 && ((int)($conv['handed_off'] ?? 0) === 1 || (int)($conv['inquiry_id'] ?? 0) > 0)) {
+            $_SESSION['chatbot_session_token'] = bin2hex(random_bytes(32));
+            $conv = sf_chatbot_get_or_create_conversation($conn, (string)($conv['language'] ?? 'English'));
+            $convId = (int)($conv['id'] ?? 0);
+        }
 
-    $stmt = $conn->prepare("INSERT INTO inquiries (guest_name, guest_email, subject, message, status) VALUES (?, ?, ?, ?, 'Unread')");
-    $stmt->bind_param('ssss', $guestName, $guestEmail, $subject, $fullMessage);
-    $stmt->execute();
-    $inquiryId = (int)$stmt->insert_id;
-    $stmt->close();
+        $transcriptLines = [];
+        foreach ($history as $turn) {
+            $speaker = ($turn['role'] === 'user') ? 'Guest' : 'AI Concierge';
+            $transcriptLines[] = "{$speaker}: {$turn['content']}";
+        }
+        $transcriptText = !empty($transcriptLines)
+            ? implode("\n\n", $transcriptLines)
+            : 'No prior chat messages in session.';
 
-    // Create a staff notification alert
-    $notifTitle = 'AI Concierge Escalation';
-    $notifMsg = "{$guestName} ({$guestEmail}) requested live staff assistance from the AI Concierge.";
-    $notifType = 'warning';
-    $nStmt = $conn->prepare("INSERT INTO notifications (title, message, type, is_read) VALUES (?, ?, ?, 0)");
-    if ($nStmt) {
-        $nStmt->bind_param('sss', $notifTitle, $notifMsg, $notifType);
-        $nStmt->execute();
-        $nStmt->close();
+        $subject = '[AI Concierge Handoff] Assistance requested by ' . $guestName;
+        $fullMessage = ($note !== '' ? "Guest Note: {$note}\n\n" : '')
+            . "--- Chat Transcript ---\n"
+            . $transcriptText;
+
+        $stmt = $conn->prepare("INSERT INTO inquiries (guest_name, guest_email, subject, message, status) VALUES (?, ?, ?, ?, 'Unread')");
+        $stmt->bind_param('ssss', $guestName, $guestEmail, $subject, $fullMessage);
+        $stmt->execute();
+        $inquiryId = (int)$stmt->insert_id;
+        $stmt->close();
+
+        // Create a staff notification alert
+        $notifTitle = 'AI Concierge Escalation';
+        $notifMsg = "{$guestName} ({$guestEmail}) requested live staff assistance from the AI Concierge.";
+        $notifType = 'warning';
+        $nStmt = $conn->prepare("INSERT INTO notifications (title, message, type, is_read) VALUES (?, ?, ?, 0)");
+        if ($nStmt) {
+            $nStmt->bind_param('sss', $notifTitle, $notifMsg, $notifType);
+            $nStmt->execute();
+            $nStmt->close();
+        }
     }
 
     $handoffMsgId = 0;
     if ($convId > 0 && sf_chatbot_tables_ready($conn)) {
         $hasLiveCols = sf_chatbot_has_live_chat_support($conn);
         if ($hasLiveCols) {
-            $uStmt = $conn->prepare("UPDATE chatbot_conversations SET handed_off = 1, live_chat_active = 1, inquiry_id = ? WHERE id = ?");
+            $uStmt = $conn->prepare("UPDATE chatbot_conversations SET handed_off = 1, live_chat_active = 1, inquiry_id = ?, last_message_at = NOW() WHERE id = ?");
         } else {
-            $uStmt = $conn->prepare("UPDATE chatbot_conversations SET handed_off = 1, inquiry_id = ? WHERE id = ?");
+            $uStmt = $conn->prepare("UPDATE chatbot_conversations SET handed_off = 1, inquiry_id = ?, last_message_at = NOW() WHERE id = ?");
         }
         if ($uStmt) {
             $uStmt->bind_param('ii', $inquiryId, $convId);
@@ -2610,13 +2677,18 @@ function sf_chatbot_create_handoff(
         $handoffMsgId = sf_chatbot_store_message($conn, $convId, 'user', $handoffChatNote, null, 'human_handoff', 'guest');
     }
 
+    $replyMsg = $receptionOnline
+        ? 'Your conversation has been forwarded to our reception desk (Live hours: 8:00 AM – 8:00 PM PHT, typical reply in 2–5 mins). Replies from our staff will appear in this chat and be sent to ' . $guestEmail . '.'
+        : 'Our reception live chat is currently after-hours (Live hours: 8:00 AM – 8:00 PM PHT). Your request has been queued for our morning shift and our team will reply to ' . $guestEmail . ' (and in this chat) first thing at 8:00 AM.';
+
     return [
         'success' => true,
         'inquiry_id' => $inquiryId,
         'conversation_id' => $convId,
         'live_chat_active' => ($convId > 0),
         'handoff_message_id' => $handoffMsgId,
-        'message' => 'Your conversation has been forwarded to our reception desk. Live support is now active here — replies from our staff will appear in this chat (and be sent to ' . $guestEmail . ').',
+        'reception_online' => $receptionOnline,
+        'message' => $replyMsg,
     ];
 }
 
@@ -2778,6 +2850,7 @@ function sf_inquiry_get_threads(mysqli $conn, array $inquiryIds): array
     }
 
     $idList = implode(',', $ids);
+    $fromChatbotConv = [];
 
     if (sf_chatbot_tables_ready($conn)) {
         $hasLiveCols = sf_chatbot_has_live_chat_support($conn);
@@ -2796,6 +2869,7 @@ function sf_inquiry_get_threads(mysqli $conn, array $inquiryIds): array
                     $threads[$iid]['handed_off'] = ((int)$cRow['handed_off'] === 1);
                     $threads[$iid]['live_chat_active'] = ((int)($cRow['live_chat_active'] ?? 0) === 1);
                     $threads[$iid]['language'] = (string)($cRow['language'] ?? 'English');
+                    $fromChatbotConv[$iid] = true;
                 }
             }
         }
@@ -2813,6 +2887,10 @@ function sf_inquiry_get_threads(mysqli $conn, array $inquiryIds): array
             while ($rRow = $rRes->fetch_assoc()) {
                 $iid = (int)$rRow['inquiry_id'];
                 if (isset($threads[$iid])) {
+                    $replyConvId = (int)($rRow['conversation_id'] ?? 0);
+                    if (empty($fromChatbotConv[$iid]) && $replyConvId > $threads[$iid]['conversation_id']) {
+                        $threads[$iid]['conversation_id'] = $replyConvId;
+                    }
                     $threads[$iid]['replies'][] = [
                         'id' => (int)$rRow['id'],
                         'sender_type' => (string)$rRow['sender_type'],
@@ -2876,6 +2954,18 @@ function sf_inquiry_send_staff_reply(
             $cStmt->close();
             if ($cRow) {
                 $convId = (int)$cRow['id'];
+            }
+        }
+    }
+    if ($convId === 0 && sf_chatbot_has_live_chat_support($conn)) {
+        $fbStmt = $conn->prepare("SELECT MAX(conversation_id) AS cid FROM inquiry_replies WHERE inquiry_id = ? AND conversation_id > 0");
+        if ($fbStmt) {
+            $fbStmt->bind_param('i', $inquiryId);
+            $fbStmt->execute();
+            $fbRow = $fbStmt->get_result()->fetch_assoc();
+            $fbStmt->close();
+            if ($fbRow && (int)($fbRow['cid'] ?? 0) > 0) {
+                $convId = (int)$fbRow['cid'];
             }
         }
     }
@@ -3600,7 +3690,7 @@ function sf_inquiry_fetch_channel_tickets(mysqli $conn, string $channel = 'conta
             WHERE {$where}
             GROUP BY i.id
             ORDER BY CASE WHEN i.status = 'Unread' THEN 0 WHEN i.status = 'Read' THEN 1 ELSE 2 END ASC,
-                     COALESCE(MAX(c.last_message_at), i.created_at) DESC,
+                     GREATEST(COALESCE(MAX(c.last_message_at), i.created_at), i.created_at) DESC,
                      i.id DESC
         ";
     } else {

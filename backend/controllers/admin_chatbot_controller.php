@@ -503,7 +503,7 @@ function sfbc_handle_admin_chatbot_page(mysqli $conn, string $admin): array
             FROM chatbot_conversations c
             WHERE {$convWhereSql}
             ORDER BY c.last_message_at DESC
-            LIMIT 50
+            LIMIT 250
         ";
         $convStmt = $conn->prepare($convSql);
         if ($convTypes !== '') {
@@ -538,8 +538,8 @@ function sfbc_handle_admin_chatbot_page(mysqli $conn, string $admin): array
             FROM inquiries i
             LEFT JOIN chatbot_conversations c ON c.inquiry_id = i.id
             WHERE i.subject LIKE '[AI Concierge Handoff]%' OR c.handed_off = 1
-            ORDER BY CASE WHEN i.status = 'Unread' THEN 0 WHEN i.status = 'Read' THEN 1 ELSE 2 END ASC, i.created_at DESC
-            LIMIT 50
+            ORDER BY CASE WHEN i.status = 'Unread' THEN 0 WHEN i.status = 'Read' THEN 1 ELSE 2 END ASC, GREATEST(COALESCE(c.last_message_at, i.created_at), i.created_at) DESC, i.id DESC
+            LIMIT 250
         ");
         if ($hqRes) {
             while ($hq = $hqRes->fetch_assoc()) {

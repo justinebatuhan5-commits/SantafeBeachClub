@@ -12,9 +12,16 @@ $sfbc_asset_prefix = (strpos($sfbc_script_dir, '/frontend') !== false || is_file
 $sfbc_logo_url = $sfbc_asset_prefix . 'assets/logo.jpg';
 $sfbc_widget_css = $sfbc_asset_prefix . 'assets/css/components/chatbot-widget.css?v=' . (int) @filemtime(__DIR__ . '/../assets/css/components/chatbot-widget.css');
 $sfbc_widget_js  = $sfbc_asset_prefix . 'assets/js/components/chatbot-widget.js?v=' . (int) @filemtime(__DIR__ . '/../assets/js/components/chatbot-widget.js');
+$sfbc_now_pht = new DateTime('now', new DateTimeZone('Asia/Manila'));
+$sfbc_pht_hour = (int)$sfbc_now_pht->format('G');
+$sfbc_reception_online = ($sfbc_pht_hour >= 8 && $sfbc_pht_hour < 20);
+$sfbc_welcome_time = $sfbc_now_pht->format('g:i A');
 $sfbc_widget_cfg = [
-    'csrfToken' => $sfbc_chat_csrf,
-    'logoUrl'   => $sfbc_logo_url,
+    'csrfToken'         => $sfbc_chat_csrf,
+    'logoUrl'           => $sfbc_logo_url,
+    'supportHoursStart' => 8,
+    'supportHoursEnd'   => 20,
+    'supportHoursLabel' => '8:00 AM – 8:00 PM PHT',
 ];
 ?>
 <!-- Santa Fe Beach Club - Intelligent Virtual Guest Assistant Widget -->
@@ -104,7 +111,7 @@ $sfbc_widget_cfg = [
             <div style="display:flex; align-items:center; gap:7px; min-width:0;">
                 <span style="width:8px; height:8px; border-radius:50%; background:#10B981; flex-shrink:0; box-shadow:0 0 0 3px rgba(16,185,129,0.2);"></span>
                 <span style="font-weight:700; white-space:nowrap;">Live Staff Chat</span>
-                <span style="color:#0F766E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Replies appear here &amp; by email</span>
+                <span id="sfbcLiveWaitStatus" style="color:#0F766E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Replies appear here &amp; by email</span>
             </div>
             <button type="button" onclick="window.sfbcResumeAiMode()" style="background:#ffffff; border:1px solid #5EEAD4; color:#0F766E; border-radius:6px; padding:3px 8px; font-size:10.5px; font-weight:700; cursor:pointer; flex-shrink:0;">Switch to AI</button>
         </div>
@@ -390,11 +397,17 @@ $sfbc_widget_cfg = [
                 <strong style="color:#5C3824; font-size:12px;">Forward Chat to Reception Staff</strong>
                 <button type="button" onclick="sfbcTogglePanel(null)" style="background:none; border:none; color:#64748B; font-size:12px; cursor:pointer;">Close ×</button>
             </div>
+            <div id="sfbcHandoffHoursBanner" class="sfbc-handoff-hours-banner <?php echo $sfbc_reception_online ? 'is-online' : 'is-offline'; ?>">
+                <span class="sfbc-handoff-hours-dot" id="sfbcHandoffHoursDot"></span>
+                <span id="sfbcHandoffHoursText"><?php echo $sfbc_reception_online
+                    ? 'Reception Online (8:00 AM – 8:00 PM PHT) · Typical reply in 2–5 mins'
+                    : 'Reception Offline (Hours: 8:00 AM – 8:00 PM PHT) · Morning shift replies at 8:00 AM via email &amp; chat'; ?></span>
+            </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <input type="text" id="sfbcHandoffName" placeholder="Your Full Name" style="width:100%; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px; background:#fff;">
                 <input type="email" id="sfbcHandoffEmail" placeholder="Your Email Address" style="width:100%; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px; background:#fff;">
                 <input type="text" id="sfbcHandoffNote" placeholder="Short note for reception (optional)" style="width:100%; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px; background:#fff;">
-                <button type="button" onclick="sfbcSubmitHandoff()" style="width:100%; padding:7px; background:#84563C; color:#fff; border:none; border-radius:6px; font-weight:600; font-size:12px; cursor:pointer;">Send Transcript to Staff</button>
+                <button type="button" id="sfbcHandoffSubmitBtn" onclick="sfbcSubmitHandoff()" style="width:100%; padding:7px; background:#84563C; color:#fff; border:none; border-radius:6px; font-weight:600; font-size:12px; cursor:pointer;">Send Transcript to Staff</button>
             </div>
         </div>
 
@@ -408,6 +421,7 @@ $sfbc_widget_cfg = [
                 <div class="sfbc-msg-bubble-model">
                     Hello! Welcome to <strong>Santa Fe Beach Club</strong>. I can check live room availability &amp; prices, recommend the best accommodation for your group, prepare pre-filled booking links, verify your reservation via OTP, or answer resort questions in <strong>any language</strong> (English, Tagalog, Bisaya, 한국어, 日本語, 中文, Español, Français, Deutsch, and more). How may I assist you today?
                 </div>
+                <div class="sfbc-msg-time"><?php echo htmlspecialchars($sfbc_welcome_time, ENT_QUOTES, 'UTF-8'); ?></div>
                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; max-width:100%;">
                     <span style="font-size:10.5px; color:#7C533C; font-weight:700; width:100%; margin-bottom:1px;">Popular questions to get started:</span>
                     <button type="button" class="sfbc-suggested-q-pill" onclick="sfbcQuickAsk('Hi! Can I book a stay on February 1-11?')">Book a Stay (Feb 1–11)</button>

@@ -496,23 +496,53 @@
             }
         }
 
+        var channelHost = document.querySelector('[data-comm-channel]');
+        var channel = channelHost ? (channelHost.getAttribute('data-comm-channel') || '') : '';
         var boxes = document.querySelectorAll('[data-reply-box]');
-        if (!boxes.length) return;
+        if (!boxes.length && !channel) return;
 
         var ids = [];
+        var knownMaxId = 0;
         boxes.forEach(function(box) {
             var id = parseInt(box.getAttribute('data-inquiry-id') || '0', 10);
-            if (id > 0) ids.push(id);
+            if (id > 0) {
+                ids.push(id);
+                if (id > knownMaxId) knownMaxId = id;
+            }
         });
-        if (!ids.length) return;
+        if (!ids.length && !channel) return;
 
-        fetch('../backend/api/inquiry_reply_api.php?action=poll_threads&inquiry_ids=' + encodeURIComponent(ids.slice(0, 50).join(',')))
+        var pollUrl = '../backend/api/inquiry_reply_api.php?action=poll_threads&inquiry_ids='
+            + encodeURIComponent(ids.slice(0, 250).join(','));
+        if (channel) {
+            pollUrl += '&channel=' + encodeURIComponent(channel)
+                + '&known_max_id=' + encodeURIComponent(knownMaxId)
+                + '&known_count=' + encodeURIComponent(boxes.length);
+        }
+
+        fetch(pollUrl)
             .then(function(r) {
                 if (!r.ok) return null;
                 return r.json();
             })
             .then(function(data) {
-                if (!data || !data.success || !data.threads) return;
+                if (!data || !data.success) return;
+
+                if (data.has_new_tickets) {
+                    var isComposing = false;
+                    var inputs = document.querySelectorAll('[data-reply-input]');
+                    inputs.forEach(function(el) {
+                        if (el === document.activeElement || (el.value && el.value.trim() !== '')) {
+                            isComposing = true;
+                        }
+                    });
+                    if (!isComposing) {
+                        window.location.reload();
+                        return;
+                    }
+                }
+
+                if (!data.threads) return;
                 boxes.forEach(function(box) {
                     var id = box.getAttribute('data-inquiry-id');
                     var thread = data.threads[id];

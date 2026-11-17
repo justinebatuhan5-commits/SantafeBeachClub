@@ -2,6 +2,9 @@
     const cfg = window.SFBC_CHATBOT_CONFIG || {};
     const CSRF_TOKEN = cfg.csrfToken || '';
     const SFBC_LOGO_URL = cfg.logoUrl || 'assets/logo.jpg';
+    const SUPPORT_HOURS_START = Number(cfg.supportHoursStart ?? 8);
+    const SUPPORT_HOURS_END = Number(cfg.supportHoursEnd ?? 20);
+    const SUPPORT_HOURS_LABEL = cfg.supportHoursLabel || '8:00 AM – 8:00 PM PHT';
 
     function resolveChatbotApiUrl() {
         const path = window.location.pathname || '';
@@ -83,6 +86,106 @@
     let sfbcPollTimer = null;
     let sfbcIsSending = false;
     let sfbcUnreadStaffCount = 0;
+    let sfbcStaffWaitTimer = null;
+    let sfbcHandoffCooldownTimer = null;
+    let sfbcLastHandoffEmail = '';
+
+    function isReceptionOnlinePHT() {
+        try {
+            const hourStr = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Manila',
+                hour: 'numeric',
+                hour12: false
+            }).format(new Date());
+            const h = parseInt(hourStr, 10) % 24;
+            return h >= SUPPORT_HOURS_START && h < SUPPORT_HOURS_END;
+        } catch (e) {
+            const h = new Date().getHours();
+            return h >= SUPPORT_HOURS_START && h < SUPPORT_HOURS_END;
+        }
+    }
+
+    function updateHandoffHoursBannerUI() {
+        const banner = document.getElementById('sfbcHandoffHoursBanner');
+        const textEl = document.getElementById('sfbcHandoffHoursText');
+        if (!banner || !textEl) return;
+        const online = isReceptionOnlinePHT();
+        banner.classList.toggle('is-online', online);
+        banner.classList.toggle('is-offline', !online);
+        textEl.textContent = online
+            ? 'Reception Online (' + SUPPORT_HOURS_LABEL + ') · Typical reply in 2–5 mins'
+            : 'Reception Offline (Hours: ' + SUPPORT_HOURS_LABEL + ') · Morning shift replies at 8:00 AM via email & chat';
+    }
+
+    function formatChatBubbleTime(rawTs) {
+        let d = new Date();
+        if (rawTs) {
+            const parsed = new Date(String(rawTs).replace(' ', 'T'));
+            if (!isNaN(parsed.getTime())) d = parsed;
+        }
+        const now = new Date();
+        const sameDay = d.getFullYear() === now.getFullYear()
+            && d.getMonth() === now.getMonth()
+            && d.getDate() === now.getDate();
+        if (sameDay) {
+            return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+        return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function clearStaffWaitTimer() {
+        if (sfbcStaffWaitTimer) {
+            clearTimeout(sfbcStaffWaitTimer);
+            sfbcStaffWaitTimer = null;
+        }
+    }
+
+    function startStaffWaitTimer(guestEmail) {
+        clearStaffWaitTimer();
+        const waitStatus = document.getElementById('sfbcLiveWaitStatus');
+        if (!isReceptionOnlinePHT()) {
+            if (waitStatus) waitStatus.textContent = 'Offline hours · Morning reply via email & chat';
+            return;
+        }
+        if (waitStatus) waitStatus.textContent = 'Waiting for staff (~2–5 mins)...';
+        sfbcStaffWaitTimer = setTimeout(function() {
+            sfbcStaffWaitTimer = null;
+            if (!sfbcLiveStaffActive) return;
+            if (waitStatus) waitStatus.textContent = 'Replies appear here & by email';
+            const emailNote = guestEmail ? ' (**' + guestEmail + '**)' : '';
+            appendBubble(
+                'Our front desk staff is currently assisting guests at the counter. You do not need to wait on this page — as soon as staff replies, we will send it to your email' + emailNote + ' and keep it here in your chat. You can also click **Switch to AI** above anytime.',
+                'model'
+            );
+        }, 180000);
+    }
+
+    function startHandoffCooldown(seconds) {
+        const btn = document.getElementById('sfbcHandoffSubmitBtn');
+        if (!btn) return;
+        if (sfbcHandoffCooldownTimer) {
+            clearInterval(sfbcHandoffCooldownTimer);
+            sfbcHandoffCooldownTimer = null;
+        }
+        let remaining = Number(seconds || 60);
+        btn.disabled = true;
+        btn.style.opacity = '0.65';
+        btn.style.cursor = 'not-allowed';
+        btn.textContent = 'Request Sent (Wait ' + remaining + 's)';
+        sfbcHandoffCooldownTimer = setInterval(function() {
+            remaining -= 1;
+            if (remaining <= 0) {
+                clearInterval(sfbcHandoffCooldownTimer);
+                sfbcHandoffCooldownTimer = null;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                btn.textContent = 'Send Transcript to Staff';
+            } else {
+                btn.textContent = 'Request Sent (Wait ' + remaining + 's)';
+            }
+        }, 1000);
+    }
 
     function updateUnreadBadgeUI() {
         const badge = document.getElementById('sfbcToggleUnreadBadge');
@@ -128,9 +231,12 @@
 
         if (nextActive && !wasActive) {
             startLiveSyncPolling();
-        } else if (!nextActive && sfbcPollTimer) {
-            clearInterval(sfbcPollTimer);
-            sfbcPollTimer = null;
+        } else if (!nextActive) {
+            clearStaffWaitTimer();
+            if (sfbcPollTimer) {
+                clearInterval(sfbcPollTimer);
+                sfbcPollTimer = null;
+            }
         }
     };
 
@@ -183,6 +289,13 @@
                         [],
                         { sender_name: m.sender_name || 'Reception Staff', created_at: m.created_at || '' }
                     );
+                    if (role === 'staff') {
+                        clearStaffWaitTimer();
+                        const waitStatusEl = document.getElementById('sfbcLiveWaitStatus');
+                        if (waitStatusEl) {
+                            waitStatusEl.textContent = 'Connected with Reception · Replies appear here & by email';
+                        }
+                    }
                     if (isBackgroundPoll && role === 'staff' && !isChatWindowOpen()) {
                         sfbcUnreadStaffCount += 1;
                         updateUnreadBadgeUI();
@@ -304,7 +417,10 @@
         if (which === 'otp' && els.otpPanel) {
             els.otpPanel.style.setProperty('display', 'block', 'important');
         } else if (which === 'handoff' && els.handoffPanel) {
+            updateHandoffHoursBannerUI();
             els.handoffPanel.style.setProperty('display', 'block', 'important');
+            const handoffNameEl = document.getElementById('sfbcHandoffName');
+            if (handoffNameEl) handoffNameEl.focus();
         } else if (which === 'faq' && els.faqPanel) {
             els.faqPanel.style.setProperty('display', 'block', 'important');
         } else if (which === 'avail' && els.availPanel) {
@@ -534,8 +650,10 @@
             });
             const data = await res.json();
             if (data.success) {
+                sfbcLastHandoffEmail = email;
                 window.sfbcTogglePanel(null);
                 if (noteEl) noteEl.value = '';
+                startHandoffCooldown(60);
                 const hmId = Number(data.handoff_message_id || 0);
                 if (hmId > 0) {
                     sfbcRenderedServerIds.add(hmId);
@@ -544,6 +662,7 @@
                 appendBubble(data.message || 'Your message has been sent to our front desk staff.', 'model');
                 if (data.live_chat_active) {
                     window.sfbcSetLiveStaffMode(true);
+                    startStaffWaitTimer(sfbcLastHandoffEmail);
                 }
             } else {
                 appendBubble(data.error || 'Could not forward conversation.', 'model');
@@ -933,6 +1052,11 @@
             div.innerHTML = sfbcFormatSafeReply(text);
         }
         wrapper.appendChild(div);
+
+        const timeEl = document.createElement('div');
+        timeEl.className = 'sfbc-msg-time';
+        timeEl.textContent = formatChatBubbleTime(meta && meta.created_at ? meta.created_at : null);
+        wrapper.appendChild(timeEl);
 
         // Visual Room Cards Carousel (Reservation Assistance — matching Akia / Hotel Segundo style)
         if (sender === 'model' && Array.isArray(roomCards) && roomCards.length > 0) {

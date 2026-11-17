@@ -45,7 +45,7 @@ try {
         $ids = array_slice(
             array_values(array_unique(array_filter(array_map('intval', $idArr), static fn(int $v): bool => $v > 0))),
             0,
-            50
+            250
         );
 
         $statuses = [];
@@ -67,9 +67,31 @@ try {
         }
         unset($t);
 
+        $channel = trim((string)($input['channel'] ?? ($_GET['channel'] ?? '')));
+        $knownMaxId = max(0, (int)($input['known_max_id'] ?? ($_GET['known_max_id'] ?? 0)));
+        $knownCount = isset($input['known_count'])
+            ? (int)$input['known_count']
+            : (isset($_GET['known_count']) ? (int)$_GET['known_count'] : -1);
+        $channelTotal = count($ids);
+        $channelMaxId = $knownMaxId;
+        $hasNewTickets = false;
+
+        if (in_array($channel, ['live_chat', 'contact'], true)) {
+            $chWhere = sf_inquiry_channel_sql_condition($conn, $channel, 'i');
+            $chRes = $conn->query("SELECT COUNT(*) AS cnt, COALESCE(MAX(i.id), 0) AS max_id FROM inquiries i WHERE {$chWhere}");
+            if ($chRes && ($chRow = $chRes->fetch_assoc())) {
+                $channelTotal = (int)($chRow['cnt'] ?? 0);
+                $channelMaxId = (int)($chRow['max_id'] ?? 0);
+                $hasNewTickets = ($channelMaxId > $knownMaxId || ($knownCount >= 0 && $channelTotal > $knownCount));
+            }
+        }
+
         echo json_encode([
             'success' => true,
             'threads' => $threads,
+            'channel_total' => $channelTotal,
+            'channel_max_id' => $channelMaxId,
+            'has_new_tickets' => $hasNewTickets,
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

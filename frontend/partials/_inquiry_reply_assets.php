@@ -359,7 +359,7 @@ if (!function_exists('sf_reply_ui_render_ticket_cards')) {
 
         if ($isLiveChatChannel):
             ?>
-            <div class="sf-comm-page">
+            <div class="sf-comm-page" data-comm-channel="<?php echo htmlspecialchars($channel, ENT_QUOTES, 'UTF-8'); ?>">
                 <?php if (empty($tickets)): ?>
                     <div style="text-align: center; padding: 64px 20px; color: #64748B; background: var(--card-bg, #FFFFFF); border: 1px solid #E5E0D8; border-radius: 16px;">
                         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px; opacity: 0.5;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
@@ -565,7 +565,7 @@ if (!function_exists('sf_reply_ui_render_ticket_cards')) {
 
         // Clean Contact Us Inquiries View (admin_inquiries.php)
         ?>
-        <div class="inquiries-container">
+        <div class="inquiries-container" data-comm-channel="<?php echo htmlspecialchars($channel, ENT_QUOTES, 'UTF-8'); ?>">
             <?php if (!empty($tickets)): ?>
                 <div class="sf-filter-bar">
                     <div class="sf-filter-pills">

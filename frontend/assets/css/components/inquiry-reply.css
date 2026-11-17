@@ -89,7 +89,7 @@
     overflow: hidden;
     box-shadow: 0 6px 24px rgba(15, 23, 42, 0.05);
     min-height: 430px;
-    height: clamp(430px, calc(100vh - 305px), 660px);
+    height: clamp(520px, calc(100vh - 210px), 780px);
 }
 @media (max-height: 760px) and (min-width: 961px) {
     .sf-conv-pane .sf-reply-controls {
