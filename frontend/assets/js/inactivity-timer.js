@@ -381,7 +381,7 @@
         } catch (e) {}
         localStorage.setItem(LOGOUT_FLAG_KEY, Date.now().toString());
         // Clean session and redirect to login page with timeout notice
-        window.location.href = 'logout.php?timeout=1';
+        window.location.href = '/SantaBeachClub-BookingSystem/frontend/logout.php?timeout=1';
     }
 
     // Heartbeat check every 2 seconds

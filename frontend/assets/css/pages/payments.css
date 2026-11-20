@@ -207,10 +207,9 @@
     overscroll-behavior-x: contain;
 }
 
-/* Sticky ledger title + filter toolbar (stays visible below the page header while scrolling). */
+/* Ledger title + filter toolbar */
 .payments-sticky-head {
-    position: sticky;
-    top: var(--payments-sticky-top, 72px);
+    position: relative;
     z-index: 30;
     background: var(--card-bg, #ffffff);
     margin: -22px -24px 0;
@@ -223,16 +222,12 @@
     box-shadow: 0 10px 16px -14px rgba(15, 23, 42, 0.25);
 }
 
-/* On wide screens the table fits, so let the column headings stick too. */
 @media (min-width: 1280px) {
     .payments-ledger-card .table-responsive {
         overflow: visible;
     }
 
     .payments-ledger-card .reservations-table thead th {
-        position: sticky;
-        top: calc(var(--payments-sticky-top, 72px) + var(--payments-head-height, 150px));
-        z-index: 25;
         background: var(--card-bg, #ffffff);
     }
 }

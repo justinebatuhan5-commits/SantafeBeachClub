@@ -14,9 +14,9 @@
  * - Generating a new OTP for a user invalidates all previous unused OTPs for that user.
  */
 
-define('OTP_EXPIRY_MINUTES', 10);
+define('OTP_EXPIRY_MINUTES', 5);
 define('OTP_MAX_ATTEMPTS',   5);
-define('OTP_RESEND_COOLDOWN', 60); // seconds between resends
+define('OTP_RESEND_COOLDOWN', 120); // seconds between resends
 
 // ---------------------------------------------------------------------------
 // Generation

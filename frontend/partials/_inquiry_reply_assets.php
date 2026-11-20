@@ -248,7 +248,7 @@ if (!function_exists('sf_reply_ui_build_suggestions')) {
         // 2. Availability / Booking / Dates
         if (preg_match('/\b(avail|available|availability|book|booking|reserve|reservation|date|dates|bakante|vacant|stay)\b/i', $combined)) {
             $suggestions[] = [
-                'label' => '📅 Check Dates & Availability',
+                'label' => 'Check Dates & Availability',
                 'text'  => "Hi {$firstName}! I would be happy to check room availability for you. Could you please share your preferred check-in and check-out dates and how many guests will be staying?",
             ];
         }
@@ -296,15 +296,15 @@ if (!function_exists('sf_reply_ui_build_suggestions')) {
         // Always include helpful reception quick-replies up to 4 total chips
         $defaults = [
             [
-                'label' => '👋 Greet & Assist',
+                'label' => 'Greet & Assist',
                 'text'  => "Hi {$firstName}! This is Reception Staff at Santa Fe Beach Club. I'm online now and reviewed your message — how may I best assist you today?",
             ],
             [
-                'label' => '📅 Ask Stay Dates & Pax',
+                'label' => 'Ask Stay Dates & Pax',
                 'text'  => "Hi {$firstName}! To help me check the best available rooms and exact rates for you, may I know your target check-in date, check-out date, and total number of guests?",
             ],
             [
-                'label' => '💰 Share Room Rates',
+                'label' => 'Share Room Rates',
                 'text'  => "Hi {$firstName}! Our rooms start at ₱3,450/night for a Standard Room (2 pax), ₱4,300/night for a Standard Family Room (4 pax), ₱6,900/night for a Beachview Duplex, and ₱7,900/night for our Seaview Duplex or Beach Villa. Which room type interests you?",
             ],
             [

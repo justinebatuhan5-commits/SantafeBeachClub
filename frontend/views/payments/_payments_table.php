@@ -14,53 +14,6 @@ $summary = $pageData['summary'] ?? [
 $csrfToken = $pageData['csrfToken'] ?? '';
 ?>
 
-<!-- ═══ EXECUTIVE BILLING SUMMARY STRIP ═══ -->
-<div class="payments-kpi-strip" role="region" aria-label="Payment Summary KPIs">
-    <button type="button" class="payments-kpi-card payments-kpi-card--verified" data-status-pill="verified" title="Filter to Verified payments">
-        <div class="payments-kpi-icon payments-kpi-icon--verified">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <div class="payments-kpi-body">
-            <span class="payments-kpi-label">Verified Collected</span>
-            <strong class="payments-kpi-value payments-kpi-value--verified">₱<?php echo number_format((float)$summary['verified_total'], 2); ?></strong>
-            <span class="payments-kpi-sub"><?php echo (int)$summary['verified_count']; ?> settled receipt<?php echo (int)$summary['verified_count'] === 1 ? '' : 's'; ?></span>
-        </div>
-    </button>
-
-    <button type="button" class="payments-kpi-card payments-kpi-card--pending" data-status-pill="pending" title="Filter to Pending verification queue">
-        <div class="payments-kpi-icon payments-kpi-icon--pending">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <div class="payments-kpi-body">
-            <span class="payments-kpi-label">Pending Verification</span>
-            <strong class="payments-kpi-value payments-kpi-value--pending">₱<?php echo number_format((float)$summary['pending_total'], 2); ?></strong>
-            <span class="payments-kpi-sub"><?php echo (int)$summary['pending_count']; ?> awaiting staff review</span>
-        </div>
-    </button>
-
-    <button type="button" class="payments-kpi-card payments-kpi-card--total active" data-status-pill="" title="Show all payment records">
-        <div class="payments-kpi-icon payments-kpi-icon--total">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-        </div>
-        <div class="payments-kpi-body">
-            <span class="payments-kpi-label">Total Ledger Entries</span>
-            <strong class="payments-kpi-value payments-kpi-value--total"><?php echo (int)$summary['total_count']; ?> Bills</strong>
-            <span class="payments-kpi-sub">Deposits, balances &amp; full stays</span>
-        </div>
-    </button>
-
-    <button type="button" class="payments-kpi-card payments-kpi-card--refund" data-status-pill="refunded" title="Filter to Refunded bills">
-        <div class="payments-kpi-icon payments-kpi-icon--refund">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        </div>
-        <div class="payments-kpi-body">
-            <span class="payments-kpi-label">Refunded / Rejected</span>
-            <strong class="payments-kpi-value payments-kpi-value--refund">₱<?php echo number_format((float)$summary['refunded_total'], 2); ?></strong>
-            <span class="payments-kpi-sub"><?php echo (int)$summary['refunded_count']; ?> refunded • <?php echo (int)$summary['rejected_count']; ?> rejected</span>
-        </div>
-    </button>
-</div>
-
 <!-- ═══ BILLS LEDGER CARD ═══ -->
 <div class="card payments-ledger-card">
     <div class="payments-sticky-head" id="paymentsStickyHead">

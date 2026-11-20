@@ -25,10 +25,4 @@ html {
 
 body {
     background-color: #FAF4ED;
-    animation: sfbcPageFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-body.page-leaving {
-    animation: sfbcPageFadeOut 0.18s cubic-bezier(0.7, 0, 0.84, 0) forwards;
-    pointer-events: none;
 }
